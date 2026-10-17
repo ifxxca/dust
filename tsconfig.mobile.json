@@ -1,0 +1,8 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "resources/mobile/src/**/*.ts",
+        "resources/mobile/src/**/*.tsx"
+    ],
+    "compilerOptions": { "types": ["vite/client"], "noEmit": true }
+}

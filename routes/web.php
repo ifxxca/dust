@@ -1,0 +1,128 @@
+<?php
+
+use App\Http\Controllers\AdminPushTestController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DiscrepancyController;
+use App\Http\Controllers\HandoverController;
+use App\Http\Controllers\OperationalCorrectionController;
+use App\Http\Controllers\OperationalDashboardController;
+use App\Http\Controllers\OperationalUserController;
+use App\Http\Controllers\PickupExecutionController;
+use App\Http\Controllers\PickupLifecycleController;
+use App\Http\Controllers\PickupNotificationController;
+use App\Http\Controllers\PickupReceiptController;
+use App\Http\Controllers\PickupScheduleController;
+use App\Http\Controllers\PickupTaskController;
+use App\Http\Controllers\ProofOfPickupController;
+use App\Models\HandoverSession;
+use App\Models\PickupTask;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
+
+Route::inertia('/', 'welcome')->name('home');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('dashboard', OperationalDashboardController::class)->name('dashboard');
+});
+
+require __DIR__.'/settings.php';
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/admin/push-test', [AdminPushTestController::class, 'page'])->name('push-test');
+    Route::get('/discrepancies', function (Request $request): Response {
+        abort_unless($request->user()->canExecutePickup(), 403);
+
+        return Inertia::render('discrepancies', ['timezone' => config('pickup.timezone')]);
+    })->name('discrepancies');
+    Route::get('/pickup-schedules', function (Request $request): Response {
+        abort_unless($request->user()->canManagePickup(), 403);
+
+        return Inertia::render('pickup-schedules', ['timezone' => config('pickup.timezone')]);
+    })->name('pickup-schedules');
+    Route::get('/handover/{session?}', function (Request $request, ?string $session = null): Response {
+        abort_unless($request->user()->canExecutePickup(), 403);
+        if ($session !== null) {
+            HandoverSession::findOrFail($session);
+        }
+
+        return Inertia::render('handover', ['sessionId' => $session ? (int) $session : null, 'timezone' => config('pickup.timezone')]);
+    })->whereNumber('session')->name('handover');
+    Route::get('/operations/{screen?}/{task?}', function (Request $request, string $screen = 'tasks', ?string $task = null): Response {
+        $roles = match ($screen) {
+            'customers' => ['cs', 'admin_supervisor'], 'users' => ['admin_supervisor'],
+            'mine', 'available' => ['pickup_staff', 'retail_staff', 'admin_supervisor'], 'create' => ['cs', 'admin_supervisor', 'pickup_staff'],
+            'execute' => ['pickup_staff', 'retail_staff', 'admin_supervisor'],
+            'tasks', 'detail' => ['cs', 'admin_supervisor', 'pickup_staff', 'retail_staff'],
+            default => [],
+        };
+        abort_unless(in_array($request->user()->role, $roles, true), 403);
+        if ($screen === 'customers') {
+            return Inertia::render('customers');
+        }
+        if (in_array($screen, ['detail', 'execute'], true)) {
+            $record = PickupTask::findOrFail($task);
+            abort_unless($request->user()->can('view', $record), 404);
+            if ($screen === 'execute') {
+                abort_unless($record->assigned_staff_id === $request->user()->id && $request->user()->canExecutePickup(), 404);
+
+                return Inertia::render('pickup-wizard', ['taskId' => $record->id, 'timezone' => config('pickup.timezone')]);
+            }
+        }
+
+        $workspaceStats = null;
+        if ($request->user()->canExecutePickup() && in_array($screen, ['mine', 'available', 'tasks'], true)) {
+            $day = CarbonImmutable::now(config('pickup.timezone'))->startOfDay();
+            $own = PickupTask::where('assigned_staff_id', $request->user()->id);
+            $workspaceStats = ['today' => (clone $own)->where('scheduled_at', '>=', $day->utc())->where('scheduled_at', '<', $day->addDay()->utc())->count(), 'date' => $day->toDateString(), 'next' => (clone $own)->where('status', 'ASSIGNED')->where(fn ($query) => $query->whereNull('execution_started_at')->orWhereDoesntHave('latestVisit', fn ($visit) => $visit->where('outcome', 'NO_PACKAGES')))->orderBy('scheduled_at')->value('scheduled_at')];
+        }
+
+        return Inertia::render('operations', ['screen' => $screen, 'taskId' => $task ? (int) $task : null, 'timezone' => config('pickup.timezone'), 'workspaceStats' => $workspaceStats]);
+    })->whereNumber('task')->name('operations');
+
+    Route::prefix('api/v1')->name('api.')->group(function (): void {
+        Route::get('pickup-notifications', [PickupNotificationController::class, 'index'])->name('pickup-notifications.index');
+        Route::patch('pickup-notifications/read', [PickupNotificationController::class, 'update'])->name('pickup-notifications.update');
+        Route::get('admin/push-test/devices', [AdminPushTestController::class, 'index'])->name('push-test.devices');
+        Route::post('admin/push-test', [AdminPushTestController::class, 'store'])->middleware('throttle:6,1')->name('push-test.store');
+        Route::get('admin/push-test/{testId}', [AdminPushTestController::class, 'show'])->whereUuid('testId')->name('push-test.show');
+        Route::get('discrepancies', [DiscrepancyController::class, 'index'])->name('discrepancies.index');
+        Route::get('pickup-schedules', [PickupScheduleController::class, 'index'])->name('schedules.index');
+        Route::post('pickup-schedules', [PickupScheduleController::class, 'store'])->name('schedules.store');
+        Route::patch('pickup-schedules/{schedule}', [PickupScheduleController::class, 'update'])->name('schedules.update');
+        Route::get('me', fn (Request $request) => response()->json(['data' => $request->user()->only(['id', 'name', 'role', 'is_active']), 'meta' => ['operational_timezone' => config('pickup.timezone')]]))->name('me');
+        Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::post('customers', [CustomerController::class, 'store'])->name('customers.store');
+        Route::patch('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+        Route::get('pickup-staff', [OperationalUserController::class, 'staff'])->name('staff');
+        Route::get('users', [OperationalUserController::class, 'index'])->name('users.index');
+        Route::post('users', [OperationalUserController::class, 'store'])->name('users.store');
+        Route::patch('users/{user}', [OperationalUserController::class, 'update'])->name('users.update');
+        Route::get('pickup-tasks/takeover-candidates', [PickupTaskController::class, 'index'])->name('tasks.candidates');
+        Route::get('pickup-tasks', [PickupTaskController::class, 'index'])->name('tasks.index');
+        Route::post('pickup-tasks', [PickupTaskController::class, 'store'])->name('tasks.store');
+        Route::post('pickup-tasks/bulk-assignment', [PickupTaskController::class, 'bulkAssign'])->name('tasks.bulkAssign');
+        Route::get('pickup-tasks/{task}', [PickupTaskController::class, 'show'])->name('tasks.show');
+        Route::post('pickup-tasks/{task}/assignment', [PickupTaskController::class, 'assign'])->name('tasks.assign');
+        Route::post('pickup-tasks/{task}/takeover', [PickupTaskController::class, 'takeover'])->name('tasks.takeover');
+        Route::post('pickup-tasks/{task}/execution', [PickupExecutionController::class, 'start'])->name('tasks.start');
+        Route::post('pickup-tasks/{task}/visits', [PickupExecutionController::class, 'record'])->name('tasks.visit');
+        Route::post('pickup-tasks/{task}/retry', [PickupLifecycleController::class, 'retry'])->name('tasks.retry');
+        Route::post('pickup-tasks/{task}/cancel', [PickupLifecycleController::class, 'cancel'])->name('tasks.cancel');
+        Route::post('pickup-tasks/{task}/corrections', [OperationalCorrectionController::class, 'proof'])->name('tasks.correct');
+        Route::post('pickup-tasks/{task}/receipt', [PickupReceiptController::class, 'send'])->name('tasks.receipt');
+        Route::post('handovers/{session}/items/{item}/corrections', [OperationalCorrectionController::class, 'verification'])->name('handovers.correct');
+        Route::post('pickup-tasks/{task}/proof', [ProofOfPickupController::class, 'store'])->name('tasks.proof');
+        Route::get('pickup-evidence/{attachment}', [ProofOfPickupController::class, 'attachment'])->name('evidence');
+        Route::get('handovers/candidates', [HandoverController::class, 'candidates'])->name('handovers.candidates');
+        Route::get('handovers', [HandoverController::class, 'index'])->name('handovers.index');
+        Route::post('handovers', [HandoverController::class, 'store'])->name('handovers.store');
+        Route::get('handovers/{session}', [HandoverController::class, 'show'])->name('handovers.show');
+        Route::post('handovers/{session}/items/{item}/verification', [HandoverController::class, 'verify'])->name('handovers.verify');
+        Route::post('handovers/{session}/close', [HandoverController::class, 'close'])->name('handovers.close');
+        Route::post('handovers/{session}/reopen', [HandoverController::class, 'reopen'])->name('handovers.reopen');
+        Route::patch('handovers/{session}/members', [HandoverController::class, 'amend'])->name('handovers.amend');
+    });
+});

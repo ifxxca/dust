@@ -1,0 +1,76 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "com.retailpickup.mobile.dev"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.retailpickup.mobile.dev"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 16
+        versionName "1.2.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    constraints {
+        androidTestImplementation('org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22')
+        androidTestImplementation('org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22')
+    }
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+def verifyReleaseMobileAssets = tasks.register('verifyReleaseMobileAssets') {
+    doLast {
+        def indexFile = file('src/main/assets/public/index.html')
+        if (!indexFile.exists()) {
+            throw new GradleException('Build mobile production assets and sync Android before a release build.')
+        }
+        def html = indexFile.getText('UTF-8')
+        if (!html.contains('name="mobile-build-mode" content="production"') || !(html =~ /connect-src 'self' https:\/\/[^;\s]+;/).find()) {
+            throw new GradleException('Release requires production mobile assets with an approved HTTPS API origin. Debug/LAN assets cannot be packaged as release.')
+        }
+    }
+}
+tasks.configureEach { task ->
+    if (task.name == 'mergeReleaseAssets') {
+        task.dependsOn(verifyReleaseMobileAssets)
+    }
+}
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.exists() || file('src/debug/google-services.json').exists()) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

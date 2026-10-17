@@ -1,0 +1,61 @@
+export type HandoverQuantities = {
+    manual_hybrid: number;
+    cashless_hybrid: number;
+    css_orion: number;
+    total: number | null;
+};
+export type HandoverItem = {
+    id: number;
+    task_id: number;
+    reference: string;
+    customer_name: string;
+    contact?: string;
+    pickup_address?: string;
+    picked_up_at?: string;
+    pickup_staff: { name: string } | null;
+    status: string;
+    pickup: HandoverQuantities;
+    retail: HandoverQuantities;
+    differences: Omit<HandoverQuantities, 'total'> | null;
+    discrepancy_notes: string | null;
+    verified_by: number | null;
+    verified_at: string | null;
+    needs_review: boolean;
+    pickup_revision: number;
+    verified_pickup_revision: number | null;
+    verified_pickup: Omit<HandoverQuantities, 'total'> | null;
+    verified_differences: Omit<HandoverQuantities, 'total'> | null;
+    original_retail: Record<string, string | number | null>;
+    revisions: {
+        revision: number;
+        reason: string;
+        actor_id: number;
+        created_at: string;
+        values: Record<string, string | number | null>;
+    }[];
+};
+export type HandoverSession = {
+    id: number;
+    reference: string;
+    status: string;
+    version: number;
+    created_at: string;
+    creator?: { id: number; name: string } | null;
+    staff_names?: string[];
+    total_packages?: number;
+    closed_at: string | null;
+    items?: HandoverItem[];
+    task_count?: number;
+    pending_count?: number;
+    discrepancy_count?: number;
+    review_count?: number;
+    verified_count?: number;
+    can_close?: boolean;
+    can?: { edit: boolean; verify: boolean; receive: boolean };
+    events?: {
+        actor_id: number;
+        action: string;
+        occurred_at: string;
+        reason?: string;
+    }[];
+};
