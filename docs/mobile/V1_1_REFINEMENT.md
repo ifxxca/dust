@@ -179,12 +179,12 @@ Latest [debug APK1.1.3/code14](../../storage/mobile-v11/login-width-fix/retail-o
 
 17 October 2026. Focused changes preserve the current shell and pickup lifecycle. No backend business code, database schema, dependencies, authentication, upload contracts, evidence limits, Keystore keys, retention policy, or idempotency rules were changed.
 
-| Priority | Changes | Validation |
-| --- | --- | --- |
-| 1 — Photos | Two-column square thumbnails; add tile below four photos; explicit camera/gallery choices; full-screen contain preview; accessible 44px delete control with confirmation; failed-preview recovery. | Actual native camera/gallery, 0–4 photos, sampled preview bounds, deletion/cancel, Back, original-file integrity. |
-| 2 — Feedback | One draft status; remove repetitive local-save success messages and duplicate outcome feedback after COLLECTED. Storage/cleanup errors and UNCERTAIN warnings remain visible. | Native gallery and server-loss scenario; optional-photo API finalization and replay. |
-| 3 — Wizard | Initialize a draft after confirmed COLLECTED only after successful scoped local recovery; preserve the explicit new-draft action after discard. Preview Back closes the preview first. Completion waits for local reconciliation as well as authoritative server proof. | Draft navigation/restart/logout/account isolation, blocked/UNCERTAIN protection, double-tap finalization, actual IME. |
-| 4 — Completion | Show completion, reference/customer, package total and server-confirmed POP; primary Kembali ke Tugas, secondary Lihat Detail. Revision/evidence/receipt details are collapsed separately. | Native lost-response reconciliation, exactly one server POP, collapsed details and private evidence access. |
+| Priority       | Changes                                                                                                                                                                                                                                                                 | Validation                                                                                                            |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 1 — Photos     | Two-column square thumbnails; add tile below four photos; explicit camera/gallery choices; full-screen contain preview; accessible 44px delete control with confirmation; failed-preview recovery.                                                                      | Actual native camera/gallery, 0–4 photos, sampled preview bounds, deletion/cancel, Back, original-file integrity.     |
+| 2 — Feedback   | One draft status; remove repetitive local-save success messages and duplicate outcome feedback after COLLECTED. Storage/cleanup errors and UNCERTAIN warnings remain visible.                                                                                           | Native gallery and server-loss scenario; optional-photo API finalization and replay.                                  |
+| 3 — Wizard     | Initialize a draft after confirmed COLLECTED only after successful scoped local recovery; preserve the explicit new-draft action after discard. Preview Back closes the preview first. Completion waits for local reconciliation as well as authoritative server proof. | Draft navigation/restart/logout/account isolation, blocked/UNCERTAIN protection, double-tap finalization, actual IME. |
+| 4 — Completion | Show completion, reference/customer, package total and server-confirmed POP; primary Kembali ke Tugas, secondary Lihat Detail. Revision/evidence/receipt details are collapsed separately.                                                                              | Native lost-response reconciliation, exactly one server POP, collapsed details and private evidence access.           |
 
 The native preview bridge checks active account/environment/session and the original SHA256 before producing a derivative. Bounds-only inspection precedes power-of-two sampled decoding on a single worker; thumbnail edge is at most512px and full-screen preview at most1600px. EXIF orientation and transparency are respected. The original encrypted evidence bytes are never rewritten by preview generation and existing uploads still read the original. Derivatives remain in component memory, with no new plaintext disk cache. Failed previews expose a retry without deleting evidence. Existing camera import quality/resizing behavior is preserved.
 
@@ -203,16 +203,16 @@ Android testing uses only the dedicated Retail_P0_API33 AVD at `emulator-5556`, 
 
 Camera and gallery process-death cases each passed both instrumentation phases and9 host/API assertions. The app was force-stopped between separate PIDs while the external capture UI was foregrounded. Recovery preserved previous photo/counts/submission key, retained the pending-capture recovery action, allowed explicit cancellation, and performed no automatic submission. Successful camera/gallery returns and completed-photo restart recovery are covered separately; these results do not certify every OEM camera's delivery of a result after process death.
 
-| Android group | Result | Saved evidence |
-| --- | --- | --- |
-| Wide POP and encrypted storage | 7 native cases passed;1 host wrapper/9 assertions | `storage/mobile-pop-refinement/pop-android.xml` |
-| Small POP and encrypted storage, including preview bridge security | 8 native cases passed;1 host wrapper/9 assertions | `storage/mobile-pop-refinement/small-pop-android.xml` |
-| Start/outcome/retry and encrypted storage | 8 native cases passed;1 host wrapper/13 assertions | `storage/mobile-pop-refinement/execution-android.xml` |
-| Workspace/login/session/notification routing | 7 native cases passed;1 host wrapper/6 assertions | `storage/mobile-pop-refinement/workspace-android.xml` |
-| Handover/history and encrypted storage | 8 native cases passed;1 host wrapper/12 assertions | `storage/mobile-pop-refinement/handover-android.xml` |
-| Sampled image helper | 4 native cases passed | `storage/mobile-pop-refinement/preview-native.log` |
-| Process death while gallery foreground | Both phases passed;1 host wrapper/9 assertions;PIDs7066→7274 | `storage/mobile-pop-refinement/gallery-process-death.log` |
-| Process death while camera foreground | Both phases passed;1 host wrapper/9 assertions;PIDs7505→7753 | `storage/mobile-pop-refinement/camera-process-death.log` |
+| Android group                                                      | Result                                                       | Saved evidence                                            |
+| ------------------------------------------------------------------ | ------------------------------------------------------------ | --------------------------------------------------------- |
+| Wide POP and encrypted storage                                     | 7 native cases passed;1 host wrapper/9 assertions            | `storage/mobile-pop-refinement/pop-android.xml`           |
+| Small POP and encrypted storage, including preview bridge security | 8 native cases passed;1 host wrapper/9 assertions            | `storage/mobile-pop-refinement/small-pop-android.xml`     |
+| Start/outcome/retry and encrypted storage                          | 8 native cases passed;1 host wrapper/13 assertions           | `storage/mobile-pop-refinement/execution-android.xml`     |
+| Workspace/login/session/notification routing                       | 7 native cases passed;1 host wrapper/6 assertions            | `storage/mobile-pop-refinement/workspace-android.xml`     |
+| Handover/history and encrypted storage                             | 8 native cases passed;1 host wrapper/12 assertions           | `storage/mobile-pop-refinement/handover-android.xml`      |
+| Sampled image helper                                               | 4 native cases passed                                        | `storage/mobile-pop-refinement/preview-native.log`        |
+| Process death while gallery foreground                             | Both phases passed;1 host wrapper/9 assertions;PIDs7066→7274 | `storage/mobile-pop-refinement/gallery-process-death.log` |
+| Process death while camera foreground                              | Both phases passed;1 host wrapper/9 assertions;PIDs7505→7753 | `storage/mobile-pop-refinement/camera-process-death.log`  |
 
 These group totals include repeated shared storage cases. Full-flow native POP finalization uses four photos; zero-photo finalization and idempotent replay are verified by the Laravel feature test, and Android verifies advancing without photos. Actual native signatures, four-photo limit, original deletion after manifest save, navigation/restart/logout recovery, final confirmation and server-loss reconciliation passed on the small viewport. The isolated backend asserts exactly one final POP and five attachments despite rapid final taps and a lost response.
 
@@ -222,10 +222,10 @@ Initial testing exposed a preview-Back event-order defect; centralizing the moda
 
 Actual screenshots:
 
-| Screen | Before | After |
-| --- | --- | --- |
-| Photo gallery | [Expanded evidence](../../storage/mobile-pop-refinement/before/pop-photos.png) | [Two-column grid](../../storage/mobile-pop-refinement/after/pop-photos.png) |
-| Completion | [Expanded technical details](../../storage/mobile-pop-refinement/before/completion.png) | [Compact completion](../../storage/mobile-pop-refinement/after/completion.png) |
+| Screen        | Before                                                                                  | After                                                                          |
+| ------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Photo gallery | [Expanded evidence](../../storage/mobile-pop-refinement/before/pop-photos.png)          | [Two-column grid](../../storage/mobile-pop-refinement/after/pop-photos.png)    |
+| Completion    | [Expanded technical details](../../storage/mobile-pop-refinement/before/completion.png) | [Compact completion](../../storage/mobile-pop-refinement/after/completion.png) |
 
 [Zero photos](../../storage/mobile-pop-refinement/after/pop-zero-photos.png), [one photo and add tile](../../storage/mobile-pop-refinement/after/pop-one-photo.png), [full-screen preview](../../storage/mobile-pop-refinement/after/pop-fullscreen.png), [delete confirmation](../../storage/mobile-pop-refinement/after/pop-delete-confirmation.png), [actual keyboard](../../storage/mobile-pop-refinement/after/pop-keyboard.png), [review](../../storage/mobile-pop-refinement/after/pop-review.png), [final confirmation](../../storage/mobile-pop-refinement/after/pop-confirmation.png).
 

@@ -1,89 +1,89 @@
 [
-  {
-    "name": "mobile-home",
-    "source": "storage/mobile-mockup-home.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-tasks",
-    "source": "storage/mobile-mockup-tasks.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-detail",
-    "source": "storage/mobile-mockup-detail.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-quantities",
-    "source": "storage/mobile-mockup-pop-quantities.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-photos",
-    "source": "storage/mobile-mockup-pop-photos.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-review",
-    "source": "storage/mobile-mockup-pop-review.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-verification",
-    "source": "storage/mobile-handover-verification.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-closed",
-    "source": "storage/mobile-handover-closed.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "mobile-no-packages",
-    "source": "storage/mobile-no-packages-complete.png",
-    "crop": null,
-    "width": 1080,
-    "height": 2210
-  },
-  {
-    "name": "web-create",
-    "source": "storage/app/ui-qa-fluid-operations-create-1920.png",
-    "crop": {
-      "left": 720,
-      "top": 85,
-      "width": 720,
-      "height": 855
+    {
+        "name": "mobile-home",
+        "source": "storage/mobile-mockup-home.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
     },
-    "width": 720,
-    "height": 855
-  },
-  {
-    "name": "web-dashboard",
-    "source": "storage/app/ui-qa-dashboard-refinement-desktop.png",
-    "crop": {
-      "left": 280,
-      "top": 90,
-      "width": 1225,
-      "height": 710
+    {
+        "name": "mobile-tasks",
+        "source": "storage/mobile-mockup-tasks.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
     },
-    "width": 1225,
-    "height": 710
-  }
+    {
+        "name": "mobile-detail",
+        "source": "storage/mobile-mockup-detail.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
+    },
+    {
+        "name": "mobile-quantities",
+        "source": "storage/mobile-mockup-pop-quantities.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
+    },
+    {
+        "name": "mobile-photos",
+        "source": "storage/mobile-mockup-pop-photos.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
+    },
+    {
+        "name": "mobile-review",
+        "source": "storage/mobile-mockup-pop-review.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
+    },
+    {
+        "name": "mobile-verification",
+        "source": "storage/mobile-handover-verification.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
+    },
+    {
+        "name": "mobile-closed",
+        "source": "storage/mobile-handover-closed.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
+    },
+    {
+        "name": "mobile-no-packages",
+        "source": "storage/mobile-no-packages-complete.png",
+        "crop": null,
+        "width": 1080,
+        "height": 2210
+    },
+    {
+        "name": "web-create",
+        "source": "storage/app/ui-qa-fluid-operations-create-1920.png",
+        "crop": {
+            "left": 720,
+            "top": 85,
+            "width": 720,
+            "height": 855
+        },
+        "width": 720,
+        "height": 855
+    },
+    {
+        "name": "web-dashboard",
+        "source": "storage/app/ui-qa-dashboard-refinement-desktop.png",
+        "crop": {
+            "left": 280,
+            "top": 90,
+            "width": 1225,
+            "height": 710
+        },
+        "width": 1225,
+        "height": 710
+    }
 ]
