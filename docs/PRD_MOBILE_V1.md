@@ -1,4 +1,5 @@
 # Product Requirements Document
+
 # Retail Pickup Mobile V1
 
 **Version:** 1.2 — NO_PACKAGES, pickup manual, dan verifikasi/penutupan Handover mobile disetujui  
@@ -55,19 +56,19 @@ Tidak ditetapkan target persentase produktivitas atau SLA baru sebelum tersedia 
 
 ### 2.1 In Scope
 
-| ID | Module | Scope |
-|---|---|---|
-| MOB-01 | Authentication | Login, logout, informasi akun, pengelolaan sesi |
-| MOB-02 | Task Workspace | Tugas Saya, Tugas Tersedia, pencarian, filter, pagination |
-| MOB-03 | Pickup Detail | Customer, alamat, jadwal, status, petugas, informasi operasional |
-| MOB-04 | Takeover | Pengambilan alih task yang memenuhi ketentuan existing |
-| MOB-05 | Pickup Execution | Mulai kunjungan, hasil kunjungan, alasan tanpa paket, task baru untuk kunjungan berikutnya |
-| MOB-06 | Proof of Pickup | Jumlah paket, foto, signature, catatan, review, finalisasi |
-| MOB-07 | Pickup History | Riwayat tugas, hasil pickup, POP, dan status receipt |
-| MOB-08 | Handover | Kandidat, pembuatan session, perubahan anggota DRAFT, verifikasi tiga kategori, penutupan, status/riwayat session |
-| MOB-09 | Offline Draft | Penyimpanan draft lokal dan pemulihan |
-| MOB-10 | Operational Feedback | Loading, validation, error, conflict, dan status pengiriman |
-| MOB-11 | Pickup Manual | Pickup Staff memilih customer existing, mengisi alamat/jadwal/alasan, dan membuat task untuk dirinya sendiri; online-only dan anti-duplikasi |
+| ID     | Module               | Scope                                                                                                                                        |
+| ------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| MOB-01 | Authentication       | Login, logout, informasi akun, pengelolaan sesi                                                                                              |
+| MOB-02 | Task Workspace       | Tugas Saya, Tugas Tersedia, pencarian, filter, pagination                                                                                    |
+| MOB-03 | Pickup Detail        | Customer, alamat, jadwal, status, petugas, informasi operasional                                                                             |
+| MOB-04 | Takeover             | Pengambilan alih task yang memenuhi ketentuan existing                                                                                       |
+| MOB-05 | Pickup Execution     | Mulai kunjungan, hasil kunjungan, alasan tanpa paket, task baru untuk kunjungan berikutnya                                                   |
+| MOB-06 | Proof of Pickup      | Jumlah paket, foto, signature, catatan, review, finalisasi                                                                                   |
+| MOB-07 | Pickup History       | Riwayat tugas, hasil pickup, POP, dan status receipt                                                                                         |
+| MOB-08 | Handover             | Kandidat, pembuatan session, perubahan anggota DRAFT, verifikasi tiga kategori, penutupan, status/riwayat session                            |
+| MOB-09 | Offline Draft        | Penyimpanan draft lokal dan pemulihan                                                                                                        |
+| MOB-10 | Operational Feedback | Loading, validation, error, conflict, dan status pengiriman                                                                                  |
+| MOB-11 | Pickup Manual        | Pickup Staff memilih customer existing, mengisi alamat/jadwal/alasan, dan membuat task untuk dirinya sendiri; online-only dan anti-duplikasi |
 
 ### 2.2 Out of Scope
 
@@ -506,19 +507,19 @@ Minimum screens:
 
 ## 7. Failure & Recovery Scenarios
 
-| Scenario | Expected Behavior |
-|---|---|
-| Internet terputus saat mengisi POP | Draft lokal tetap tersedia |
-| Internet terputus sebelum submit | Tidak ada mutation; user dapat mencoba setelah online |
-| Timeout setelah finalisasi dikirim | Periksa state server sebelum retry |
+| Scenario                             | Expected Behavior                                       |
+| ------------------------------------ | ------------------------------------------------------- |
+| Internet terputus saat mengisi POP   | Draft lokal tetap tersedia                              |
+| Internet terputus sebelum submit     | Tidak ada mutation; user dapat mencoba setelah online   |
+| Timeout setelah finalisasi dikirim   | Periksa state server sebelum retry                      |
 | Aplikasi ditutup saat mengambil foto | Pulihkan draft dan hasil kamera bila berhasil tersimpan |
-| Token/sesi kedaluwarsa | Minta login ulang tanpa mengklaim transaksi berhasil |
-| Task diambil alih petugas lain | Blokir mutation dan tampilkan state terbaru |
-| Task berubah versi | Refresh detail dan tampilkan konflik |
-| File terlalu besar | Tolak file dengan pesan validasi |
-| Session handover berubah | Jangan menimpa perubahan pihak lain |
-| Receipt belum dikonfigurasi | Tampilkan status sebenarnya, bukan "Terkirim" |
-| Storage perangkat tidak cukup | Informasikan kegagalan penyimpanan draft/bukti |
+| Token/sesi kedaluwarsa               | Minta login ulang tanpa mengklaim transaksi berhasil    |
+| Task diambil alih petugas lain       | Blokir mutation dan tampilkan state terbaru             |
+| Task berubah versi                   | Refresh detail dan tampilkan konflik                    |
+| File terlalu besar                   | Tolak file dengan pesan validasi                        |
+| Session handover berubah             | Jangan menimpa perubahan pihak lain                     |
+| Receipt belum dikonfigurasi          | Tampilkan status sebenarnya, bukan "Terkirim"           |
+| Storage perangkat tidak cukup        | Informasikan kegagalan penyimpanan draft/bukti          |
 
 ---
 
@@ -736,15 +737,15 @@ Mobile V1 tidak harus menunggu integrasi WhatsApp receipt atau otomatisasi M5 se
 
 Keputusan berikut belum ditetapkan dalam audit dan perlu diselesaikan sebelum tahap implementasi terkait atau pilot:
 
-| ID | Decision | Dibutuhkan sebelum |
-|---|---|---|
-| OD-01 | Versi minimum Android dan perangkat target | UAT perangkat |
-| OD-02 | Masa berlaku sesi/token mobile | Implementasi authentication |
-| OD-03 | Prosedur perangkat hilang dan pencabutan akses | Pilot internal |
-| OD-04 | Masa retensi dan penghapusan draft lokal | Implementasi offline draft |
-| OD-05 | Perilaku draft ketika user logout atau berganti akun | Implementasi offline draft |
-| OD-06 | Mekanisme distribusi dan pembaruan APK internal | Pilot internal |
-| OD-07 | Baseline performa pada perangkat dan jaringan target | Performance gate |
+| ID    | Decision                                             | Dibutuhkan sebelum          |
+| ----- | ---------------------------------------------------- | --------------------------- |
+| OD-01 | Versi minimum Android dan perangkat target           | UAT perangkat               |
+| OD-02 | Masa berlaku sesi/token mobile                       | Implementasi authentication |
+| OD-03 | Prosedur perangkat hilang dan pencabutan akses       | Pilot internal              |
+| OD-04 | Masa retensi dan penghapusan draft lokal             | Implementasi offline draft  |
+| OD-05 | Perilaku draft ketika user logout atau berganti akun | Implementasi offline draft  |
+| OD-06 | Mekanisme distribusi dan pembaruan APK internal      | Pilot internal              |
+| OD-07 | Baseline performa pada perangkat dan jaringan target | Performance gate            |
 
 Open decisions ini tidak menghalangi penyusunan PRD, tetapi harus ditutup pada gate yang relevan.
 

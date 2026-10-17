@@ -4,26 +4,26 @@ Tanggal tinjauan: 15 Oktober 2026. Bahasa: Indonesia. Audiens: manajemen cabang 
 
 ## Narasi dan sumber per slide
 
-| Slide | Isi dan tujuan | Sumber utama dalam repository |
-|---|---|---|
-| 1 | Pengenalan platform dengan fokus Pickup Management | `docs/PRD_MOBILE_V1.md` §1–2; Implementation Plan §16–23 |
-| 2 | Kebutuhan koordinasi, pekerjaan lapangan, serah terima, dan riwayat | PRD Mobile §1; `docs/prd.md` |
-| 3 | Visi satu platform untuk CS/Admin, Pickup Staff, Retail/Supervisor | `routes/web.php`, `routes/api.php`, mobile `app.tsx` |
-| 4 | Cakupan kemampuan web dan Android | Routes; Implementation Plan §17,19,21,22 |
-| 5 | Alur tugas hingga handover, termasuk cabang Tanpa Paket | `RecordPickupVisit`, `FinalizePickup`, `CreatePickupTask`, PRD §4 |
-| 6 | Pembuatan, assignment tunggal/massal, dan pemantauan web | `create-pickup.tsx`, `bulk-pickup-assignment.tsx`, daftar pickup |
-| 7 | Beranda, Tugas Saya, Tersedia, Riwayat dan batas notifikasi | Mobile `app.tsx`, `push.ts`; Implementation Plan §16,19,23 |
-| 8 | Eksekusi terpandu dan tugas terminal Tanpa Paket | Mobile `execution-panel.tsx`, `manual-pickup.tsx`; Plan §17 |
-| 9 | Kuantitas, foto opsional, tanda tangan wajib dan finalisasi POP | `FinalizePickupRequest.php`, `FinalizePickup.php`, `proof-panel.tsx` |
-| 10 | DRAFT, verifikasi kategori, penutupan dan selisih | `VerifyItem.php`, `CloseSession.php`, `handover-panel.tsx`; Plan §19 |
-| 11 | Monitoring harian dan audit tugas hingga handover | `OperationalDashboardController.php`, task/session events |
-| 12 | Arsitektur Laravel, React/Inertia, React/Capacitor, database dan FCM | Composer, package.json, routes, mobile bootstrap, assignment push job |
-| 13 | Klasifikasi bukti implementasi, batas UAT dan kesiapan pilot | Plan §17–23, Technical Design baseline/addendum, kode saat ini |
-| 14 | Manfaat bisnis yang diharapkan | PRD §1.2–1.3 dan kemampuan aktual; belum merupakan dampak terukur |
-| 15 | Reporting, cashless HO, AWB, portal dan fleet/ERP | Brief pengguna §7; PRD Mobile §2.2 |
-| 16 | Konsep/PoC satu pickup, satu cashless HO via JNE Hybrid | Konsep dalam brief pengguna §7; belum integrasi produksi |
-| 17 | UAT, kesiapan rilis, pilot terbatas, evaluasi | PRD UAT-01–12; remaining gates Plan §19–23 |
-| 18 | Ringkasan dan diskusi keputusan berikutnya | PRD dan remaining gates terbaru |
+| Slide | Isi dan tujuan                                                       | Sumber utama dalam repository                                         |
+| ----- | -------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1     | Pengenalan platform dengan fokus Pickup Management                   | `docs/PRD_MOBILE_V1.md` §1–2; Implementation Plan §16–23              |
+| 2     | Kebutuhan koordinasi, pekerjaan lapangan, serah terima, dan riwayat  | PRD Mobile §1; `docs/prd.md`                                          |
+| 3     | Visi satu platform untuk CS/Admin, Pickup Staff, Retail/Supervisor   | `routes/web.php`, `routes/api.php`, mobile `app.tsx`                  |
+| 4     | Cakupan kemampuan web dan Android                                    | Routes; Implementation Plan §17,19,21,22                              |
+| 5     | Alur tugas hingga handover, termasuk cabang Tanpa Paket              | `RecordPickupVisit`, `FinalizePickup`, `CreatePickupTask`, PRD §4     |
+| 6     | Pembuatan, assignment tunggal/massal, dan pemantauan web             | `create-pickup.tsx`, `bulk-pickup-assignment.tsx`, daftar pickup      |
+| 7     | Beranda, Tugas Saya, Tersedia, Riwayat dan batas notifikasi          | Mobile `app.tsx`, `push.ts`; Implementation Plan §16,19,23            |
+| 8     | Eksekusi terpandu dan tugas terminal Tanpa Paket                     | Mobile `execution-panel.tsx`, `manual-pickup.tsx`; Plan §17           |
+| 9     | Kuantitas, foto opsional, tanda tangan wajib dan finalisasi POP      | `FinalizePickupRequest.php`, `FinalizePickup.php`, `proof-panel.tsx`  |
+| 10    | DRAFT, verifikasi kategori, penutupan dan selisih                    | `VerifyItem.php`, `CloseSession.php`, `handover-panel.tsx`; Plan §19  |
+| 11    | Monitoring harian dan audit tugas hingga handover                    | `OperationalDashboardController.php`, task/session events             |
+| 12    | Arsitektur Laravel, React/Inertia, React/Capacitor, database dan FCM | Composer, package.json, routes, mobile bootstrap, assignment push job |
+| 13    | Klasifikasi bukti implementasi, batas UAT dan kesiapan pilot         | Plan §17–23, Technical Design baseline/addendum, kode saat ini        |
+| 14    | Manfaat bisnis yang diharapkan                                       | PRD §1.2–1.3 dan kemampuan aktual; belum merupakan dampak terukur     |
+| 15    | Reporting, cashless HO, AWB, portal dan fleet/ERP                    | Brief pengguna §7; PRD Mobile §2.2                                    |
+| 16    | Konsep/PoC satu pickup, satu cashless HO via JNE Hybrid              | Konsep dalam brief pengguna §7; belum integrasi produksi              |
+| 17    | UAT, kesiapan rilis, pilot terbatas, evaluasi                        | PRD UAT-01–12; remaining gates Plan §19–23                            |
+| 18    | Ringkasan dan diskusi keputusan berikutnya                           | PRD dan remaining gates terbaru                                       |
 
 Path Implementation Plan: `docs/mobile/IMPLEMENTATION_PLAN.md`. Path Technical Design: `docs/mobile/TECHNICAL_DESIGN.md`. Kelas backend berada di `app/Actions`, request di `app/Http/Requests`, dan mobile di `resources/mobile/src`. Sumber dan penjelasan tambahan tersedia pada speaker notes setiap slide.
 
