@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property CarbonImmutable|null $last_observed_at
@@ -60,5 +61,11 @@ class JneShipment extends Model
     public function observations(): HasMany
     {
         return $this->hasMany(JneShipmentObservation::class);
+    }
+
+    /** @return HasOne<PickupCashlessAwb, $this> */
+    public function cashlessClaim(): HasOne
+    {
+        return $this->hasOne(PickupCashlessAwb::class, 'awb', 'awb');
     }
 }

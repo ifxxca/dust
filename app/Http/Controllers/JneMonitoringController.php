@@ -108,6 +108,7 @@ class JneMonitoringController extends Controller
                 ->leftJoin('pickup_tasks as p', 'p.id', '=', 'e.pickup_task_id')->leftJoin('pickup_tasks as old', 'old.id', '=', 'e.previous_pickup_task_id')
                 ->where('e.jne_shipment_id', $record->id)->orderByDesc('e.id')->limit(50)
                 ->get(['e.id', 'e.method', 'e.match_status', 'e.reason', 'e.evidence', 'e.previous_customer_id', 'e.customer_id', 'e.customer_match_status', 'e.created_at', 'u.name as actor_name', 'p.reference as pickup_reference', 'old.reference as previous_pickup_reference']),
+            'decisionPages' => JneShipmentMatchEvent::where('jne_shipment_id', $record->id)->orderByDesc('id')->paginate(50, ['id', 'method', 'actor_id', 'reason', 'evidence', 'created_at'], 'decisions_page')->withQueryString(),
             'timezone' => config('pickup.timezone'),
         ]);
     }

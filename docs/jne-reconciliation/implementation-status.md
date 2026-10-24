@@ -1,5 +1,11 @@
 # Implementation status
 
+### M6 continuation — 25 October 2026
+
+Admin exception review now supports individual and equivalent-evidence batches (maximum 100) with server-side group/version checks, explicit reasons, original evidence and before/after audit. Human decisions never register permanent mappings implicitly. Active conflicting Sertim must be corrected through the existing audited Sertim workflow. Changed source/mapping evidence flags prior reviewed identity for another decision; release safely replays automatic resolution. Configuration registries and full decision audit are paginated.
+
+Validation: 11 combined exception/identity/category tests passed (86 assertions), PHPStan and TypeScript passed. Actual Chromium exercised equivalent-group selection, ownership confirmation and responsive rendering on disposable SQLite; the combined browser/refresh regression passed nine tests (51 assertions). No operational ownership changed.
+
 ### M5 continuation — 25 October 2026
 
 Configured literal source-column and Hybrid-origin category resolution is implemented behind disabled environment gates. Conflicting categories remain unresolved. POP calculations require separate confident customer, pickup and category evidence. Versioned, idempotent Admin collection attestation records verified required sources, selected ready reports, cutoff, POP/Sertim fingerprints and source high-water mark. Changed evidence invalidates completeness to REVIEW; finalized POP and handover records remain untouched.

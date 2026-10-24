@@ -20,6 +20,7 @@ import {
     jneTimestamp,
 } from '@/lib/jne-monitoring';
 import * as monitoring from '@/routes/jne-monitoring';
+import * as exceptions from '@/routes/jne-exceptions';
 import * as evidenceRules from '@/routes/jne-evidence';
 import * as runs from '@/routes/report-runs';
 import type {
@@ -134,6 +135,9 @@ export default function JneMonitoring({
                 href={evidenceRules.index.url()}
             >
                 Aturan bukti dan alias kode
+            </Link>
+            <Link href={exceptions.index.url()} className="text-sm underline">
+                Pemeriksaan exception dan keputusan batch
             </Link>
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1">

@@ -136,6 +136,18 @@ class MatchJneShipments
     public function automatic(JneShipment $shipment, JneReportAwb $source, array $candidates): void
     {
         $customer = $candidates[$source->id];
+        if ($shipment->match_method === 'REVIEW') {
+            if ($shipment->identity_review_hash === ReviewJneExceptions::identityHash($customer)) {
+                return;
+            }
+            if ($shipment->match_status !== 'CONFLICT' || $shipment->customer_match_status !== 'CONFLICT') {
+                $oldCustomerId = $shipment->customer_id;
+                $shipment->fill(['customer_match_status' => 'CONFLICT', 'customer_match_note' => 'Bukti berubah setelah keputusan review. Periksa kembali keputusan Admin.']);
+                $this->record($shipment, $shipment->pickup_task_id, 'CONFLICT', 'REVIEW', null, $shipment->customer_match_note, $oldCustomerId, $customer['evidence']);
+            }
+
+            return;
+        }
         if ($shipment->match_method === 'MANUAL') {
             $claimConflict = $customer['method'] === 'SERTIM' && ($customer['customer_id'] !== $shipment->customer_id || $customer['pickups'] !== [$shipment->pickup_task_id]);
             if ($claimConflict || $customer['status'] === 'CONFLICT') {

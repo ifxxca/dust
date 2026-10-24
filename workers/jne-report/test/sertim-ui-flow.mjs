@@ -138,6 +138,7 @@ try {
         .waitFor();
     await confidence.getByText(/1 AWB memiliki pickup terkonfirmasi/).waitFor();
     await admin.page
+        .getByRole('listitem').filter({ hasText: 'SERTIM001' })
         .getByRole('button', { name: 'Detail pengiriman', exact: true })
         .click();
     await admin.page
@@ -226,6 +227,15 @@ try {
     await admin.page.locator('summary').filter({ hasText: 'Synthetic browser external review' }).waitFor();
     await admin.page.screenshot({ path: path.join(artifacts, 'collection-review-390.png'), fullPage: true });
     assert.ok(await admin.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    assert.deepEqual(errors, []);
+    await admin.page.goto(base + '/admin/jne-monitoring/exceptions?q=REVIEWUI1');
+    await admin.page.getByRole('heading', { name: 'Pemeriksaan exception JNE', exact: true }).waitFor();
+    await admin.page.getByRole('button', { name: 'Pilih kelompok (1 AWB)', exact: true }).click();
+    await admin.page.getByLabel('Customer yang dikonfirmasi', { exact: true }).selectOption(process.env.SERTIM_UI_CUSTOMER);
+    await admin.page.getByLabel('Alasan dan referensi bukti review', { exact: true }).fill('Synthetic browser ownership decision');
+    await admin.page.getByRole('button', { name: 'Simpan keputusan review', exact: true }).click();
+    await admin.page.getByText('0 AWB memerlukan pemeriksaan', { exact: false }).waitFor();
+    await admin.page.screenshot({ path: path.join(artifacts, 'exception-review-390.png'), fullPage: true });
     assert.deepEqual(errors, []);
     process.stdout.write('SERTIM_CHROMIUM_UI_OK\n');
 } finally {

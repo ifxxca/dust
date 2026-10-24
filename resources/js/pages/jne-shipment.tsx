@@ -97,11 +97,24 @@ export default function JneShipment({
     history,
     matchHistory,
     timezone,
+    decisionPages,
 }: {
     shipment: Shipment;
     history: { data: Observation[]; current_page: number; last_page: number };
     matchHistory: MatchEvent[];
     timezone: string;
+    decisionPages?: {
+        data: {
+            id: number;
+            method: string;
+            actor_id: number | null;
+            reason: string;
+            evidence: unknown;
+            created_at: string;
+        }[];
+        prev_page_url: string | null;
+        next_page_url: string | null;
+    };
 }) {
     const form = useForm({
         pickup_reference: shipment.pickup_reference || '',
@@ -110,6 +123,37 @@ export default function JneShipment({
     });
     return (
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
+            {decisionPages && (
+                <details className="rounded border p-3">
+                    <summary>
+                        Audit keputusan lengkap ({decisionPages.data.length}{' '}
+                        pada halaman ini)
+                    </summary>
+                    {decisionPages.data.map((event) => (
+                        <details key={event.id} className="my-2">
+                            <summary>
+                                {event.created_at} · {event.method} ·{' '}
+                                {event.reason}
+                            </summary>
+                            <pre className="max-w-full overflow-auto text-xs">
+                                {JSON.stringify(event.evidence, null, 2)}
+                            </pre>
+                        </details>
+                    ))}
+                    <nav className="flex gap-4">
+                        {decisionPages.prev_page_url && (
+                            <Link href={decisionPages.prev_page_url}>
+                                Audit sebelumnya
+                            </Link>
+                        )}
+                        {decisionPages.next_page_url && (
+                            <Link href={decisionPages.next_page_url}>
+                                Audit berikutnya
+                            </Link>
+                        )}
+                    </nav>
+                </details>
+            )}
             <Head title={`AWB ${shipment.awb}`} />
             <h1 className="text-2xl font-semibold">AWB {shipment.awb}</h1>
             <Card>

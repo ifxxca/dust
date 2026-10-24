@@ -28,6 +28,11 @@ type Rule = {
     definition?: Record<string, unknown>;
 };
 type Props = {
+    q?: string;
+    pages?: Record<
+        string,
+        { previous: string | null; next: string | null; total: number }
+    >;
     installed: boolean;
     enabled: boolean;
     contracts: Rule[];
@@ -65,7 +70,10 @@ export default function JneEvidenceRules({
     scopedAliases,
     customers,
     events,
+    q = '',
+    pages = {},
 }: Props) {
+    const search = useForm({ q });
     const form = useForm({
         kind: 'contract',
         source: 'apex',
@@ -98,6 +106,39 @@ export default function JneEvidenceRules({
     return (
         <PageContainer className="space-y-4 py-4">
             <Head title="Aturan bukti JNE" />
+            <form
+                className="flex gap-2"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    search.get(evidence.index.url());
+                }}
+            >
+                <Input
+                    aria-label="Cari aturan bukti"
+                    value={search.data.q}
+                    onChange={(event) =>
+                        search.setData('q', event.target.value)
+                    }
+                />
+                <Button variant="outline">Cari aturan</Button>
+            </form>
+            <nav className="flex flex-wrap gap-4">
+                {Object.entries(pages).map(([label, page]) => (
+                    <div key={label} className="space-x-2 text-sm">
+                        {label}: {page.total}{' '}
+                        {page.previous && (
+                            <Link className="underline" href={page.previous}>
+                                Sebelumnya
+                            </Link>
+                        )}
+                        {page.next && (
+                            <Link className="underline" href={page.next}>
+                                Berikutnya
+                            </Link>
+                        )}
+                    </div>
+                ))}
+            </nav>
             <Link className="text-sm underline" href={monitoring.index.url()}>
                 Kembali ke pengiriman
             </Link>

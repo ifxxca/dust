@@ -21,13 +21,17 @@ class JneEvidenceRuleController extends Controller
     {
         abort_unless($request->user()?->is_active && $request->user()->role === 'admin_supervisor', 403);
         $installed = Schema::hasTable('jne_evidence_rule_events');
+        $q = $request->validate(['q' => ['nullable', 'string', 'max:100']])['q'] ?? '';
+        $contracts = $installed ? JneSourceContract::when($q !== '', fn ($query) => $query->where('source', 'like', '%'.$q.'%'))->orderByDesc('id')->paginate(30, ['*'], 'contracts_page')->withQueryString() : null;
+        $codes = $installed ? JneCustomerCodeAlias::when($q !== '', fn ($query) => $query->where('code', 'like', '%'.$q.'%'))->orderByDesc('id')->paginate(30, ['*'], 'codes_page')->withQueryString() : null;
+        $shippers = $installed ? JneShipperAlias::where(fn ($query) => $query->whereNotNull('verified_at')->orWhereNotNull('account_scope')->orWhereNotNull('valid_from')->orWhereNotNull('valid_thru')->orWhereNotNull('verification_reason'))
+            ->when($q !== '', fn ($query) => $query->where('shipper_name', 'like', '%'.$q.'%'))->orderByDesc('id')->paginate(30, ['*'], 'shippers_page')->withQueryString() : null;
+        $events = $installed ? DB::table('jne_evidence_rule_events as e')->leftJoin('users as u', 'u.id', '=', 'e.actor_id')->orderByDesc('e.id')->paginate(30, ['e.*', 'u.name as actor_name'], 'events_page')->withQueryString() : null;
 
         return Inertia::render('jne-evidence-rules', [
             'installed' => $installed, 'enabled' => (bool) config('jne-reports.evidence_policies_enabled'),
-            'contracts' => $installed ? JneSourceContract::orderByDesc('id')->limit(100)->get() : [],
-            'codeAliases' => $installed ? JneCustomerCodeAlias::orderByDesc('id')->limit(100)->get() : [],
-            'scopedAliases' => $installed ? JneShipperAlias::whereNotNull('verified_at')->orWhereNotNull('account_scope')->orWhereNotNull('valid_from')->orWhereNotNull('valid_thru')->orWhereNotNull('verification_reason')->orderByDesc('id')->limit(100)->get() : [],
-            'events' => $installed ? DB::table('jne_evidence_rule_events as e')->leftJoin('users as u', 'u.id', '=', 'e.actor_id')->orderByDesc('e.id')->limit(50)->get(['e.*', 'u.name as actor_name']) : [],
+            'contracts' => $contracts?->items() ?? [], 'codeAliases' => $codes?->items() ?? [], 'scopedAliases' => $shippers?->items() ?? [], 'events' => $events?->items() ?? [],
+            'q' => $q, 'pages' => collect(['Kontrak' => $contracts, 'Kode' => $codes, 'Pengirim' => $shippers, 'Audit' => $events])->map(fn ($page): array => ['previous' => $page?->previousPageUrl(), 'next' => $page?->nextPageUrl(), 'total' => $page?->total() ?? 0]),
             'customers' => Customer::where('is_active', true)->orderBy('name')->get(['id', 'name', 'customer_code']),
         ]);
     }

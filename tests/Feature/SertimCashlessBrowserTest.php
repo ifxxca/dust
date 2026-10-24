@@ -31,6 +31,7 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
         JneReportProfile::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'enabled' => false, 'updated_by' => $admin->id]);
         $sourceJob = ReportJob::factory()->create(['source' => 'apex', 'status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'completed_at' => now()]);
         JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'SERTIM001', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED', 'entry_at' => now(), 'observed_at' => now()->subDays(2), 'status_web' => 'ON PROCESS', 'status_pod' => null]);
+        JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'REVIEWUI1', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED']);
         app(ProjectJneShipments::class)->handle($sourceJob->id);
         $task = PickupTask::factory()->create(['assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
         PickupVisit::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $staff->id, 'outcome' => 'COLLECTED']);

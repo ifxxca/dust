@@ -8,6 +8,7 @@ use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\JneCollectionWindowController;
 use App\Http\Controllers\JneCustomerDashboardController;
 use App\Http\Controllers\JneEvidenceRuleController;
+use App\Http\Controllers\JneExceptionController;
 use App\Http\Controllers\JneMonitoringController;
 use App\Http\Controllers\JneShipperAliasController;
 use App\Http\Controllers\OperationalCorrectionController;
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/admin/jne-shipper-aliases/import', [JneShipperAliasController::class, 'import'])->middleware('throttle:5,1')->name('jne-shipper-aliases.import');
     Route::get('/admin/jne-monitoring', [JneMonitoringController::class, 'index'])->name('jne-monitoring.index');
     Route::get('/admin/jne-monitoring/evidence-rules', [JneEvidenceRuleController::class, 'index'])->name('jne-evidence.index');
+    Route::get('/admin/jne-monitoring/exceptions', [JneExceptionController::class, 'index'])->name('jne-exceptions.index');
+    Route::post('/admin/jne-monitoring/exceptions', [JneExceptionController::class, 'store'])->middleware('throttle:30,1')->name('jne-exceptions.store');
     Route::get('/admin/jne-monitoring/collections/{pickupTask}', [JneCollectionWindowController::class, 'show'])->name('jne-collections.show');
     Route::post('/admin/jne-monitoring/collections/{pickupTask}', [JneCollectionWindowController::class, 'store'])->middleware('throttle:30,1')->name('jne-collections.store');
     Route::post('/admin/jne-monitoring/evidence-rules', [JneEvidenceRuleController::class, 'store'])->middleware('throttle:30,1')->name('jne-evidence.store');
