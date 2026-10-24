@@ -265,6 +265,23 @@ export default function ShipmentDataTable({
                                         Pengirim JNE:{' '}
                                         {shipment.shipper_name || '—'}
                                     </p>
+                                    {[
+                                        'AMBIGUOUS',
+                                        'CONFLICT',
+                                        'CANDIDATE',
+                                    ].includes(
+                                        shipment.customer_match_status || '',
+                                    ) && (
+                                        <Badge
+                                            className="mt-2"
+                                            variant="outline"
+                                        >
+                                            {shipment.customer_match_status ===
+                                            'CANDIDATE'
+                                                ? 'Kandidat customer'
+                                                : 'Customer perlu pemeriksaan'}
+                                        </Badge>
+                                    )}
                                 </div>
                                 <dl className="grid grid-cols-2 gap-3 border-t pt-3 text-xs">
                                     <div>

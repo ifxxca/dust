@@ -54,6 +54,15 @@ test('monitoring emphasizes normalized status and preserves the AWB detail link 
                 total: 1,
             }}
             summary={{ UNKNOWN: 1 }}
+            identitySummary={{
+                collected: 1,
+                customer_matched: 0,
+                pickup_matched: 0,
+                candidates: 1,
+                conflicts: 0,
+                ambiguous: 0,
+                unmatched: 0,
+            }}
             filters={{ q: '', account: '', status: '', match: '' }}
             accounts={['TESTACCOUNT']}
             timezone="Asia/Jakarta"
@@ -68,7 +77,50 @@ test('monitoring emphasizes normalized status and preserves the AWB detail link 
     expect(html).toContain('Salin AWB 001234567890123456789');
     expect(html).toContain('Diamati di halaman ini:');
     expect(html).toContain('bukan informasi real-time');
+    expect(html).toContain('0 AWB memiliki customer terkonfirmasi');
+    expect(html).toContain('0 AWB memiliki pickup terkonfirmasi');
+    expect(html).toContain('customer_match=CANDIDATE');
+    expect(html).toContain('Periksa kategori POP');
 });
+
+test.each([
+    { candidates: 1, conflicts: 0, status: 'CANDIDATE' },
+    { candidates: 0, conflicts: 1, status: 'CONFLICT' },
+])(
+    'ownership summary keeps $status records in review even with no unmatched or ambiguous names',
+    (review) => {
+        const html = renderToStaticMarkup(
+            <ShipperAliases
+                aliases={{ data: [], current_page: 1, last_page: 1, total: 0 }}
+                directory={{
+                    data: [],
+                    current_page: 1,
+                    last_page: 1,
+                    total: 0,
+                }}
+                selectedCustomer={null}
+                stats={{ customers: 1, without_names: 0, conflicts: 0 }}
+                ownership={{
+                    total: 1,
+                    recognized: 0,
+                    ambiguous: 0,
+                    unmatched: 0,
+                    ...review,
+                }}
+                filters={{
+                    customer_id: '',
+                    q: '',
+                    alias_q: '',
+                    conflicts: false,
+                }}
+                importResult={null}
+            />,
+        );
+        expect(html).toContain('1 AWB belum dikenali pemiliknya');
+        expect(html).toContain('customer_match=' + review.status);
+        expect(html).not.toContain('Semua 0 AWB');
+    },
+);
 
 test('shipment detail retains all raw source fields and explains audited manual matching', () => {
     const html = renderToStaticMarkup(

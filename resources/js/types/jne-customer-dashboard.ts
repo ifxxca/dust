@@ -55,6 +55,9 @@ export type CustomerDashboardProps = {
         customers: number;
         accounts: number;
         mapped: number;
+        pickup_matched?: number;
+        candidates?: number;
+        conflicts?: number;
         unmapped: number;
         ambiguous: number;
         undated: number;

@@ -1,10 +1,14 @@
 <?php
 
 use App\Actions\Pickup\RecordCashlessAwb;
+use App\Actions\Reports\ProjectJneShipments;
 use App\Models\HandoverSession;
+use App\Models\JneReportAwb;
+use App\Models\JneReportProfile;
 use App\Models\PickupRecord;
 use App\Models\PickupTask;
 use App\Models\PickupVisit;
+use App\Models\ReportJob;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +27,11 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
     try {
         Artisan::call('migrate', ['--database' => 'sertim_ui', '--force' => true]);
         $staff = User::factory()->create(['email' => 'sertim-staff@example.test', 'password' => 'SertimFixture123!', 'role' => 'pickup_staff']);
-        User::factory()->create(['email' => 'sertim-admin@example.test', 'password' => 'SertimFixture123!', 'role' => 'admin_supervisor']);
+        $admin = User::factory()->create(['email' => 'sertim-admin@example.test', 'password' => 'SertimFixture123!', 'role' => 'admin_supervisor']);
+        JneReportProfile::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'enabled' => false, 'updated_by' => $admin->id]);
+        $sourceJob = ReportJob::factory()->create(['source' => 'apex', 'status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'completed_at' => now()]);
+        JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'SERTIM001', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED', 'entry_at' => now(), 'observed_at' => now()->subDays(2), 'status_web' => 'ON PROCESS', 'status_pod' => null]);
+        app(ProjectJneShipments::class)->handle($sourceJob->id);
         $task = PickupTask::factory()->create(['assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
         PickupVisit::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $staff->id, 'outcome' => 'COLLECTED']);
         $closed = PickupTask::factory()->create(['assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);

@@ -129,6 +129,59 @@ try {
             () => document.documentElement.scrollWidth <= window.innerWidth,
         ),
     );
+    await admin.page.goto(base + '/admin/jne-monitoring');
+    const confidence = admin.page.getByRole('region', {
+        name: 'Kepastian identitas AWB',
+    });
+    await confidence
+        .getByText(/1 AWB memiliki customer terkonfirmasi/)
+        .waitFor();
+    await confidence.getByText(/1 AWB memiliki pickup terkonfirmasi/).waitFor();
+    await admin.page
+        .getByRole('button', { name: 'Detail pengiriman', exact: true })
+        .click();
+    await admin.page
+        .getByRole('dialog')
+        .getByText('Report terakhir diterima', { exact: true })
+        .waitFor();
+    await admin.page.getByRole('dialog').evaluate(async (element) => {
+        await Promise.all(
+            element
+                .getAnimations({ subtree: true })
+                .map((animation) => animation.finished),
+        );
+    });
+    await admin.page.screenshot({
+        path: path.join(artifacts, 'shipment-evidence-390.png'),
+    });
+    await admin.page
+        .getByRole('link', { name: /Lihat riwayat & detail lengkap/ })
+        .click();
+    await admin.page
+        .getByRole('heading', { name: 'AWB SERTIM001', exact: true })
+        .waitFor();
+    await admin.page
+        .getByText('Riwayat keputusan pencocokan', { exact: true })
+        .click();
+    await admin.page.getByText(/Sertim #/).waitFor();
+    await admin.page.goto(base + '/admin/jne-monitoring/customer-dashboard');
+    await admin.page.getByLabel('Pemetaan customer').selectOption('candidate');
+    await admin.page
+        .getByRole('button', { name: 'Terapkan filter', exact: true })
+        .click();
+    await admin.page
+        .getByText('Belum ada kiriman pada pilihan ini', { exact: true })
+        .waitFor();
+    await admin.page.screenshot({
+        path: path.join(artifacts, 'customer-confidence-390.png'),
+        fullPage: true,
+    });
+    assert.ok(
+        await admin.page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+    );
+    assert.deepEqual(errors, []);
     process.stdout.write('SERTIM_CHROMIUM_UI_OK\n');
 } finally {
     await browser.close();

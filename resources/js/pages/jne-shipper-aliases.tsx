@@ -91,6 +91,8 @@ export default function JneShipperAliases({
         recognized: number;
         ambiguous: number;
         unmatched: number;
+        candidates?: number;
+        conflicts?: number;
     };
     conflictGroups?: Page<{
         name: string;
@@ -99,6 +101,15 @@ export default function JneShipperAliases({
 }) {
     usePoll(5000, { only: ['mappingRuns', 'mappingPagination', 'ownership'] });
     const retry = useForm({});
+    const unresolved = ownership
+        ? Math.max(0, ownership.total - ownership.recognized)
+        : 0;
+    const reviewStatuses = [
+        ['CONFLICT', ownership?.conflicts ?? 0, 'Konflik bukti'],
+        ['AMBIGUOUS', ownership?.ambiguous ?? 0, 'Pemetaan ambigu'],
+        ['CANDIDATE', ownership?.candidates ?? 0, 'Kandidat customer'],
+        ['UNMATCHED', ownership?.unmatched ?? 0, 'Tanpa nama cocok'],
+    ].filter((entry) => Number(entry[1]) > 0);
     const [importOpen, setImportOpen] = useState(false);
     const search = useForm({ q: filters.q || '' });
     const form = useForm({
@@ -126,8 +137,9 @@ export default function JneShipperAliases({
                         Customer & nama pengirim
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Kode customer menentukan pemilik kiriman. Satu customer
-                        dapat memiliki banyak nama pengirim.
+                        Nama pengirim terdaftar membantu mengenali pemilik
+                        kiriman. Satu customer dapat memiliki banyak nama
+                        pengirim.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -250,7 +262,7 @@ export default function JneShipperAliases({
                 <div
                     className={
                         'flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4 ' +
-                        (ownership.ambiguous + ownership.unmatched > 0
+                        (unresolved > 0
                             ? 'border-amber-500/30 bg-amber-500/5'
                             : 'border-emerald-500/30 bg-emerald-500/5')
                     }
@@ -259,20 +271,17 @@ export default function JneShipperAliases({
                         <p className="font-semibold">
                             {ownership.total === 0
                                 ? 'Belum ada AWB tersimpan'
-                                : ownership.ambiguous + ownership.unmatched ===
-                                    0
+                                : unresolved === 0
                                   ? 'Semua ' +
                                     ownership.recognized +
                                     ' AWB sudah dikenali customernya'
-                                  : ownership.ambiguous +
-                                    ownership.unmatched +
+                                  : unresolved +
                                     ' AWB belum dikenali pemiliknya'}
                         </p>
                         <p className="max-w-3xl text-sm text-muted-foreground">
                             {ownership.total === 0
                                 ? 'Tarik report terlebih dahulu untuk melihat kiriman. Nama ganda di daftar belum tentu dipakai dalam report.'
-                                : ownership.ambiguous + ownership.unmatched ===
-                                    0
+                                : unresolved === 0
                                   ? 'Kamu bisa lanjut ke Pengiriman. Nama ganda di daftar tidak menghambat AWB yang tersimpan saat ini. Tidak perlu menonaktifkan nama yang belum kamu pastikan pemiliknya.'
                                   : 'Periksa AWB yang belum dikenali. Pastikan customer dari dokumen pengiriman, lalu koreksi daftar nama pengirim. Jangan menebak pemilik berdasarkan nama saja.'}
                         </p>
@@ -285,40 +294,39 @@ export default function JneShipperAliases({
                                         ? reports.index.url()
                                         : monitoring.index.url({
                                               query:
-                                                  ownership.ambiguous > 0
+                                                  reviewStatuses.length > 0
                                                       ? {
                                                             customer_match:
-                                                                'AMBIGUOUS',
+                                                                String(
+                                                                    reviewStatuses[0][0],
+                                                                ),
                                                         }
-                                                      : ownership.unmatched > 0
-                                                        ? {
-                                                              customer_match:
-                                                                  'UNMATCHED',
-                                                          }
-                                                        : {},
+                                                      : {},
                                           })
                                 }
                             >
                                 {ownership.total === 0
                                     ? 'Tarik report'
-                                    : ownership.ambiguous +
-                                            ownership.unmatched >
-                                        0
+                                    : unresolved > 0
                                       ? 'Periksa AWB'
                                       : 'Lihat Pengiriman'}
                             </Link>
                         </Button>
-                        {ownership.ambiguous > 0 && ownership.unmatched > 0 && (
-                            <Button variant="outline" asChild>
-                                <Link
-                                    href={monitoring.index.url({
-                                        query: { customer_match: 'UNMATCHED' },
-                                    })}
-                                >
-                                    Lihat AWB tanpa nama cocok
-                                </Link>
-                            </Button>
-                        )}
+                        {reviewStatuses
+                            .slice(1)
+                            .map(([status, count, label]) => (
+                                <Button key={status} variant="outline" asChild>
+                                    <Link
+                                        href={monitoring.index.url({
+                                            query: {
+                                                customer_match: String(status),
+                                            },
+                                        })}
+                                    >
+                                        {label}: {count}
+                                    </Link>
+                                </Button>
+                            ))}
                     </div>
                 </div>
             )}

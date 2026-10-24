@@ -22,7 +22,7 @@ class JneCustomerDashboardController extends Controller
             'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_thru' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
-            'mapping' => ['nullable', Rule::in(['all', 'unmapped', 'ambiguous'])],
+            'mapping' => ['nullable', Rule::in(['all', 'matched', 'unmapped', 'ambiguous', 'candidate', 'conflict'])],
             'server' => ['nullable', Rule::in(['all', ...array_keys(JneAwbSource::LABELS)])],
             'age' => ['nullable', Rule::in(['all', '7_plus', '14_plus'])],
             'service' => ['nullable', 'string', 'max:100'], 'destination' => ['nullable', 'string', 'max:100'],

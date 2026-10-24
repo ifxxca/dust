@@ -36,6 +36,7 @@ export default function JneMonitoring({
     customers = [],
     timezone,
     trackingRefresh,
+    identitySummary,
 }: {
     shipments: JnePage<JneShipment>;
     summary: Record<string, number>;
@@ -44,6 +45,7 @@ export default function JneMonitoring({
     customers?: JneCustomer[];
     timezone: string;
     trackingRefresh?: TrackingRefresh;
+    identitySummary?: Record<string, number>;
 }) {
     const refresh = useForm({ profile_id: trackingRefresh?.profile?.id ?? 0 });
     const applied = normalizeJneFilters(filters);
@@ -66,7 +68,7 @@ export default function JneMonitoring({
         return false;
     };
     usePoll(15000, {
-        only: ['shipments', 'summary', 'trackingRefresh'],
+        only: ['shipments', 'summary', 'trackingRefresh', 'identitySummary'],
         onSuccess: () => setError(''),
         onNetworkError: networkError,
         onHttpException: (response) => {
@@ -172,6 +174,55 @@ export default function JneMonitoring({
                     </div>
                 </div>
             </header>
+            {identitySummary && (
+                <section
+                    aria-label="Kepastian identitas AWB"
+                    className="space-y-2 rounded-lg border p-4 text-sm"
+                >
+                    <p>
+                        {identitySummary.collected.toLocaleString('id-ID')} AWB
+                        tersimpan ·{' '}
+                        {identitySummary.customer_matched.toLocaleString(
+                            'id-ID',
+                        )}{' '}
+                        AWB memiliki customer terkonfirmasi ·{' '}
+                        {identitySummary.pickup_matched.toLocaleString('id-ID')}{' '}
+                        AWB memiliki pickup terkonfirmasi
+                    </p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                        {[
+                            ['CONFLICT', 'conflicts', 'Konflik'],
+                            ['AMBIGUOUS', 'ambiguous', 'Ambigu'],
+                            ['CANDIDATE', 'candidates', 'Kandidat'],
+                            ['UNMATCHED', 'unmatched', 'Belum dikenali'],
+                        ].map(([status, key, label]) => (
+                            <Link
+                                key={status}
+                                className="underline underline-offset-4"
+                                href={monitoring.index.url({
+                                    query: {
+                                        ...applied,
+                                        customer_match: status,
+                                    },
+                                })}
+                            >
+                                {label}: {identitySummary[key] ?? 0}
+                            </Link>
+                        ))}
+                        <Link
+                            className="underline underline-offset-4"
+                            href={monitoring.reconciliation.url()}
+                        >
+                            Periksa kategori POP
+                        </Link>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        Cakupan mengikuti filter daftar. Konfirmasi customer,
+                        pickup, kategori dan kelengkapan report diperiksa
+                        terpisah.
+                    </p>
+                </section>
+            )}
             <JneShipmentSummary
                 summary={summary}
                 status={applied.status}

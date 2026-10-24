@@ -16,14 +16,16 @@ class QueryJneCustomerDashboard
      */
     public function handle(array $filters, CarbonImmutable $from, CarbonImmutable $thru): array
     {
-        $scope = DB::table('jne_shipments as s')->join('jne_report_awbs as a', 'a.id', '=', 's.latest_report_awb_id');
+        $scope = DB::table('jne_shipments as s')->join('jne_report_awbs as a', 'a.id', '=', 's.latest_report_awb_id')->leftJoin('pickup_tasks as p', 'p.id', '=', 's.pickup_task_id');
         if ($filters['customer_id']) {
-            $scope->where('s.customer_id', $filters['customer_id']);
+            $scope->where('s.customer_id', $filters['customer_id'])->where('s.customer_match_status', 'MATCHED');
         }
         if ($filters['mapping'] === 'unmapped') {
-            $scope->whereNull('s.customer_id');
-        } elseif ($filters['mapping'] === 'ambiguous') {
-            $scope->where('s.customer_match_status', 'AMBIGUOUS');
+            $scope->where(fn (Builder $query) => $query->whereNull('s.customer_id')->orWhere('s.customer_match_status', '<>', 'MATCHED'));
+        } elseif ($filters['mapping'] === 'matched') {
+            $scope->whereNotNull('s.customer_id')->where('s.customer_match_status', 'MATCHED');
+        } elseif (in_array($filters['mapping'], ['ambiguous', 'candidate', 'conflict'], true)) {
+            $scope->where('s.customer_match_status', strtoupper($filters['mapping']));
         }
         foreach (['service' => 'a.service', 'destination' => 'a.destination', 'status' => 's.tracking_status'] as $filter => $column) {
             if ($filters[$filter] !== '') {
@@ -51,9 +53,12 @@ class QueryJneCustomerDashboard
         $undated = (clone $scope)->whereNull('a.entry_at')->count();
         $query = (clone $scope)->where('a.entry_at', '>=', $from->utc()->format('Y-m-d H:i:s'))
             ->where('a.entry_at', '<', $thru->addDay()->utc()->format('Y-m-d H:i:s'));
-        $summary = (array) (clone $query)->selectRaw("COUNT(*) as shipments, COUNT(DISTINCT s.customer_id) as customers, COUNT(DISTINCT s.customer_account) as accounts,
-            SUM(CASE WHEN s.customer_id IS NOT NULL THEN 1 ELSE 0 END) as mapped,
+        $summary = (array) (clone $query)->selectRaw("COUNT(*) as shipments, COUNT(DISTINCT CASE WHEN s.customer_match_status = 'MATCHED' THEN s.customer_id END) as customers, COUNT(DISTINCT s.customer_account) as accounts,
+            SUM(CASE WHEN s.customer_id IS NOT NULL AND s.customer_match_status = 'MATCHED' THEN 1 ELSE 0 END) as mapped,
+            SUM(CASE WHEN s.customer_match_status = 'MATCHED' AND s.match_status = 'MATCHED' AND s.customer_id = p.customer_id THEN 1 ELSE 0 END) as pickup_matched,
             SUM(CASE WHEN s.customer_match_status = 'AMBIGUOUS' THEN 1 ELSE 0 END) as ambiguous,
+            SUM(CASE WHEN s.customer_match_status = 'CANDIDATE' THEN 1 ELSE 0 END) as candidates,
+            SUM(CASE WHEN s.customer_match_status = 'CONFLICT' THEN 1 ELSE 0 END) as conflicts,
             COUNT(a.amount_cents) as amount_known, SUM(a.amount_cents) as amount_cents,
             COUNT(a.weight_grams) as weight_known, SUM(a.weight_grams) as weight_grams,
             COUNT(a.quantity) as quantity_known, SUM(a.quantity) as quantity,
@@ -63,7 +68,7 @@ class QueryJneCustomerDashboard
             SUM(CASE WHEN s.tracking_status = 'EXCEPTION' THEN 1 ELSE 0 END) as exceptions,
             SUM(CASE WHEN s.tracking_status NOT IN ('DELIVERED','CANCELLED','RETURNED') THEN 1 ELSE 0 END) as active,
             MAX(s.last_observed_at) as last_observed_at")->first();
-        foreach (['shipments', 'customers', 'accounts', 'mapped', 'ambiguous', 'amount_known', 'weight_known', 'quantity_known', 'quantity', 'delivered', 'active', 'cancelled', 'returned', 'exceptions'] as $key) {
+        foreach (['shipments', 'customers', 'accounts', 'mapped', 'pickup_matched', 'ambiguous', 'candidates', 'conflicts', 'amount_known', 'weight_known', 'quantity_known', 'quantity', 'delivered', 'active', 'cancelled', 'returned', 'exceptions'] as $key) {
             $summary[$key] = (int) ($summary[$key] ?? 0);
         }
         $summary['amount'] = $summary['amount_known'] > 0 ? (int) $summary['amount_cents'] / 100 : null;

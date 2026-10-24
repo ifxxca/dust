@@ -52,6 +52,14 @@ class JneMonitoringController extends Controller
             $query->where('match_status', $filters['match']);
         }
         $refreshProfile = JneReportProfile::where('source', 'apex')->where('report_type', 'unresolved')->first();
+        $identity = JneShipment::whereIn('jne_shipments.id', (clone $query)->select('id'))->leftJoin('pickup_tasks as cp', 'cp.id', '=', 'jne_shipments.pickup_task_id')
+            ->selectRaw("count(*) as collected,
+                sum(case when customer_match_status = 'MATCHED' and jne_shipments.customer_id is not null then 1 else 0 end) as customer_matched,
+                sum(case when customer_match_status = 'MATCHED' and match_status = 'MATCHED' and jne_shipments.customer_id = cp.customer_id then 1 else 0 end) as pickup_matched,
+                sum(case when customer_match_status = 'CANDIDATE' then 1 else 0 end) as candidates,
+                sum(case when customer_match_status = 'CONFLICT' then 1 else 0 end) as conflicts,
+                sum(case when customer_match_status = 'AMBIGUOUS' then 1 else 0 end) as ambiguous,
+                sum(case when customer_match_status = 'UNMATCHED' then 1 else 0 end) as unmatched")->first();
 
         return Inertia::render('jne-monitoring', [
             'shipments' => $query->with(['latestSource:id,status_web,status_pod,consignee_name,shipper_name', 'customer:id,name,customer_code', 'pickup:id,reference,customer_name_snapshot'])->orderByDesc('last_observed_at')->orderByDesc('id')
@@ -63,6 +71,7 @@ class JneMonitoringController extends Controller
                     'pickup_reference' => $shipment->pickup?->reference,
                 ]),
             'summary' => $summary, 'filters' => [...['q' => '', 'account' => '', 'status' => '', 'match' => ''], ...$filters],
+            'identitySummary' => collect($identity?->getAttributes())->map(fn ($value): int => (int) $value),
             'accounts' => JneShipment::select('customer_account')->distinct()->orderBy('customer_account')->pluck('customer_account'),
             'trackingRefresh' => [
                 'active_count' => JneShipment::whereNotIn('tracking_status', ['DELIVERED', 'CANCELLED'])->count(),

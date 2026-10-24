@@ -55,7 +55,11 @@ import {
 } from '@/components/ui/table';
 import * as routes from '@/routes/jne-monitoring';
 import * as aliases from '@/routes/jne-shipper-aliases';
-import { jneTimestamp, trackingLabels } from '@/lib/jne-monitoring';
+import {
+    jneTimestamp,
+    matchLabels,
+    trackingLabels,
+} from '@/lib/jne-monitoring';
 import type {
     CustomerDashboardFilters,
     CustomerDashboardProps,
@@ -233,11 +237,20 @@ export default function JneCustomerDashboard({
                                 }}
                             >
                                 <option value="all">Semua pemetaan</option>
+                                <option value="matched">
+                                    Customer terkonfirmasi
+                                </option>
                                 <option value="unmapped">
                                     Belum terpetakan
                                 </option>
                                 <option value="ambiguous">
-                                    Perlu ditinjau
+                                    Pemetaan ambigu
+                                </option>
+                                <option value="candidate">
+                                    Kandidat customer
+                                </option>
+                                <option value="conflict">
+                                    Bukti bertentangan
                                 </option>
                             </select>
                             <p className="text-xs text-destructive">
@@ -317,7 +330,7 @@ export default function JneCustomerDashboard({
                     {
                         label: 'Total resi',
                         value: summary.shipments,
-                        detail: `${summary.customers} customer · ${summary.accounts} account JNE`,
+                        detail: `${summary.customers} customer terkonfirmasi · ${summary.accounts} account JNE`,
                         icon: Package,
                     },
                     {
@@ -377,12 +390,13 @@ export default function JneCustomerDashboard({
                     <AlertDescription>
                         <div className="flex flex-col gap-2">
                             <p>
-                                {number(summary.unmapped)} resi belum terhubung
-                                ke customer
+                                {number(summary.unmapped)} resi belum
+                                terkonfirmasi customernya
                                 {summary.ambiguous
                                     ? `, termasuk ${summary.ambiguous} dengan pemetaan ambigu`
                                     : ''}
-                                .
+                                . {summary.candidates ?? 0} kandidat ·{' '}
+                                {summary.conflicts ?? 0} konflik.
                                 {summary.undated > 0 &&
                                     ` Ada ${number(summary.undated)} resi tanpa tanggal kirim yang tidak masuk angka periode ini.`}
                             </p>
@@ -419,6 +433,17 @@ export default function JneCustomerDashboard({
                     </AlertDescription>
                 </Alert>
             )}
+
+            <p className="text-sm text-muted-foreground">
+                {number(summary.mapped)} AWB memiliki customer terkonfirmasi ·{' '}
+                {number(summary.pickup_matched ?? 0)} AWB memiliki pickup
+                terkonfirmasi. Kecocokan kategori POP dan kelengkapan
+                pengumpulan report diperiksa terpisah di{' '}
+                <Link className="underline" href={routes.reconciliation.url()}>
+                    rekonsiliasi POP
+                </Link>
+                .
+            </p>
 
             {summary.shipments === 0 && (
                 <Alert>
@@ -602,6 +627,14 @@ export default function JneCustomerDashboard({
                                                 'Belum terpetakan'}{' '}
                                             · {row.customer_account}
                                         </p>
+                                        {row.customer_match_status !==
+                                            'MATCHED' && (
+                                            <p className="text-xs text-amber-700 dark:text-amber-400">
+                                                {matchLabels[
+                                                    row.customer_match_status
+                                                ] ?? 'Belum dikonfirmasi'}
+                                            </p>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         {jneTimestamp(row.entry_at, timezone)}
