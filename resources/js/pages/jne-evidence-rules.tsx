@@ -89,6 +89,7 @@ export default function JneEvidenceRules({
         verified: false,
     });
     const disable = useForm({
+        action: 'disable',
         kind: 'contract',
         id: '',
         version: 1,
@@ -479,6 +480,10 @@ export default function JneEvidenceRules({
                                 variant="outline"
                                 onClick={() =>
                                     disable.setData({
+                                        action:
+                                            row.active_key || row.is_active
+                                                ? 'disable'
+                                                : 'activate',
                                         kind: row.kind,
                                         id: String(row.id),
                                         version:
@@ -487,7 +492,9 @@ export default function JneEvidenceRules({
                                     })
                                 }
                             >
-                                Pilih untuk dinonaktifkan
+                                {row.active_key || row.is_active
+                                    ? 'Pilih untuk dinonaktifkan'
+                                    : 'Pilih untuk diverifikasi dan diaktifkan'}
                             </Button>
                         </details>
                     ))}
@@ -496,19 +503,26 @@ export default function JneEvidenceRules({
                             className="space-y-2 rounded-lg border p-3"
                             onSubmit={(event) => {
                                 event.preventDefault();
-                                disable.post(evidence.disable.url(), {
-                                    preserveScroll: true,
-                                    onSuccess: () => disable.reset(),
-                                });
+                                disable.post(
+                                    disable.data.action === 'activate'
+                                        ? evidence.activate.url()
+                                        : evidence.disable.url(),
+                                    {
+                                        preserveScroll: true,
+                                        onSuccess: () => disable.reset(),
+                                    },
+                                );
                             }}
                         >
                             <p className="text-sm">
-                                Nonaktifkan {disable.data.kind} #
-                                {disable.data.id}; versi {disable.data.version}.
-                                Riwayat tetap disimpan.
+                                {disable.data.action === 'activate'
+                                    ? 'Verifikasi dan aktifkan'
+                                    : 'Nonaktifkan'}{' '}
+                                {disable.data.kind} #{disable.data.id}; versi{' '}
+                                {disable.data.version}. Riwayat tetap disimpan.
                             </p>
                             <Label htmlFor="evidence-disable-reason">
-                                Alasan penonaktifan
+                                Alasan perubahan aturan
                             </Label>
                             <Input
                                 id="evidence-disable-reason"
@@ -533,8 +547,17 @@ export default function JneEvidenceRules({
                                     </p>
                                 ),
                             )}
-                            <Button type="submit" disabled={disable.processing}>
-                                Nonaktifkan dan evaluasi ulang
+                            <Button
+                                type="submit"
+                                disabled={
+                                    disable.processing ||
+                                    (disable.data.action === 'activate' &&
+                                        !enabled)
+                                }
+                            >
+                                {disable.data.action === 'activate'
+                                    ? 'Verifikasi, aktifkan dan evaluasi ulang'
+                                    : 'Nonaktifkan dan evaluasi ulang'}
                             </Button>
                         </form>
                     )}

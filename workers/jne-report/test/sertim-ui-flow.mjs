@@ -214,6 +214,18 @@ try {
         .locator('summary')
         .filter({ hasText: /code_alias.*4000A.*Aktif terverifikasi/ })
         .waitFor();
+    await admin.page.getByLabel('Jenis aturan', { exact: true }).selectOption('code_alias');
+    await admin.page.getByLabel('Customer pemilik', { exact: true }).selectOption(process.env.SERTIM_UI_CUSTOMER);
+    await admin.page.getByLabel('Kode alias persis', { exact: true }).fill('4000B');
+    await admin.page.getByLabel('Alasan dan referensi verifikasi', { exact: true }).fill('Synthetic browser alias draft');
+    await admin.page.getByRole('checkbox', { name: /^Verifikasi dan aktifkan/ }).uncheck();
+    await admin.page.getByRole('button', { name: 'Simpan aturan bukti', exact: true }).click();
+    const draft = admin.page.locator('details').filter({ has: admin.page.locator('summary').filter({ hasText: /code_alias.*4000B/ }) });
+    await draft.locator('summary').click();
+    await draft.getByRole('button', { name: 'Pilih untuk diverifikasi dan diaktifkan', exact: true }).click();
+    await admin.page.getByLabel('Alasan perubahan aturan', { exact: true }).fill('Synthetic original draft verified');
+    await admin.page.getByRole('button', { name: 'Verifikasi, aktifkan dan evaluasi ulang', exact: true }).click();
+    await admin.page.locator('summary').filter({ hasText: /code_alias.*4000B.*Aktif terverifikasi/ }).waitFor();
     await admin.page.screenshot({
         path: path.join(artifacts, 'evidence-rules-390.png'),
         fullPage: true,

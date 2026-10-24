@@ -67,6 +67,7 @@ class BuildJnePickupReconciliation
             $confident = $rows->filter(fn (JneShipment $row): bool => $row->customer_match_status === 'MATCHED' && $row->match_status === 'MATCHED' && $row->customer_id === $task->customer_id);
             $classified = $confident->where('category_status', 'MATCHED')->whereIn('category', PickupProcessingRecord::CATEGORIES)->count();
             $unclassified = $confident->count() - $classified;
+            $unresolvedIdentity = $rows->count() - $confident->count();
             $values = $task->proof?->finalized_at ? $task->proof->effectiveValues() : null;
             $complete = (bool) $cashless[$task->id]['collection_complete'];
             $categories = [];
@@ -85,7 +86,7 @@ class BuildJnePickupReconciliation
                 $expected = $values === null ? null : (int) $values[$category];
                 $shortfall = $expected === null ? null : max(0, $expected - $confirmed);
                 $excess = $expected === null ? null : max(0, $confirmed - $expected);
-                $review = $unclassified > 0 || $conflicts > 0 || $candidates > 0 || $unmatched > 0;
+                $review = $unclassified > 0 || $unresolvedIdentity > 0 || $conflicts > 0 || $candidates > 0 || $unmatched > 0;
                 $reconciled = $expected !== null && $confirmed === $expected && ! $review && $complete;
                 $state = $expected === null ? 'AWAITING_POP' : ($conflicts > 0 ? 'CONFLICT' : ($excess > 0 ? 'EXCESS' : ($review ? 'REVIEW' : ($reconciled ? 'RECONCILED' : ($complete && $shortfall > 0 ? 'MISSING' : ($shortfall === 0 ? 'IDENTIFIED_COUNTS' : 'AWAITING_EVIDENCE'))))));
                 $categories[$category] = ['category' => $category, 'expected_quantity' => $expected, 'identified_awbs' => $identified, 'confirmed_awbs' => $confirmed, 'candidate_awbs' => $candidates,

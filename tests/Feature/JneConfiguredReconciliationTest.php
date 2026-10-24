@@ -67,12 +67,21 @@ test('Vanny 0 manual 3 cashless 100 CSS needs independent identity category and 
 });
 
 test('late observations invalidate attestation without changing finalized POP', function () {
+    $old = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED']);
     [$admin, $task, $contract, $job] = categoryFixture();
-    $old = ReportJob::factory()->create(['status' => 'COMPLETED']);
     app(ManageJneCollectionWindow::class)->handle($admin, $task->id, collectionPayload($contract, $job));
-    JneReportAwb::factory()->create(['report_job_id' => $old->id, 'awb' => 'CASH1']);
+    JneReportAwb::factory()->create(['report_job_id' => $old->id, 'awb' => 'LATE_UNKNOWN', 'shipper_name' => 'Tokopedia', 'reference' => null, 'raw_data' => []]);
+    app(ProjectJneShipments::class)->handle($old->id);
     $result = app(QueryJneCollectionWindows::class)->handle(collect([$task]))[$task->id];
     expect($result['complete'])->toBeFalse()->and($result['status'])->toBe('REVIEW')->and($task->proof->css_orion)->toBe(100);
+});
+
+test('equal confirmed totals with an additional uncertain retained pickup pointer remain under review', function () {
+    [$admin, $task, $contract, $job] = categoryFixture();
+    JneShipment::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'customer_match_status' => 'CONFLICT', 'match_status' => 'CONFLICT']);
+    app(ManageJneCollectionWindow::class)->handle($admin, $task->id, collectionPayload($contract, $job));
+    $result = app(BuildJnePickupReconciliation::class)->handle(PickupTask::whereKey($task->id)->get())[$task->id];
+    expect($result['category_confirmed_awbs'])->toBe(103)->and($result['reconciled'])->toBeFalse()->and($result['categories']['css_orion']['state'])->toBe('REVIEW');
 });
 
 test('contradictory verified categories cannot reconcile equal counts', function () {

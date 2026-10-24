@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/admin/jne-monitoring/collections/{pickupTask}', [JneCollectionWindowController::class, 'store'])->middleware('throttle:30,1')->name('jne-collections.store');
     Route::post('/admin/jne-monitoring/evidence-rules', [JneEvidenceRuleController::class, 'store'])->middleware('throttle:30,1')->name('jne-evidence.store');
     Route::post('/admin/jne-monitoring/evidence-rules/disable', [JneEvidenceRuleController::class, 'disable'])->middleware('throttle:30,1')->name('jne-evidence.disable');
+    Route::post('/admin/jne-monitoring/evidence-rules/activate', [JneEvidenceRuleController::class, 'activate'])->middleware('throttle:30,1')->name('jne-evidence.activate');
     Route::post('/admin/report-runs/{reportJob}/apex-recovery', [ApexBatchController::class, 'review'])->whereNumber('reportJob')->middleware('throttle:20,1')->name('report-runs.apex-recovery');
     Route::get('/admin/jne-monitoring/customer-dashboard', JneCustomerDashboardController::class)->name('jne-monitoring.customer-dashboard');
     Route::get('/admin/jne-monitoring/profiles', [JneMonitoringController::class, 'profiles'])->name('jne-monitoring.profiles');

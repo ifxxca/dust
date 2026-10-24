@@ -1,5 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import PageContainer from '@/components/page-container';
+import JneCustomerCandidates from '@/components/jne-customer-candidates';
+import type { JneCustomerCandidate } from '@/types/jne';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +17,7 @@ type Row = {
     group_key: string;
     customer_match_status: string;
     customer_match_note: string | null;
+    customer_match_candidates?: JneCustomerCandidate[] | null;
     match_status: string;
     match_note: string | null;
     category: string | null;
@@ -127,6 +130,9 @@ export default function JneExceptions({
                                 {row.match_status} /{' '}
                                 {row.category_status ?? 'UNCONFIGURED'}
                             </summary>
+                            <JneCustomerCandidates
+                                candidates={row.customer_match_candidates ?? []}
+                            />
                             <p className="text-sm">
                                 {row.customer_match_note} {row.match_note}
                             </p>

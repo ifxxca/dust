@@ -98,6 +98,37 @@ class ManageJneEvidenceRules
         }, 3);
     }
 
+    public function activate(User $actor, string $kind, int $id, int $version, string $reason): void
+    {
+        DB::transaction(function () use ($actor, $kind, $id, $version, $reason): void {
+            $this->authorize($actor);
+            abort_unless(config('jne-reports.evidence_policies_enabled'), 409, 'Gate aktivasi belum dibuka.');
+            abort_unless(trim($reason) !== '' && mb_strlen($reason) <= 500, 422);
+            $class = match ($kind) {
+                'contract' => JneSourceContract::class, 'code_alias' => JneCustomerCodeAlias::class, 'shipper_alias' => JneShipperAlias::class, default => abort(422)
+            };
+            $row = $class::whereKey($id)->lockForUpdate()->firstOrFail();
+            abort_unless(($row instanceof JneSourceContract ? $row->revision : $row->version) === $version, 409);
+            $before = $row->getAttributes();
+            if ($row instanceof JneSourceContract) {
+                $latest = JneSourceContract::where('source', $row->source)->where('report_type', $row->report_type)->max('revision');
+                abort_unless($row->revision === $latest, 409, 'Gunakan revisi kontrak terbaru; definisi lama tidak diaktifkan kembali.');
+                foreach (JneSourceContract::where('source', $row->source)->where('report_type', $row->report_type)->whereNotNull('active_key')->whereKeyNot($id)->lockForUpdate()->get() as $old) {
+                    $oldBefore = $old->getAttributes();
+                    $old->update(['active_key' => null]);
+                    $this->audit($actor, 'contract', $old, $oldBefore, $reason);
+                }
+                $row->fill(['active_key' => JneSourceContract::key($row->source, $row->report_type)]);
+            } else {
+                abort_unless(Customer::whereKey($row->customer_id)->where('is_active', true)->lockForUpdate()->exists(), 422);
+                $row->fill(['is_active' => true, 'version' => $version + 1]);
+            }
+            $row->fill(['verified_by' => $actor->id, 'verified_at' => now()])->save();
+            $this->audit($actor, $kind, $row, $before, $reason);
+            app(QueueJneCustomerMappings::class)->handle([], $actor->id, true);
+        }, 3);
+    }
+
     /** @param array<string, mixed> $data */
     private function verified(array $data): bool
     {

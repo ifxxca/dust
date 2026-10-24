@@ -1,5 +1,11 @@
 # Implementation status
 
+### Integration safeguards — 25 October 2026
+
+Draft activation is explicit, reasoned and audited; superseded contract revisions cannot be reactivated. Customer-code suggestion work is bounded and exact lookup is grouped. Reconciliation also rejects equal totals with uncertain retained pickup pointers; a new unowned observation in a required source scope invalidates earlier completeness, including rows imported later from older jobs. Category replay includes manually linked shipments while preserving their manual identity decisions.
+
+Fourteen current identity/category/exception/visibility tests passed (135 assertions), plus Chromium draft activation, correction, collection, exception and tracking forms passed. PHPStan and TypeScript passed. Full regression before the last two additional cases passed 754 tests, with five explicitly skipped and 7,055 assertions; a final current-tree full run follows.
+
 ### M7 continuation — 25 October 2026
 
 Verified refresh-policy drafts and activation gates are implemented on existing unresolved-report profiles. Policies configure per-status intervals, SLA thresholds/intervals, status priority, source hours, terminal confirmation and bounded failure backoff. No default terminal/SLA semantics are introduced. Terminal confirmation counts distinct consecutive chronological observations, never repeated rows or old terminal totals. New/priority/oldest-receipt scheduling preserves concurrency, uncertainty review and profile interval floors. Saving a policy does not enable or reschedule an operational profile.

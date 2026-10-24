@@ -103,3 +103,22 @@ test('Admin stores audited drafts while activation remains gated and corrections
     expect(DB::table('jne_evidence_rule_events')->where('kind', 'code_alias')->count())->toBe(2);
     Queue::assertPushed(SyncJneCustomerMappings::class, 2);
 });
+
+test('existing drafts can be explicitly verified without duplicate mappings and old contract revisions cannot be reactivated', function () {
+    Queue::fake([SyncJneCustomerMappings::class]);
+    $admin = User::factory()->create(['role' => 'admin_supervisor']);
+    $alias = JneCustomerCodeAlias::factory()->create();
+    $payload = ['kind' => 'code_alias', 'id' => $alias->id, 'version' => 1, 'reason' => 'Original code mapping verified in UAT'];
+    $this->actingAs($admin)->postJson(route('jne-evidence.activate'), $payload)->assertConflict();
+    config(['jne-reports.evidence_policies_enabled' => true]);
+    $this->post(route('jne-evidence.activate'), $payload)->assertRedirect();
+    expect($alias->fresh()->is_active)->toBeTrue()->and($alias->fresh()->version)->toBe(2);
+    $this->postJson(route('jne-evidence.activate'), $payload)->assertConflict();
+    expect(JneCustomerCodeAlias::count())->toBe(1);
+    $old = JneSourceContract::factory()->create(['revision' => 1]);
+    $new = JneSourceContract::factory()->create(['revision' => 2]);
+    $contractPayload = ['kind' => 'contract', 'id' => $old->id, 'version' => 1, 'reason' => 'Attempt to revive superseded contract'];
+    $this->postJson(route('jne-evidence.activate'), $contractPayload)->assertConflict();
+    $this->post(route('jne-evidence.activate'), [...$contractPayload, 'id' => $new->id, 'version' => 2])->assertRedirect();
+    expect($new->fresh()->active_key)->toBe(JneSourceContract::key('apex', 'apex'));
+});

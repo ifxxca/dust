@@ -51,4 +51,12 @@ class JneEvidenceRuleController extends Controller
 
         return back();
     }
+
+    public function activate(Request $request, ManageJneEvidenceRules $rules): RedirectResponse
+    {
+        $data = $request->validate(['kind' => ['required', Rule::in(['contract', 'code_alias', 'shipper_alias'])], 'id' => ['required', 'integer', 'min:1'], 'version' => ['required', 'integer', 'min:1'], 'reason' => ['required', 'string', 'max:500']]);
+        $rules->activate($request->user(), $data['kind'], (int) $data['id'], (int) $data['version'], $data['reason']);
+
+        return back();
+    }
 }

@@ -52,17 +52,20 @@ class ResolveJneCustomerCodes
         $activeAliasCustomers = Customer::whereIn('id', $aliases->pluck('customer_id'))->where('is_active', true)->pluck('id')->all();
         $catalog = Customer::where('is_active', true)->whereNotNull('customer_code')->orderBy('id')->limit(5001)->get(['id', 'name', 'customer_code']);
         $aliasCatalog = JneCustomerCodeAlias::where('is_active', true)->whereNotNull('verified_at')->whereHas('customer', fn ($query) => $query->where('is_active', true))->with('customer:id,name,customer_code')->orderBy('id')->limit(5001)->get();
+        $customersByCode = $customers->groupBy(fn (Customer $customer): string => JneCustomerCodeAlias::normalize($customer->customer_code ?? ''));
+        $aliasesByCode = $aliases->groupBy('normalized_code');
+        $suggestions = [];
         $result = [];
         foreach ($inputs as $id => $input) {
             $owners = [];
             $evidence = [['source_id' => $id, 'contract_id' => $input['contract']->id, 'contract_revision' => $input['contract']->revision, 'original_code' => $input['raw']]];
-            foreach ($customers as $customer) {
+            foreach ($customersByCode->get($input['code'], collect()) as $customer) {
                 if (JneCustomerCodeAlias::normalize($customer->customer_code ?? '') === $input['code']) {
                     $owners[] = $customer->id;
                     $evidence[] = ['source_id' => $id, 'contract_id' => $input['contract']->id, 'contract_revision' => $input['contract']->revision, 'original_code' => $input['raw'], 'registered_code' => $customer->customer_code, 'customer_id' => $customer->id];
                 }
             }
-            foreach ($aliases as $alias) {
+            foreach ($aliasesByCode->get($input['code'], collect()) as $alias) {
                 if ($alias->normalized_code === $input['code'] && $this->scope->allows($alias, $input['source']) && in_array($alias->customer_id, $activeAliasCustomers, true)) {
                     $owners[] = $alias->customer_id;
                     $evidence[] = ['source_id' => $id, 'contract_id' => $input['contract']->id, 'contract_revision' => $input['contract']->revision, 'code_alias_id' => $alias->id, 'code_alias_version' => $alias->version, 'original_code' => $input['raw'], 'registered_code' => $alias->code, 'customer_id' => $alias->customer_id];
@@ -70,7 +73,10 @@ class ResolveJneCustomerCodes
             }
             $owners = array_values(array_unique($owners));
             $candidates = [];
-            if ($owners === [] && $catalog->count() + $aliasCatalog->count() <= 5000 && strlen($input['code']) >= 3 && strlen($input['code']) <= 64) {
+            $suggestionKey = hash('sha256', json_encode([$input['code'], $input['source']->customer_account, $input['source']->entry_at?->toIso8601String()], JSON_THROW_ON_ERROR));
+            if (isset($suggestions[$suggestionKey])) {
+                $candidates = $suggestions[$suggestionKey];
+            } elseif ($owners === [] && count($suggestions) < 100 && $catalog->count() + $aliasCatalog->count() <= 5000 && strlen($input['code']) >= 3 && strlen($input['code']) <= 64) {
                 foreach ($catalog as $customer) {
                     $distance = levenshtein($input['code'], JneCustomerCodeAlias::normalize($customer->customer_code ?? ''));
                     if ($distance === 1) {
@@ -86,6 +92,7 @@ class ResolveJneCustomerCodes
                     }
                 }
                 $candidates = collect($candidates)->unique('customer_id')->take(5)->values()->all();
+                $suggestions[$suggestionKey] = $candidates;
             }
             $result[$id] = ['customer_id' => count($owners) === 1 ? $owners[0] : null,
                 'status' => count($owners) > 1 ? 'CONFLICT' : ($owners !== [] ? 'MATCHED' : ($candidates !== [] ? 'CANDIDATE' : 'UNMATCHED')),
