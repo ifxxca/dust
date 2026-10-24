@@ -9,7 +9,7 @@ Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`
 | M2 | Registry increment implemented; source contracts partial | Unique normalized AWB registry across accounts; all original report rows/observations preserved; upgrade blocks historical duplicates. Sparse identity handling follows in M3; code/category fields remain unverified |
 | M3 | Safe identity increment implemented; code/scope gates remain | Historical exact evidence retained separately from tracking chronology; conflicting owners flagged; typo suggestions stored/displayed without assignment; source/alias IDs audited. Code field and scoped aliases still need B3/B4 |
 | M4 | Complete for initial web workflow | BR-SERTIM-01–04 enforced by backend policy/action; assigned staff capture before finalization; Admin-only audited correction/add/revoke; persistent first closure; late import/re-evaluation; pickup and handover UI with paginated audit history |
-| M5 | Partial / business gate | Current total declaration comparison; B6 categories/B7 collection closure required |
+| M5 | Safe category increment implemented; business gates remain | Effective POP per category; cashless claims compared only with independently confirmed customer/pickup; other AWBs remain unclassified; shortfalls provisional and missing quantity unknown until B6/B7 |
 | M6 | Partial | Existing alias/report/manual reference review; full evidence exception workflow pending |
 | M7 | Partial | Existing refresh profile and stale observation guard; policy refinements pending |
 | M8 | Partial | Existing monitoring/dashboard; category/exception confidence metrics pending |
@@ -21,11 +21,12 @@ Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`
 - M1 integrity increment: 16 PHP pipeline tests passed, 382 assertions, including missing/corrupt source recovery without recollection.
 - M1 PHPStan and Pint passed. Existing UI exposes file recheck on the report-run page; TypeScript/frontend validation is recorded with the final verification below.
 - M1 TypeScript checks and 11 report-flow frontend tests passed.
-- M2: 101 affected import/registry/monitoring/refresh/dashboard tests passed, 936 assertions; Pint and PHPStan passed. Includes atomic projection failure/replay and guarded duplicate upgrade. Migration has not been applied to the operational database.
+- M2: 101 affected import/registry/monitoring/refresh/dashboard tests passed, 936 assertions; Pint and PHPStan passed. Includes atomic projection failure/replay and guarded duplicate upgrade. The scoped local migration was subsequently applied as recorded below.
 - M3: 89 identity/monitoring/alias/reapplication PHP tests passed, 654 assertions; PHPStan/Pint passed. 33 relevant frontend tests and both TypeScript projects passed. Covers sender typos, sparse refresh, late conflicting ownership, marketplace labels and historical alias correction.
 - M4: 19 focused backend tests passed, 121 assertions; disposable MySQL concurrent-claim test passed (one claim wins, one is rejected). 134 affected identity/pickup/handover regression tests passed, 1,089 assertions, before the additional history/rollback cases. PHPStan/Pint/TypeScript and production build passed.
 - Chromium exercised actual staff capture and Admin post-closure correction/audit against a disposable SQLite application at 390px and 1280px. One browser test passed, seven PHP assertions plus browser checks; no browser runtime errors. A discovered small-screen overflow was corrected and the test rerun. Synthetic screenshots are under ignored `storage/app/private/jne-reconciliation-ui`.
 - Four scoped migrations were applied to the local MySQL database after the 6,900-row/6,900-normalized-AWB preflight passed: registry uniqueness, candidate/event evidence, cashless claim/events, and persistent Sertim closure with history backfill. No report was submitted, schedule enabled, live customer attribution rebuilt or POP quantity changed.
+- M5: 49 reconciliation/monitoring/Sertim tests passed, 335 assertions; both TypeScript projects and Pint passed. Vanny 100 CSS + 3 cashless, delayed data/replay, excess/effective POP revision, and retained ambiguous/wrong-customer pickup pointers covered. Production build and actual Chromium reconciliation page at 390px passed with no root overflow or runtime errors.
 
 ## Business decisions and limitations
 
@@ -37,5 +38,6 @@ See `business-rules.md` B1–B8. Questions were sent during discovery. No busine
 - `169fd69` — M1 stored Hybrid integrity and safe recovery increment.
 - `06268f5` — M2 global AWB registry and guarded uniqueness upgrade.
 - `9580a2e` — M3 historical identity evidence and non-authoritative typo candidates.
+- `c9c343d` — M4 cashless Sertim, backend authority and audited Admin corrections.
 
 Each completed milestone or clearly bounded safe increment is committed separately. Remaining references and final validation will be recorded here as work proceeds.

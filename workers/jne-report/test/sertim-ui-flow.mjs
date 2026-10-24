@@ -113,6 +113,22 @@ try {
         path: path.join(artifacts, 'sertim-admin-390.png'),
     });
     assert.deepEqual(errors, []);
+    await admin.page.goto(base + '/admin/jne-monitoring/reconciliation');
+    await admin.page
+        .getByRole('heading', { name: 'Rekonsiliasi POP & AWB' })
+        .waitFor();
+    await admin.page
+        .getByRole('cell', { name: 'CSS / Orion', exact: true })
+        .waitFor();
+    await admin.page.screenshot({
+        path: path.join(artifacts, 'pop-reconciliation-390.png'),
+        fullPage: true,
+    });
+    assert.ok(
+        await admin.page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+    );
     process.stdout.write('SERTIM_CHROMIUM_UI_OK\n');
 } finally {
     await browser.close();

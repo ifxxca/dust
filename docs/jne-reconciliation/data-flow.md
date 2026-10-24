@@ -31,7 +31,9 @@ M2 adds a unique `jne_shipments.awb` constraint. The old account/AWB index remai
 
 Hybrid outputs may finish at different times. The parent waits; saved children survive another child's failure. Safe local import/projection replay reuses stored data. Unknown external Process outcomes remain attention states and are not blindly resubmitted. Multi-batch APEX intermediate recovery is not currently durable and remains an explicit limitation.
 
-The Sertim-to-registry and category-reconciliation parts are target boundaries, not a claim of completed implementation. Business gates are listed in `business-rules.md`.
+Sertim evidence now participates in registry matching and the existing reconciliation page shows effective POP expectations for all three categories. Only uncontested collected AWBs matched to both the claim customer and pickup count as confirmed cashless. Manual/CSS classification and external collection completion remain gated by `business-rules.md`.
+
+`BuildJnePickupReconciliation` batches the category view using `QueryCashlessReconciliation`; it excludes retained ambiguous or wrong-customer pickup pointers from confirmed counts. Other confidently linked AWBs remain unclassified. Expected quantity uses the latest authorized POP revision without changing the original. `shortfall_quantity` is provisional, `missing_quantity` remains null, and `reconciled`/`collection_complete` remain false while the external completeness rule is unknown. Sertim closure is displayed separately.
 
 ## Sertim API contract (M4)
 

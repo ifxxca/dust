@@ -25,14 +25,41 @@ type Row = {
     difference: number;
     state: string;
     comparison_ready: boolean;
+    pop_reconciliation?: {
+        confirmed_pickup_awbs: number;
+        category_confirmed_awbs: number;
+        unclassified_awbs: number;
+        sertim_window: string;
+        categories: Record<
+            string,
+            {
+                expected_quantity: number | null;
+                confirmed_awbs: number;
+                identified_awbs: number;
+                candidate_awbs: number;
+                conflicts: number;
+                shortfall_quantity: number | null;
+                excess_quantity: number | null;
+                state: string;
+            }
+        >;
+    };
 };
 
 const states: Record<string, string> = {
-    NO_BASELINE: 'Penerimaan belum tersedia',
-    BASELINE_REVIEW: 'Baseline perlu diperiksa',
-    MISMATCH: 'Jumlah berbeda',
-    MATCHED_COUNTS: 'Jumlah cocok',
+    AWAITING_POP: 'POP belum final',
+    CONFLICT: 'Bukti bertentangan',
+    EXCESS: 'Bukti melebihi POP',
+    CATEGORY_EVIDENCE_REQUIRED: 'Perlu bukti kategori',
+    IDENTIFIED_COUNTS:
+        'Jumlah bukti sesuai POP · kelengkapan report belum disahkan',
+    AWAITING_EVIDENCE: 'Menunggu bukti / report',
 };
+const categories = [
+    ['manual_hybrid', 'Manual'],
+    ['cashless_hybrid', 'Cashless'],
+    ['css_orion', 'CSS / Orion'],
+] as const;
 
 export default function JneReconciliation({
     pickups,
@@ -51,23 +78,23 @@ export default function JneReconciliation({
     const form = useForm({ q: filters.q });
     return (
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
-            <Head title="Perbandingan paket & AWB" />
-            <h1 className="text-2xl font-semibold">Perbandingan paket & AWB</h1>
+            <Head title="Rekonsiliasi POP & AWB" />
+            <h1 className="text-2xl font-semibold">Rekonsiliasi POP & AWB</h1>
             <p className="text-sm text-muted-foreground">
-                Perbandingan baru bermakna setelah AWB terhubung ke pickup
-                melalui referensi yang dapat diverifikasi. Tanpa hubungan
-                tersebut, selisih belum dapat dinilai dan bukan bukti paket
-                hilang. Bandingkan deklarasi pemrosesan efektif dengan AWB unik
-                yang terhubung. Jumlah cocok tidak otomatis menutup selisih
-                POP/retail atau membuktikan alokasi per kategori; koreksi tetap
-                memakai alur operasional yang ada.
+                Bandingkan POP efektif per kategori dengan AWB yang customer,
+                pickup dan buktinya dapat diverifikasi. Jumlah total yang sama
+                tidak membuktikan kategori. Kekurangan masih sementara sampai
+                kelengkapan pengumpulan report dapat dipastikan.
             </p>
             <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
                 <p className="text-sm font-medium">Syarat perbandingan</p>
                 <p className="text-sm text-muted-foreground">
-                    POP sudah final, customer dikenali, dan referensi JNE cocok
-                    dengan referensi pickup yang dapat diverifikasi. Nama atau
-                    tanggal yang mirip tidak cukup untuk menghubungkan AWB.
+                    Bukti Sertim dapat menetapkan Cashless. AWB lain tetap
+                    menunggu bukti kategori yang sah; prefix dan account tidak
+                    menetapkan kategori atau pemilik. Jendela Sertim yang
+                    ditutup tidak menandakan Hybrid/APEX selesai. Perbandingan
+                    jumlah tidak otomatis menutup selisih POP atau verifikasi
+                    Retail.
                 </p>
                 {linkage && (
                     <p className="text-sm">
@@ -117,10 +144,11 @@ export default function JneReconciliation({
                             <TableRow>
                                 {[
                                     'Pickup / customer',
-                                    'Diterima retail',
-                                    'Deklarasi berhasil',
-                                    'AWB terhubung',
-                                    'Selisih deklarasi − AWB',
+                                    'Kategori',
+                                    'POP efektif',
+                                    'AWB terkonfirmasi',
+                                    'Kurang sementara',
+                                    'Lebih',
                                     'Pemeriksaan',
                                 ].map((label) => (
                                     <TableHead key={label}>{label}</TableHead>
@@ -128,40 +156,110 @@ export default function JneReconciliation({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {pickups.data.map((row) => (
-                                <TableRow key={row.id}>
-                                    <TableCell>
-                                        <Link
-                                            className="underline"
-                                            href={pickupDetail.url(row.id)}
-                                        >
-                                            {row.reference}
-                                        </Link>
-                                        <p>{row.customer_name}</p>
-                                    </TableCell>
-                                    <TableCell>
-                                        {row.received_quantity ?? '—'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {row.declared_successful}
-                                    </TableCell>
-                                    <TableCell>{row.matched_awbs}</TableCell>
-                                    <TableCell>
-                                        {row.comparison_ready
-                                            ? row.difference
-                                            : '—'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {row.comparison_ready
-                                            ? states[row.state]
-                                            : 'Belum ada AWB terhubung'}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {pickups.data.flatMap((row) =>
+                                categories.map(([category, label], index) => {
+                                    const result =
+                                        row.pop_reconciliation?.categories[
+                                            category
+                                        ];
+                                    return (
+                                        <TableRow key={row.id + '-' + category}>
+                                            {index === 0 && (
+                                                <TableCell
+                                                    rowSpan={3}
+                                                    className="min-w-52 whitespace-normal"
+                                                >
+                                                    <Link
+                                                        className="underline"
+                                                        href={pickupDetail.url(
+                                                            row.id,
+                                                        )}
+                                                    >
+                                                        {row.reference}
+                                                    </Link>
+                                                    <p>{row.customer_name}</p>
+                                                    <p className="mt-2 text-xs text-muted-foreground">
+                                                        {row.pop_reconciliation
+                                                            ?.confirmed_pickup_awbs ??
+                                                            row.matched_awbs}{' '}
+                                                        AWB terhubung ·{' '}
+                                                        {row.pop_reconciliation
+                                                            ?.unclassified_awbs ??
+                                                            0}{' '}
+                                                        belum punya bukti
+                                                        kategori
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Sertim:{' '}
+                                                        {row.pop_reconciliation
+                                                            ?.sertim_window ===
+                                                        'CLOSED'
+                                                            ? 'Ditutup'
+                                                            : 'Terbuka'}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Diterima Retail:{' '}
+                                                        {row.received_quantity ??
+                                                            'Belum diverifikasi'}{' '}
+                                                        · Deklarasi berhasil:{' '}
+                                                        {
+                                                            row.declared_successful
+                                                        }
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-muted-foreground">
+                                                        {row.state ===
+                                                        'NO_BASELINE'
+                                                            ? 'Baseline Retail belum tersedia.'
+                                                            : row.state ===
+                                                                'BASELINE_REVIEW'
+                                                              ? 'Baseline POP berubah; periksa deklarasi pemrosesan.'
+                                                              : !row.comparison_ready
+                                                                ? 'Belum ada AWB terhubung; ini bukan bukti paket hilang.'
+                                                                : row.state ===
+                                                                    'MATCHED_COUNTS'
+                                                                  ? 'Jumlah cocok dengan deklarasi; bukti kategori tetap diperiksa.'
+                                                                  : 'Jumlah berbeda dari deklarasi; periksa bukti dan kelengkapan report.'}
+                                                    </p>
+                                                </TableCell>
+                                            )}
+                                            <TableCell>{label}</TableCell>
+                                            <TableCell>
+                                                {result?.expected_quantity ??
+                                                    '—'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {result?.confirmed_awbs ?? 0}
+                                                <p className="text-xs text-muted-foreground">
+                                                    {result?.identified_awbs ??
+                                                        0}{' '}
+                                                    bukti ·{' '}
+                                                    {result?.candidate_awbs ??
+                                                        0}{' '}
+                                                    kandidat ·{' '}
+                                                    {result?.conflicts ?? 0}{' '}
+                                                    konflik
+                                                </p>
+                                            </TableCell>
+                                            <TableCell>
+                                                {result?.shortfall_quantity ??
+                                                    '—'}
+                                            </TableCell>
+                                            <TableCell>
+                                                {result?.excess_quantity ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="max-w-64 whitespace-normal">
+                                                {result
+                                                    ? states[result.state]
+                                                    : 'Menunggu bukti kategori'}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                }),
+                            )}
                             {pickups.data.length === 0 && (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={6}
+                                        colSpan={7}
                                         className="py-8 text-center text-muted-foreground"
                                     >
                                         Tidak ada pickup yang sesuai.

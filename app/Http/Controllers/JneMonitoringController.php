@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Pickup\QueryPackageProcessing;
+use App\Actions\Reports\BuildJnePickupReconciliation;
 use App\Actions\Reports\MatchJneShipments;
 use App\Actions\Reports\QueryActiveJneAwbs;
 use App\Http\Requests\BulkJneReportProfileRequest;
@@ -10,6 +11,7 @@ use App\Jobs\ImportJneReportAwbs;
 use App\Models\Customer;
 use App\Models\JneReportProfile;
 use App\Models\JneShipment;
+use App\Models\PickupTask;
 use App\Models\ReportJob;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -235,7 +237,7 @@ class JneMonitoringController extends Controller
         return $request->boolean('return_to_report') ? to_route('jne-reports.awbs', $reportJob) : to_route('jne-monitoring.profiles');
     }
 
-    public function reconciliation(Request $request, QueryPackageProcessing $processing): Response
+    public function reconciliation(Request $request, QueryPackageProcessing $processing, BuildJnePickupReconciliation $pop): Response
     {
         $this->authorizeAdmin($request);
         $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
@@ -243,15 +245,18 @@ class JneMonitoringController extends Controller
         $grouped = DB::query()->fromSub($records, 'p')->select(['id', 'reference', 'customer_name'])
             ->selectRaw('sum(manual_quantity) as declared_successful, sum(received_quantity) as received_quantity, min(case when received_quantity is null then 0 else 1 end) as has_baseline, max(reconciliation_required) as baseline_review')
             ->groupBy('id', 'reference', 'customer_name')->orderByDesc('id')->paginate(30)->withQueryString();
-        $counts = JneShipment::whereIn('pickup_task_id', $grouped->getCollection()->pluck('id'))->where('match_status', 'MATCHED')->selectRaw('pickup_task_id, count(*) as total')->groupBy('pickup_task_id')->pluck('total', 'pickup_task_id');
+        $popResults = $pop->handle(PickupTask::whereIn('id', $grouped->getCollection()->pluck('id'))->with('proof.revisions')->get());
+        $counts = collect($popResults)->map(fn (array $result): int => $result['confirmed_pickup_awbs']);
 
-        $coverage = JneShipment::selectRaw("count(*) as total, sum(case when match_status = 'MATCHED' and pickup_task_id is not null then 1 else 0 end) as linked")->first();
+        $coverage = JneShipment::leftJoin('pickup_tasks as p', 'p.id', '=', 'jne_shipments.pickup_task_id')
+            ->selectRaw("count(*) as total, sum(case when match_status = 'MATCHED' and customer_match_status = 'MATCHED' and jne_shipments.customer_id = p.customer_id then 1 else 0 end) as linked")->first();
 
         return Inertia::render('jne-reconciliation', [
             'linkage' => ['total' => (int) $coverage->getAttribute('total'), 'linked' => (int) $coverage->getAttribute('linked')],
             'pickups' => $grouped->through(fn ($row): array => [...(array) $row, 'declared_successful' => (int) $row->declared_successful,
                 'received_quantity' => $row->has_baseline ? (int) $row->received_quantity : null,
                 'comparison_ready' => (int) ($counts[$row->id] ?? 0) > 0,
+                'pop_reconciliation' => $popResults[$row->id],
                 'matched_awbs' => (int) ($counts[$row->id] ?? 0), 'difference' => (int) $row->declared_successful - (int) ($counts[$row->id] ?? 0),
                 'state' => ! $row->has_baseline ? 'NO_BASELINE' : ($row->baseline_review ? 'BASELINE_REVIEW' : ((int) $row->declared_successful === (int) ($counts[$row->id] ?? 0) ? 'MATCHED_COUNTS' : 'MISMATCH'))]),
             'filters' => ['q' => $data['q'] ?? ''],

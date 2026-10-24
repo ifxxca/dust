@@ -17,7 +17,7 @@ All new tests use synthetic data. No destructive test or Process submission targ
 | Import fails halfway | `JneReportAwbImportTest`: DB error rolls back rows; retry from original checksum-verified file |
 | Late APEX result | `CombinedHybridReportTest`/worker fixtures: wait for correlated delayed result; source rows retained; no extra Process click |
 | Older tracking observation | `JneMonitoringTest`: history retained, current status does not regress by observation order |
-| Equal quantity, ambiguous ownership | Reference/alias tests prevent guessing; category-aware reconciliation still missing |
+| Equal quantity, ambiguous ownership | `JnePopReconciliationTest`: retained ambiguous/wrong-customer pointers excluded; Vanny 103 total links do not prove 100 CSS classifications |
 | Alias corrected after match | `JneMonitoringFlowTest`, `JneShipperAliasTest`: resumable reapplication, conflict with old pickup, manual decision retained |
 
 ## Validation commands
