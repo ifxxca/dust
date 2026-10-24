@@ -10,6 +10,7 @@ use App\Http\Controllers\JneShipperAliasController;
 use App\Http\Controllers\OperationalCorrectionController;
 use App\Http\Controllers\OperationalDashboardController;
 use App\Http\Controllers\OperationalUserController;
+use App\Http\Controllers\PickupCashlessAwbController;
 use App\Http\Controllers\PickupExecutionController;
 use App\Http\Controllers\PickupLifecycleController;
 use App\Http\Controllers\PickupNotificationController;
@@ -121,6 +122,10 @@ Route::middleware('auth')->group(function (): void {
     })->whereNumber('task')->name('operations');
 
     Route::prefix('api/v1')->name('api.')->group(function (): void {
+        Route::get('pickup-tasks/{task}/cashless-awbs', [PickupCashlessAwbController::class, 'index'])->whereNumber('task')->name('cashless-awbs.index');
+        Route::get('pickup-tasks/{task}/cashless-awbs/{evidence}/history', [PickupCashlessAwbController::class, 'history'])->whereNumber(['task', 'evidence'])->name('cashless-awbs.history');
+        Route::post('pickup-tasks/{task}/cashless-awbs', [PickupCashlessAwbController::class, 'store'])->whereNumber('task')->middleware('throttle:120,1')->name('cashless-awbs.store');
+        Route::post('pickup-tasks/{task}/cashless-awbs/corrections', [PickupCashlessAwbController::class, 'correct'])->whereNumber('task')->middleware('throttle:60,1')->name('cashless-awbs.correct');
         Route::get('pickup-notifications', [PickupNotificationController::class, 'index'])->name('pickup-notifications.index');
         Route::patch('pickup-notifications/read', [PickupNotificationController::class, 'update'])->name('pickup-notifications.update');
         Route::get('admin/push-test/devices', [AdminPushTestController::class, 'index'])->name('push-test.devices');

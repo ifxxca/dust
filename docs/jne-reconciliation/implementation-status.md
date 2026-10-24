@@ -8,7 +8,7 @@ Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`
 | M1 | Safe integrity increment implemented and tested; operational acceptance partial | Missing/corrupt originals stop combination; identical authorized reupload restores originals; Admin rechecks without recollection. B1/B2 operator acceptance and durable APEX batch checkpointing unresolved |
 | M2 | Registry increment implemented; source contracts partial | Unique normalized AWB registry across accounts; all original report rows/observations preserved; upgrade blocks historical duplicates. Sparse identity handling follows in M3; code/category fields remain unverified |
 | M3 | Safe identity increment implemented; code/scope gates remain | Historical exact evidence retained separately from tracking chronology; conflicting owners flagged; typo suggestions stored/displayed without assignment; source/alias IDs audited. Code field and scoped aliases still need B3/B4 |
-| M4 | Verified rules; implementation pending | BR-SERTIM-01–04 confirmed: Admin-only audited corrections; closure at first handover close, no implicit reopening; late imports allowed |
+| M4 | Complete for initial web workflow | BR-SERTIM-01–04 enforced by backend policy/action; assigned staff capture before finalization; Admin-only audited correction/add/revoke; persistent first closure; late import/re-evaluation; pickup and handover UI with paginated audit history |
 | M5 | Partial / business gate | Current total declaration comparison; B6 categories/B7 collection closure required |
 | M6 | Partial | Existing alias/report/manual reference review; full evidence exception workflow pending |
 | M7 | Partial | Existing refresh profile and stale observation guard; policy refinements pending |
@@ -23,7 +23,9 @@ Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`
 - M1 TypeScript checks and 11 report-flow frontend tests passed.
 - M2: 101 affected import/registry/monitoring/refresh/dashboard tests passed, 936 assertions; Pint and PHPStan passed. Includes atomic projection failure/replay and guarded duplicate upgrade. Migration has not been applied to the operational database.
 - M3: 89 identity/monitoring/alias/reapplication PHP tests passed, 654 assertions; PHPStan/Pint passed. 33 relevant frontend tests and both TypeScript projects passed. Covers sender typos, sparse refresh, late conflicting ownership, marketplace labels and historical alias correction.
-- No schema changes or live data migrations have been applied by this work at this point.
+- M4: 19 focused backend tests passed, 121 assertions; disposable MySQL concurrent-claim test passed (one claim wins, one is rejected). 134 affected identity/pickup/handover regression tests passed, 1,089 assertions, before the additional history/rollback cases. PHPStan/Pint/TypeScript and production build passed.
+- Chromium exercised actual staff capture and Admin post-closure correction/audit against a disposable SQLite application at 390px and 1280px. One browser test passed, seven PHP assertions plus browser checks; no browser runtime errors. A discovered small-screen overflow was corrected and the test rerun. Synthetic screenshots are under ignored `storage/app/private/jne-reconciliation-ui`.
+- Four scoped migrations were applied to the local MySQL database after the 6,900-row/6,900-normalized-AWB preflight passed: registry uniqueness, candidate/event evidence, cashless claim/events, and persistent Sertim closure with history backfill. No report was submitted, schedule enabled, live customer attribution rebuilt or POP quantity changed.
 
 ## Business decisions and limitations
 
@@ -34,5 +36,6 @@ See `business-rules.md` B1–B8. Questions were sent during discovery. No busine
 - `323c402` — M0 discovery, implementation matrix and roadmap.
 - `169fd69` — M1 stored Hybrid integrity and safe recovery increment.
 - `06268f5` — M2 global AWB registry and guarded uniqueness upgrade.
+- `9580a2e` — M3 historical identity evidence and non-authoritative typo candidates.
 
 Each completed milestone or clearly bounded safe increment is committed separately. Remaining references and final validation will be recorded here as work proceeds.

@@ -67,4 +67,11 @@ class PickupTask extends Model
     {
         return $this->hasOne(HandoverItem::class);
     }
+
+    public function sertimWindowClosed(): bool
+    {
+        $sessionId = $this->handoverItem()->value('handover_session_id');
+
+        return $sessionId !== null && HandoverSession::whereKey($sessionId)->where(fn ($query) => $query->whereNotNull('sertim_closed_at')->orWhere('status', 'CLOSED'))->exists();
+    }
 }

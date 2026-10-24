@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { EmptyState, StatusBadge } from '@/components/operational-ui';
+import PickupCashlessAwbs from '@/components/pickup-cashless-awbs';
 import OperationalChange, {
     RecordedValues,
 } from '@/components/operational-change';
@@ -728,6 +729,11 @@ export default function HandoverSessionDetail({
                                     </Link>
                                 </Button>
                             </div>
+                            <PickupCashlessAwbs
+                                key={selected.task_id}
+                                taskId={selected.task_id}
+                                timezone={timezone}
+                            />
                             {selected.status === 'PENDING' &&
                             session.can?.verify &&
                             session.status !== 'CLOSED' ? (

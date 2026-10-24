@@ -32,6 +32,7 @@ class HandoverResource extends JsonResource
                 return $item->status !== 'PENDING' && ! $item->needsReview() && ($values['status'] !== 'DISCREPANCY' || filled($values['discrepancy_notes']));
             })),
             'created_by' => $this->created_by, 'closed_by' => $this->closed_by, 'closed_at' => $this->closed_at,
+            'sertim_closed_at' => $this->sertim_closed_at,
             'creator' => $this->whenLoaded('creator', fn () => $this->creator?->only(['id', 'name'])),
             'verification_started_at' => $this->verification_started_at, 'created_at' => $this->created_at,
             'staff_names' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => $item->task->assignedStaff?->name)->filter()->unique()->values()),

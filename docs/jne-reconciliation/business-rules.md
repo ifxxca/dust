@@ -41,3 +41,7 @@ Operator decisions BR-SERTIM-01 through BR-SERTIM-04 supersede provisional corre
 - Corrected AWBs are normalized/validated; both old and replacement matches are safely re-evaluated. Source evidence and historical audit remain. Unrelated customers/pickups and physical verification remain unchanged.
 
 This closes the Sertim-window part of B7. It does **not** establish when all external shipment collection is complete: a closed scan window is not proof that every Hybrid/APEX report has arrived. Missing-quantity finality remains gated by that separate decision.
+
+Implemented in M4: initial capture is append-only for the assigned executing operator before POP finalization. All replacements, revocations and late additions use the explicit Admin correction endpoint with a reason and version check. Current active AWB claims are globally unique; duplicate claims are rejected without changing either customer. Corrections never create permanent alias rules. The original input and complete event history remain, including before/after matching and cashless reconciliation snapshots. Only affected old/replacement AWBs are re-evaluated.
+
+The initial interface is the existing responsive web pickup wizard, task detail and handover detail. Text/barcode keyboard input is supported. No new native camera scanner, offline cashless submission queue or native-mobile correction UI is claimed. Existing mobile pickup/handover behavior and permissions remain unchanged.

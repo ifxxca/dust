@@ -2,10 +2,12 @@
 
 namespace App\Actions\Reports;
 
+use App\Models\Customer;
 use App\Models\JneReportAwb;
 use App\Models\JneShipment;
 use App\Models\JneShipmentMatchEvent;
 use App\Models\JneShipperAlias;
+use App\Models\PickupCashlessAwb;
 use App\Models\PickupProcessingRecord;
 use App\Models\PickupTask;
 use App\Models\User;
@@ -89,12 +91,34 @@ class MatchJneShipments
             }
         }
         $matches = [];
+        $claims = PickupCashlessAwb::whereIn('awb', $sources->pluck('awb'))->get()->keyBy('awb');
+        $claimTasks = PickupTask::whereIn('id', $claims->pluck('pickup_task_id'))->pluck('customer_id', 'id');
+        $activeCustomers = Customer::whereIn('id', $claims->pluck('customer_id'))->where('is_active', true)->pluck('id')->all();
         foreach ($sources as $source) {
             $customer = $resolved[$source->id];
             $pickupIds = [];
             if ($customer['status'] === 'MATCHED') {
                 foreach ($byAwb->get($source->awb, collect([$source])) as $row) {
                     $pickupIds = [...$pickupIds, ...($candidates[$customer['customer_id']][mb_strtoupper(trim($row->reference ?? ''))] ?? [])];
+                }
+            }
+            $claim = $claims->get($source->awb);
+            if ($claim) {
+                $customer['evidence'][] = ['sertim_id' => $claim->id, 'sertim_version' => $claim->version, 'customer_id' => $claim->customer_id, 'pickup_task_id' => $claim->pickup_task_id];
+                if ($claimTasks->get($claim->pickup_task_id) !== $claim->customer_id || ! in_array($claim->customer_id, $activeCustomers, true)
+                    || in_array($customer['status'], ['AMBIGUOUS', 'CONFLICT'], true)
+                    || ($customer['customer_id'] !== null && $customer['customer_id'] !== $claim->customer_id)) {
+                    $customer['customer_id'] = null;
+                    $customer['status'] = 'CONFLICT';
+                    $customer['note'] = 'Bukti AWB Sertim bertentangan dengan pemetaan customer atau data pickup.';
+                    $pickupIds = [];
+                } else {
+                    $customer['customer_id'] = $claim->customer_id;
+                    $customer['status'] = 'MATCHED';
+                    $customer['method'] = 'SERTIM';
+                    $customer['note'] = 'AWB dicatat pada Sertim Cashless pickup ini; tidak ada bukti customer yang bertentangan.';
+                    $customer['candidates'] = [];
+                    $pickupIds[] = $claim->pickup_task_id;
                 }
             }
             $matches[$source->id] = [...$customer, 'pickups' => array_values(array_unique($pickupIds))];
@@ -106,21 +130,33 @@ class MatchJneShipments
     /** @param array<int, array{customer_id: ?int, status: string, method: string, note: string, pickups: list<int>, candidates: list<array<string, mixed>>, evidence: list<array<string, mixed>>}> $candidates */
     public function automatic(JneShipment $shipment, JneReportAwb $source, array $candidates): void
     {
+        $customer = $candidates[$source->id];
         if ($shipment->match_method === 'MANUAL') {
+            $claimConflict = $customer['method'] === 'SERTIM' && ($customer['customer_id'] !== $shipment->customer_id || $customer['pickups'] !== [$shipment->pickup_task_id]);
+            if ($claimConflict || $customer['status'] === 'CONFLICT') {
+                if ($shipment->match_status !== 'CONFLICT' || $shipment->customer_match_status !== 'CONFLICT') {
+                    $oldCustomerId = $shipment->customer_id;
+                    $shipment->fill(['customer_match_status' => 'CONFLICT', 'customer_match_note' => 'Bukti terbaru bertentangan dengan keputusan manual. Periksa tanpa mengganti hubungan secara otomatis.']);
+                    $this->record($shipment, $shipment->pickup_task_id, 'CONFLICT', 'MANUAL', null, $shipment->customer_match_note, $oldCustomerId, $customer['evidence']);
+                }
+            }
+
             return;
         }
-        $customer = $candidates[$source->id];
         $ids = $customer['pickups'];
         $status = in_array($customer['status'], ['AMBIGUOUS', 'CONFLICT'], true) ? $customer['status'] : (count($ids) === 1 ? 'MATCHED' : (count($ids) > 1 ? 'AMBIGUOUS' : 'UNMATCHED'));
         $taskId = count($ids) === 1 ? $ids[0] : null;
-        $note = $status === 'MATCHED' ? 'Referensi sama persis dan customer sesuai nama pengirim.'
+        if ($customer['method'] === 'SERTIM' && count($ids) > 1) {
+            $status = 'CONFLICT';
+        }
+        $note = $status === 'MATCHED' ? ($customer['method'] === 'SERTIM' ? 'AWB sesuai bukti Sertim Cashless untuk customer dan pickup ini.' : 'Referensi sama persis dan customer sesuai nama pengirim.')
             : ($status === 'AMBIGUOUS' ? 'Referensi cocok dengan lebih dari satu pickup; perlu pemeriksaan Admin.' : 'Customer dikenali, tetapi belum ada referensi pickup yang cocok.');
-        if ($shipment->pickup_task_id && $shipment->pickup_task_id !== $taskId) {
+        if ($shipment->pickup_task_id && $shipment->pickup_task_id !== $taskId && $shipment->match_method !== 'SERTIM') {
             $status = $status === 'CONFLICT' ? 'CONFLICT' : 'AMBIGUOUS';
             $taskId = $shipment->pickup_task_id;
             $note = 'Referensi atau pemetaan terbaru berbeda dari hubungan pickup sebelumnya. Perlu keputusan Admin.';
         }
-        $linkedCustomerId = $shipment->pickup?->customer_id;
+        $linkedCustomerId = $taskId === $shipment->pickup_task_id ? $shipment->pickup?->customer_id : null;
         if ($linkedCustomerId && $linkedCustomerId !== $customer['customer_id']) {
             $customer['customer_id'] = $linkedCustomerId;
             $customer['status'] = $customer['status'] === 'CONFLICT' ? 'CONFLICT' : 'AMBIGUOUS';
@@ -143,7 +179,7 @@ class MatchJneShipments
 
             return;
         }
-        $this->record($shipment, $taskId, $status, 'REFERENCE', null, $note, $oldCustomerId, $customer['evidence']);
+        $this->record($shipment, $taskId, $status, $customer['method'] === 'SERTIM' ? 'SERTIM' : 'REFERENCE', null, $note, $oldCustomerId, $customer['evidence']);
     }
 
     public function manual(User $actor, int $id, ?string $reference, int $version, string $reason): void

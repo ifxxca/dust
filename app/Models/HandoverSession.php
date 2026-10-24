@@ -17,7 +17,7 @@ class HandoverSession extends Model
 
     protected function casts(): array
     {
-        return ['version' => 'integer', 'closed_at' => 'immutable_datetime', 'verification_started_at' => 'immutable_datetime'];
+        return ['version' => 'integer', 'closed_at' => 'immutable_datetime', 'sertim_closed_at' => 'immutable_datetime', 'verification_started_at' => 'immutable_datetime'];
     }
 
     /** @return HasMany<HandoverItem, $this> */

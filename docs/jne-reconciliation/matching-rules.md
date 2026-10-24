@@ -30,3 +30,9 @@ Current candidate details are stored in `jne_shipments.customer_match_candidates
 Marketplace names such as Shopee International or Tokopedia do not establish Retail identity by themselves. A spelling resemblance must not turn such a name into an owner. Any future permanent mapping must be an explicit scoped decision, separate from a one-AWB correction.
 
 Category confidence must be independent of customer/pickup confidence. A matched reference does not establish Manual/Cashless/CSS. Quantities are comparison results, never matching evidence.
+
+## Implemented explicit AWB evidence (M4)
+
+An active Sertim Cashless claim for the exact normalized AWB may resolve its registered task/customer even when the shipper is a marketplace label. Conflicting registered customer evidence or inconsistent claim ownership produces CONFLICT. Explicit evidence never overrides contradictory verified evidence silently. A conflicting claim against a manual decision flags the decision for review while preserving its linked IDs.
+
+Corrections re-evaluate both removed and replacement AWBs in the same transaction as the evidence/audit write. A revoked Sertim-only link is removed when no other verified evidence supports it. Manual decisions are not silently replaced. Independent aliases/references may still support an old AWB after revocation; such results remain explainable in the audit snapshot. No shipment registry row is invented by a scan before JNE data arrives.

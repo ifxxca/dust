@@ -23,6 +23,7 @@ import {
 import { StatusBadge } from '@/components/operational-ui';
 import OperationalChange from '@/components/operational-change';
 import PickupProof, { type Proof } from '@/components/pickup-proof';
+import PickupCashlessAwbs from '@/components/pickup-cashless-awbs';
 import { type Visit } from '@/components/pickup-execution';
 import { handover, operations } from '@/routes';
 import * as api from '@/routes/api/tasks';
@@ -604,6 +605,7 @@ export default function PickupDetail({
                     )}
                 </section>
             </div>
+            <PickupCashlessAwbs taskId={task.id} timezone={timezone} />
             <div className="flex flex-wrap gap-2">
                 {task.previous_task_id && (
                     <Button asChild variant="outline">

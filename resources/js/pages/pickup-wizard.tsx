@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select';
 import { EmptyState, StatusBadge } from '@/components/operational-ui';
 import SignaturePad from '@/components/signature-pad';
+import PickupCashlessAwbs from '@/components/pickup-cashless-awbs';
 import { type Visit } from '@/components/pickup-execution';
 import { type Proof } from '@/components/pickup-proof';
 import { operations } from '@/routes';
@@ -672,6 +673,10 @@ export default function PickupWizard({
                                     ))}
                                 {step === 1 && (
                                     <>
+                                        <PickupCashlessAwbs
+                                            taskId={taskId}
+                                            timezone={timezone}
+                                        />
                                         <p className="text-sm text-muted-foreground">
                                             Catat paket yang diambil per
                                             kategori. Perpindahan langkah belum
