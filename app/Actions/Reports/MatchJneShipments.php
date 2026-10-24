@@ -67,7 +67,8 @@ class MatchJneShipments
             }
             $resolved[$source->id] = $customer;
         }
-        $customerIds = array_values(array_unique(array_filter(array_column($resolved, 'customer_id'))));
+        $claims = PickupCashlessAwb::whereIn('awb', $sources->pluck('awb'))->get()->keyBy('awb');
+        $customerIds = collect(array_column($resolved, 'customer_id'))->merge($claims->pluck('customer_id'))->filter()->unique()->values()->all();
         $references = $history->pluck('reference')->filter()->map(fn (string $reference): string => mb_strtoupper(trim($reference)))->unique()->values()->all();
         $candidates = [];
         foreach (array_chunk($references, 500) as $chunk) {
@@ -91,17 +92,11 @@ class MatchJneShipments
             }
         }
         $matches = [];
-        $claims = PickupCashlessAwb::whereIn('awb', $sources->pluck('awb'))->get()->keyBy('awb');
         $claimTasks = PickupTask::whereIn('id', $claims->pluck('pickup_task_id'))->pluck('customer_id', 'id');
         $activeCustomers = Customer::whereIn('id', $claims->pluck('customer_id'))->where('is_active', true)->pluck('id')->all();
         foreach ($sources as $source) {
             $customer = $resolved[$source->id];
             $pickupIds = [];
-            if ($customer['status'] === 'MATCHED') {
-                foreach ($byAwb->get($source->awb, collect([$source])) as $row) {
-                    $pickupIds = [...$pickupIds, ...($candidates[$customer['customer_id']][mb_strtoupper(trim($row->reference ?? ''))] ?? [])];
-                }
-            }
             $claim = $claims->get($source->awb);
             if ($claim) {
                 $customer['evidence'][] = ['sertim_id' => $claim->id, 'sertim_version' => $claim->version, 'customer_id' => $claim->customer_id, 'pickup_task_id' => $claim->pickup_task_id];
@@ -119,6 +114,15 @@ class MatchJneShipments
                     $customer['note'] = 'AWB dicatat pada Sertim Cashless pickup ini; tidak ada bukti customer yang bertentangan.';
                     $customer['candidates'] = [];
                     $pickupIds[] = $claim->pickup_task_id;
+                }
+            }
+            if ($customer['status'] === 'MATCHED') {
+                foreach ($byAwb->get($source->awb, collect([$source])) as $row) {
+                    $referenceIds = $candidates[$customer['customer_id']][mb_strtoupper(trim($row->reference ?? ''))] ?? [];
+                    $pickupIds = [...$pickupIds, ...$referenceIds];
+                    if ($referenceIds !== []) {
+                        $customer['evidence'][] = ['source_id' => $row->id, 'reference' => $row->reference, 'pickup_task_ids' => array_values(array_unique($referenceIds))];
+                    }
                 }
             }
             $matches[$source->id] = [...$customer, 'pickups' => array_values(array_unique($pickupIds))];
@@ -150,7 +154,8 @@ class MatchJneShipments
             $status = 'CONFLICT';
         }
         $note = $status === 'MATCHED' ? ($customer['method'] === 'SERTIM' ? 'AWB sesuai bukti Sertim Cashless untuk customer dan pickup ini.' : 'Referensi sama persis dan customer sesuai nama pengirim.')
-            : ($status === 'AMBIGUOUS' ? 'Referensi cocok dengan lebih dari satu pickup; perlu pemeriksaan Admin.' : 'Customer dikenali, tetapi belum ada referensi pickup yang cocok.');
+            : ($status === 'CONFLICT' ? 'Bukti Sertim dan referensi report menunjuk pickup berbeda; perlu pemeriksaan Admin.'
+                : ($status === 'AMBIGUOUS' ? 'Referensi cocok dengan lebih dari satu pickup; perlu pemeriksaan Admin.' : 'Customer dikenali, tetapi belum ada referensi pickup yang cocok.'));
         if ($shipment->pickup_task_id && $shipment->pickup_task_id !== $taskId && $shipment->match_method !== 'SERTIM') {
             $status = $status === 'CONFLICT' ? 'CONFLICT' : 'AMBIGUOUS';
             $taskId = $shipment->pickup_task_id;

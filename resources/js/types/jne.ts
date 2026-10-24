@@ -15,6 +15,17 @@ export type JneCustomerCandidate = {
     distance: number;
 };
 
+export type JneMatchEvidence = {
+    source_id?: number;
+    alias_id?: number;
+    customer_id?: number;
+    sertim_id?: number;
+    sertim_version?: number;
+    pickup_task_id?: number;
+    reference?: string;
+    pickup_task_ids?: number[];
+};
+
 export type JneShipment = {
     id: number;
     awb: string;
@@ -102,6 +113,9 @@ export type JneDetail = {
         awb_cancel: string | null;
         report_job_id: number;
         source_row: number;
+        shipper_name?: string | null;
+        customer_account?: string | null;
+        reference?: string | null;
     }>;
     timezone: string;
 };

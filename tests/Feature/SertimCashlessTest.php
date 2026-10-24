@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
 
 function sertimTask(string $role = 'pickup_staff'): array
 {
@@ -69,6 +70,29 @@ test('assigned executing staff record normalized cashless AWBs idempotently with
     $this->assertDatabaseCount('jne_shipments', 0);
     $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $id, 'original_awb' => 'cgk0001', 'customer_id' => $task->customer_id]);
     $this->getJson(route('api.cashless-awbs.index', $task))->assertOk()->assertJsonPath('reconciliation.awaiting_source_awbs', 1)->assertJsonPath('reconciliation.missing_quantity', null);
+});
+
+test('Sertim establishes marketplace customer identity but a different verified pickup reference remains a conflict', function () {
+    $this->withoutVite();
+    Storage::fake('jne_reports');
+    [$staff, $task] = sertimTask();
+    sertimEntry($staff, $task, 'CONFLICTING_PICKUP');
+    sertimClose($task);
+    $other = PickupTask::factory()->create(['customer_id' => $task->customer_id, 'status' => 'PICKED_UP']);
+    PickupRecord::factory()->create(['pickup_task_id' => $other->id]);
+    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME,NOREF\nCONFLICTING_PICKUP,SHARED,Shopee International,".$other->reference."\n");
+
+    $shipment = JneShipment::where('awb', 'CONFLICTING_PICKUP')->sole();
+    expect($shipment->customer_id)->toBe($task->customer_id)->and($shipment->customer_match_status)->toBe('MATCHED');
+    expect($shipment->pickup_task_id)->toBeNull()->and($shipment->match_status)->toBe('CONFLICT');
+    $this->assertDatabaseCount('pickup_cashless_awbs', 1);
+    $this->actingAs(User::factory()->create(['role' => 'admin_supervisor']))->getJson(route('api.cashless-awbs.index', $task))
+        ->assertOk()->assertJsonPath('reconciliation.confirmed_awbs', 0)->assertJsonPath('reconciliation.conflicts', 1);
+    $this->get(route('jne-monitoring.show', $shipment))->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->where('history.data.0.shipper_name', 'Shopee International')->where('history.data.0.reference', $other->reference)
+        ->where('matchHistory.0.customer_match_status', 'MATCHED')->where('matchHistory.0.match_status', 'CONFLICT')
+        ->where('matchHistory.0.evidence.0.sertim_id', PickupCashlessAwb::sole()->id)
+        ->where('matchHistory.0.evidence.1.pickup_task_ids', [$other->id]));
 });
 
 test('pickup and retail staff cannot add or correct evidence after POP finalization at either API or service boundary', function (string $role) {

@@ -1,7 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
 import JneCustomerCandidates from '@/components/jne-customer-candidates';
-import type { JneCustomerCandidate, JneDetail } from '@/types/jne';
+import type {
+    JneCustomerCandidate,
+    JneDetail,
+    JneMatchEvidence,
+} from '@/types/jne';
 import PageContainer from '@/components/page-container';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -66,6 +70,9 @@ type Observation = {
     awb_cancel: string | null;
     report_job_id: number;
     source_row: number;
+    shipper_name?: string | null;
+    customer_account?: string | null;
+    reference?: string | null;
 };
 type MatchEvent = {
     id: number;
@@ -76,6 +83,10 @@ type MatchEvent = {
     actor_name: string | null;
     pickup_reference: string | null;
     previous_pickup_reference: string | null;
+    previous_customer_id?: number | null;
+    customer_id?: number | null;
+    customer_match_status?: string;
+    evidence?: JneMatchEvidence[] | null;
 };
 export default function JneShipment({
     shipment,
@@ -288,6 +299,82 @@ export default function JneShipment({
                                         {matchLabels[event.match_status]}
                                     </p>
                                     <p>{event.reason}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Customer #
+                                        {event.previous_customer_id ?? '—'} → #
+                                        {event.customer_id ?? '—'} ·{' '}
+                                        {event.customer_match_status
+                                            ? matchLabels[
+                                                  event.customer_match_status
+                                              ]
+                                            : '—'}
+                                    </p>
+                                    {event.evidence &&
+                                        event.evidence.length > 0 && (
+                                            <ul className="mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground">
+                                                {event.evidence.map(
+                                                    (evidence, index) => (
+                                                        <li key={index}>
+                                                            {evidence.source_id && (
+                                                                <>
+                                                                    Baris sumber
+                                                                    #
+                                                                    {
+                                                                        evidence.source_id
+                                                                    }{' '}
+                                                                    ·{' '}
+                                                                </>
+                                                            )}
+                                                            {evidence.alias_id && (
+                                                                <>
+                                                                    Alias
+                                                                    terdaftar #
+                                                                    {
+                                                                        evidence.alias_id
+                                                                    }{' '}
+                                                                    · Customer #
+                                                                    {
+                                                                        evidence.customer_id
+                                                                    }
+                                                                </>
+                                                            )}
+                                                            {evidence.sertim_id && (
+                                                                <>
+                                                                    Sertim #
+                                                                    {
+                                                                        evidence.sertim_id
+                                                                    }{' '}
+                                                                    revisi{' '}
+                                                                    {
+                                                                        evidence.sertim_version
+                                                                    }{' '}
+                                                                    · Customer #
+                                                                    {
+                                                                        evidence.customer_id
+                                                                    }{' '}
+                                                                    · Pickup #
+                                                                    {
+                                                                        evidence.pickup_task_id
+                                                                    }
+                                                                </>
+                                                            )}
+                                                            {evidence.reference && (
+                                                                <>
+                                                                    Referensi{' '}
+                                                                    {
+                                                                        evidence.reference
+                                                                    }{' '}
+                                                                    · Pickup #
+                                                                    {evidence.pickup_task_ids?.join(
+                                                                        ', #',
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </li>
+                                                    ),
+                                                )}
+                                            </ul>
+                                        )}
                                 </div>
                             ))}
                             {matchHistory.length === 0 && (
@@ -347,6 +434,12 @@ export default function JneShipment({
                                             #{item.report_job_id}
                                         </Link>{' '}
                                         · baris {item.source_row}
+                                        <p className="max-w-64 text-xs whitespace-normal text-muted-foreground">
+                                            Account:{' '}
+                                            {item.customer_account || '—'} ·
+                                            Pengirim: {item.shipper_name || '—'}{' '}
+                                            · Referensi: {item.reference || '—'}
+                                        </p>
                                     </TableCell>
                                     <TableCell>
                                         {item.changes_current

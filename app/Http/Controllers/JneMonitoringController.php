@@ -11,6 +11,7 @@ use App\Jobs\ImportJneReportAwbs;
 use App\Models\Customer;
 use App\Models\JneReportProfile;
 use App\Models\JneShipment;
+use App\Models\JneShipmentMatchEvent;
 use App\Models\PickupTask;
 use App\Models\ReportJob;
 use Carbon\CarbonImmutable;
@@ -80,7 +81,7 @@ class JneMonitoringController extends Controller
         $refreshAttempt = ReportJob::where('source', 'apex')->where('report_type', 'unresolved')->whereJsonContains('parameters->awbs', $record->awb)->latest('id')->first();
         $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
         $history = DB::table('jne_shipment_observations as h')->join('jne_report_awbs as a', 'a.id', '=', 'h.jne_report_awb_id')
-            ->where('h.jne_shipment_id', $record->id)->select(['h.id', 'h.observed_at', 'h.tracking_status', 'h.changes_current', 'a.status_web', 'a.status_pod', 'a.awb_cancel', 'a.report_job_id', 'a.source_row'])
+            ->where('h.jne_shipment_id', $record->id)->select(['h.id', 'h.observed_at', 'h.tracking_status', 'h.changes_current', 'a.status_web', 'a.status_pod', 'a.awb_cancel', 'a.report_job_id', 'a.source_row', 'a.shipper_name', 'a.customer_account', 'a.reference'])
             ->orderByDesc('h.observed_at')->orderByDesc('h.id')->paginate(50)->withQueryString()
             ->through(fn ($item): array => [...(array) $item, 'observed_at' => CarbonImmutable::parse($item->observed_at, 'UTC')->toIso8601String(), 'changes_current' => (bool) $item->changes_current]);
 
@@ -94,10 +95,10 @@ class JneMonitoringController extends Controller
                 'last_refresh_attempt' => $refreshAttempt ? [...$refreshAttempt->only(['id', 'status', 'error_message', 'import_error', 'projection_error']), 'stage' => $refreshAttempt->workflowStage(), 'requested_at' => $refreshAttempt->created_at->toIso8601String()] : null,
                 'pickup_customer' => $record->pickup?->customer_name_snapshot, 'source' => $record->latestSource?->only(['report_job_id', 'source_row', 'reference', 'shipper_name', 'consignee_name', 'status_web', 'status_pod', 'awb_cancel', 'raw_data'])],
             'history' => $history,
-            'matchHistory' => DB::table('jne_shipment_match_events as e')->leftJoin('users as u', 'u.id', '=', 'e.actor_id')
+            'matchHistory' => JneShipmentMatchEvent::from('jne_shipment_match_events as e')->leftJoin('users as u', 'u.id', '=', 'e.actor_id')
                 ->leftJoin('pickup_tasks as p', 'p.id', '=', 'e.pickup_task_id')->leftJoin('pickup_tasks as old', 'old.id', '=', 'e.previous_pickup_task_id')
                 ->where('e.jne_shipment_id', $record->id)->orderByDesc('e.id')->limit(50)
-                ->get(['e.id', 'e.method', 'e.match_status', 'e.reason', 'e.created_at', 'u.name as actor_name', 'p.reference as pickup_reference', 'old.reference as previous_pickup_reference']),
+                ->get(['e.id', 'e.method', 'e.match_status', 'e.reason', 'e.evidence', 'e.previous_customer_id', 'e.customer_id', 'e.customer_match_status', 'e.created_at', 'u.name as actor_name', 'p.reference as pickup_reference', 'old.reference as previous_pickup_reference']),
             'timezone' => config('pickup.timezone'),
         ]);
     }

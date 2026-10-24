@@ -246,6 +246,11 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                                     POD: {row.status_pod || '—'}
                                     <br />
                                     Pembatalan: {row.awb_cancel || '—'}
+                                    <br />
+                                    Pengirim: {row.shipper_name || '—'} ·
+                                    Account: {row.customer_account || '—'}
+                                    <br />
+                                    Referensi: {row.reference || '—'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     Report #{row.report_job_id} · Baris{' '}
