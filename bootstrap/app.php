@@ -3,11 +3,14 @@
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
+use Inertia\ExceptionResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -31,7 +34,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
-        $exceptions->respond(function (Response $response): Response {
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request): Response {
+            if ($response->getStatusCode() === 404
+                && in_array($request->method(), ['GET', 'HEAD'], true)
+                && ! $request->is('api/*')
+                && ! $request->expectsJson()) {
+                return (new ExceptionResponse($exception, $request, $response, app(Router::class), app(Kernel::class)))
+                    ->render('errors/not-found')
+                    ->withSharedData()
+                    ->toResponse($request);
+            }
+
             if (! (request()->is('api/*') || (request()->routeIs('login.store', 'logout') && request()->expectsJson())) || $response->getStatusCode() < 400) {
                 return $response;
             }

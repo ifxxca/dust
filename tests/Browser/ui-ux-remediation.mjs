@@ -443,3 +443,159 @@ check(
         return motion;
     },
 );
+
+check(
+    'wave 3 customer URL restores search status pagination and browser history',
+    async (page) => {
+        await visit(page, '/operations/customers?page=2');
+        await page.waitForTimeout(450);
+        assert.equal(new URL(page.url()).searchParams.get('page'), '2');
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        assert.equal(new URL(page.url()).searchParams.get('page'), '2');
+        await page
+            .getByRole('button', { name: 'Halaman sebelumnya', exact: true })
+            .click();
+        await page.waitForURL((url) => !url.searchParams.has('page'));
+        await page.goBack();
+        await page.waitForURL((url) => url.searchParams.get('page') === '2');
+        await page.goForward();
+        await page.waitForURL((url) => !url.searchParams.has('page'));
+        const search = page.getByRole('textbox', {
+            name: 'Cari customer',
+            exact: true,
+        });
+        await search.fill('Customer Audit 2');
+        await page.waitForURL(
+            (url) => url.searchParams.get('q') === 'Customer Audit 2',
+        );
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        assert.equal(await search.inputValue(), 'Customer Audit 2');
+        await page
+            .getByRole('combobox', {
+                name: 'Filter status customer',
+                exact: true,
+            })
+            .click();
+        await page
+            .getByRole('option', { name: 'Nonaktif', exact: true })
+            .click();
+        await page.waitForURL(
+            (url) => url.searchParams.get('status') === 'inactive',
+        );
+        await page.goBack();
+        await page.waitForURL((url) => !url.searchParams.has('status'));
+        assert.equal(await search.inputValue(), 'Customer Audit 2');
+        await page.goForward();
+        await page.waitForURL(
+            (url) => url.searchParams.get('status') === 'inactive',
+        );
+        assert.equal(await search.inputValue(), 'Customer Audit 2');
+        await page
+            .getByRole('button', { name: 'Reset Filter', exact: true })
+            .click();
+        await page.waitForURL((url) => url.search === '');
+        assert.equal(await search.inputValue(), '');
+        await visit(page, '/operations/customers?page=999');
+        await page.waitForURL((url) => url.searchParams.get('page') === '2');
+        return {
+            restoredSearch: true,
+            restoredPage: 2,
+            history: true,
+            clampedOutOfRangePage: true,
+        };
+    },
+);
+
+check(
+    'wave 3 customer validation and settings use Indonesian',
+    async (page) => {
+        await visit(page, '/operations/customers');
+        await page
+            .getByRole('button', { name: 'Tambah Customer', exact: true })
+            .click();
+        await page.locator('#customer-name').fill('Validasi bahasa');
+        await page.locator('#customer-pickup_address').fill('Alamat fixture');
+        await page
+            .getByRole('button', { name: 'Simpan Customer', exact: true })
+            .click();
+        const error = page.locator('#customer-contact-error');
+        await error.waitFor();
+        await page.screenshot({
+            path: path.join(evidence, 'wave-3-customer-validation-id.png'),
+            fullPage: true,
+            animations: 'disabled',
+        });
+        assert.equal(
+            await error.innerText(),
+            'Isi minimal satu email, nomor telepon, atau kontak utama pickup.',
+        );
+        // A full document visit leaves only the invalid local form; no record was created.
+        await visit(page, '/settings/profile');
+        await page
+            .getByRole('heading', { name: 'Pengaturan', exact: true })
+            .waitFor();
+        await page
+            .getByRole('button', { name: 'Simpan', exact: true })
+            .waitFor();
+        await visit(page, '/settings/security');
+        if (new URL(page.url()).pathname === '/user/confirm-password') {
+            await page.locator('input[name=password]').fill('password');
+            await page.locator('[data-test=confirm-password-button]').click();
+            await page.waitForURL(
+                (url) => url.pathname === '/settings/security',
+            );
+        }
+        await page
+            .getByRole('heading', { name: 'Ubah kata sandi', exact: true })
+            .waitFor();
+    },
+);
+
+check(
+    'wave 3 password recovery copy and 404 recovery remain usable',
+    async (page) => {
+        await page.context().clearCookies();
+        await visit(page, '/forgot-password');
+        await page
+            .getByRole('button', {
+                name: 'Kirim tautan atur ulang',
+                exact: true,
+            })
+            .waitFor();
+        await visit(
+            page,
+            '/reset-password/INVALID_UI_UX_TOKEN?email=fixture%40example.test',
+        );
+        await page
+            .getByRole('button', { name: 'Atur ulang kata sandi', exact: true })
+            .waitFor();
+        const response = await visit(page, '/ui-ux-missing-page');
+        assert.equal(response.status(), 404);
+        await page.screenshot({
+            path: path.join(evidence, 'wave-3-404-recovery.png'),
+            fullPage: true,
+            animations: 'disabled',
+        });
+        await page
+            .getByRole('heading', {
+                name: 'Halaman tidak ditemukan',
+                exact: true,
+            })
+            .waitFor();
+        const recovery = page.getByRole('link', {
+            name: 'Kembali ke dashboard',
+            exact: true,
+        });
+        assert.equal(await recovery.getAttribute('href'), '/dashboard');
+        await recovery.click();
+        await page.waitForURL((url) => url.pathname === '/login');
+        assert.equal(
+            await page
+                .getByRole('textbox', { name: 'Alamat email', exact: true })
+                .count(),
+            1,
+        );
+    },
+);

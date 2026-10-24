@@ -28,8 +28,6 @@ Checks completed:
 
 The before-fix reproduction used the fresh baseline bundle and confirmed the audit scenarios in an isolated SQLite application. Browser infrastructure initially lacked a process-level SQLite driver; enabling the already-installed PDO SQLite extension for that process resolved it. Artisan's test child process did not inherit the flag, so the successful PHP run uses the direct Pest runner with the extension enabled. These setup failures are not represented as application regressions.
 
-## Reproducible browser checks
-
 ## Wave 2 — Accessibility
 
 Commit subject: `fix(ui): resolve wave 2 accessibility issues`. Wave 1 commit: `458808d`.
@@ -46,6 +44,22 @@ Commit subject: `fix(ui): resolve wave 2 accessibility issues`. Wave 1 commit: `
 Component paths above are under `resources/js/components/`. Existing `DataTable` and operational workflow contracts are unchanged.
 
 Checks: 3 frontend files / 11 tests passed; PickupMonitoringWorkspace and OperationalDashboardAnalytics: 10 PHP tests / 264 assertions passed; web/mobile TypeScript, build and targeted lint passed. Six browser checks passed: [results](remediation/wave-2/browser-results.json). A first theme-persistence check incorrectly reset localStorage on every navigation; the fixture initialization now only supplies a default to empty storage. Browser checks also exposed the sidebar slot and focus-return cases; both were corrected and the six-check run repeated successfully before committing.
+
+## Reproducible browser checks
+
+## Wave 3 — Workflow consistency
+
+Commit subject: `fix(ui): resolve wave 3 workflow consistency`. Wave 2 commit: `4c33ca5`.
+
+| Issue | Status | Fix and changed files | Verification | Remaining limitations |
+| --- | --- | --- | --- | --- |
+| UI-05 | Fixed | `resources/js/pages/customers.tsx`, `lib/customer-list-navigation.ts`: URL owns query/status/page; debounced search replaces history, explicit page/status/reset changes push history; out-of-range page canonicalized | Browser checks direct page 2, reload, previous/back/forward, query reload, status history, reset, page 999 clamp; helper regression tests | Scope is the documented customer defect; other lists retain their existing workflow-specific behavior |
+| UI-06 | Fixed | Auth recovery/confirmation/verification, settings/profile/security/appearance, delete confirmation, shared close/sidebar text; `lang/id/*`; request-scoped locale in `HandleInertiaRequests.php` | Actual contact 422 and failed login use Indonesian; settings/recovery browser checks; original process locale restored; user-modified login/password components preserved | Translation assets cover these workflows and common validation messages; third-party/external free text may remain in its source language; delivery/native devices not tested |
+| UI-12 | Fixed | `resources/js/pages/errors/not-found.tsx`, resolver `resources/js/app.tsx`, existing `bootstrap/app.php` responder: useful HTML/Inertia 404 with known named recovery routes | Guest/missing shipment HTML remain 404; JSON 404/code/envelope preserved; guest dashboard recovery reaches login; [404 screenshot](remediation/wave-3/wave-3-404-recovery.png) | Only HTML GET/HEAD 404 is customized; existing 403/500 and API behavior retained |
+
+Checks: 3 frontend files / 5 tests passed; UiUxRemediation, CustomerManagement and ProfileUpdate: 40 PHP tests / 248 assertions passed; web/mobile TypeScript, build, targeted lint and Pint passed. Three browser scenarios passed: [results](remediation/wave-3/browser-results.json).
+
+An initial standalone Inertia exception callback replaced the existing JSON responder and was rejected by regression tests. The final implementation adds the HTML-only branch inside the original responder, retaining machine-readable error codes/envelopes and existing conflict responses. No route, permission, validation rule or worker locale default was changed.
 
 ## Reproducible browser checks
 
