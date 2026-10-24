@@ -1,49 +1,54 @@
 # Scenario coverage
 
-All new tests use synthetic data. No destructive test or Process submission targets live JNE. Existing tests use SQLite or disposable MySQL and local Chromium fixtures.
+Updated 25 October 2026. All engineering scenarios use synthetic data and disposable SQLite/MySQL/local Hybrid/APEX browser fixtures. No destructive test or Process submission targets live JNE.
 
-| Required scenario | Existing coverage / gap |
-|---|---|
-| Vanny: 100 CSS + 3 cashless + 0 manual | `JnePopReconciliationTest`: 103 individually linked AWBs, 3 confirmed cashless, 100 unclassified; Manual expectation zero. CSS category and external completion remain gated, never inferred from the total |
-| Shared account, several customers | `JneShipperAliasTest`, `HybridApexPipelineTest`: separate alias ownership, real returned accounts, unresolved names stay unresolved |
-| Multiple names for one customer | `JneShipperAliasTest`: many aliases, exact normalization, disabled aliases |
-| Registered 4000A/4000B aliases | Missing code-alias model/verified source field; no prefix inference permitted |
-| 400O instead of 4000 | Candidate-only requirement; code field B3 unresolved |
-| Misspelled shipper name | `JneIdentityEvidenceTest`: Vany Songket, Vanny Sngket and punctuation produce bounded candidates without confirmed customer/pickup |
-| Marketplace shipper gives no identity | `JneIdentityEvidenceTest`, `SertimCashlessTest`: marketplace aliases alone cannot establish identity; uncontested explicit AWB evidence can |
-| Sertim AWB arrives later via Hybrid | `SertimCashlessTest`, `JnePopReconciliationTest`: claims persist before import; late data matches after closure without modifying POP or closure |
-| Same AWB in multiple reports | `JneAwbRegistryTest`, import/monitoring tests: one normalized registry AWB across accounts, multiple original rows/observations; guarded upgrade refuses historical duplicates |
-| Two customers claim one AWB | `SertimCashlessTest`, `SertimCashlessConcurrencyTest`: duplicate claims rejected, concurrent MySQL writers cannot both win; contradictory registered ownership flagged |
-| Import fails halfway | `JneReportAwbImportTest`: DB error rolls back rows; retry from original checksum-verified file |
-| Late APEX result | `CombinedHybridReportTest`/worker fixtures: wait for correlated delayed result; source rows retained; no extra Process click |
-| Older tracking observation | `JneMonitoringTest`: history retained, current status does not regress by observation order |
-| Equal quantity, ambiguous ownership | `JnePopReconciliationTest`: retained ambiguous/wrong-customer pointers excluded; Vanny 103 total links do not prove 100 CSS classifications |
-| Alias corrected after match | `JneMonitoringFlowTest`, `JneShipperAliasTest`: resumable reapplication, conflict with old pickup, manual decision retained |
+## Required business scenarios
 
-Additional regressions cover Admin-only post-POP/closure correction (API and service), required reasons, optimistic versions and payload replay, before/after audit, transaction rollback including matching, persisted closure across handover reopen and legacy history backfill. A same-customer report reference conflicting with Sertim leaves customer MATCHED but pickup CONFLICT, with both evidence sources visible for review.
+| # | Scenario | Positive and false-positive protection | Executable evidence |
+|---|---|---|---|
+| 1 | Vanny 100 CSS + 3 Cashless + 0 Manual | Separate customer/pickup/category confidence; requires explicit completeness; equal counts with uncertain pointers stay REVIEW | JneConfiguredReconciliationTest, JnePopReconciliationTest |
+| 2 | Account shared by customers | Verified code/alias/Sertim evidence resolves individually; account-only row has no owner | JneConfiguredIdentityTest, JneShipperAliasTest |
+| 3 | Multiple sender names | Registered aliases resolve; conflicting owners across reports remain conflict | JneIdentityEvidenceTest, JneShipperAliasTest |
+| 4 | Registered 4000A/4000B | Exact verified aliases match 4000 customer; 4000C prefix alone does not | JneConfiguredIdentityTest |
+| 5 | 400O/400OB typo | Candidate suggestions only, originals unchanged | JneConfiguredIdentityTest |
+| 6 | Misspelled shipper | Bounded candidates, no confirmed ownership/pickup | JneIdentityEvidenceTest, jne-customer-candidates.test.tsx |
+| 7 | Marketplace identity absent | Tokopedia/Shopee alone do not resolve; uncontested explicit Sertim may | SertimCashlessTest, JneConfiguredIdentityTest |
+| 8 | Sertim before delayed Hybrid | No registry shipment invented by scan; late source matches after close | SertimCashlessTest |
+| 9 | Same AWB in multiple reports | One canonical registry row across accounts; source rows/observations retained | JneAwbRegistryTest, JneSourceEvidenceTest |
+| 10 | Two customer claims | Global active-AWB uniqueness and transactional rollback; contradictory source evidence flagged | SertimCashlessConcurrencyTest, SertimCashlessTest, JneConfiguredIdentityTest |
+| 11 | Halfway import failure | Atomic import/retry, checksum idempotency and no duplicate AWBs | JneReportAwbImportTest |
+| 12 | APEX arrives late | Saved successful sources retained; exact-set final import; old/unknown later source invalidates completeness | CombinedHybridReportTest, HybridApexPipelineTest, ApexBatchRecoveryTest, JneConfiguredReconciliationTest |
+| 13 | Older tracking refresh | Newer status retained; receipt distinguished; duplicate times do not confirm terminal status | JneRefreshPolicyTest, JneConfiguredRefreshPolicyTest, JneMonitoringTest |
+| 14 | Equal POP counts, ambiguous identity | Uncertain/wrong-owner pointers excluded and final reconciliation blocked | JnePopReconciliationTest, JneConfiguredReconciliationTest, JneOperationalVisibilityTest |
+| 15 | Corrected alias after matching | Fenced replay; contrary historical evidence and reviewed result flagged; sources unchanged | JneIdentityEvidenceTest, JneExceptionReviewTest, JneConfiguredIdentityTest |
 
-`JneRefreshPolicyTest` verifies new/due/fresh selection, interval floors, recently received old observations, explicit manual refresh, pending/failed guards, empty cycles and exact-AWB errors without external calls. `JneConfidenceMonitoringTest` verifies that candidate/conflict/retained ambiguous pointers never count as confirmed ownership and mismatched pickup customers never count as confirmed pickups. Summary denominators follow the applied list filters.
+## Additional implementation acceptance
 
-`SertimCashlessBrowserTest` uses the existing Node/Playwright runtime and a disposable SQLite Laravel server. It exercises staff entry, Admin correction/history, reconciliation, monitoring confidence, shipment evidence and customer dashboard filtering at 390px and 1280px. Screenshots remain ignored local artifacts. Native Android smoke testing remains separate and requires its existing emulator opt-in.
+- Durable APEX: stable start UUID, exact AWB/checksum validation, saved-batch reuse, uncertain replay blocked, active Admin reasoned restore/no-submission review. Node restart fixture uses 6,001 AWBs and avoids repeating batch one.
+- Verified configuration: activation disabled by default, nullable code column, draft verification in place, stale version rejection, superseded contract blocked, account/date scope with missing/invalid entry date.
+- Category/collection: configured literal and Hybrid-origin evidence, conflicting process categories, required report completeness, failed reports/roles/versions/request UUIDs, late rows from older jobs and new unowned required-scope AWBs.
+- Sertim: staff correction after final POP denied, Retail after closure denied, Admin reason/audit permitted, normal closed entry denied, late import/reconciliation allowed, duplicate/foreign claim rejected, reopen latch persistent and finalized POP unchanged.
+- Exception review: mixed/stale/unauthorized batches fail atomically, equivalent decisions audited, unchanged replay preserved, changed evidence conflicts, category override and explicit release do not rewrite source cells or create aliases.
+- Tracking: configured status intervals/receipt floors, new/risk ordering, source hours, bounded failure backoff, no uncertain external retry, consecutive distinct terminal observations and transition reset.
+- Visibility: applied shipment filters, multiple source observations versus AWB grain, strict actual customer/pickup agreement, nullable unconfigured categories, separately labeled global failures/pending Sertim and policy gates.
+- Actual Chromium: existing staff pickup, Admin correction/audit, verified/draft alias forms, external OPEN/COMPLETE attestation, equivalent review, inactive tracking draft, detail/customer scope and responsive 390/1280 views.
 
-## Validation commands
+## Verification commands
 
-On this host SQLite extensions must be enabled explicitly:
+On this Windows host run PHP with SQLite extensions enabled. The complete suite also uses its existing Git OpenSSL configuration only for the process.
 
-```powershell
-php -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest --compact <affected test paths>
-php vendor/bin/phpstan analyse --no-progress --error-format=raw
-php vendor/bin/pint --dirty --format agent
-npm test --prefix workers/jne-report
-```
+- php -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest --compact [affected paths]
+- Set process OPENSSL_CONF to C:/Program Files/Git/usr/ssl/openssl.cnf; then run the same command without paths for the complete suite.
+- php vendor/bin/pint --dirty --format agent
+- php vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+- npm exec -- vp test run [JNE frontend test paths]
+- npm run types:check
+- npm run build
+- npm test --prefix workers/jne-report
+- php -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest --compact tests/Feature/SertimCashlessBrowserTest.php
 
-The complete suite was also run successfully on this Windows host with its existing OpenSSL configuration supplied to the test process:
+Current results and exact commit references are in implementation-status.md. The final frozen full suite supersedes an earlier run that overlapped a browser-fixture extension. Five pre-existing opt-in device/disabled-feature cases are skipped, never presented as passed.
 
-```powershell
-$env:OPENSSL_CONF = 'C:/Program Files/Git/usr/ssl/openssl.cnf'
-php -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest --compact
-```
+Final engineering result: 756 PHP tests passed, five skipped, 7,067 assertions; 89 JNE frontend tests and 75 worker tests passed. PHPStan, Pint, both TypeScript projects, production build and complete responsive Chromium fixture passed. All six new operational gates remain false and the five continuation migrations remain pending.
 
-Result: 732 passed, five skipped, 6,887 assertions. Without that local setting, 13 existing mocked-push tests fail during OpenSSL fixture-key generation. This is a CLI runtime requirement on this host; no repository dependency or system configuration was changed.
-
-When frontend changes are made, also run the relevant frontend test files, `npm run types:check`, the production build and browser verification. See `implementation-status.md` for results. Before release, the operator should rerun the full application suite in the target environment with `php artisan test --compact`; the local pass does not replace environment-specific validation.
+Run php artisan test --compact in the target UAT/release environment as well. Real report samples, source semantics, policy decisions and operator acceptance belong to uat-plan.md; fixtures establish engineering behavior, not operational certification.

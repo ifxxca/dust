@@ -1,5 +1,26 @@
 # Data flow and evidence boundaries
 
+## Current implementation-first flow — 25 October 2026
+
+The continuation below supersedes older partial-delivery statements. New technical paths are gated off by default.
+
+1. Four Hybrid children retain original CSVs/checksums and exact AWB membership. Merge produces a deduplicated headerless CRLF file. Optional durable APEX checkpoints distinguish PLANNED, uncertain STARTED and validated SAVED batches. Resume reuses saved results; only audited Admin evidence resolves uncertain submissions.
+2. Final standardized import preserves raw cells/provenance and projects one canonical AWB plus independent status observations. Optional source contracts name exact original standardized CSV headers; no account-to-code transformation is guessed. Hybrid process/checksum origins remain attached.
+3. Historical code/alias/shipper/Sertim evidence resolves customer separately from exact finalized pickup references. Configured category evidence is a separate projection; candidates/conflicts never become confirmed to balance quantities.
+4. Existing Sertim authorization and first-close latch remain enforced. Late import/review never reopens handover or updates finalized POP.
+5. External collection attestation records a verified required-source contract, selected ready reports, cutoff, Admin scope check, source high-water mark and POP/Sertim fingerprints. New required-scope evidence or changed snapshots invalidate completeness to REVIEW. Reconciliation always rechecks current confidence and effective POP.
+6. Human review writes existing match events with actor/reason, original decision and before/after affected AWB. Batches require equivalent source/context fingerprint and current versions. Permanent mapping registration is separate. Changed evidence flags reviewed identity; explicit release re-evaluates sources.
+7. Tracking remains a separate unresolved-report profile. Verified optional policy selects due/priority/SLA/terminal-confirmation behavior while receipt floors, source slots, leases, idempotent batches and uncertainty review remain. Older snapshots never regress newer status.
+
+| Admin session/CSRF route | Current contract |
+|---|---|
+| GET/POST /admin/jne-monitoring/collections/{pickupTask} | Active Admin; version, UUID, reason, OPEN/COMPLETE. COMPLETE requires verified contract, ready report IDs, past cutoff and explicit scope attestation. Identical requests replay; altered/stale submissions conflict |
+| GET/POST /admin/jne-monitoring/exceptions | Active Admin; max 100 ID/version pairs, equivalent server group key, reason and CONFIRM/RELEASE. Optional customer/finalized pickup/category decisions; contrary Sertim rejected |
+| POST /admin/jne-monitoring/evidence-rules/activate | Active Admin; kind/id/version/reason and gate. Verifies existing draft; rejects superseded contract; audited fenced replay |
+| GET /admin/jne-monitoring/refresh-policies; POST /admin/jne-monitoring/refresh-policies/{profile} | Active Admin; current profile version, validated definition, verification and reason. Saves policy/audit without enabling schedule |
+
+Laravel feature tests are executable HTTP/service contracts; disposable Chromium exercises actual forms. Invalid, unauthorized and stale/disabled decisions return 422, 403 and 409. Original files/observations and audit remain. Existing local contracts suffice; no Postman workspace, external publication or additional infrastructure was added.
+
 ```mermaid
 flowchart TD
     P[Report profile / administrator request] --> H[Hybrid combined parent run]

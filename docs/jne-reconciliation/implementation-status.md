@@ -120,6 +120,8 @@ This continuation is NOT pushed:
 - 312d13f — M6 equivalent-evidence review/correction.
 - 7d47e2c — M7 verified tracking policy.
 - 27580b4 — draft activation and late/uncertain evidence safeguards.
-- M8 visibility and consolidated UAT documentation: final references recorded after verification.
+- ef8a9c1 — M8 evidence confidence, operational visibility and complete browser workflow verification.
+
+Consolidated UAT documentation is committed separately after the implementation. Refer to this branch's Git log for its documentation commit; no push was performed.
 
 Unrelated pre-existing authentication/welcome UI changes and untracked artifacts remain untouched.

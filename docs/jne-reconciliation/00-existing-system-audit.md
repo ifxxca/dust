@@ -1,5 +1,20 @@
 # M0 — Existing system audit
 
+This is the historical pre-change audit. The continuation on 25 October 2026 inspected current code and MySQL schema again. The following implemented capabilities supersede corresponding original gaps; new continuation migrations remain unapplied to the operational database.
+
+| Capability | Existing | Partial | Missing | Current files / tables / behavior |
+|---|---|---|---|---|
+| Durable APEX recovery | ✓ | | | ManageApexBatches, ApexBatchController, worker-api/hybrid-apex/worker modules; report_job_batches STARTED/SAVED, checksum/exact-AWB reuse and audited uncertainty review |
+| Code/provenance contracts | ✓ | | | ReadJneSourceEvidence, JneSourceContract, JneCustomerCodeAlias; jne_source_contracts, jne_customer_code_aliases and source-row nullable code/evidence; originals retained |
+| Verified identity/scope | ✓ | | | ResolveJneCustomerCodes, JneEvidenceScope, ManageJneEvidenceRules; registered exact codes/aliases, account/date constraints, candidates and audited fenced replay |
+| Category/external completeness | ✓ | | | ResolveJneCategories, BuildJnePickupReconciliation, Manage/QueryJneCollectionWindow; shipment category evidence, jne_collection_windows and jne_reconciliation_events; explicit attestation and late-evidence invalidation |
+| Exception decisions | ✓ | | | ReviewJneExceptions, JneExceptionController, jne-exceptions.tsx; individual/equivalent batch checks, Admin reason/version, match-event ledger, safe release and complete audit pagination |
+| Verified tracking policies | ✓ | | | ManageJneRefreshPolicy, QueryActiveJneAwbs, QueueScheduledJneReports, jne-refresh-policy.tsx; profile refresh_policy and rule-event audit; default disabled with no schedule activation on save |
+| Operational visibility | ✓ | | | JneMonitoringController, jne-operations-summary.tsx, reconciliation/customer pages; filtered confidence/observation grain, separately labeled global failures and pending Sertim, freshness and gates |
+| Real source semantics / operational certification | | ✓ | | B1–B4/B6–B8 remain consolidated UAT/activation gates; no authoritative code/category/terminal rule was guessed |
+
+See current project-roadmap.md, implementation-status.md, uat-plan.md and uat-readiness.md. Original discovery below remains for traceability.
+
 Audited 24 October 2026 against commit `d918714`, before reconciliation changes. This is an extension of the existing application. Read-only MySQL inspection, routes, migrations, actions, controllers, worker code, React pages, and regression tests were used. `.ai/rules` does not exist in this checkout. Unrelated local UI changes and untracked artifacts are outside this work.
 
 ## Architecture actually present
