@@ -1,5 +1,11 @@
 # Implementation status
 
+### M7 continuation — 25 October 2026
+
+Verified refresh-policy drafts and activation gates are implemented on existing unresolved-report profiles. Policies configure per-status intervals, SLA thresholds/intervals, status priority, source hours, terminal confirmation and bounded failure backoff. No default terminal/SLA semantics are introduced. Terminal confirmation counts distinct consecutive chronological observations, never repeated rows or old terminal totals. New/priority/oldest-receipt scheduling preserves concurrency, uncertainty review and profile interval floors. Saving a policy does not enable or reschedule an operational profile.
+
+Validation: 12 policy/legacy/reconciliation tests passed (69 assertions), PHPStan and both TypeScript projects passed. Production build and Chromium draft-policy creation passed on disposable SQLite. Gate and policy remain disabled operationally. Source availability and policy semantics still require consolidated UAT.
+
 ### M6 continuation — 25 October 2026
 
 Admin exception review now supports individual and equivalent-evidence batches (maximum 100) with server-side group/version checks, explicit reasons, original evidence and before/after audit. Human decisions never register permanent mappings implicitly. Active conflicting Sertim must be corrected through the existing audited Sertim workflow. Changed source/mapping evidence flags prior reviewed identity for another decision; release safely replays automatic resolution. Configuration registries and full decision audit are paginated.

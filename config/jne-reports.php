@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'tracking_policies_enabled' => (bool) env('JNE_TRACKING_POLICIES_ENABLED', false),
     'batch_checkpoints_enabled' => (bool) env('JNE_APEX_BATCH_CHECKPOINTS_ENABLED', false),
     'evidence_policies_enabled' => (bool) env('JNE_EVIDENCE_POLICIES_ENABLED', false),
     'source_provenance_enabled' => (bool) env('JNE_SOURCE_EVIDENCE_ENABLED', false),

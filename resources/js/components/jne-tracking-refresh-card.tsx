@@ -23,6 +23,7 @@ import * as monitoring from '@/routes/jne-monitoring';
 import * as runs from '@/routes/report-runs';
 
 export type TrackingRefresh = {
+    policy_active?: boolean;
     active_count: number;
     due_count?: number | null;
     profile: {
@@ -67,7 +68,9 @@ export default function JneTrackingRefreshCard({
                                     {data.active_count.toLocaleString('id-ID')}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
-                                    resi belum delivered/cancel
+                                    {data.policy_active
+                                        ? 'resi memenuhi kebijakan terverifikasi'
+                                        : 'resi belum delivered/cancel'}
                                 </span>
                             </p>
                             {data.due_count != null && (

@@ -137,6 +137,11 @@ try {
         .getByText(/1 AWB memiliki customer terkonfirmasi/)
         .waitFor();
     await confidence.getByText(/1 AWB memiliki pickup terkonfirmasi/).waitFor();
+    await admin.page.getByRole('region', { name: 'Tindak lanjut koleksi dan rekonsiliasi', exact: true }).waitFor();
+    await admin.page.setViewportSize({ width: 1280, height: 900 });
+    await admin.page.screenshot({ path: path.join(artifacts, 'operations-monitoring-1280.png'), fullPage: true });
+    assert.ok(await admin.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await admin.page.setViewportSize({ width: 390, height: 844 });
     await admin.page
         .getByRole('listitem').filter({ hasText: 'SERTIM001' })
         .getByRole('button', { name: 'Detail pengiriman', exact: true })
@@ -236,6 +241,14 @@ try {
     await admin.page.getByRole('button', { name: 'Simpan keputusan review', exact: true }).click();
     await admin.page.getByText('0 AWB memerlukan pemeriksaan', { exact: false }).waitFor();
     await admin.page.screenshot({ path: path.join(artifacts, 'exception-review-390.png'), fullPage: true });
+    assert.deepEqual(errors, []);
+    await admin.page.goto(base + '/admin/jne-monitoring/refresh-policies');
+    await admin.page.getByRole('heading', { name: 'Kebijakan pembaruan tracking', exact: true }).waitFor();
+    await admin.page.getByLabel('Alasan dan bukti kebijakan', { exact: true }).fill('Synthetic browser inactive tracking draft');
+    await admin.page.getByRole('button', { name: 'Simpan kebijakan tracking', exact: true }).click();
+    await admin.page.locator('summary').filter({ hasText: 'Synthetic browser inactive tracking draft' }).waitFor();
+    await admin.page.screenshot({ path: path.join(artifacts, 'refresh-policy-390.png'), fullPage: true });
+    assert.ok(await admin.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     assert.deepEqual(errors, []);
     process.stdout.write('SERTIM_CHROMIUM_UI_OK\n');
 } finally {
