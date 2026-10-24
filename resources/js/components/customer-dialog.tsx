@@ -21,13 +21,22 @@ export default function CustomerDialog({
     onSaved: (customer: CustomerDetails) => void;
 }) {
     const [busy, setBusy] = useState(false);
+    const [dirty, setDirty] = useState(false);
+    const changeOpen = (value: boolean) => {
+        if (busy) return;
+        if (
+            !value &&
+            dirty &&
+            !window.confirm(
+                'Perubahan customer belum disimpan. Buang perubahan?',
+            )
+        ) {
+            return;
+        }
+        onOpenChange(value);
+    };
     return (
-        <Dialog
-            open={open}
-            onOpenChange={(value) => {
-                if (!busy) onOpenChange(value);
-            }}
-        >
+        <Dialog open={open} onOpenChange={changeOpen}>
             <DialogContent
                 className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl"
                 onInteractOutside={(event) => event.preventDefault()}
@@ -53,7 +62,8 @@ export default function CustomerDialog({
                     customer={customer}
                     inDialog
                     onProcessingChange={setBusy}
-                    onCancel={() => onOpenChange(false)}
+                    onDirtyChange={setDirty}
+                    onCancel={() => changeOpen(false)}
                     onSaved={onSaved}
                 />
             </DialogContent>

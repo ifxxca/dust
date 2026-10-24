@@ -1,0 +1,26 @@
+[
+  {
+    "name": "wave 1 contrast primary and active navigation",
+    "status": "passed",
+    "lightPrimary": 5.5,
+    "lightHover": 4.58,
+    "lightNavigation": 4.76,
+    "darkPrimary": 6.78,
+    "darkHover": 5.73,
+    "darkNavigation": 5.36
+  },
+  {
+    "name": "wave 1 protects dirty customer Escape close and cancel",
+    "status": "passed"
+  },
+  {
+    "name": "wave 1 customer 422 focuses visible invalid field and preserves draft",
+    "status": "passed"
+  },
+  {
+    "name": "wave 1 mobile handover opens selected panel and retains quantities",
+    "status": "passed",
+    "tasks": 12,
+    "panelTop": 79.5
+  }
+]
