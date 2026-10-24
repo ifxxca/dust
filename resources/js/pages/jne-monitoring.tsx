@@ -2,6 +2,9 @@ import * as reports from '@/routes/jne-reports';
 import { Head, Link, router, usePoll, useForm } from '@inertiajs/react';
 import { RefreshCw } from 'lucide-react';
 import JneShipmentSummary from '@/components/jne-shipment-summary';
+import JneOperationsSummary, {
+    type JneOperations,
+} from '@/components/jne-operations-summary';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import JneTrackingRefreshCard, {
     type TrackingRefresh,
@@ -21,6 +24,7 @@ import {
 } from '@/lib/jne-monitoring';
 import * as monitoring from '@/routes/jne-monitoring';
 import * as exceptions from '@/routes/jne-exceptions';
+import * as refreshPolicies from '@/routes/jne-refresh';
 import * as evidenceRules from '@/routes/jne-evidence';
 import * as runs from '@/routes/report-runs';
 import type {
@@ -39,6 +43,7 @@ export default function JneMonitoring({
     timezone,
     trackingRefresh,
     identitySummary,
+    operationsSummary,
 }: {
     shipments: JnePage<JneShipment>;
     summary: Record<string, number>;
@@ -48,6 +53,7 @@ export default function JneMonitoring({
     timezone: string;
     trackingRefresh?: TrackingRefresh;
     identitySummary?: Record<string, number>;
+    operationsSummary?: JneOperations;
 }) {
     const refresh = useForm({ profile_id: trackingRefresh?.profile?.id ?? 0 });
     const applied = normalizeJneFilters(filters);
@@ -70,7 +76,13 @@ export default function JneMonitoring({
         return false;
     };
     usePoll(15000, {
-        only: ['shipments', 'summary', 'trackingRefresh', 'identitySummary'],
+        only: [
+            'shipments',
+            'summary',
+            'trackingRefresh',
+            'identitySummary',
+            'operationsSummary',
+        ],
         onSuccess: () => setError(''),
         onNetworkError: networkError,
         onHttpException: (response) => {
@@ -129,12 +141,21 @@ export default function JneMonitoring({
 
     return (
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
+            {operationsSummary && (
+                <JneOperationsSummary data={operationsSummary} />
+            )}
             <Head title="Pengiriman JNE" />
             <Link
                 className="text-sm underline"
                 href={evidenceRules.index.url()}
             >
                 Aturan bukti dan alias kode
+            </Link>
+            <Link
+                href={refreshPolicies.index.url()}
+                className="text-sm underline"
+            >
+                Kebijakan pembaruan tracking
             </Link>
             <Link href={exceptions.index.url()} className="text-sm underline">
                 Pemeriksaan exception dan keputusan batch

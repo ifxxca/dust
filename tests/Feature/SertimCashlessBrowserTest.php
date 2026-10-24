@@ -5,6 +5,7 @@ use App\Actions\Reports\ProjectJneShipments;
 use App\Models\HandoverSession;
 use App\Models\JneReportAwb;
 use App\Models\JneReportProfile;
+use App\Models\JneSourceContract;
 use App\Models\PickupRecord;
 use App\Models\PickupTask;
 use App\Models\PickupVisit;
@@ -33,6 +34,7 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
         JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'SERTIM001', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED', 'entry_at' => now(), 'observed_at' => now()->subDays(2), 'status_web' => 'ON PROCESS', 'status_pod' => null]);
         JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'REVIEWUI1', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED']);
         app(ProjectJneShipments::class)->handle($sourceJob->id);
+        $contract = JneSourceContract::factory()->create(['active_key' => JneSourceContract::key('apex', 'apex'), 'verified_at' => now(), 'verified_by' => $admin->id, 'definition' => ['collection_requirements' => ['apex:apex']]]);
         $task = PickupTask::factory()->create(['assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
         PickupVisit::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $staff->id, 'outcome' => 'COLLECTED']);
         $closed = PickupTask::factory()->create(['assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
@@ -59,6 +61,7 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
         $runner = new Process(['node', base_path('workers/jne-report/test/sertim-ui-flow.mjs')], base_path('workers/jne-report'), [
             'RETAIL_OPERATIONS_URL' => $url, 'SERTIM_UI_TASK' => (string) $task->id, 'SERTIM_UI_CLOSED_TASK' => (string) $closed->id,
             'SERTIM_UI_CUSTOMER' => (string) $task->customer_id,
+            'SERTIM_UI_COLLECTION_CONTRACT' => (string) $contract->id, 'SERTIM_UI_REPORT' => (string) $sourceJob->id,
             'SERTIM_UI_ARTIFACT_DIR' => storage_path('app/private/jne-reconciliation-ui'),
         ], null, 70);
         $runner->run();

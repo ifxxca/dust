@@ -242,6 +242,14 @@ try {
     await admin.page.getByLabel('Alasan dan cakupan bukti', { exact: true }).fill('Synthetic browser external review');
     await admin.page.getByRole('button', { name: 'Simpan pengesahan yang diaudit', exact: true }).click();
     await admin.page.locator('summary').filter({ hasText: 'Synthetic browser external review' }).waitFor();
+    await admin.page.getByLabel('Keputusan', { exact: true }).selectOption('COMPLETE');
+    await admin.page.getByLabel('Kontrak sumber terverifikasi', { exact: true }).selectOption(process.env.SERTIM_UI_COLLECTION_CONTRACT);
+    await admin.page.getByLabel('ID laporan bukti (pisahkan koma)', { exact: true }).fill(process.env.SERTIM_UI_REPORT);
+    await admin.page.getByLabel(/Cutoff yang diperiksa/).fill(new Date(Date.now() - 86400000).toISOString().slice(0, 16));
+    await admin.page.getByLabel('Alasan dan cakupan bukti', { exact: true }).fill('Synthetic browser full source scope attested');
+    await admin.page.getByRole('checkbox', { name: /^Saya telah memeriksa seluruh sumber/ }).check();
+    await admin.page.getByRole('button', { name: 'Simpan pengesahan yang diaudit', exact: true }).click();
+    await admin.page.locator('summary').filter({ hasText: 'Synthetic browser full source scope attested' }).waitFor();
     await admin.page.screenshot({ path: path.join(artifacts, 'collection-review-390.png'), fullPage: true });
     assert.ok(await admin.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     assert.deepEqual(errors, []);

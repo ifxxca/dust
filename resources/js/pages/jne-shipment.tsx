@@ -42,6 +42,9 @@ type Source = {
     source_evidence?: JneSourceProvenance | null;
 };
 type Shipment = {
+    category?: string | null;
+    category_status?: string;
+    category_evidence?: unknown;
     id: number;
     awb: string;
     customer_account: string;
@@ -157,6 +160,21 @@ export default function JneShipment({
             <Head title={`AWB ${shipment.awb}`} />
             <h1 className="text-2xl font-semibold">AWB {shipment.awb}</h1>
             <Card>
+                {shipment.category_status && (
+                    <details className="px-6">
+                        <summary>
+                            Kategori: {shipment.category ?? 'Belum pasti'} ·{' '}
+                            {shipment.category_status}
+                        </summary>
+                        <pre className="overflow-auto text-xs">
+                            {JSON.stringify(
+                                shipment.category_evidence,
+                                null,
+                                2,
+                            )}
+                        </pre>
+                    </details>
+                )}
                 <CardHeader>
                     <CardTitle>Detail pengiriman</CardTitle>
                 </CardHeader>

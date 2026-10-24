@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react';
 import PageContainer from '@/components/page-container';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +65,7 @@ export default function JneCollectionWindow({
         confirmed_scope: false,
     });
     const search = useForm({ q });
+    const [reportIds, setReportIds] = useState('');
     return (
         <PageContainer className="space-y-4 py-4">
             <Head title="Pengesahan koleksi eksternal" />
@@ -152,16 +154,17 @@ export default function JneCollectionWindow({
                 </Label>
                 <Input
                     id="collection-jobs"
-                    value={form.data.report_job_ids.join(',')}
-                    onChange={(event) =>
+                    value={reportIds}
+                    onChange={(event) => {
+                        setReportIds(event.target.value);
                         form.setData(
                             'report_job_ids',
                             event.target.value
                                 .split(',')
                                 .filter((id) => /^\d+$/.test(id.trim()))
                                 .map(Number),
-                        )
-                    }
+                        );
+                    }}
                 />
                 <Label htmlFor="collection-cutoff">
                     Cutoff yang diperiksa · {timezone}
@@ -241,19 +244,20 @@ export default function JneCollectionWindow({
                             checked={form.data.report_job_ids.includes(
                                 report.id,
                             )}
-                            onChange={(event) =>
-                                form.setData(
-                                    'report_job_ids',
-                                    event.target.checked
-                                        ? [
+                            onChange={(event) => {
+                                const ids = event.target.checked
+                                    ? Array.from(
+                                          new Set([
                                               ...form.data.report_job_ids,
                                               report.id,
-                                          ]
-                                        : form.data.report_job_ids.filter(
-                                              (id) => id !== report.id,
-                                          ),
-                                )
-                            }
+                                          ]),
+                                      )
+                                    : form.data.report_job_ids.filter(
+                                          (id) => id !== report.id,
+                                      );
+                                form.setData('report_job_ids', ids);
+                                setReportIds(ids.join(','));
+                            }}
                         />
                         #{report.id} {report.source}/{report.report_type} ·{' '}
                         {report.customer_account} · {report.status}/

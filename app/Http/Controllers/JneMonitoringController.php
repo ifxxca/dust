@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Actions\Pickup\QueryPackageProcessing;
 use App\Actions\Reports\BuildJnePickupReconciliation;
+use App\Actions\Reports\ManageJneRefreshPolicy;
 use App\Actions\Reports\MatchJneShipments;
 use App\Actions\Reports\QueryActiveJneAwbs;
+use App\Actions\Reports\QueryJneCollectionWindows;
+use App\Actions\Reports\ResolveJneCategories;
 use App\Http\Requests\BulkJneReportProfileRequest;
 use App\Jobs\ImportJneReportAwbs;
 use App\Models\Customer;
@@ -52,6 +55,7 @@ class JneMonitoringController extends Controller
             $query->where('match_status', $filters['match']);
         }
         $refreshProfile = JneReportProfile::where('source', 'apex')->where('report_type', 'unresolved')->first();
+        $refreshPolicy = $refreshProfile ? ManageJneRefreshPolicy::active($refreshProfile) : null;
         $identity = JneShipment::whereIn('jne_shipments.id', (clone $query)->select('id'))->leftJoin('pickup_tasks as cp', 'cp.id', '=', 'jne_shipments.pickup_task_id')
             ->selectRaw("count(*) as collected,
                 sum(case when customer_match_status = 'MATCHED' and jne_shipments.customer_id is not null then 1 else 0 end) as customer_matched,
@@ -72,10 +76,23 @@ class JneMonitoringController extends Controller
                 ]),
             'summary' => $summary, 'filters' => [...['q' => '', 'account' => '', 'status' => '', 'match' => ''], ...$filters],
             'identitySummary' => collect($identity?->getAttributes())->map(fn ($value): int => (int) $value),
+            'operationsSummary' => [
+                'source_observations' => DB::table('jne_report_awbs')->whereIn('awb', (clone $query)->select('awb'))->count(),
+                'pickup_conflicts' => (clone $query)->whereIn('match_status', ['CONFLICT', 'AMBIGUOUS'])->count(),
+                'category_confirmed' => ResolveJneCategories::enabled() ? (clone $query)->where('category_status', 'MATCHED')->where('customer_match_status', 'MATCHED')->where('match_status', 'MATCHED')
+                    ->whereHas('pickup', fn ($query) => $query->whereColumn('pickup_tasks.customer_id', 'jne_shipments.customer_id'))->count() : null,
+                'unclassified' => ResolveJneCategories::enabled() ? (clone $query)->where('category_status', '<>', 'MATCHED')->count() : null,
+                'last_report_received_at' => DB::table('jne_shipment_observations')->whereIn('jne_shipment_id', (clone $query)->select('id'))->max('created_at'),
+                'global_collection_failures' => ReportJob::whereNull('hybrid_batch_id')->whereNull('reviewed_at')->where(fn ($query) => $query->whereIn('status', ['FAILED', 'NEEDS_ATTENTION'])->orWhere('import_status', 'FAILED')->orWhere('projection_status', 'FAILED'))->count(),
+                'global_sertim_awaiting_source' => DB::table('pickup_cashless_awbs as e')->whereNotNull('e.awb')->whereNotExists(fn ($query) => $query->selectRaw('1')->from('jne_shipments as s')->whereColumn('s.awb', 'e.awb'))->count(),
+                'gates' => ['checkpoints' => (bool) config('jne-reports.batch_checkpoints_enabled'), 'identity' => (bool) config('jne-reports.evidence_policies_enabled'),
+                    'categories' => ResolveJneCategories::enabled(), 'collection' => QueryJneCollectionWindows::enabled(), 'tracking' => (bool) config('jne-reports.tracking_policies_enabled')],
+            ],
             'accounts' => JneShipment::select('customer_account')->distinct()->orderBy('customer_account')->pluck('customer_account'),
             'trackingRefresh' => [
-                'active_count' => JneShipment::whereNotIn('tracking_status', ['DELIVERED', 'CANCELLED'])->count(),
-                'due_count' => $refreshProfile ? app(QueryActiveJneAwbs::class)->due($refreshProfile->lookback_days, $refreshProfile->interval_minutes)->count() : null,
+                'active_count' => $refreshPolicy ? app(QueryActiveJneAwbs::class)->handle($refreshProfile->lookback_days, $refreshPolicy)->count() : JneShipment::whereNotIn('tracking_status', ['DELIVERED', 'CANCELLED'])->count(),
+                'due_count' => $refreshProfile ? app(QueryActiveJneAwbs::class)->due($refreshProfile->lookback_days, $refreshProfile->interval_minutes, $refreshPolicy)->count() : null,
+                'policy_active' => $refreshPolicy !== null,
                 'profile' => $refreshProfile?->only(['id', 'enabled', 'interval_minutes', 'lookback_days', 'next_run_at', 'last_run_at', 'last_error']),
             ],
             'customers' => Customer::orderBy('name')->get(['id', 'name', 'customer_code']),
@@ -96,6 +113,8 @@ class JneMonitoringController extends Controller
 
         return Inertia::render('jne-shipment', [
             'shipment' => [...$record->only(['id', 'awb', 'customer_account', 'tracking_status', 'match_status', 'match_method', 'match_note', 'version', 'pickup_task_id']),
+                'category' => ResolveJneCategories::enabled() ? $record->category : null, 'category_status' => ResolveJneCategories::enabled() ? $record->category_status : 'UNCONFIGURED',
+                'category_evidence' => ResolveJneCategories::enabled() ? $record->category_evidence : null,
                 ...$record->only(['customer_id', 'customer_match_status', 'customer_match_method', 'customer_match_note']),
                 'customer_match_candidates' => $record->customer_match_candidates,
                 'customer_name' => $record->customer?->name, 'customer_code' => $record->customer?->customer_code,
