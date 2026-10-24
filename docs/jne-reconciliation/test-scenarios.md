@@ -37,4 +37,13 @@ php vendor/bin/pint --dirty --format agent
 npm test --prefix workers/jne-report
 ```
 
-When frontend changes are made, also run the relevant frontend test files, `npm run types:check`, the production build and browser verification. See `implementation-status.md` for commands actually executed and their results. Ask the operator to run the full application suite before release; a targeted pass is not a full-suite result.
+The complete suite was also run successfully on this Windows host with its existing OpenSSL configuration supplied to the test process:
+
+```powershell
+$env:OPENSSL_CONF = 'C:/Program Files/Git/usr/ssl/openssl.cnf'
+php -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest --compact
+```
+
+Result: 732 passed, five skipped, 6,887 assertions. Without that local setting, 13 existing mocked-push tests fail during OpenSSL fixture-key generation. This is a CLI runtime requirement on this host; no repository dependency or system configuration was changed.
+
+When frontend changes are made, also run the relevant frontend test files, `npm run types:check`, the production build and browser verification. See `implementation-status.md` for results. Before release, the operator should rerun the full application suite in the target environment with `php artisan test --compact`; the local pass does not replace environment-specific validation.

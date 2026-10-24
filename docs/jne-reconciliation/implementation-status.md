@@ -30,12 +30,13 @@ Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`
 - M7: 54 refresh/scheduling/monitoring tests passed, 332 assertions; 33 monitoring/detail frontend tests, TypeScript, PHPStan and Pint passed. Fresh/due boundary, status minimums, old snapshot receipt, manual override, pending/failed guards, empty local-only cycle and exact-AWB failure detail covered.
 - M6 review increment: 58 Sertim/identity/monitoring/reconciliation tests passed, 395 assertions, including a marketplace AWB with uncontested customer but conflicting pickup references. Source rows and both kinds of evidence are exposed in Admin review; no automatic permanent alias is created.
 - M8: 88 affected confidence/dashboard/monitoring/alias tests passed, 882 assertions; three focused confidence tests rerun after fixture cleanup (143 assertions). 36 relevant frontend tests, both TypeScript projects, PHPStan/Pint and production build passed. Expanded real Chromium flow verifies confidence counts, receipt diagnostics, evidence review and dashboard filtering.
+- Final complete PHP rerun: 737 tests executed, 732 passed, five skipped, zero failures/errors, 6,887 assertions (221 seconds). This includes source pipeline fixtures, all pickup/handover regressions, MySQL races and real Chromium Sertim/monitoring UI. Final production build, both TypeScript projects, PHPStan, Pint and diff whitespace checks passed. The worker fixture suite previously passed all 74 tests; no production worker implementation changed in this project.
 
 ## Business decisions and limitations
 
 See `business-rules.md` unresolved B1–B4/B6–B8. Sertim correction and first-close rules are confirmed and implemented; no further approval is needed for them. A local fixture pass does not certify live JNE availability or unverified source/mapping meanings.
 
-The first complete PHP run executed 737 tests: 719 passed, five skipped and 13 existing push-notification tests errored because this Windows PHP could not find its OpenSSL configuration when generating fixture keys. Those two suites then passed (52 tests, 213 assertions) with the existing Git OpenSSL config supplied only to the test process via `OPENSSL_CONF`. No application/test dependency or host-wide configuration was changed. Final complete-run result is recorded below when finished.
+The first complete PHP run executed 737 tests: 719 passed, five skipped and 13 existing push-notification tests errored because this Windows PHP could not find its OpenSSL configuration when generating fixture keys. Those two suites then passed (52 tests, 213 assertions) with the existing Git OpenSSL config supplied only to the test process via `OPENSSL_CONF`. The complete rerun passed as recorded above. No application/test dependency or host-wide configuration was changed.
 
 ## Commit ledger
 
@@ -47,8 +48,9 @@ The first complete PHP run executed 737 tests: 719 passed, five skipped and 13 e
 - `3136e07` — M5 verified cashless/category POP comparison and provisional shortfalls.
 - `7a3a35c` — M7 conservative per-AWB due selection and refresh diagnostics (independent of gated scoped exception rules).
 - `2177512` — M6 source/decision review and conflicting Sertim/report pickup evidence.
+- `b48da8e` — M8 confidence metrics, safe customer scope and actionable review links.
 
-Each completed milestone or clearly bounded safe increment is committed separately. Remaining references and final validation will be recorded here as work proceeds.
+Each completed milestone or clearly bounded safe increment is committed separately. The following documentation-only commit records final verification; no implementation remains uncommitted.
 
 ## Delivery report
 
