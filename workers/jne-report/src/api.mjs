@@ -1,4 +1,5 @@
 import { openAsBlob } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { ReportError } from './errors.mjs';
 
@@ -64,6 +65,17 @@ export class WorkerApi {
 
     claim(key) {
         return this.request('claim', () => ({ claim_key: key }));
+    }
+    beginBatch(job, number) {
+        const key = randomUUID();
+        return this.request(
+            job.id + '/batches/' + number,
+            () => ({ start_key: key }),
+            job.claim_token,
+        );
+    }
+    saveBatch(job, number, filePath) {
+        return this.upload(job, filePath, 'batches/' + number);
     }
     progress(job, status) {
         return this.request(

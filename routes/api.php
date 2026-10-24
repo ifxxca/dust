@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApexBatchController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\InternalReportJobController;
@@ -21,6 +22,7 @@ Route::prefix('internal/report-jobs')->name('internal.report-jobs.')
         Route::post('{reportJob}/upload', [InternalReportJobController::class, 'upload'])->whereNumber('reportJob')->name('upload');
         Route::post('{reportJob}/source-upload', [InternalReportJobController::class, 'uploadSource'])->whereNumber('reportJob')->name('source-upload');
         Route::post('{reportJob}/fail', [InternalReportJobController::class, 'fail'])->whereNumber('reportJob')->name('fail');
+        Route::post('{reportJob}/batches/{number}', [ApexBatchController::class, 'checkpoint'])->whereNumber(['reportJob', 'number'])->name('batch');
     });
 
 Route::prefix('mobile/v1')->name('mobile.')->group(function (): void {

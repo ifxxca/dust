@@ -249,7 +249,7 @@ test('the scheduled combined cycle runs four Chromium source downloads through o
         $server = new Process([PHP_BINARY, '-d', 'extension=pdo_sqlite', '-d', 'extension=sqlite3', '-S', $address, base_path('vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php')], public_path(), [
             'APP_ENV' => 'testing', 'APP_URL' => $url, 'DB_CONNECTION' => 'sqlite', 'DB_DATABASE' => $database, 'DB_URL' => '',
             'SESSION_DRIVER' => 'database', 'SESSION_COOKIE' => 'combined-e2e-session', 'SESSION_DOMAIN' => '', 'SESSION_SECURE_COOKIE' => 'false',
-            'JNE_REPORT_WORKER_TOKEN' => $token, 'JNE_REPORT_WORKER_ID' => 'jne-report-1', 'JNE_REPORT_STORAGE_PATH' => $root.DIRECTORY_SEPARATOR.'reports', 'QUEUE_CONNECTION' => 'sync',
+            'JNE_REPORT_WORKER_TOKEN' => $token, 'JNE_REPORT_WORKER_ID' => 'jne-report-1', 'JNE_REPORT_STORAGE_PATH' => $root.DIRECTORY_SEPARATOR.'reports', 'QUEUE_CONNECTION' => 'sync', 'JNE_APEX_BATCH_CHECKPOINTS_ENABLED' => 'true',
         ]);
         $server->start();
         $deadline = microtime(true) + 10;
@@ -268,6 +268,7 @@ test('the scheduled combined cycle runs four Chromium source downloads through o
         $this->assertDatabaseCount('jne_report_awbs', 2);
         $this->assertDatabaseCount('jne_shipments', 2);
         $this->assertDatabaseCount('report_jobs', 5);
+        $this->assertDatabaseHas('report_job_batches', ['report_job_id' => $batch->id, 'batch_number' => 1, 'status' => 'SAVED', 'row_count' => 2]);
     } finally {
         $server?->stop();
         config(['database.default' => $original]);

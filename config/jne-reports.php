@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'batch_checkpoints_enabled' => (bool) env('JNE_APEX_BATCH_CHECKPOINTS_ENABLED', false),
     'worker_token' => env('JNE_REPORT_WORKER_TOKEN'),
     'worker_id' => env('JNE_REPORT_WORKER_ID', 'jne-report-1'),
     'lease_seconds' => (int) env('JNE_REPORT_LEASE_SECONDS', 300),

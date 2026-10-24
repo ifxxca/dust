@@ -37,6 +37,7 @@ class ReportRunController extends Controller
         $runs = $query->orderByDesc('id')->paginate(20)->withQueryString();
         $events = DB::table('report_job_events')->whereIn('report_job_id', $runs->pluck('id'))->orderBy('id')->get()->groupBy('report_job_id');
         $sources = ReportJob::whereIn('hybrid_batch_id', $runs->pluck('id'))->orderBy('id')->get(['id', 'hybrid_batch_id', 'source', 'report_type', 'status', 'source_row_count', 'awb_count', 'error_message'])->groupBy('hybrid_batch_id');
+        $batches = config('jne-reports.batch_checkpoints_enabled') ? DB::table('report_job_batches')->whereIn('report_job_id', $runs->pluck('id'))->orderBy('batch_number')->get(['report_job_id', 'batch_number', 'status', 'file_checksum', 'row_count', 'review_reason'])->groupBy('report_job_id') : collect();
 
         return Inertia::render('jne-report-runs', [
             'runs' => $runs->through(fn (ReportJob $job): array => [
@@ -50,10 +51,12 @@ class ReportRunController extends Controller
                     'message' => $event->message, 'created_at' => CarbonImmutable::parse($event->created_at, 'UTC')->toIso8601String(),
                 ])->values(),
                 'sources' => $sources->get($job->id, collect())->values(),
+                'apex_batches' => $batches->get($job->id, collect())->values(),
             ]),
             'profiles' => JneReportProfile::orderBy('source')->orderBy('id')->get(['id', 'source', 'report_type', 'customer_account', 'label']),
             'filters' => ['source' => $data['source'] ?? '', 'status' => $data['status'] ?? '', 'q' => $data['q'] ?? ''],
             'timezone' => config('pickup.timezone'),
+            'checkpointsEnabled' => (bool) config('jne-reports.batch_checkpoints_enabled'),
             'today' => CarbonImmutable::now('Asia/Jakarta')->toDateString(),
         ]);
     }

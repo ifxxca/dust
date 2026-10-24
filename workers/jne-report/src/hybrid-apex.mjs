@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { parseCsvBytes } from './csv.mjs';
 import { ReportError } from './errors.mjs';
 import { MAX_AWBS } from './limits.mjs';
@@ -11,6 +12,7 @@ export async function retrieveHybridApex(
     progress,
     signal,
     maxBytes,
+    checkpoints = null,
 ) {
     const awbs = job.parameters?.awbs;
     if (
@@ -49,19 +51,38 @@ export async function retrieveHybridApex(
         const batch = offset / MAX_AWBS + 1;
         const directory = path.join(tempDir, 'batch-' + batch);
         await mkdir(directory);
-        const file = await apex.retrieve(
-            {
-                ...job,
-                awbs: awbs.slice(offset, offset + MAX_AWBS),
-                upload_filename:
-                    job.report_type === 'unresolved'
-                        ? `active-awbs-${job.id}-${batch}.csv`
-                        : `hybrid-${job.source}-${job.id}-${batch}.csv`,
-            },
-            directory,
-            async () => {},
-            signal,
-        );
+        const checkpoint = checkpoints ? await checkpoints.begin(batch) : null;
+        let file;
+        if (checkpoint?.status === 'SAVED') {
+            const bytes = Buffer.from(checkpoint.content_base64, 'base64');
+            if (
+                bytes.length > maxBytes ||
+                createHash('sha256').update(bytes).digest('hex') !==
+                    checkpoint.checksum
+            ) {
+                throw new ReportError(
+                    'CHECKPOINT_INVALID',
+                    'Checkpoint APEX tidak utuh; periksa file tersimpan.',
+                );
+            }
+            file = path.join(directory, 'saved.csv');
+            await writeFile(file, bytes, { mode: 0o600 });
+        } else {
+            file = await apex.retrieve(
+                {
+                    ...job,
+                    awbs: awbs.slice(offset, offset + MAX_AWBS),
+                    upload_filename:
+                        job.report_type === 'unresolved'
+                            ? `active-awbs-${job.id}-${batch}.csv`
+                            : `hybrid-${job.source}-${job.id}-${batch}.csv`,
+                },
+                directory,
+                async () => {},
+                signal,
+            );
+            if (checkpoints) await checkpoints.save(batch, file);
+        }
         if (awbs.length <= MAX_AWBS) {
             return file;
         }

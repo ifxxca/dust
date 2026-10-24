@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,6 +10,62 @@ import { parseCsv, parseCsvBytes } from '../src/csv.mjs';
 import { correlateHistory } from '../src/history.mjs';
 import { apexUploadFixture } from './apex-upload-fixture.mjs';
 import { runJob } from '../src/worker.mjs';
+
+test('durable saved batches are reused after a restart without another APEX Process call', async (t) => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'apex-checkpoint-'));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const awbs = Array.from({ length: 6001 }, (_, index) =>
+        String(index + 1).padStart(8, '0'),
+    );
+    const first = Buffer.from(
+        'AWB,ID_ACCOUNT\n' +
+            awbs
+                .slice(0, 6000)
+                .map((awb) => awb + ',SHARED')
+                .join('\n') +
+            '\n',
+    );
+    const calls = [];
+    const saved = [];
+    const checkpoints = {
+        begin: async (number) =>
+            number === 1
+                ? {
+                      status: 'SAVED',
+                      content_base64: first.toString('base64'),
+                      checksum: createHash('sha256')
+                          .update(first)
+                          .digest('hex'),
+                  }
+                : { status: 'STARTED' },
+        save: async (number, file) =>
+            saved.push([number, await readFile(file, 'utf8')]),
+    };
+    const apex = {
+        retrieve: async (job, folder) => {
+            calls.push(job.awbs);
+            const file = path.join(folder, 'download.csv');
+            await writeFile(
+                file,
+                'AWB,ID_ACCOUNT\n' + job.awbs[0] + ',OTHER\n',
+            );
+            return file;
+        },
+    };
+    const file = await retrieveHybridApex(
+        { id: 80, source: 'hybrid', parameters: { awbs } },
+        apex,
+        directory,
+        async () => {},
+        new AbortController().signal,
+        20971520,
+        checkpoints,
+    );
+    assert.deepEqual(calls, [[awbs[6000]]]);
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0][0], 2);
+    assert.equal(parseCsv(await readFile(file, 'utf8'), ',').length, 6002);
+});
 
 test('CSV byte parsing preserves UTF8 cells and legacy Windows names without replacement characters', () => {
     const bytes = Buffer.concat([

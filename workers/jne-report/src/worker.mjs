@@ -7,6 +7,7 @@ import {
     unlink,
     readdir,
     chmod,
+    rename,
 } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
@@ -81,6 +82,13 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
                       progress,
                       controller.signal,
                       Math.min(config.maxFileBytes, job.max_file_kb * 1024),
+                      job.batch_checkpoints
+                          ? {
+                                begin: (number) => api.beginBatch(job, number),
+                                save: (number, file) =>
+                                    api.saveBatch(job, number, file),
+                            }
+                          : null,
                   )
                 : await apex.retrieve(
                       job,
@@ -131,8 +139,21 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
         clearTimeout(timeout);
         shutdownSignal?.removeEventListener('abort', shutdown);
         controller.signal.removeEventListener('abort', cancelBrowser);
-        if (tempDir && path.dirname(tempDir) === config.dataDir)
-            await rm(tempDir, { recursive: true, force: true });
+        if (tempDir && path.dirname(tempDir) === config.dataDir) {
+            if (job.batch_checkpoints && !completed) {
+                const recovery = path.join(
+                    config.dataDir,
+                    'recovery-' + path.basename(tempDir),
+                );
+                await rename(tempDir, recovery);
+                log('job_recovery_files_retained', {
+                    job_id: job.id,
+                    directory: path.basename(recovery),
+                });
+            } else {
+                await rm(tempDir, { recursive: true, force: true });
+            }
+        }
     }
     return completed;
 }

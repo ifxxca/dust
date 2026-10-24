@@ -2,6 +2,12 @@
 
 Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`. Unrelated work remains untouched; no push is authorized.
 
+## Implementation-first continuation
+
+The prior delivery through `6016d67` was pushed at the operator's subsequent request. This continuation starts from that state; no further push is authorized. Business semantics are now UAT/activation gates: their technical configuration, evidence and review paths are being completed without changing operational ownership, POP or schedules. New migrations remain unapplied to the operational database during this continuation.
+
+M1 durable APEX batch checkpoints are implemented behind `JNE_APEX_BATCH_CHECKPOINTS_ENABLED=false`. Each submitted batch has a STARTED guard and each validated downloaded CSV is saved privately with its checksum. Resume reuses SAVED batches, blocks uncertain STARTED batches and requires active Admin review/reason to restore the exact original result or attest that no Process submission occurred. Failed workers retain private recovery files for explicit restoration. Partial results never become a final import. Synthetic worker restart recovery, exact-AWB/auth checks and the complete four-source Chromium/Laravel fixture pass; static/build results are recorded per increment below. This is implemented/tested evidence, not operational acceptance of B1/B2.
+
 | Milestone | Status | Evidence / outstanding gate |
 |---|---|---|
 | M0 | Complete | Code/schema/routes/worker/UI/test discovery and implementation matrix written |

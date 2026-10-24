@@ -61,7 +61,10 @@ import * as monitoring from '@/routes/jne-monitoring';
 import * as reports from '@/routes/jne-reports';
 import * as routes from '@/routes/report-runs';
 
-type Run = JneRun;
+import JneApexRecovery, {
+    type ApexBatch,
+} from '@/components/jne-apex-recovery';
+type Run = JneRun & { apex_batches?: ApexBatch[] };
 
 type Profile = {
     id: number;
@@ -81,6 +84,7 @@ type Props = {
     filters: { source: string; status: string; q: string };
     timezone: string;
     today: string;
+    checkpointsEnabled?: boolean;
 };
 
 export default function ReportRuns({
@@ -89,6 +93,7 @@ export default function ReportRuns({
     filters,
     timezone,
     today,
+    checkpointsEnabled,
 }: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [runOpen, setRunOpen] = useState(false);
@@ -663,6 +668,17 @@ export default function ReportRuns({
                                     </li>
                                 ))}
                             </ol>
+                            {checkpointsEnabled && (
+                                <JneApexRecovery
+                                    key={selected.id}
+                                    id={selected.id}
+                                    batches={selected.apex_batches ?? []}
+                                    failed={[
+                                        'FAILED',
+                                        'NEEDS_ATTENTION',
+                                    ].includes(selected.status)}
+                                />
+                            )}
                             {selected.sources?.length > 0 && (
                                 <div className="space-y-3 rounded-lg border p-4">
                                     <p className="text-sm font-medium">
