@@ -53,9 +53,16 @@ function check(name, run) {
             }
         });
         const page = await context.newPage();
+        const pageErrors = [];
+        page.on('pageerror', (error) => pageErrors.push(error.message));
         try {
             await login(page);
             const detail = await run(page);
+            assert.deepEqual(
+                pageErrors,
+                [],
+                'No unhandled browser JavaScript errors',
+            );
             await page.screenshot({
                 path: path.join(
                     evidence,
@@ -234,9 +241,33 @@ check(
             bounds.y > 0 && bounds.y + bounds.height < 1000,
             'Invalid field is visible in dialog',
         );
+        await page.screenshot({
+            path: path.join(evidence, 'customer-error-visible.png'),
+            fullPage: true,
+            animations: 'disabled',
+        });
+        const heading = page.getByRole('heading', {
+            name: 'Tambah Customer',
+            exact: true,
+        });
+        assert(
+            (await heading.boundingBox()).y > 0,
+            'The dialog header remains visible after validation',
+        );
         assert.equal(
             await page.locator('#customer-name').inputValue(),
             'Draft validasi',
+        );
+        await page.locator('#customer-email').fill('staff@example.test');
+        await page.waitForTimeout(80);
+        assert.equal(
+            await page.evaluate(() => document.activeElement.id),
+            'customer-email',
+            'Validation recovery does not steal focus while editing another field',
+        );
+        assert(
+            (await heading.boundingBox()).y > 0,
+            'The dialog header remains visible when returning to an earlier field',
         );
     },
 );
@@ -597,5 +628,166 @@ check(
                 .count(),
             1,
         );
+    },
+);
+
+check(
+    'wave 4 active admin workspaces retain their routes and rendering',
+    async (page) => {
+        const routes = [
+            '/dashboard',
+            '/operations/tasks',
+            '/operations/users',
+            '/operations/customers',
+            '/operations/create',
+            '/pickup-schedules',
+            '/hasil-pickup?monitoring=pickup',
+            '/hasil-pickup?monitoring=processing',
+            `/operations/detail/${ids.proof}`,
+            '/handover',
+            `/handover/${ids.session}`,
+            '/discrepancies',
+            '/admin/jne-monitoring',
+            '/admin/jne-monitoring/customer-dashboard',
+            '/admin/jne-monitoring/profiles',
+            '/admin/jne-reports',
+            '/admin/report-runs',
+            `/admin/jne-reports/${ids.report}/awbs`,
+            '/admin/jne-monitoring/reconciliation',
+            '/admin/jne-shipper-aliases',
+            `/admin/jne-monitoring/${ids.shipment}`,
+        ];
+        for (const route of routes) {
+            const response = await visit(page, route);
+            assert.equal(response.status(), 200, route);
+            assert.equal(await page.locator('main').count(), 1, route);
+            assert(
+                await page.evaluate(
+                    () =>
+                        document.documentElement.scrollWidth <= innerWidth + 1,
+                ),
+                route,
+            );
+            if (
+                [
+                    '/admin/jne-monitoring/customer-dashboard',
+                    '/admin/jne-monitoring/profiles',
+                    '/admin/report-runs',
+                    '/admin/jne-monitoring',
+                ].includes(route)
+            ) {
+                await page.screenshot({
+                    path: path.join(
+                        evidence,
+                        'fresh-build-' + route.split('/').at(-1) + '.png',
+                    ),
+                    fullPage: true,
+                    animations: 'disabled',
+                });
+            }
+        }
+        return {
+            routes: routes.length,
+            build: 'fresh',
+            externalRetrieval: false,
+        };
+    },
+);
+
+check(
+    'wave 4 role access and assigned pickup remain unchanged',
+    async (page) => {
+        const matrix = [
+            [
+                'cs',
+                [
+                    ['/operations/tasks', 200],
+                    ['/operations/customers', 200],
+                    ['/operations/users', 403],
+                    ['/admin/jne-monitoring', 403],
+                ],
+            ],
+            [
+                'pickup_staff',
+                [
+                    ['/operations/mine', 200],
+                    ['/operations/available', 200],
+                    [`/operations/execute/${ids.execute}`, 200],
+                    ['/operations/customers', 403],
+                    ['/admin/jne-monitoring', 403],
+                ],
+            ],
+            [
+                'retail_staff',
+                [
+                    ['/dashboard', 200],
+                    ['/operations/users', 403],
+                    [`/handover/${ids.session}`, 200],
+                ],
+            ],
+        ];
+        const statuses = [];
+        for (const [role, routes] of matrix) {
+            await page.context().clearCookies();
+            await login(page, role);
+            for (const [route, status] of routes) {
+                const response = await visit(page, route);
+                assert.equal(response.status(), status, role + ' ' + route);
+                statuses.push({ role, route, status });
+            }
+        }
+        return { statuses };
+    },
+);
+
+check(
+    'wave 4 pickup and embedded customer dialogs preserve unsaved drafts',
+    async (page) => {
+        await visit(page, '/operations/tasks');
+        await page
+            .getByRole('button', { name: 'Buat Pickup', exact: true })
+            .click();
+        // The actual field ID is intentionally located by its visible label.
+        const field = page.getByRole('textbox', {
+            name: 'Alamat Pickup',
+            exact: true,
+        });
+        await field.fill('Draft alamat pickup');
+        let confirmation = page.waitForEvent('dialog');
+        let closing = page.keyboard.press('Escape');
+        await (await confirmation).dismiss();
+        await closing;
+        assert.equal(await field.inputValue(), 'Draft alamat pickup');
+        confirmation = page.waitForEvent('dialog');
+        closing = page.keyboard.press('Escape');
+        await (await confirmation).accept();
+        await closing;
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
+        await visit(page, '/operations/create');
+        await page
+            .getByRole('combobox', { name: 'Customer', exact: true })
+            .click();
+        await page
+            .getByRole('dialog')
+            .getByRole('button', { name: 'Tambah Customer', exact: true })
+            .click();
+        await page.locator('#customer-name').fill('Draft customer di picker');
+        confirmation = page.waitForEvent('dialog');
+        closing = page.keyboard.press('Escape');
+        await (await confirmation).dismiss();
+        await closing;
+        assert.equal(
+            await page.locator('#customer-name').inputValue(),
+            'Draft customer di picker',
+        );
+        confirmation = page.waitForEvent('dialog');
+        closing = page
+            .getByRole('button', { name: 'Batal', exact: true })
+            .click();
+        await (await confirmation).accept();
+        await closing;
+        await page
+            .getByRole('dialog', { name: 'Pilih Customer', exact: true })
+            .waitFor();
     },
 );

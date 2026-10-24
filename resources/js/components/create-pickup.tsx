@@ -17,11 +17,13 @@ export default function CreatePickup({
     onCreated,
     onCancel,
     onBusyChange,
+    onDirtyChange,
 }: {
     timezone: string;
     onCreated?: () => void;
     onCancel?: () => void;
     onBusyChange?: (busy: boolean) => void;
+    onDirtyChange?: (dirty: boolean) => void;
 }) {
     const [customer, setCustomer] = useState<PickupCustomer | null>(null);
     const staff = usePage().props.auth.user.role === 'pickup_staff';
@@ -42,6 +44,10 @@ export default function CreatePickup({
         submission_key: key,
         previous_task_id: previousId,
     });
+    useEffect(() => {
+        onDirtyChange?.(form.isDirty);
+    }, [form.isDirty, onDirtyChange]);
+    useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
     useEffect(() => {
         if (!previousId) return;
         let active = true;

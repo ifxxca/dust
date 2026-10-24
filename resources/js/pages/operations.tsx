@@ -23,8 +23,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { operations } from '@/routes';
-import * as customerApi from '@/routes/api/customers';
-import CustomerForm, { type CustomerDetails } from '@/components/customer-form';
 import * as taskApi from '@/routes/api/tasks';
 import BulkPickupAssignment, {
     type AssignmentSelection,
@@ -57,7 +55,6 @@ import {
 } from 'lucide-react';
 import { handover } from '@/routes';
 
-type Customer = CustomerDetails;
 type Account = {
     id: number;
     name: string;
@@ -334,9 +331,7 @@ export default function Operations({
               ? 'mine'
               : 'all',
     );
-    const isTaskList = !['customers', 'users', 'detail', 'create'].includes(
-        screen,
-    );
+    const isTaskList = !['users', 'detail', 'create'].includes(screen);
     const manager = ['cs', 'admin_supervisor'].includes(role);
     const operationalWorkspace = manager && screen === 'tasks' && !history;
     const [sort, setSort] = useState('newest');
@@ -375,29 +370,18 @@ export default function Operations({
     const [to, setTo] = useState('');
     const [revision, setRevision] = useState(0);
     const [modal, setModal] = useState<
-        | 'customer'
-        | 'edit-customer'
-        | 'user'
-        | 'assign'
-        | 'takeover'
-        | 'edit-user'
-        | null
+        'user' | 'assign' | 'takeover' | 'edit-user' | null
     >(null);
     const [selectedUser, setSelectedUser] = useState<Account | null>(null);
-    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-        null,
-    );
-    const [customerBusy, setCustomerBusy] = useState(false);
-    const [customerStatus, setCustomerStatus] = useState('all');
     const [staff, setStaff] = useState<{ id: number; name: string }[]>([]);
     const [message, setMessage] = useState('');
     const loader = useHttp<
         Record<string, never>,
-        Envelope<(Task | Customer | Account)[] | Task>
+        Envelope<(Task | Account)[] | Task>
     >({});
     const lookup = useHttp<
         Record<string, never>,
-        Envelope<Customer[] | { id: number; name: string }[]>
+        Envelope<{ id: number; name: string }[]>
     >({});
     const reload = () => {
         setModal(null);
@@ -414,9 +398,6 @@ export default function Operations({
         ...(taskScope === 'mine' || (history && !manager) ? { mine: 1 } : {}),
         ...(history && isTaskList ? { history: 1 } : {}),
         ...(search ? { q: search } : {}),
-        ...(screen === 'customers' && customerStatus !== 'all'
-            ? { is_active: customerStatus === 'active' ? 1 : 0 }
-            : {}),
         ...(status ? { status } : {}),
         ...(from ? { date_from: from } : {}),
         ...(to ? { date_to: to } : {}),
@@ -430,15 +411,13 @@ export default function Operations({
             : {}),
     };
     const url =
-        screen === 'customers'
-            ? customerApi.index.url({ query })
-            : screen === 'users'
-              ? userApi.index.url({ query })
-              : screen === 'detail' && taskId
-                ? taskApi.show.url(taskId)
-                : taskScope === 'available' && !history
-                  ? taskApi.candidates.url({ query })
-                  : taskApi.index.url({ query });
+        screen === 'users'
+            ? userApi.index.url({ query })
+            : screen === 'detail' && taskId
+              ? taskApi.show.url(taskId)
+              : taskScope === 'available' && !history
+                ? taskApi.candidates.url({ query })
+                : taskApi.index.url({ query });
     useEffect(() => {
         if (screen === 'create') return;
         let cancelled = false;
@@ -490,7 +469,6 @@ export default function Operations({
     const title =
         (
             {
-                customers: 'Customer',
                 users: 'Pengguna',
                 mine: history ? 'Riwayat Pickup' : 'Tugas Saya',
                 available: 'Tugas Saya',
@@ -516,29 +494,16 @@ export default function Operations({
                         {title}
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        {screen === 'customers'
-                            ? 'Data customer untuk membuat dan menjalankan pickup.'
-                            : screen === 'users'
-                              ? 'Kelola akun aktif dan satu role operasional per pengguna.'
-                              : isTaskList && !manager && !history
-                                ? `Selamat bekerja, ${user.name.split(' ')[0]}. Kelola tugas dan kunjungan Anda.`
-                                : operationalWorkspace
-                                  ? `Kelola seluruh pickup customer di ${timezone}.`
-                                  : 'Pickup on-demand · ' + timezone}
+                        {screen === 'users'
+                            ? 'Kelola akun aktif dan satu role operasional per pengguna.'
+                            : isTaskList && !manager && !history
+                              ? `Selamat bekerja, ${user.name.split(' ')[0]}. Kelola tugas dan kunjungan Anda.`
+                              : operationalWorkspace
+                                ? `Kelola seluruh pickup customer di ${timezone}.`
+                                : 'Pickup on-demand · ' + timezone}
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {screen === 'customers' && (
-                        <Button
-                            onClick={() => {
-                                setSelectedCustomer(null);
-                                setModal('customer');
-                            }}
-                        >
-                            <Plus className="size-4" />
-                            Tambah Customer
-                        </Button>
-                    )}
                     {screen === 'users' && (
                         <Button onClick={() => setModal('user')}>
                             Tambah Pengguna
@@ -783,11 +748,7 @@ export default function Operations({
                                 }
                             >
                                 <Label htmlFor="primary-search">
-                                    {isTaskList
-                                        ? 'Cari Pickup'
-                                        : screen === 'customers'
-                                          ? 'Cari Customer'
-                                          : 'Cari Nama'}
+                                    {isTaskList ? 'Cari Pickup' : 'Cari Nama'}
                                 </Label>
                                 <div className="relative">
                                     <Search className="absolute top-3 left-3 size-4 text-muted-foreground" />
@@ -797,9 +758,7 @@ export default function Operations({
                                         placeholder={
                                             isTaskList
                                                 ? 'Reference, customer, atau alamat…'
-                                                : screen === 'customers'
-                                                  ? 'Nama, kode, email, telepon, atau alamat…'
-                                                  : 'Ketik nama…'
+                                                : 'Ketik nama…'
                                         }
                                         value={search}
                                         onChange={(event) => {
@@ -823,32 +782,7 @@ export default function Operations({
                                     )}
                                 </div>
                             </div>
-                            {screen === 'customers' && (
-                                <div className="space-y-2 sm:col-span-2">
-                                    <Label htmlFor="customer-status-filter">
-                                        Status Customer
-                                    </Label>
-                                    <select
-                                        id="customer-status-filter"
-                                        className="h-11 w-full rounded-md border bg-background px-3 text-sm"
-                                        value={customerStatus}
-                                        onChange={(event) => {
-                                            setCustomerStatus(
-                                                event.target.value,
-                                            );
-                                            setPage(1);
-                                        }}
-                                    >
-                                        <option value="all">
-                                            Semua Status
-                                        </option>
-                                        <option value="active">Aktif</option>
-                                        <option value="inactive">
-                                            Nonaktif
-                                        </option>
-                                    </select>
-                                </div>
-                            )}
+
                             {isTaskList && (
                                 <>
                                     <div className="space-y-2 sm:col-span-2 xl:col-span-2">
@@ -1020,8 +954,11 @@ export default function Operations({
                                         {manager && (
                                             <>
                                                 <div className="space-y-2">
-                                                    <Label>Customer</Label>
+                                                    <Label htmlFor="pickup-filter-customer">
+                                                        Customer
+                                                    </Label>
                                                     <CustomerPicker
+                                                        triggerId="pickup-filter-customer"
                                                         allowClear
                                                         selected={
                                                             selectedFilterCustomer
@@ -1527,83 +1464,10 @@ export default function Operations({
                                     </div>
                                 )}
                             <div
-                                className={`grid min-w-0 gap-4 sm:grid-cols-2 ${(isTaskList && manager) || screen === 'customers' || screen === 'users' ? 'lg:hidden' : ''} ${loader.processing ? 'hidden' : ''}`}
+                                className={`grid min-w-0 gap-4 sm:grid-cols-2 ${(isTaskList && manager) || screen === 'users' ? 'lg:hidden' : ''} ${loader.processing ? 'hidden' : ''}`}
                             >
                                 {rows.map((row) =>
-                                    screen === 'customers' ? (
-                                        <Panel
-                                            key={row.id}
-                                            title={(row as Customer).name}
-                                        >
-                                            <div className="mb-3 flex items-center justify-between gap-2">
-                                                <span className="text-xs text-muted-foreground">
-                                                    {(row as Customer)
-                                                        .customer_code ||
-                                                        'Kode belum diisi'}
-                                                </span>
-                                                <Badge variant="outline">
-                                                    {(row as Customer).is_active
-                                                        ? 'Aktif'
-                                                        : 'Nonaktif'}
-                                                </Badge>
-                                            </div>
-                                            <p className="break-words">
-                                                {
-                                                    (row as Customer)
-                                                        .pickup_address
-                                                }
-                                            </p>
-                                            <p className="mt-2 text-sm break-all text-muted-foreground">
-                                                Email:{' '}
-                                                {(row as Customer).email || '—'}
-                                                <br />
-                                                Telepon:{' '}
-                                                {(row as Customer).phone || '—'}
-                                                {!(row as Customer).email &&
-                                                    !(row as Customer)
-                                                        .phone && (
-                                                        <>
-                                                            <br />
-                                                            Kontak:{' '}
-                                                            {
-                                                                (
-                                                                    row as Customer
-                                                                ).contact
-                                                            }
-                                                        </>
-                                                    )}
-                                            </p>
-                                            {(row as Customer).latitude !==
-                                                null &&
-                                                (row as Customer).longitude !==
-                                                    null && (
-                                                    <p className="mt-2 text-xs text-muted-foreground">
-                                                        Lokasi:{' '}
-                                                        {
-                                                            (row as Customer)
-                                                                .latitude
-                                                        }
-                                                        ,{' '}
-                                                        {
-                                                            (row as Customer)
-                                                                .longitude
-                                                        }
-                                                    </p>
-                                                )}
-                                            <Button
-                                                variant="outline"
-                                                className="mt-4"
-                                                onClick={() => {
-                                                    setSelectedCustomer(
-                                                        row as Customer,
-                                                    );
-                                                    setModal('edit-customer');
-                                                }}
-                                            >
-                                                Edit Customer
-                                            </Button>
-                                        </Panel>
-                                    ) : screen === 'users' ? (
+                                    screen === 'users' ? (
                                         <Panel
                                             key={row.id}
                                             title={(row as Account).name}
@@ -1751,26 +1615,20 @@ export default function Operations({
             <Dialog
                 open={modal !== null}
                 onOpenChange={(open) => {
-                    if (!open && !customerBusy) setModal(null);
+                    if (!open) setModal(null);
                 }}
             >
                 <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
-                            {modal === 'customer'
-                                ? 'Tambah Customer'
-                                : modal === 'edit-customer'
-                                  ? 'Edit Customer'
-                                  : modal === 'takeover'
-                                    ? 'Konfirmasi Ambil Alih'
-                                    : 'Data Operasional'}
+                            {modal === 'takeover'
+                                ? 'Konfirmasi Ambil Alih'
+                                : 'Data Operasional'}
                         </DialogTitle>
                         <DialogDescription>
-                            {modal === 'customer' || modal === 'edit-customer'
-                                ? 'Kelola data kontak, alamat, lokasi, dan status customer. Perubahan tidak menimpa informasi pickup sebelumnya.'
-                                : modal === 'takeover'
-                                  ? `Ambil alih ${task?.customer.name} dari ${task?.assigned_staff?.name}? Tanpa approval CS. Petugas lama kehilangan ownership. Jadwal ${task ? formatTime(task.scheduled_at) : ''}.`
-                                  : 'Lengkapi data. Perubahan divalidasi oleh server.'}
+                            {modal === 'takeover'
+                                ? `Ambil alih ${task?.customer.name} dari ${task?.assigned_staff?.name}? Tanpa approval CS. Petugas lama kehilangan ownership. Jadwal ${task ? formatTime(task.scheduled_at) : ''}.`
+                                : 'Lengkapi data. Perubahan divalidasi oleh server.'}
                         </DialogDescription>
                     </DialogHeader>
                     {message && (
@@ -1786,18 +1644,7 @@ export default function Operations({
                             Memuat petugas aktif…
                         </p>
                     )}
-                    {(modal === 'customer' || modal === 'edit-customer') && (
-                        <CustomerForm
-                            key={selectedCustomer?.id ?? 'new'}
-                            customer={selectedCustomer}
-                            onSaved={() => {
-                                toast.success('Customer berhasil disimpan');
-                                reload();
-                            }}
-                            onProcessingChange={setCustomerBusy}
-                            onCancel={() => setModal(null)}
-                        />
-                    )}
+
                     {modal === 'user' && (
                         <Editor
                             title="Buat Akun"

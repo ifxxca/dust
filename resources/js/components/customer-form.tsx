@@ -64,6 +64,7 @@ export default function CustomerForm({
     });
     const [message, setMessage] = useState('');
     const formElement = useRef<HTMLFormElement>(null);
+    const scrollArea = useRef<HTMLDivElement>(null);
     const [contactOpen, setContactOpen] = useState(false);
     useEffect(() => {
         onProcessingChange?.(form.processing);
@@ -80,10 +81,24 @@ export default function CustomerForm({
                 '[aria-invalid="true"]',
             );
             invalid?.focus({ preventScroll: true });
-            invalid?.scrollIntoView({ block: 'center', behavior: 'auto' });
+            if (invalid && inDialog && scrollArea.current) {
+                const area = scrollArea.current;
+                const offset =
+                    invalid.getBoundingClientRect().top -
+                    area.getBoundingClientRect().top;
+                area.scrollTo({
+                    top:
+                        area.scrollTop +
+                        offset -
+                        (area.clientHeight - invalid.offsetHeight) / 2,
+                    behavior: 'auto',
+                });
+            } else {
+                invalid?.scrollIntoView({ block: 'center', behavior: 'auto' });
+            }
         });
         return () => cancelAnimationFrame(frame);
-    }, [form.errors, form.hasErrors, form.processing]);
+    }, [form.errors, form.hasErrors, form.processing, inDialog]);
     return (
         <form
             ref={formElement}
@@ -132,6 +147,7 @@ export default function CustomerForm({
             }}
         >
             <div
+                ref={scrollArea}
                 className={
                     inDialog
                         ? 'min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5'

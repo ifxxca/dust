@@ -56,6 +56,10 @@ export default function CustomerPicker({
     const [error, setError] = useState('');
     const search = useHttp({});
     const [createBusy, setCreateBusy] = useState(false);
+    const [createDirty, setCreateDirty] = useState(false);
+    const discardCreate = () =>
+        !createDirty ||
+        window.confirm('Perubahan customer belum disimpan. Buang perubahan?');
     useEffect(() => {
         if (!open || creating) return;
         let cancelled = false;
@@ -98,7 +102,8 @@ export default function CustomerPicker({
         <Dialog
             open={open}
             onOpenChange={(value) => {
-                if (!createBusy) setOpen(value);
+                if (!createBusy && (value || !creating || discardCreate()))
+                    setOpen(value);
             }}
         >
             <DialogTrigger asChild>
@@ -158,7 +163,10 @@ export default function CustomerPicker({
                     <CustomerForm
                         inDialog
                         onProcessingChange={setCreateBusy}
-                        onCancel={() => setCreating(false)}
+                        onDirtyChange={setCreateDirty}
+                        onCancel={() => {
+                            if (discardCreate()) setCreating(false);
+                        }}
                         onSaved={(customer) => {
                             if (customer.is_active) {
                                 choose(customer);

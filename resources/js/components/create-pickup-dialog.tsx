@@ -20,13 +20,19 @@ export default function CreatePickupDialog({
     onCreated: () => void;
 }) {
     const [busy, setBusy] = useState(false);
+    const [dirty, setDirty] = useState(false);
+    const changeOpen = (value: boolean) => {
+        if (busy) return;
+        if (
+            !value &&
+            dirty &&
+            !window.confirm('Input pickup belum disimpan. Buang perubahan?')
+        )
+            return;
+        onOpenChange(value);
+    };
     return (
-        <Dialog
-            open={open}
-            onOpenChange={(value) => {
-                if (!busy) onOpenChange(value);
-            }}
-        >
+        <Dialog open={open} onOpenChange={changeOpen}>
             <DialogContent
                 className="max-h-[90dvh] overflow-y-auto bg-card sm:max-w-xl"
                 onInteractOutside={(event) => event.preventDefault()}
@@ -40,8 +46,9 @@ export default function CreatePickupDialog({
                 </DialogHeader>
                 <CreatePickup
                     timezone={timezone}
-                    onCancel={() => onOpenChange(false)}
+                    onCancel={() => changeOpen(false)}
                     onBusyChange={setBusy}
+                    onDirtyChange={setDirty}
                     onCreated={() => {
                         onOpenChange(false);
                         onCreated();

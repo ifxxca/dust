@@ -1,0 +1,633 @@
+[
+  {
+    "key": "live-application-unavailable",
+    "url": "http://localhost:8000/login",
+    "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8000/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8000/login\", waiting until \"load\"\u001b[22m\n"
+  },
+  {
+    "key": "customer-dialog",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "INPUT",
+      "id": "customer-name",
+      "text": ""
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [
+      {
+        "label": "Tambah Customer",
+        "description": "radix-_r_n_"
+      }
+    ],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nDaftar Customer (28)\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\nCustomer Audit 10\n\nAUD0009\n\n\t\n\n+14436572244\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 11\n\nAUD0010\n\n\t\n\n+14199885078\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 12\n\nAUD0011\n\n\t\n\n+1 (628) 562-9483\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 13\n\nAUD0012\n\n\t\n\n351-658-0388\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 14\n\nAUD0013\n\n\t\n\n+17259252766\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 15\n\nAUD0014\n\n\t\n\n(317) 962-9585\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 16\n\nAUD0015\n\n\t\n\n(781) 864-0238\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 17\n\nAUD0016\n\n\t\n\n+1-970-381-5956\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 18\n\nAUD0017\n\n\t\n\n978.207.6700\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 19\n\nAUD0018\n\n\t\n\n(607) 845-9317\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 2\n\nAUD0001\n\n\t\n\n+1-667-900-9053\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 20\n\nAUD0019\n\n\t\n\n+1-305-686-3964\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 21\n\nAUD0020\n\n\t\n\n386.555.3098\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 22\n\nAUD0021\n\n\t\n\n858-886-4070\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 23\n\nAUD0022\n\n\t\n\n1-754-471-2733\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 24\n\nAUD0023\n\n\t\n\n(845) 951-5140\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 25\n\nAUD0024\n\n\t\n\n(858) 560-7349\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 26\n\nAUD0025\n\n\t\n\n845-813-1713\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 27\n\nAUD0026\n\n\t\n\n1-346-845-5316\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 28\n\nAUD0027\n\n\t\n\n+15087738259\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n1–20 dari 28 customer\n\nHalaman 1 dari 2\nTambah Customer\n\nLengkapi identitas, kontak, dan alamat customer untuk kebutuhan pickup.\n\nIdentitas & Kontak\n\nIsi nama customer dan minimal satu email, telepon, atau kontak utama pickup.\n\nNama Customer *\nKode Customer\n\nKode unik. Pada customer baru, kosongkan untuk kode otomatis.\n\nEmail\nNomor Telepon\nAlamat & Lokasi\n\nAlamat digunakan sebagai acuan saat membuat pickup baru.\n\nAlamat Pickup *\nLokasi Customer (opsional)\nLatitude\nLongitude\n\nIsi kedua koordinat, atau kosongkan keduanya. Latitude −90 sampai 90; longitude −180 sampai 180.\n\nKontak Utama Pickup (opsional)\nStatus Customer\nAktif\nAktif\nNonaktif\n\nCustomer nonaktif tidak dapat dipilih untuk pickup baru. Task dan riwayat sebelumnya tetap tersimpan.\n\nBatal\nSimpan Customer\nClose"
+  },
+  {
+    "key": "customer-server-validation",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "DIV",
+      "id": "radix-_r_l_",
+      "text": "Tambah CustomerLengkapi identitas, kontak, dan alamat customer untuk kebutuhan pickup.Identitas & Ko"
+    },
+    "invalid": [
+      {
+        "id": "customer-contact",
+        "description": null
+      }
+    ],
+    "alerts": [
+      "The contact field is required when none of email / phone are present."
+    ],
+    "dialogs": [
+      {
+        "label": "Tambah Customer",
+        "description": "radix-_r_n_"
+      }
+    ],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nDaftar Customer (28)\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\nCustomer Audit 10\n\nAUD0009\n\n\t\n\n+14436572244\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 11\n\nAUD0010\n\n\t\n\n+14199885078\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 12\n\nAUD0011\n\n\t\n\n+1 (628) 562-9483\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 13\n\nAUD0012\n\n\t\n\n351-658-0388\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 14\n\nAUD0013\n\n\t\n\n+17259252766\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 15\n\nAUD0014\n\n\t\n\n(317) 962-9585\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 16\n\nAUD0015\n\n\t\n\n(781) 864-0238\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 17\n\nAUD0016\n\n\t\n\n+1-970-381-5956\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 18\n\nAUD0017\n\n\t\n\n978.207.6700\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 19\n\nAUD0018\n\n\t\n\n(607) 845-9317\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 2\n\nAUD0001\n\n\t\n\n+1-667-900-9053\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 20\n\nAUD0019\n\n\t\n\n+1-305-686-3964\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 21\n\nAUD0020\n\n\t\n\n386.555.3098\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 22\n\nAUD0021\n\n\t\n\n858-886-4070\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 23\n\nAUD0022\n\n\t\n\n1-754-471-2733\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 24\n\nAUD0023\n\n\t\n\n(845) 951-5140\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 25\n\nAUD0024\n\n\t\n\n(858) 560-7349\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 26\n\nAUD0025\n\n\t\n\n845-813-1713\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 27\n\nAUD0026\n\n\t\n\n1-346-845-5316\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 28\n\nAUD0027\n\n\t\n\n+15087738259\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n1–20 dari 28 customer\n\nHalaman 1 dari 2\nTambah Customer\n\nLengkapi identitas, kontak, dan alamat customer untuk kebutuhan pickup.\n\nIdentitas & Kontak\n\nIsi nama customer dan minimal satu email, telepon, atau kontak utama pickup.\n\nNama Customer *\nKode Customer\n\nKode unik. Pada customer baru, kosongkan untuk kode otomatis.\n\nEmail\nNomor Telepon\nAlamat & Lokasi\n\nAlamat digunakan sebagai acuan saat membuat pickup baru.\n\nAlamat Pickup *\nLokasi Customer (opsional)\nLatitude\nLongitude\n\nIsi kedua koordinat, atau kosongkan keduanya. Latitude −90 sampai 90; longitude −180 sampai 180.\n\nKontak Utama Pickup (opsional)\n\nKontak pickup lama tetap dipertahankan. Kosongkan untuk memakai email, atau telepon jika email tidak tersedia.\n\nKontak utama (opsional)\n\nThe contact field is required when none of email / phone are present.\n\nStatus Customer\nAktif\nAktif\nNonaktif\n\nCustomer nonaktif tidak dapat dipilih untuk pickup baru. Task dan riwayat sebelumnya tetap tersimpan.\n\nBatal\nSimpan Customer\nClose",
+    "httpStatus": 422
+  },
+  {
+    "key": "customer-draft-after-escape",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "INPUT",
+      "id": "customer-name",
+      "text": ""
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [
+      {
+        "label": "Tambah Customer",
+        "description": "radix-_r_n_"
+      }
+    ],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nDaftar Customer (28)\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\nCustomer Audit 10\n\nAUD0009\n\n\t\n\n+14436572244\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 11\n\nAUD0010\n\n\t\n\n+14199885078\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 12\n\nAUD0011\n\n\t\n\n+1 (628) 562-9483\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 13\n\nAUD0012\n\n\t\n\n351-658-0388\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 14\n\nAUD0013\n\n\t\n\n+17259252766\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 15\n\nAUD0014\n\n\t\n\n(317) 962-9585\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 16\n\nAUD0015\n\n\t\n\n(781) 864-0238\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 17\n\nAUD0016\n\n\t\n\n+1-970-381-5956\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 18\n\nAUD0017\n\n\t\n\n978.207.6700\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 19\n\nAUD0018\n\n\t\n\n(607) 845-9317\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 2\n\nAUD0001\n\n\t\n\n+1-667-900-9053\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 20\n\nAUD0019\n\n\t\n\n+1-305-686-3964\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 21\n\nAUD0020\n\n\t\n\n386.555.3098\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 22\n\nAUD0021\n\n\t\n\n858-886-4070\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 23\n\nAUD0022\n\n\t\n\n1-754-471-2733\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 24\n\nAUD0023\n\n\t\n\n(845) 951-5140\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 25\n\nAUD0024\n\n\t\n\n(858) 560-7349\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 26\n\nAUD0025\n\n\t\n\n845-813-1713\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 27\n\nAUD0026\n\n\t\n\n1-346-845-5316\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 28\n\nAUD0027\n\n\t\n\n+15087738259\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n1–20 dari 28 customer\n\nHalaman 1 dari 2\nTambah Customer\n\nLengkapi identitas, kontak, dan alamat customer untuk kebutuhan pickup.\n\nIdentitas & Kontak\n\nIsi nama customer dan minimal satu email, telepon, atau kontak utama pickup.\n\nNama Customer *\nKode Customer\n\nKode unik. Pada customer baru, kosongkan untuk kode otomatis.\n\nEmail\nNomor Telepon\nAlamat & Lokasi\n\nAlamat digunakan sebagai acuan saat membuat pickup baru.\n\nAlamat Pickup *\nLokasi Customer (opsional)\nLatitude\nLongitude\n\nIsi kedua koordinat, atau kosongkan keduanya. Latitude −90 sampai 90; longitude −180 sampai 180.\n\nKontak Utama Pickup (opsional)\nStatus Customer\nAktif\nAktif\nNonaktif\n\nCustomer nonaktif tidak dapat dipilih untuk pickup baru. Task dan riwayat sebelumnya tetap tersimpan.\n\nBatal\nSimpan Customer\nClose",
+    "retainedDraft": ""
+  },
+  {
+    "key": "customer-filtered",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "INPUT",
+      "id": "",
+      "text": ""
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nReset Filter\nDaftar Customer (10)\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\nCustomer Audit 2\n\nAUD0001\n\n\t\n\n+1-667-900-9053\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 20\n\nAUD0019\n\n\t\n\n+1-305-686-3964\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 21\n\nAUD0020\n\n\t\n\n386.555.3098\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 22\n\nAUD0021\n\n\t\n\n858-886-4070\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 23\n\nAUD0022\n\n\t\n\n1-754-471-2733\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 24\n\nAUD0023\n\n\t\n\n(845) 951-5140\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 25\n\nAUD0024\n\n\t\n\n(858) 560-7349\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 26\n\nAUD0025\n\n\t\n\n845-813-1713\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 27\n\nAUD0026\n\n\t\n\n1-346-845-5316\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 28\n\nAUD0027\n\n\t\n\n+15087738259\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n1–10 dari 10 customer\n\nHalaman 1 dari 1",
+    "queryUrl": "http://127.0.0.1:59634/operations/customers"
+  },
+  {
+    "key": "customer-filter-after-reload",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"customers\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,\"name"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nDaftar Customer (28)\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\nCustomer Audit 10\n\nAUD0009\n\n\t\n\n+14436572244\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 11\n\nAUD0010\n\n\t\n\n+14199885078\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 12\n\nAUD0011\n\n\t\n\n+1 (628) 562-9483\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 13\n\nAUD0012\n\n\t\n\n351-658-0388\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 14\n\nAUD0013\n\n\t\n\n+17259252766\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 15\n\nAUD0014\n\n\t\n\n(317) 962-9585\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 16\n\nAUD0015\n\n\t\n\n(781) 864-0238\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 17\n\nAUD0016\n\n\t\n\n+1-970-381-5956\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 18\n\nAUD0017\n\n\t\n\n978.207.6700\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 19\n\nAUD0018\n\n\t\n\n(607) 845-9317\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 2\n\nAUD0001\n\n\t\n\n+1-667-900-9053\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 20\n\nAUD0019\n\n\t\n\n+1-305-686-3964\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 21\n\nAUD0020\n\n\t\n\n386.555.3098\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 22\n\nAUD0021\n\n\t\n\n858-886-4070\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 23\n\nAUD0022\n\n\t\n\n1-754-471-2733\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 24\n\nAUD0023\n\n\t\n\n(845) 951-5140\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 25\n\nAUD0024\n\n\t\n\n(858) 560-7349\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 26\n\nAUD0025\n\n\t\n\n845-813-1713\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 27\n\nAUD0026\n\n\t\n\n1-346-845-5316\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 28\n\nAUD0027\n\n\t\n\n+15087738259\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n1–20 dari 28 customer\n\nHalaman 1 dari 2",
+    "searchAfterReload": ""
+  },
+  {
+    "key": "customer-pagination",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"customers\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,\"name"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nDaftar Customer (28)\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\nCustomer Audit 3\n\nAUD0002\n\n\t\n\n+18707676399\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 4\n\nAUD0003\n\n\t\n\n+13237628655\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 5\n\nAUD0004\n\n\t\n\n+1-256-674-9342\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 6\n\nAUD0005\n\n\t\n\n743.506.8540\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 7\n\nAUD0006\n\n\t\n\n+1-312-590-9592\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 8\n\nAUD0007\n\n\t\n\n(906) 609-6765\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 9\n\nAUD0008\n\n\t\n\n1-320-255-8957\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nAUD0000\n\n\t\n\n956-242-9648\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n21–28 dari 28 customer\n\nHalaman 2 dari 2",
+    "urlAfterPageChange": "http://127.0.0.1:59634/operations/customers"
+  },
+  {
+    "key": "customer-loading",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"customers\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,\"name"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nDaftar Customer\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\t\n\t\n\t\n\t\n\n\n\t\n\t\n\t\n\t\n\n\n\t\n\t\n\t\n\t\n\n\n\t\n\t\n\t\n\t\n\n\n\t\n\t\n\t\n\t\n\nMemuat customer…\n\nHalaman 1 dari 1",
+    "injection": "read response delayed by audit harness"
+  },
+  {
+    "key": "customer-error",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"customers\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,\"name"
+    },
+    "invalid": [],
+    "alerts": [
+      "Customer belum dapat dimuatCustomer belum dapat dimuat. Periksa koneksi dan sesi login Anda, lalu muat ulang.Coba Lagi"
+    ],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nCustomer belum dapat dimuat\nCustomer belum dapat dimuat. Periksa koneksi dan sesi login Anda, lalu muat ulang.\nCoba Lagi\nDaftar Customer\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\nDaftar belum dapat dimuat. Gunakan Muat Ulang untuk mencoba kembali.\n\nData belum tersedia\n\nHalaman 1 dari 1",
+    "injection": "simulated HTTP 500 response; no backend change"
+  },
+  {
+    "key": "customer-error-recovered",
+    "url": "/operations/customers",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"customers\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,\"name"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nCustomer\nAdmin / Supervisor\nCustomer\nMaster Data\n\nKelola identitas, kontak, alamat pickup, dan status customer.\n\nNama pengirim JNE\nMuat Ulang\nTambah Customer\nSemua Status\nDaftar Customer (28)\n\nDiurutkan berdasarkan nama customer.\n\nKolom\nCustomer\tKontak\tAlamat Pickup\tStatus\tAksi\n\n\nCustomer Audit 10\n\nAUD0009\n\n\t\n\n+14436572244\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 11\n\nAUD0010\n\n\t\n\n+14199885078\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 12\n\nAUD0011\n\n\t\n\n+1 (628) 562-9483\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 13\n\nAUD0012\n\n\t\n\n351-658-0388\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 14\n\nAUD0013\n\n\t\n\n+17259252766\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 15\n\nAUD0014\n\n\t\n\n(317) 962-9585\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 16\n\nAUD0015\n\n\t\n\n(781) 864-0238\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 17\n\nAUD0016\n\n\t\n\n+1-970-381-5956\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 18\n\nAUD0017\n\n\t\n\n978.207.6700\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 19\n\nAUD0018\n\n\t\n\n(607) 845-9317\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 2\n\nAUD0001\n\n\t\n\n+1-667-900-9053\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 20\n\nAUD0019\n\n\t\n\n+1-305-686-3964\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 21\n\nAUD0020\n\n\t\n\n386.555.3098\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 22\n\nAUD0021\n\n\t\n\n858-886-4070\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 23\n\nAUD0022\n\n\t\n\n1-754-471-2733\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 24\n\nAUD0023\n\n\t\n\n(845) 951-5140\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 25\n\nAUD0024\n\n\t\n\n(858) 560-7349\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 26\n\nAUD0025\n\n\t\n\n845-813-1713\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 27\n\nAUD0026\n\n\t\n\n1-346-845-5316\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n\nCustomer Audit 28\n\nAUD0027\n\n\t\n\n+15087738259\n\n\t\n\nAlamat fixture audit, Kecamatan Contoh, Kota Pengujian\n\n\t\nAktif\t\nEdit\n\n1–20 dari 28 customer\n\nHalaman 1 dari 2"
+  },
+  {
+    "key": "shipment-sheet",
+    "url": "/admin/jne-monitoring",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BUTTON",
+      "id": "",
+      "text": "Close"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [
+      {
+        "label": "AWB 0166000000000029",
+        "description": "radix-_r_5l_"
+      }
+    ],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nPengiriman JNE\nDaftar pengiriman\nAdmin / Supervisor\nPengiriman JNE\n\nMonitoring pengiriman berdasarkan laporan JNE yang terakhir diproses.\n\nDiamati di halaman ini: 24 Okt 2026, 18.01 · Asia/Jakarta\nSnapshot report, bukan informasi real-time.\n\nTarik report customer\nSegarkan tampilan\nSemua pengiriman\n30\nTerkirim\n6\nDalam proses\n6\nDibatalkan\n6\n\nRingkasan mengikuti pencarian dan filter customer.\n\nStatus\nSemua status\nPembaruan resi aktif\n\n18\nresi belum delivered/cancel\n\nJadwal otomatis\nBelum diatur\nInterval\n—\nBerikutnya\nAtur jadwal dahulu\nAtur jadwal pembaruan\nCakupan pembaruan\nAturan & jadwal penarikan\nLihat proses penarikan\nCari AWB\nCustomer\nSemua customer\nFilter lanjutan\nTerapkan\nDaftar AWB\nUrutan: observasi terbaru\nKolom\nAWB\tCustomer / Pengirim\tStatus Pengiriman\tPenerima\tTerakhir Diamati\t\nTindakan\n\n\n0166000000000029\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000028\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000027\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000026\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000025\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000024\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000023\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000022\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000021\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000020\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000019\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000018\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000017\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000016\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000015\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000014\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000013\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000012\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000011\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000010\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000009\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000008\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000007\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000006\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000005\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000004\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000003\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000002\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000001\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000000\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n1–30 dari 30 AWB\n\nHalaman 1 dari 1\nAWB 0166000000000029\n\nInformasi dari report JNE dan observasi yang telah tersimpan.\n\nRingkasan pengiriman\nStatus belum dikenali\nCustomer\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\nPemetaan customer\nCustomer dikenali\nPengirim di report JNE\nPengirim Audit\nPenerima\nPenerima Fixture\nInformasi JNE & sumber\nStatus web asli\nUNKNOWN\nStatus POD asli\nDELIVERED\nPembatalan (CSV)\n—\nTerakhir diamati\n24 Okt 2026, 18.01 · Asia/Jakarta\nSumber report (nomor penarikan)\nAUDIT001\nReport / baris CSV\n#1 / 31\nReferensi di report\n—\n\nWaktu observasi berasal dari data report yang diproses. Ini bukan waktu kejadian pengiriman atau pembaruan real-time.\n\nUnduh CSV sumber #1\nSemua kolom CSV asli\nHubungan pickup\nBelum terhubung\n\nBelum terhubung ke pickup. Ini tidak menunjukkan kegagalan pengiriman.\n\nCustomer pickup\n—\nMetode pencocokan\n—\nCatatan rekonsiliasi\n—\n\nRekonsiliasi dan perubahan hubungan pickup tersedia di halaman AWB.\n\nRiwayat observasi tersimpan\n\nSnapshot dari report yang sudah diproses, bukan riwayat kejadian langsung dari JNE.\n\nBelum ada riwayat observasi.\n\nLihat riwayat & detail lengkap\nSalin AWB\nBuka halaman AWB\nClose"
+  },
+  {
+    "key": "shipment-sheet-focus-return",
+    "url": "/admin/jne-monitoring",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BUTTON",
+      "id": "radix-_r_2q_",
+      "text": ""
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nPengiriman JNE\nDaftar pengiriman\nAdmin / Supervisor\nPengiriman JNE\n\nMonitoring pengiriman berdasarkan laporan JNE yang terakhir diproses.\n\nDiamati di halaman ini: 24 Okt 2026, 18.01 · Asia/Jakarta\nSnapshot report, bukan informasi real-time.\n\nTarik report customer\nSegarkan tampilan\nSemua pengiriman\n30\nTerkirim\n6\nDalam proses\n6\nDibatalkan\n6\n\nRingkasan mengikuti pencarian dan filter customer.\n\nStatus\nSemua status\nPembaruan resi aktif\n\n18\nresi belum delivered/cancel\n\nJadwal otomatis\nBelum diatur\nInterval\n—\nBerikutnya\nAtur jadwal dahulu\nAtur jadwal pembaruan\nCakupan pembaruan\nAturan & jadwal penarikan\nLihat proses penarikan\nCari AWB\nCustomer\nSemua customer\nFilter lanjutan\nTerapkan\nDaftar AWB\nUrutan: observasi terbaru\nKolom\nAWB\tCustomer / Pengirim\tStatus Pengiriman\tPenerima\tTerakhir Diamati\t\nTindakan\n\n\n0166000000000029\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000028\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000027\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000026\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000025\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000024\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000023\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000022\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000021\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000020\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000019\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000018\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000017\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000016\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000015\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000014\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000013\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000012\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000011\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000010\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000009\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000008\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000007\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000006\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000005\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000004\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nStatus belum dikenali\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000003\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nDibatalkan\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000002\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nKendala pengiriman\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000001\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nDalam proses\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000000\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n1–30 dari 30 AWB\n\nHalaman 1 dari 1",
+    "tabSequence": [
+      {
+        "insideDialog": true,
+        "label": "Unduh CSV sumber #1"
+      },
+      {
+        "insideDialog": true,
+        "label": "Semua kolom CSV asli"
+      },
+      {
+        "insideDialog": true,
+        "label": "Lihat riwayat & detail lengkap"
+      },
+      {
+        "insideDialog": true,
+        "label": "Salin AWB"
+      },
+      {
+        "insideDialog": true,
+        "label": "Buka halaman AWB"
+      },
+      {
+        "insideDialog": true,
+        "label": "Close"
+      },
+      {
+        "insideDialog": true,
+        "label": "Unduh CSV sumber #1"
+      },
+      {
+        "insideDialog": true,
+        "label": "Semua kolom CSV asli"
+      },
+      {
+        "insideDialog": true,
+        "label": "Lihat riwayat & detail lengkap"
+      },
+      {
+        "insideDialog": true,
+        "label": "Salin AWB"
+      },
+      {
+        "insideDialog": true,
+        "label": "Buka halaman AWB"
+      },
+      {
+        "insideDialog": true,
+        "label": "Close"
+      }
+    ]
+  },
+  {
+    "key": "pickup-sorted",
+    "url": "/hasil-pickup?date_basis=pickup&date_from=2026-10-24&date_to=2026-10-24&direction=desc&monitoring=pickup&page=1&sort=customer_name",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"pickup-results\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nHasil Pickup\nAdmin / Supervisor\nHasil Pickup\n\nPantau kunjungan, POP, dan serah terima Retail.\n\n2026-10-24\nWIB\nEkspor CSV\nMonitoring Pemrosesan Paket\nMonitoring Pickup\nHari Ini\nKemarin\n7 Hari\nRentang Tanggal\nBantuan Metrik\nAktivitas Harian\nPekerjaan Tertunda\nHari Operasional: 24 Okt 2026 · 05.00–04.59 WIB\n\nPickup Dijadwalkan\n\n29\n\nPickup & rencana · 2026-10-24 – 2026-10-24 WIB\n\nPickup Dikunjungi\n\n13\n\nKunjungan · hari operasional dipilih\n\nPOP Final\n\n12\n\nStatus terbaru · periode dipilih\n\nMenunggu Handover\n\n0\n\nPOP final, belum masuk sesi\n\nMenunggu Verifikasi\n\n6\n\nBelum diperiksa / perlu tinjau ulang\n\nPerlu Ditindaklanjuti\n\nLintas hari · hingga hari operasional 2026-10-24 · status terkini\n\nBelum Dikunjungi\n11\nPOP Belum Final\n12\nMenunggu Handover\n0\nMenunggu Verifikasi\n6\nAda Selisih\n6\nCari\nFilter (1)\nBersihkan\nUrutkan:\nCustomer\nDaftar Pickup 29 pickup\n\nHari Operasional: 24 Okt 2026 · 05.00–04.59 WIB · status terkini\n\nPickup / Customer\n\t\nJadwal\n\tKunjungan\tPOP\tPaket\tHandover\tVerifikasi\tSelisih\tAksi\n\n\nCustomer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nAUD-PICKUP-0000\n\nBelum ditugaskan\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 9\n\nAUD-PICKUP-0008\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 8\n\nAUD-PICKUP-0007\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 7\n\nAUD-PICKUP-0006\n\nBelum ditugaskan\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 6\n\nAUD-PICKUP-0033\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tSudah diverifikasi\tAda selisih\t\n\n\n\nCustomer Audit 6\n\nAUD-PICKUP-0005\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tDibatalkan\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 5\n\nAUD-PICKUP-0032\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 4\n\nAUD-PICKUP-0031\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 4\n\nAUD-PICKUP-0003\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tSudah diverifikasi\tAda selisih\t\n\n\n\nCustomer Audit 3\n\nAUD-PICKUP-0030\n\nBelum ditugaskan\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 3\n\nAUD-PICKUP-0002\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 28\n\nAUD-PICKUP-0027\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tSudah diverifikasi\tAda selisih\t\n\n\n\nCustomer Audit 27\n\nAUD-PICKUP-0026\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 26\n\nAUD-PICKUP-0025\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 25\n\nAUD-PICKUP-0024\n\nBelum ditugaskan\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 24\n\nAUD-PICKUP-0023\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tDibatalkan\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 22\n\nAUD-PICKUP-0021\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tSudah diverifikasi\tAda selisih\t\n\n\n\nCustomer Audit 21\n\nAUD-PICKUP-0020\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tPOP Final\t9\t\nDalam verifikasi\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 20\n\nAUD-PICKUP-0019\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tBelum dibuat\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\n\n\n\nCustomer Audit 2\n\nAUD-PICKUP-0029\n\nAudit pickup_staff\n\n\t\n24 Okt 2026\n10.00\tBelum dikunjungi\tDibatalkan\t—\tBelum ada handover\tBelum diverifikasi\tBelum diperiksa\t\nHalaman 1 / 2 · 29 pickup\nSebelumnya\nBerikutnya",
+    "sortHeaders": [
+      {
+        "label": "Pickup / Customer",
+        "ariaSort": null
+      },
+      {
+        "label": "Jadwal",
+        "ariaSort": null
+      },
+      {
+        "label": "Petugas",
+        "ariaSort": null
+      },
+      {
+        "label": "Kunjungan",
+        "ariaSort": null
+      },
+      {
+        "label": "POP",
+        "ariaSort": null
+      },
+      {
+        "label": "Paket",
+        "ariaSort": null
+      },
+      {
+        "label": "Handover",
+        "ariaSort": null
+      },
+      {
+        "label": "Verifikasi",
+        "ariaSort": null
+      },
+      {
+        "label": "Selisih",
+        "ariaSort": null
+      },
+      {
+        "label": "Aksi",
+        "ariaSort": null
+      }
+    ]
+  },
+  {
+    "key": "shipments-filtered",
+    "url": "/admin/jne-monitoring?status=DELIVERED",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"jne-monitoring\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nPengiriman JNE\nDaftar pengiriman\nAdmin / Supervisor\nPengiriman JNE\n\nMonitoring pengiriman berdasarkan laporan JNE yang terakhir diproses.\n\nDiamati di halaman ini: 24 Okt 2026, 18.01 · Asia/Jakarta\nSnapshot report, bukan informasi real-time.\n\nTarik report customer\nSegarkan tampilan\nSemua pengiriman\n30\nTerkirim\n6\nDalam proses\n6\nDibatalkan\n6\n\nRingkasan mengikuti pencarian dan filter customer.\n\nStatus\nTerkirim · 6\nPembaruan resi aktif\n\n18\nresi belum delivered/cancel\n\nJadwal otomatis\nBelum diatur\nInterval\n—\nBerikutnya\nAtur jadwal dahulu\nAtur jadwal pembaruan\nCakupan pembaruan\nAturan & jadwal penarikan\nLihat proses penarikan\nCari AWB\nCustomer\nSemua customer\nFilter lanjutan\nTerapkan\nReset filter\nDaftar AWB\nUrutan: observasi terbaru\nKolom\nAWB\tCustomer / Pengirim\tStatus Pengiriman\tPenerima\tTerakhir Diamati\t\nTindakan\n\n\n0166000000000025\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000020\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCGKEC000000000015\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\nCSS01000000000010\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0166000000000005\n\t\n\nAUD0000 · Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n\n0101000000000000\n\t\n\nCustomer belum dipetakan\n\nPengirim JNE: Pengirim Audit\n\n\t\nTerkirim\tPenerima Fixture\t24 Okt 2026, 18.01\t\n\n1–6 dari 6 AWB\n\nHalaman 1 dari 1"
+  },
+  {
+    "key": "shipments-empty",
+    "url": "/admin/jne-monitoring?q=IMPOSSIBLE_AUDIT_EMPTY_989898",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"jne-monitoring\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nPengiriman JNE\nDaftar pengiriman\nAdmin / Supervisor\nPengiriman JNE\n\nMonitoring pengiriman berdasarkan laporan JNE yang terakhir diproses.\n\nAsia/Jakarta\nSnapshot report, bukan informasi real-time.\n\nTarik report customer\nSegarkan tampilan\nSemua pengiriman\n0\nTerkirim\n0\nDalam proses\n0\nDibatalkan\n0\n\nRingkasan mengikuti pencarian dan filter customer.\n\nStatus\nSemua status\nPembaruan resi aktif\n\n18\nresi belum delivered/cancel\n\nJadwal otomatis\nBelum diatur\nInterval\n—\nBerikutnya\nAtur jadwal dahulu\nAtur jadwal pembaruan\nCakupan pembaruan\nAturan & jadwal penarikan\nLihat proses penarikan\nCari AWB\nCustomer\nSemua customer\nFilter lanjutan\nTerapkan\nAwalan AWB: IMPOSSIBLE_AUDIT_EMPTY_989898\nReset filter\nDaftar AWB\nUrutan: observasi terbaru\nKolom\nAWB\tCustomer / Pengirim\tStatus Pengiriman\tPenerima\tTerakhir Diamati\t\nTindakan\n\n\n\nTidak ada AWB yang sesuai\n\nUbah atau reset filter untuk melihat pengiriman lainnya.\n\nReset filter\n\n0 AWB\n\nHalaman 1 dari 1"
+  },
+  {
+    "key": "report-run-dialog",
+    "url": "/admin/report-runs",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BUTTON",
+      "id": "",
+      "text": "Informasi developer"
+    },
+    "invalid": [],
+    "alerts": [
+      "Error yang perlu diperiksaFixture audit: laporan belum tersedia; periksa lalu coba kembali."
+    ],
+    "dialogs": [
+      {
+        "label": "Run #2",
+        "description": "radix-_r_p_"
+      }
+    ],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nPengiriman JNE\nRiwayat run\nAdmin / Supervisor\nRiwayat run report\n\nPantau antrean, hasil APEX, dan pemrosesan data.\n\nPengaturan\nTarik sekarang\n\nRun di halaman ini\n\n2\n\nSedang diproses\n\n0\n\nSiap dimonitor\n\n1\n\nPerlu diperiksa\n\n1\n\nRingkasan status dihitung dari run pada halaman ini.\n\nSemua penarikan\n2 run tersimpan · diperbarui setiap 15 detik\nPerbarui\nNomor customer / akun\nSumber\nSemua sumber\nSemua sumber\nHybrid gabungan\nAPEX JNE CCC\nHybrid ROBERTO\nHybrid NURALAMT\nStatus\nSemua status\nSemua status\nAntrean\nDimulai\nMenyiapkan report\nMenunggu konversi APEX\nMengumpulkan 4 report\nSumber tersimpan\nTidak ada AWB\nMengunduh CSV\nSelesai\nGagal\nPerlu diperiksa\nTerapkan\nRun / sumber\tAccount / periode\tProgres\tHasil CSV\tDibuat / selesai\t\n\n\n#2 · APEX JNE CCC\n\nReport customer\n\n\t\n\nAUDIT002\nNational: NO\n\n2026-10-01 – 2026-10-02\n\n\t\nPerlu diperiksa\t\n\n—\n\n\t\n\n24 Okt 2026, 18.01\n\nBelum selesai\n\n\tDetail & log\n\n\n\n#1 · APEX JNE CCC\n\nReport customer\n\n\t\n\nAUDIT001\nNational: NO\n\n2026-10-23 – 2026-10-24\n\n\t\nSiap dimonitor\t\n\n30 baris\n\n\t\n\n24 Okt 2026, 18.01\n\n24 Okt 2026, 18.01\n\n\tDetail & log\n\nHalaman 1 dari 1 · 20 run per halaman\n\nSebelumnya\nBerikutnya\n\nRun lama tetap tersimpan ketika konfigurasi diubah.\n\nPeriksa worker terhenti\nRun #2\n\nAPEX JNE CCC · Report customer · AUDIT002\n\nAntrean\nPenarikan\nCSV APEX\nMonitoring\nPerlu diperiksa\n\nError yang perlu diperiksa\n\nFixture audit: laporan belum tersedia; periksa lalu coba kembali.\n\nBaris sumber\n\n—\n\nAWB unik\n\n—\n\nBaris CSV APEX\n\n—\n\nMasuk antrean\n\n24 Okt 2026, 18.01\nInformasi developer\nCatatan pemeriksaan\nTandai sudah diperiksa\nClose"
+  },
+  {
+    "key": "dashboard-actual-dark",
+    "url": "/dashboard",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BUTTON",
+      "id": "",
+      "text": ""
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nDashboard\nAdmin / Supervisor\nDashboard operasional\n\nRingkasan pickup, paket, performa tim, dan pekerjaan yang perlu ditangani.\n\nData dimuat 24 Okt, 19.07 · WIB\n\nSegarkan data\nBuat pickup\nHari ini\n7 hari\n30 hari\nDari tanggal\nSampai tanggal\nTerapkan\n\nHari pickup: 05.00–04.59 WIB, mengikuti aktivitas; pickup yang belum dimulai mengikuti jadwal. Pembanding: 26 Agu–24 Sep.\n\nCustomer aktif\n\n25\n\nCustomer unik dengan aktivitas pickup\n\nBelum ada pembanding\n\nAktivitas pickup\n\n29\n\nSatu task dihitung satu kali\n\nBelum ada pembanding\n\nPaket tercatat\n\n108\n\nBukti final dengan koreksi terakhir\n\nBelum ada pembanding\n\nPerlu tindak lanjut\n\n24\n\nTask belum tuntas atau perlu diperiksa\n\nBelum ada pembanding\n\nPickup berhasil\n\n12\n\nTanpa paket\n\n0\n\nRasio pickup berhasil\n\n41,4%\n\nMenunggu handover\n\n0\n\nAktivitas harian\nPickup, paket final, dan customer aktif per hari.\nPickup\nPaket\nCustomer\n24 Okt\n29 pickup · 108 paket · 25 customer\n\n29\n\n25 Sep\n24 Okt\nData aktivitas harian\nStatus pengiriman JNE\nSnapshot terbaru resi berdasarkan tanggal kirim kalender (00.00–23.59 WIB).\n30\nResi APEX\nDibatalkan\n6\n20%\nTerkirim\n6\n20%\nKendala pengiriman\n6\n20%\nDalam proses\n6\n20%\nStatus belum dikenali\n6\n20%\n\nDiamati: 24 Okt, 18.01. Status mengikuti report terakhir.\n\nAnalisis pengiriman\nPerforma petugas\nPickup berhasil dibanding aktivitas tercatat, berdasarkan penanggung jawab task.\nAudit pickup_staff\n12/23 · 52,2%\n108 paket dari bukti final\nTipe pickup\nDistribusi jenis task pada periode terpilih.\n29\nPickup\nRegular\n17\n58,6%\nOn-demand\n12\n41,4%\nKategori paket\nJumlah paket pada bukti final, memakai koreksi terbaru.\n108\nPaket\nManual Hybrid\n48\n44,4%\nCashless Hybrid\n36\n33,3%\nCSS/Orion\n24\n22,2%\nPerlu tindak lanjut\n24\nMonitoring\nTask dihitung sekali, meskipun memiliki beberapa hal yang perlu diperiksa.\nBelum ditugaskan\nCustomer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\nBelum ditugaskan\nCustomer Audit 7\nBukti pickup belum final\nCustomer Audit 8\nBelum ditugaskan\nCustomer Audit 13\nBukti pickup belum final\nCustomer Audit 14\nBelum ditugaskan\nCustomer Audit 19\n\nMenampilkan 6 dari 24 task.\n\nCustomer dengan paket terbanyak\nDiurutkan dari paket final, kemudian jumlah aktivitas pickup.\n1\nCustomer Audit 3\n9 paket\n2 pickup\n2\nCustomer Audit 4\n9 paket\n2 pickup\n3\nCustomer Audit 6\n9 paket\n2 pickup\n4\nCustomer Audit 5\n9 paket\n1 pickup\n5\nCustomer Audit 9\n9 paket\n1 pickup\nCustomer baru dan repeat\nBaru: customer aktif yang belum punya jadwal pickup sebelum awal periode. Repeat: sudah pernah punya jadwal sebelumnya.\n25\nCustomer unik\nBaru pada periode ini\n25\n100%\nRepeat\n0\n0%\nTujuan pengiriman terbanyak\n5 tujuan dari resi APEX pada periode ini. Nama mengikuti lokasi JNE yang tersedia.\nBandung\n15 resi\nCikarang\n15 resi\nAktivitas terbaru\nMaksimal 8 aktivitas dalam periode terpilih.\nLihat semua\nWaktu\tCustomer\tPetugas\tPaket\tStatus\t\nDetail\n\n24 Okt, 18.23\tCustomer Audit 2\tAudit pickup_staff\tBukti belum final\t\nDitugaskan\t\n\n24 Okt, 11.00\tCustomer Audit 6\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 5\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 28\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 27\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 22\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 21\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 16\tAudit pickup_staff\t9\t\nPickup berhasil\t",
+    "contrastFailures": [
+      {
+        "text": "Buat pickup",
+        "tag": "BUTTON",
+        "className": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 min-h-11",
+        "color": "oklch(1 0 0)",
+        "background": [
+          91,
+          150,
+          250
+        ],
+        "fontSize": 14,
+        "fontWeight": "500",
+        "ratio": 2.92,
+        "threshold": 4.5
+      },
+      {
+        "text": "Terapkan",
+        "tag": "BUTTON",
+        "className": "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3 min-h-11 sm:col-span-2 xl:w-auto",
+        "color": "oklch(1 0 0)",
+        "background": [
+          91,
+          150,
+          250
+        ],
+        "fontSize": 14,
+        "fontWeight": "500",
+        "ratio": 2.92,
+        "threshold": 4.5
+      }
+    ],
+    "colorScheme": "dark"
+  },
+  {
+    "key": "dashboard-contrast-light",
+    "url": "/dashboard",
+    "viewport": [
+      1440,
+      1000
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BUTTON",
+      "id": "",
+      "text": ""
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nDashboard\nAdmin / Supervisor\nDashboard operasional\n\nRingkasan pickup, paket, performa tim, dan pekerjaan yang perlu ditangani.\n\nData dimuat 24 Okt, 19.07 · WIB\n\nSegarkan data\nBuat pickup\nHari ini\n7 hari\n30 hari\nDari tanggal\nSampai tanggal\nTerapkan\n\nHari pickup: 05.00–04.59 WIB, mengikuti aktivitas; pickup yang belum dimulai mengikuti jadwal. Pembanding: 26 Agu–24 Sep.\n\nCustomer aktif\n\n25\n\nCustomer unik dengan aktivitas pickup\n\nBelum ada pembanding\n\nAktivitas pickup\n\n29\n\nSatu task dihitung satu kali\n\nBelum ada pembanding\n\nPaket tercatat\n\n108\n\nBukti final dengan koreksi terakhir\n\nBelum ada pembanding\n\nPerlu tindak lanjut\n\n24\n\nTask belum tuntas atau perlu diperiksa\n\nBelum ada pembanding\n\nPickup berhasil\n\n12\n\nTanpa paket\n\n0\n\nRasio pickup berhasil\n\n41,4%\n\nMenunggu handover\n\n0\n\nAktivitas harian\nPickup, paket final, dan customer aktif per hari.\nPickup\nPaket\nCustomer\n24 Okt\n29 pickup · 108 paket · 25 customer\n\n29\n\n25 Sep\n24 Okt\nData aktivitas harian\nStatus pengiriman JNE\nSnapshot terbaru resi berdasarkan tanggal kirim kalender (00.00–23.59 WIB).\n30\nResi APEX\nDibatalkan\n6\n20%\nTerkirim\n6\n20%\nKendala pengiriman\n6\n20%\nDalam proses\n6\n20%\nStatus belum dikenali\n6\n20%\n\nDiamati: 24 Okt, 18.01. Status mengikuti report terakhir.\n\nAnalisis pengiriman\nPerforma petugas\nPickup berhasil dibanding aktivitas tercatat, berdasarkan penanggung jawab task.\nAudit pickup_staff\n12/23 · 52,2%\n108 paket dari bukti final\nTipe pickup\nDistribusi jenis task pada periode terpilih.\n29\nPickup\nRegular\n17\n58,6%\nOn-demand\n12\n41,4%\nKategori paket\nJumlah paket pada bukti final, memakai koreksi terbaru.\n108\nPaket\nManual Hybrid\n48\n44,4%\nCashless Hybrid\n36\n33,3%\nCSS/Orion\n24\n22,2%\nPerlu tindak lanjut\n24\nMonitoring\nTask dihitung sekali, meskipun memiliki beberapa hal yang perlu diperiksa.\nBelum ditugaskan\nCustomer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\nBelum ditugaskan\nCustomer Audit 7\nBukti pickup belum final\nCustomer Audit 8\nBelum ditugaskan\nCustomer Audit 13\nBukti pickup belum final\nCustomer Audit 14\nBelum ditugaskan\nCustomer Audit 19\n\nMenampilkan 6 dari 24 task.\n\nCustomer dengan paket terbanyak\nDiurutkan dari paket final, kemudian jumlah aktivitas pickup.\n1\nCustomer Audit 3\n9 paket\n2 pickup\n2\nCustomer Audit 4\n9 paket\n2 pickup\n3\nCustomer Audit 6\n9 paket\n2 pickup\n4\nCustomer Audit 5\n9 paket\n1 pickup\n5\nCustomer Audit 9\n9 paket\n1 pickup\nCustomer baru dan repeat\nBaru: customer aktif yang belum punya jadwal pickup sebelum awal periode. Repeat: sudah pernah punya jadwal sebelumnya.\n25\nCustomer unik\nBaru pada periode ini\n25\n100%\nRepeat\n0\n0%\nTujuan pengiriman terbanyak\n5 tujuan dari resi APEX pada periode ini. Nama mengikuti lokasi JNE yang tersedia.\nBandung\n15 resi\nCikarang\n15 resi\nAktivitas terbaru\nMaksimal 8 aktivitas dalam periode terpilih.\nLihat semua\nWaktu\tCustomer\tPetugas\tPaket\tStatus\t\nDetail\n\n24 Okt, 18.23\tCustomer Audit 2\tAudit pickup_staff\tBukti belum final\t\nDitugaskan\t\n\n24 Okt, 11.00\tCustomer Audit 6\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 5\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 28\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 27\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 22\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 21\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 16\tAudit pickup_staff\t9\t\nPickup berhasil\t",
+    "contrastFailures": [
+      {
+        "text": "Dashboard",
+        "tag": "A",
+        "className": "peer/menu-button flex w-full items-center gap-2 overflow-hidden p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-8 text-sm my-0.5 min-h-11 rounded-lg data-[active=true]:bg-primary/10 data-[active=true]:font-semibold data-[active=true]:text-primary",
+        "color": "oklch(0.55 0.2 260)",
+        "background": [
+          227.4666666666667,
+          235.521568627451,
+          247.5529411764706
+        ],
+        "fontSize": 14,
+        "fontWeight": "600",
+        "ratio": 4.21,
+        "threshold": 4.5
+      },
+      {
+        "text": "Dashboard",
+        "tag": "SPAN",
+        "className": "",
+        "color": "oklch(0.55 0.2 260)",
+        "background": [
+          227.4666666666667,
+          235.521568627451,
+          247.5529411764706
+        ],
+        "fontSize": 14,
+        "fontWeight": "600",
+        "ratio": 4.21,
+        "threshold": 4.5
+      }
+    ]
+  },
+  {
+    "key": "handover-mobile-selection",
+    "url": "/handover/1",
+    "viewport": [
+      375,
+      812
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BUTTON",
+      "id": "",
+      "text": "PCK-0003Perlu VerifikasiCustomer Audit 324 Okt 2026, 11.009 paket (POP)"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Sidebar\n\nDisplays the mobile sidebar.\n\nToggle sidebar\nHandover & Verifikasi\nHandover Session HO-0001\nDalam verifikasi\n\n24 Okt 2026, 18.01 · Audit pickup_staff\n\nMuat Ulang\nTutup Session\n\nJumlah Task\n\n12\n\nJumlah Paket (POP)\n\n108\n\nVerifikasi\n\n6 / 12\n\nDiscrepancy\n\n6\n\nDibuat Oleh\n\nAudit retail_staff\n\n24 Okt 2026, 18.01\n\nDaftar Pickup Task\n\nPilih task untuk memeriksa hasil penerimaan paket.\n\nPCK-0003\n\nPerlu Verifikasi\n\nCustomer Audit 3\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0004\n\nSelisih\n\nCustomer Audit 4\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0009\n\nPerlu Verifikasi\n\nCustomer Audit 9\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0010\n\nSelisih\n\nCustomer Audit 10\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0015\n\nPerlu Verifikasi\n\nCustomer Audit 15\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0016\n\nSelisih\n\nCustomer Audit 16\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0021\n\nPerlu Verifikasi\n\nCustomer Audit 21\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0022\n\nSelisih\n\nCustomer Audit 22\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0027\n\nPerlu Verifikasi\n\nCustomer Audit 27\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0028\n\nSelisih\n\nCustomer Audit 28\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0033\n\nPerlu Verifikasi\n\nCustomer Audit 5\n\n24 Okt 2026, 11.00\n9 paket (POP)\n\nPCK-0034\n\nSelisih\n\nCustomer Audit 6\n\n24 Okt 2026, 11.00\n9 paket (POP)\nVerifikasi Paket\n\nPeriksa jumlah paket fisik per kategori dan masukkan hasil penerimaan.\n\nPerlu Verifikasi\n\nPCK-0003\n\nCustomer Audit 3\n\n24 Okt 2026, 11.00\nAlamat fixture audit\nKontak fixture\nLihat Detail Task\nKategori\tJumlah POP\tJumlah Diterima\tSelisih\nManual Hybrid Non-Cashless\t4\t\n\t—\nCashless Hybrid\t3\t\n\t—\nCSS / Orion\t2\t\n\t—\nTotal\t9\t—\t—\nCatatan Verifikasi (opsional)\n\n0/2000\n\nHitung fisik secara independen. Input belum tersimpan sampai verifikasi dikirim.\n\nTandai Terverifikasi\nKembali ke Daftar Session\n\nMenutup session tidak menyelesaikan discrepancy.\n\nJejak Session (0)",
+    "verificationTop": 1997.5,
+    "viewportHeight": 812
+  },
+  {
+    "key": "pickup-landscape",
+    "url": "/operations/tasks",
+    "viewport": [
+      812,
+      375
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"operations\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,\"nam"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Retail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor\nToggle sidebar\nRetail Pickup\nAdmin / Supervisor\nOperasional Pickup\n\nKelola seluruh pickup customer di Asia/Jakarta.\n\nBuat Pickup\nMuat Ulang\n\nTotal Pickup\n\n34\nHari ini\n\nMenunggu Assignment\n\n6\n\nSedang Ditangani\n\n6\n\nPickup Berhasil\n\n12\n\nKunjungan Tanpa Paket\n\n5\n\nBerdasarkan jadwal hari ini (2026-10-24), terlepas dari filter daftar. Tanpa paket adalah hasil akhir tersendiri, terpisah dari pickup berhasil.\n\nCari Pickup\nStatus\nSemua Status\nTanggal Mulai\nTanggal Selesai\nFilter Lanjutan\nReset Filter\n\nAssignment Massal · 0/100 dipilih\n\nPilihan tetap tersimpan saat pindah halaman atau filter. Hanya task belum ditugaskan yang dapat dipilih.\n\nHapus Pilihan\nTugaskan Massal\nDaftar Pickup (34)\nUrutkan\nTerbaru\nPilih tugas belum ditugaskan di halaman ini (2)\nTidak dapat di-assign\n\nPCK-0034\n\nCustomer Audit 6\nPickup berhasil\n\n256 Alexandrea Street Apt. 694 North Blanca, VT 15143\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n712.471.2906\n\nAUD-PICKUP-0033\nDetail\nTidak dapat di-assign\n\nPCK-0033\n\nCustomer Audit 5\nPickup berhasil\n\n1822 Clarabelle Neck Jadonhaven, IA 39410-1574\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+1.847.435.9649\n\nAUD-PICKUP-0032\nDetail\nTidak dapat di-assign\n\nPCK-0032\n\nCustomer Audit 4\nDitugaskan\n\n48959 Corkery Burgs East Berryfort, MS 17777-8323\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+1-734-310-7264\n\nAUD-PICKUP-0031\nDetail\nPilih tugas\n\nPCK-0031\n\nCustomer Audit 3\nMenunggu assignment\n\n879 Alia Circle Apt. 160 Pacochafurt, NJ 20841-9890\n\n24 Okt 2026 · 10.00\n\nBelum ditugaskan\n\n(925) 831-6966\n\nAUD-PICKUP-0030\nDetail\nTidak dapat di-assign\n\nPCK-0030\n\nCustomer Audit 2\nDibatalkan\n\n2487 Little Crest Apt. 415 Hollyberg, NH 23579-2779\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+1 (934) 535-6371\n\nAUD-PICKUP-0029\nDetail\nTidak dapat di-assign\n\nPCK-0029\n\nCustomer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\nSelesai tanpa paket\n\n2522 Kub Island Apt. 243 Port Guadalupeton, AK 08013-9420\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n(678) 260-7242\n\nAUD-PICKUP-0028\nDetail\nTidak dapat di-assign\n\nPCK-0028\n\nCustomer Audit 28\nPickup berhasil\n\n1909 Schaden Prairie Apt. 651 North Jordanport, AR 28153-0147\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+14056187540\n\nAUD-PICKUP-0027\nDetail\nTidak dapat di-assign\n\nPCK-0027\n\nCustomer Audit 27\nPickup berhasil\n\n462 Alejandrin Ridge East Alfred, MS 97049\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+17575957268\n\nAUD-PICKUP-0026\nDetail\nTidak dapat di-assign\n\nPCK-0026\n\nCustomer Audit 26\nDitugaskan\n\n9449 Gorczany Freeway Apt. 400 Harrisland, NV 22933-8880\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n(516) 792-1880\n\nAUD-PICKUP-0025\nDetail\nPilih tugas\n\nPCK-0025\n\nCustomer Audit 25\nMenunggu assignment\n\n5820 Nettie Drive Apt. 979 South Ubaldo, DE 81505\n\n24 Okt 2026 · 10.00\n\nBelum ditugaskan\n\n+1.678.993.4733\n\nAUD-PICKUP-0024\nDetail\n\n1–10 dari 34 pickup\n\n10 per halaman\nHalaman 1 dari 4"
+  },
+  {
+    "key": "mobile-sidebar",
+    "url": "/operations/tasks",
+    "viewport": [
+      375,
+      812
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BUTTON",
+      "id": "radix-_r_2h_",
+      "text": "AAAudit admin_supervisor"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [
+      {
+        "label": "Sidebar",
+        "description": "radix-_r_23_"
+      }
+    ],
+    "bodyText": "Sidebar\n\nDisplays the mobile sidebar.\n\nToggle sidebar\nRetail Pickup\nOperasional Pickup\n\nKelola seluruh pickup customer di Asia/Jakarta.\n\nBuat Pickup\nMuat Ulang\n\nTotal Pickup\n\n34\nHari ini\n\nMenunggu Assignment\n\n6\n\nSedang Ditangani\n\n6\n\nPickup Berhasil\n\n12\n\nKunjungan Tanpa Paket\n\n5\n\nBerdasarkan jadwal hari ini (2026-10-24), terlepas dari filter daftar. Tanpa paket adalah hasil akhir tersendiri, terpisah dari pickup berhasil.\n\nCari Pickup\nStatus\nSemua Status\nTanggal Mulai\nTanggal Selesai\nFilter Lanjutan\nReset Filter\n\nAssignment Massal · 0/100 dipilih\n\nPilihan tetap tersimpan saat pindah halaman atau filter. Hanya task belum ditugaskan yang dapat dipilih.\n\nHapus Pilihan\nTugaskan Massal\nDaftar Pickup (34)\nTerbaru\nPilih tugas belum ditugaskan di halaman ini (2)\nTidak dapat di-assign\n\nPCK-0034\n\nCustomer Audit 6\nPickup berhasil\n\n256 Alexandrea Street Apt. 694 North Blanca, VT 15143\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n712.471.2906\n\nAUD-PICKUP-0033\nDetail\nTidak dapat di-assign\n\nPCK-0033\n\nCustomer Audit 5\nPickup berhasil\n\n1822 Clarabelle Neck Jadonhaven, IA 39410-1574\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+1.847.435.9649\n\nAUD-PICKUP-0032\nDetail\nTidak dapat di-assign\n\nPCK-0032\n\nCustomer Audit 4\nDitugaskan\n\n48959 Corkery Burgs East Berryfort, MS 17777-8323\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+1-734-310-7264\n\nAUD-PICKUP-0031\nDetail\nPilih tugas\n\nPCK-0031\n\nCustomer Audit 3\nMenunggu assignment\n\n879 Alia Circle Apt. 160 Pacochafurt, NJ 20841-9890\n\n24 Okt 2026 · 10.00\n\nBelum ditugaskan\n\n(925) 831-6966\n\nAUD-PICKUP-0030\nDetail\nTidak dapat di-assign\n\nPCK-0030\n\nCustomer Audit 2\nDibatalkan\n\n2487 Little Crest Apt. 415 Hollyberg, NH 23579-2779\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+1 (934) 535-6371\n\nAUD-PICKUP-0029\nDetail\nTidak dapat di-assign\n\nPCK-0029\n\nCustomer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\nSelesai tanpa paket\n\n2522 Kub Island Apt. 243 Port Guadalupeton, AK 08013-9420\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n(678) 260-7242\n\nAUD-PICKUP-0028\nDetail\nTidak dapat di-assign\n\nPCK-0028\n\nCustomer Audit 28\nPickup berhasil\n\n1909 Schaden Prairie Apt. 651 North Jordanport, AR 28153-0147\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+14056187540\n\nAUD-PICKUP-0027\nDetail\nTidak dapat di-assign\n\nPCK-0027\n\nCustomer Audit 27\nPickup berhasil\n\n462 Alejandrin Ridge East Alfred, MS 97049\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n+17575957268\n\nAUD-PICKUP-0026\nDetail\nTidak dapat di-assign\n\nPCK-0026\n\nCustomer Audit 26\nDitugaskan\n\n9449 Gorczany Freeway Apt. 400 Harrisland, NV 22933-8880\n\n24 Okt 2026 · 10.00\n\nAudit pickup_staff\n\n(516) 792-1880\n\nAUD-PICKUP-0025\nDetail\nPilih tugas\n\nPCK-0025\n\nCustomer Audit 25\nMenunggu assignment\n\n5820 Nettie Drive Apt. 979 South Ubaldo, DE 81505\n\n24 Okt 2026 · 10.00\n\nBelum ditugaskan\n\n+1.678.993.4733\n\nAUD-PICKUP-0024\nDetail\n\n1–10 dari 34 pickup\n\n10 per halaman\nHalaman 1 dari 4\nRetail Pickup\nOperasional Retail\nRetail Operations\nDashboard\nHasil Pickup\nOperasional Pickup\nHandover & Verifikasi\nJadwal Regular\nPengiriman JNE\nDashboard customer\nDaftar pengiriman\nTarik report\nPengaturan penarikan\nRiwayat run\nAdministrasi\nCustomer\nPengguna\nTes Notifikasi\nAA\nAudit admin_supervisor"
+  },
+  {
+    "key": "dashboard-text-zoom-200",
+    "url": "/dashboard",
+    "viewport": [
+      375,
+      812
+    ],
+    "overflow": true,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        {\"component\":\"dashboard\",\"props\":{\"errors\":{},\"name\":\"Laravel\",\"auth\":{\"user\":{\"id\":1,\"name"
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "Sidebar\n\nDisplays the mobile sidebar.\n\nToggle sidebar\nDashboard\nDashboard operasional\n\nRingkasan pickup, paket, performa tim, dan pekerjaan yang perlu ditangani.\n\nData dimuat 24 Okt, 19.07 · WIB\n\nSegarkan data\nBuat pickup\nHari ini\n7 hari\n30 hari\nDari tanggal\nSampai tanggal\nTerapkan\n\nHari pickup: 05.00–04.59 WIB, mengikuti aktivitas; pickup yang belum dimulai mengikuti jadwal. Pembanding: 26 Agu–24 Sep.\n\nCustomer aktif\n\n25\n\nCustomer unik dengan aktivitas pickup\n\nBelum ada pembanding\n\nAktivitas pickup\n\n29\n\nSatu task dihitung satu kali\n\nBelum ada pembanding\n\nPaket tercatat\n\n108\n\nBukti final dengan koreksi terakhir\n\nBelum ada pembanding\n\nPerlu tindak lanjut\n\n24\n\nTask belum tuntas atau perlu diperiksa\n\nBelum ada pembanding\n\nPickup berhasil\n\n12\n\nTanpa paket\n\n0\n\nRasio pickup berhasil\n\n41,4%\n\nMenunggu handover\n\n0\n\nAktivitas harian\nPickup, paket final, dan customer aktif per hari.\nPickup\nPaket\nCustomer\n24 Okt\n29 pickup · 108 paket · 25 customer\n\n29\n\n25 Sep\n24 Okt\nData aktivitas harian\nStatus pengiriman JNE\nSnapshot terbaru resi berdasarkan tanggal kirim kalender (00.00–23.59 WIB).\n30\nResi APEX\nDibatalkan\n6\n20%\nTerkirim\n6\n20%\nKendala pengiriman\n6\n20%\nDalam proses\n6\n20%\nStatus belum dikenali\n6\n20%\n\nDiamati: 24 Okt, 18.01. Status mengikuti report terakhir.\n\nAnalisis pengiriman\nPerforma petugas\nPickup berhasil dibanding aktivitas tercatat, berdasarkan penanggung jawab task.\nAudit pickup_staff\n12/23 · 52,2%\n108 paket dari bukti final\nTipe pickup\nDistribusi jenis task pada periode terpilih.\n29\nPickup\nRegular\n17\n58,6%\nOn-demand\n12\n41,4%\nKategori paket\nJumlah paket pada bukti final, memakai koreksi terbaru.\n108\nPaket\nManual Hybrid\n48\n44,4%\nCashless Hybrid\n36\n33,3%\nCSS/Orion\n24\n22,2%\nPerlu tindak lanjut\n24\nMonitoring\nTask dihitung sekali, meskipun memiliki beberapa hal yang perlu diperiksa.\nBelum ditugaskan\nCustomer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks\nBelum ditugaskan\nCustomer Audit 7\nBukti pickup belum final\nCustomer Audit 8\nBelum ditugaskan\nCustomer Audit 13\nBukti pickup belum final\nCustomer Audit 14\nBelum ditugaskan\nCustomer Audit 19\n\nMenampilkan 6 dari 24 task.\n\nCustomer dengan paket terbanyak\nDiurutkan dari paket final, kemudian jumlah aktivitas pickup.\n1\nCustomer Audit 3\n9 paket\n2 pickup\n2\nCustomer Audit 4\n9 paket\n2 pickup\n3\nCustomer Audit 6\n9 paket\n2 pickup\n4\nCustomer Audit 5\n9 paket\n1 pickup\n5\nCustomer Audit 9\n9 paket\n1 pickup\nCustomer baru dan repeat\nBaru: customer aktif yang belum punya jadwal pickup sebelum awal periode. Repeat: sudah pernah punya jadwal sebelumnya.\n25\nCustomer unik\nBaru pada periode ini\n25\n100%\nRepeat\n0\n0%\nTujuan pengiriman terbanyak\n5 tujuan dari resi APEX pada periode ini. Nama mengikuti lokasi JNE yang tersedia.\nBandung\n15 resi\nCikarang\n15 resi\nAktivitas terbaru\nMaksimal 8 aktivitas dalam periode terpilih.\nLihat semua\nWaktu\tCustomer\tPetugas\tPaket\tStatus\t\nDetail\n\n24 Okt, 18.23\tCustomer Audit 2\tAudit pickup_staff\tBukti belum final\t\nDitugaskan\t\n\n24 Okt, 11.00\tCustomer Audit 6\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 5\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 28\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 27\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 22\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 21\tAudit pickup_staff\t9\t\nPickup berhasil\t\n\n24 Okt, 11.00\tCustomer Audit 16\tAudit pickup_staff\t9\t\nPickup berhasil\t",
+    "zoom": "root font 200%, not browser full-page zoom"
+  },
+  {
+    "key": "not-found",
+    "url": "/audit-route-does-not-exist",
+    "viewport": [
+      375,
+      812
+    ],
+    "overflow": false,
+    "scrollY": 0,
+    "active": {
+      "tag": "BODY",
+      "id": "",
+      "text": "\n        \n            \n                \n                    \n                        404            "
+    },
+    "invalid": [],
+    "alerts": [],
+    "dialogs": [],
+    "bodyText": "404\nNot Found"
+  }
+]
