@@ -31,6 +31,8 @@ import {
     pushTest,
 } from '@/routes';
 import type { NavItem } from '@/types';
+import { index as pickupResults } from '@/routes/pickup-results';
+import { jneNavigation } from '@/lib/jne-navigation';
 
 export function AppSidebar() {
     const { setOpenMobile } = useSidebar();
@@ -60,7 +62,8 @@ export function AppSidebar() {
         'Customer',
         operations({ screen: 'customers' }),
         ContactRound,
-        path.includes('/customers'),
+        path.includes('/customers') ||
+            path.startsWith('/admin/jne-shipper-aliases'),
     );
     const reception = item(
         role === 'admin_supervisor'
@@ -136,9 +139,15 @@ export function AppSidebar() {
                   ]
                 : [
                       {
-                          label: 'Operasional',
+                          label: 'Retail Operations',
                           items: [
                               overview,
+                              item(
+                                  'Hasil Pickup',
+                                  pickupResults(),
+                                  ClipboardList,
+                                  path.startsWith('/hasil-pickup'),
+                              ),
                               item(
                                   'Operasional Pickup',
                                   operations({ screen: 'tasks' }),
@@ -153,6 +162,10 @@ export function AppSidebar() {
                                   path === '/pickup-schedules',
                               ),
                           ],
+                      },
+                      {
+                          label: 'Pengiriman JNE',
+                          items: jneNavigation(url),
                       },
                       {
                           label: 'Administrasi',

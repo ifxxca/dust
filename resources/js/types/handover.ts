@@ -44,6 +44,7 @@ export type HandoverSession = {
     staff_names?: string[];
     total_packages?: number;
     closed_at: string | null;
+    closed_by?: number | null;
     items?: HandoverItem[];
     task_count?: number;
     pending_count?: number;

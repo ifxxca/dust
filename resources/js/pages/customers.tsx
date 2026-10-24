@@ -1,4 +1,4 @@
-import { Head, useHttp } from '@inertiajs/react';
+import { Head, Link, useHttp, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { AlertCircle, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -21,8 +21,10 @@ import {
 } from '@/components/ui/select';
 import { index } from '@/routes/api/customers';
 import { operations } from '@/routes';
+import { index as shipperNames } from '@/routes/jne-shipper-aliases';
 
 export default function Customers() {
+    const { auth } = usePage().props;
     const [search, setSearch] = useState('');
     const [query, setQuery] = useState('');
     const [status, setStatus] = useState('all');
@@ -116,7 +118,14 @@ export default function Customers() {
                         customer.
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                    {auth.user.role === 'admin_supervisor' && (
+                        <Button variant="outline" asChild>
+                            <Link href={shipperNames.url()}>
+                                Nama pengirim JNE
+                            </Link>
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         disabled={loading}

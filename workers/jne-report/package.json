@@ -1,0 +1,21 @@
+{
+    "name": "retail-operations-jne-report-worker",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "node --env-file=.env src/worker.mjs",
+        "once": "node --env-file=.env src/worker.mjs --once",
+        "inspect": "node --env-file=.env src/inspect.mjs",
+        "hybrid": "node --env-file-if-exists=.env --env-file-if-exists=.env.hybrid src/hybrid-cli.mjs",
+        "hybrid:serve": "node --env-file-if-exists=.env --env-file-if-exists=.env.hybrid src/hybrid-cli.mjs --serve",
+        "hybrid:status": "node --env-file-if-exists=.env --env-file-if-exists=.env.hybrid src/hybrid-cli.mjs --status",
+        "test": "node --test test/*.test.mjs",
+        "install:browser": "playwright install chromium"
+    },
+    "dependencies": {
+        "playwright": "1.64.1"
+    },
+    "engines": {
+        "node": ">=24"
+    }
+}

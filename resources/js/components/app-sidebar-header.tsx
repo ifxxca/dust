@@ -6,6 +6,7 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppearance } from '@/hooks/use-appearance';
 import { PickupNotifications } from '@/components/pickup-notifications';
+import { jneBreadcrumbs } from '@/lib/jne-navigation';
 
 export function AppSidebarHeader({
     breadcrumbs = [],
@@ -14,6 +15,10 @@ export function AppSidebarHeader({
 }) {
     const { resolvedAppearance, updateAppearance } = useAppearance();
     const user = usePage().props.auth.user;
+    const shipmentBreadcrumbs = jneBreadcrumbs(usePage().url);
+    const currentBreadcrumbs = shipmentBreadcrumbs.length
+        ? shipmentBreadcrumbs
+        : breadcrumbs;
     const role = user.role;
     return (
         <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-card/95 px-4 backdrop-blur-sm sm:px-6">
@@ -22,8 +27,8 @@ export function AppSidebarHeader({
                     className="-ml-1"
                     aria-label="Buka atau tutup navigasi"
                 />
-                <Breadcrumbs breadcrumbs={breadcrumbs} />
-                {breadcrumbs.length === 0 && (
+                <Breadcrumbs breadcrumbs={currentBreadcrumbs} />
+                {currentBreadcrumbs.length === 0 && (
                     <span className="text-sm font-semibold">Retail Pickup</span>
                 )}
             </div>

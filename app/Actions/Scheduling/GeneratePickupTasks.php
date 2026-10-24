@@ -23,7 +23,7 @@ class GeneratePickupTasks
                 return 0;
             }
             $customer = Customer::whereKey($schedule->customer_id)->lockForUpdate()->firstOrFail();
-            if (! $customer->is_active) {
+            if (! $customer->is_active || blank($customer->contact)) {
                 return 0;
             }
             $scheduled = CarbonImmutable::parse($date->toDateString().' '.$schedule->pickup_time, $schedule->timezone)->utc();

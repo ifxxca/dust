@@ -30,6 +30,14 @@ return [
 
     'disks' => [
 
+        'jne_reports' => [
+            'driver' => 'local',
+            'root' => env('JNE_REPORT_STORAGE_PATH', storage_path('app/private/jne-reports')),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

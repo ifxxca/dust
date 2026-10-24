@@ -33,6 +33,9 @@ class PickupScheduleController extends Controller
             if ($data['is_active'] && ! $customer->is_active) {
                 throw ValidationException::withMessages(['customer_id' => 'Customer tidak aktif. Jadwal tidak dapat diaktifkan.']);
             }
+            if ($data['is_active'] && blank($customer->contact)) {
+                throw ValidationException::withMessages(['customer_id' => 'Lengkapi kontak customer sebelum mengaktifkan jadwal pickup.']);
+            }
 
             return PickupSchedule::create([...$data, 'timezone' => config('pickup.timezone'), 'created_by' => $actor->id]);
         }, 3);
@@ -52,6 +55,9 @@ class PickupScheduleController extends Controller
             $customer = Customer::whereKey($data['customer_id'])->lockForUpdate()->firstOrFail();
             if ($data['is_active'] && ! $customer->is_active) {
                 throw ValidationException::withMessages(['customer_id' => 'Customer tidak aktif. Jadwal tidak dapat diaktifkan.']);
+            }
+            if ($data['is_active'] && blank($customer->contact)) {
+                throw ValidationException::withMessages(['customer_id' => 'Lengkapi kontak customer sebelum mengaktifkan jadwal pickup.']);
             }
             unset($data['expected_version']);
             $current->update([...$data, 'updated_by' => $actor->id, 'version' => $current->version + 1]);

@@ -36,6 +36,6 @@ class ProofOfPickupController extends Controller
         abort_unless($request->user()->can('view', $task), 404);
         abort_unless(Storage::disk('local')->exists($attachment->path), 404);
 
-        return response()->file(Storage::disk('local')->path($attachment->path), ['Content-Type' => $attachment->mime_type, 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
+        return response()->file(Storage::disk('local')->path($attachment->path), ['Content-Type' => $attachment->mime_type, 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff'])->setPrivate();
     }
 }

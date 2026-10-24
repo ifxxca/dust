@@ -31,11 +31,16 @@ export function NavMain({
                         <SidebarMenuButton
                             asChild
                             isActive={item.active ?? isCurrentUrl(item.href)}
-                            className="my-0.5 min-h-10 rounded-lg data-[active=true]:bg-primary/10 data-[active=true]:font-semibold data-[active=true]:text-primary"
+                            className="my-0.5 min-h-11 rounded-lg data-[active=true]:bg-primary/10 data-[active=true]:font-semibold data-[active=true]:text-primary"
                             tooltip={{ children: item.title }}
                         >
                             <Link
                                 href={item.href}
+                                aria-current={
+                                    (item.active ?? isCurrentUrl(item.href))
+                                        ? 'page'
+                                        : undefined
+                                }
                                 prefetch
                                 onClick={() => {
                                     setOpenMobile(false);

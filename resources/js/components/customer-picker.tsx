@@ -13,6 +13,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import * as api from '@/routes/api/customers';
+import { cn } from '@/lib/utils';
 
 export type PickupCustomer = {
     id: number;
@@ -30,12 +31,18 @@ export default function CustomerPicker({
     allowCreate = false,
     allowClear = false,
     disabled = false,
+    triggerId,
+    className,
+    placeholder,
 }: {
-    selected: PickupCustomer | null;
+    selected: Pick<PickupCustomer, 'id' | 'name' | 'customer_code'> | null;
     onSelect: (customer: PickupCustomer | null) => void;
     allowCreate?: boolean;
     allowClear?: boolean;
     disabled?: boolean;
+    triggerId?: string;
+    className?: string;
+    placeholder?: string;
 }) {
     const id = useId();
     const [open, setOpen] = useState(false);
@@ -89,13 +96,17 @@ export default function CustomerPicker({
     return (
         <>
             <Button
+                id={triggerId}
                 type="button"
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
                 aria-controls={`${id}-list`}
                 disabled={disabled}
-                className="h-11 w-full justify-between gap-3 font-normal"
+                className={cn(
+                    'h-11 w-full justify-between gap-3 font-normal',
+                    className,
+                )}
                 onClick={() => {
                     setCreating(false);
                     setOpen(true);
@@ -103,6 +114,7 @@ export default function CustomerPicker({
             >
                 <span className="truncate">
                     {selected?.name ??
+                        placeholder ??
                         (allowClear
                             ? 'Semua Customer'
                             : 'Cari dan pilih customer…')}

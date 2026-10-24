@@ -2,21 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Pickup\PickupResultPeriod;
+use App\Actions\Pickup\QueryOperationalDashboard;
 use App\Models\HandoverItem;
 use App\Models\HandoverSession;
 use App\Models\PickupTask;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OperationalDashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, QueryOperationalDashboard $overview): Response
     {
         $user = $request->user();
         $timezone = config('pickup.timezone');
         $day = CarbonImmutable::now($timezone)->startOfDay();
+        $filters = $request->validate(['date_from' => ['nullable', 'date_format:Y-m-d'], 'date_thru' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from']]);
+        $operationalDay = PickupResultPeriod::today();
+        $from = CarbonImmutable::parse($filters['date_from'] ?? $operationalDay->subDays(29)->toDateString(), $timezone)->startOfDay();
+        $thru = CarbonImmutable::parse($filters['date_thru'] ?? $operationalDay->toDateString(), $timezone)->startOfDay();
+        if ($from->greaterThan($thru) || $from->diffInDays($thru) > 30) {
+            throw ValidationException::withMessages(['date_thru' => 'Pilih periode berurutan maksimal 31 hari.']);
+        }
         $tasks = PickupTask::query();
         if (! $user->canManagePickup()) {
             $tasks->where('assigned_staff_id', $user->id);
@@ -71,6 +81,7 @@ class OperationalDashboardController extends Controller
         }
 
         return Inertia::render('dashboard', [
+            'overview' => $user->canManagePickup() ? fn (): array => $overview->handle($from, $thru, $user->role === 'admin_supervisor') : null,
             'operationalDate' => $day->toDateString(), 'timezone' => $timezone, 'stats' => $stats, 'trends' => $trends,
             'recent' => $recent->map($serialize), 'attention' => $attention->map($serialize), 'nextTasks' => $next->map($serialize), 'retail' => $retail,
         ]);

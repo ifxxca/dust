@@ -5,9 +5,16 @@ namespace App\Models;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
+    /** @return HasMany<JneShipperAlias, $this> */
+    public function shipperAliases(): HasMany
+    {
+        return $this->hasMany(JneShipperAlias::class)->whereNotNull('mapping_key');
+    }
+
     /** @use HasFactory<CustomerFactory> */
     use HasFactory;
 

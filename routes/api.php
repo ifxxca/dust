@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HandoverController;
+use App\Http\Controllers\InternalReportJobController;
 use App\Http\Controllers\MobilePushDeviceController;
 use App\Http\Controllers\MobileSubmissionController;
 use App\Http\Controllers\MobileTokenController;
@@ -10,7 +11,17 @@ use App\Http\Controllers\PickupLifecycleController;
 use App\Http\Controllers\PickupTaskController;
 use App\Http\Controllers\ProofOfPickupController;
 use App\Http\Middleware\EnsureMobileToken;
+use App\Http\Middleware\EnsureReportWorker;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('internal/report-jobs')->name('internal.report-jobs.')
+    ->middleware(EnsureReportWorker::class)->group(function (): void {
+        Route::post('claim', [InternalReportJobController::class, 'claim'])->name('claim');
+        Route::post('{reportJob}/progress', [InternalReportJobController::class, 'progress'])->whereNumber('reportJob')->name('progress');
+        Route::post('{reportJob}/upload', [InternalReportJobController::class, 'upload'])->whereNumber('reportJob')->name('upload');
+        Route::post('{reportJob}/source-upload', [InternalReportJobController::class, 'uploadSource'])->whereNumber('reportJob')->name('source-upload');
+        Route::post('{reportJob}/fail', [InternalReportJobController::class, 'fail'])->whereNumber('reportJob')->name('fail');
+    });
 
 Route::prefix('mobile/v1')->name('mobile.')->group(function (): void {
     Route::post('auth/tokens', [MobileTokenController::class, 'store'])->middleware('throttle:login')->name('auth.store');
