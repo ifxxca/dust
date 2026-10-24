@@ -1,7 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
 import JneCustomerCandidates from '@/components/jne-customer-candidates';
-import type { JneCustomerCandidate } from '@/types/jne';
+import type { JneCustomerCandidate, JneDetail } from '@/types/jne';
 import PageContainer from '@/components/page-container';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,8 @@ type Shipment = {
     match_method: string | null;
     match_note: string | null;
     observed_at: string | null;
+    last_report_received_at?: string | null;
+    last_refresh_attempt?: JneDetail['shipment']['last_refresh_attempt'];
     pickup_reference: string | null;
     pickup_task_id: number | null;
     pickup_customer: string | null;
@@ -105,6 +107,26 @@ export default function JneShipment({
                         Observasi terakhir:{' '}
                         {jneTimestamp(shipment.observed_at, timezone)}
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                        Report terakhir diterima:{' '}
+                        {jneTimestamp(
+                            shipment.last_report_received_at ?? null,
+                            timezone,
+                        )}
+                        . Waktu observasi adalah snapshot report, bukan
+                        pembaruan real-time.
+                    </p>
+                    {shipment.last_refresh_attempt?.stage === 'ATTENTION' && (
+                        <p role="alert" className="text-sm text-destructive">
+                            Pembaruan #{shipment.last_refresh_attempt.id} perlu
+                            diperiksa:{' '}
+                            {shipment.last_refresh_attempt.error_message ||
+                                shipment.last_refresh_attempt.import_error ||
+                                shipment.last_refresh_attempt
+                                    .projection_error ||
+                                'Periksa proses penarikan report.'}
+                        </p>
+                    )}
                     <p className="text-sm">
                         Pengirim: {shipment.source?.shipper_name || '—'} ·
                         Penerima: {shipment.source?.consignee_name || '—'}

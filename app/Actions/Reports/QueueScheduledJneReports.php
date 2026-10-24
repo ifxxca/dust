@@ -101,7 +101,9 @@ class QueueScheduledJneReports
     private function queueActiveAwbs(JneReportProfile $profile, bool $force, CarbonImmutable $local): int
     {
         $maximum = config('jne-reports.max_scheduled_jobs_per_cycle') * config('jne-reports.max_awbs');
-        $awbs = app(QueryActiveJneAwbs::class)->handle($profile->lookback_days)->select('awb')->distinct()->orderBy('awb')->limit($maximum + 1)->pluck('awb')->all();
+        $selector = app(QueryActiveJneAwbs::class);
+        $query = $force ? $selector->handle($profile->lookback_days) : $selector->due($profile->lookback_days, $profile->interval_minutes);
+        $awbs = $query->select('awb')->distinct()->orderBy('awb')->limit($maximum + 1)->pluck('awb')->all();
         if (count($awbs) > $maximum || array_any($awbs, fn (string $awb): bool => preg_match('/^[A-Z0-9_-]{1,100}$/D', $awb) !== 1)) {
             $profile->update(['last_error' => 'Daftar AWB aktif terlalu besar atau berisi format AWB yang tidak didukung. Periksa data sumber.', 'next_run_at' => $profile->enabled ? now()->addMinutes(15) : null]);
 
@@ -118,7 +120,7 @@ class QueueScheduledJneReports
                 'status' => $batch === [] ? 'NO_DATA' : 'QUEUED', 'completed_at' => $batch === [] ? now() : null, 'created_by' => $profile->updated_by,
             ]);
             if ($job->wasRecentlyCreated) {
-                $job->recordEvent($batch === [] ? 'Tidak ada resi aktif yang memenuhi batas usia penarikan.' : count($batch).' AWB aktif diantrekan untuk Upload Connote APEX. Delivered dan cancel dikecualikan.');
+                $job->recordEvent($batch === [] ? 'Tidak ada resi aktif yang memenuhi batas usia dan interval pembaruan.' : count($batch).' AWB aktif diantrekan untuk Upload Connote APEX. Delivered dan cancel dikecualikan.');
             }
         }
         $profile->update(['last_run_at' => now(), 'next_run_at' => $profile->enabled ? now()->addMinutes($profile->interval_minutes) : null, 'last_error' => null]);

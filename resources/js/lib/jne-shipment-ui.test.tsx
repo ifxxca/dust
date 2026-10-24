@@ -132,6 +132,30 @@ test('quick detail shows only stored observations and links to existing related 
     expect(html).not.toContain('Belum ada riwayat observasi.');
 });
 
+test('quick detail distinguishes a received snapshot from its observation and surfaces refresh failures', () => {
+    const detail = detailFixture();
+    detail.shipment.last_report_received_at = '2026-10-24T00:00:00Z';
+    detail.shipment.last_refresh_attempt = {
+        id: 91,
+        status: 'NEEDS_ATTENTION',
+        stage: 'ATTENTION',
+        requested_at: '2026-10-24T00:05:00Z',
+        error_message: 'WORKER_EXPIRED: fixture',
+        import_error: null,
+        projection_error: null,
+    };
+    const html = renderToStaticMarkup(
+        <ShipmentDetailContent detail={detail} />,
+    );
+    expect(html).toContain('Report terakhir diterima');
+    expect(html).toContain('21 Okt 2026');
+    expect(html).toContain('24 Okt 2026');
+    expect(html).toContain('WORKER_EXPIRED: fixture');
+    expect(html).toContain(
+        'bukan waktu kejadian pengiriman atau pembaruan real-time',
+    );
+});
+
 test.each(['UNKNOWN', 'NEW_UNRECOGNIZED_STATUS'])(
     'unknown delivery state %s stays recognizable by text',
     (status) => {

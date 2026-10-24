@@ -11,7 +11,7 @@ Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`
 | M4 | Complete for initial web workflow | BR-SERTIM-01–04 enforced by backend policy/action; assigned staff capture before finalization; Admin-only audited correction/add/revoke; persistent first closure; late import/re-evaluation; pickup and handover UI with paginated audit history |
 | M5 | Safe category increment implemented; business gates remain | Effective POP per category; cashless claims compared only with independently confirmed customer/pickup; other AWBs remain unclassified; shortfalls provisional and missing quantity unknown until B6/B7 |
 | M6 | Partial | Existing alias/report/manual reference review; full evidence exception workflow pending |
-| M7 | Partial | Existing refresh profile and stale observation guard; policy refinements pending |
+| M7 | Safe due-selection increment implemented; business policy partial | Scheduled per-AWB receipt intervals, configurable status minimums, existing manual override and failure/concurrency gates; observation/receipt/failure exposed separately. SLA and terminal confirmation remain B8 |
 | M8 | Partial | Existing monitoring/dashboard; category/exception confidence metrics pending |
 
 ## Validation ledger
@@ -27,6 +27,7 @@ Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`
 - Chromium exercised actual staff capture and Admin post-closure correction/audit against a disposable SQLite application at 390px and 1280px. One browser test passed, seven PHP assertions plus browser checks; no browser runtime errors. A discovered small-screen overflow was corrected and the test rerun. Synthetic screenshots are under ignored `storage/app/private/jne-reconciliation-ui`.
 - Four scoped migrations were applied to the local MySQL database after the 6,900-row/6,900-normalized-AWB preflight passed: registry uniqueness, candidate/event evidence, cashless claim/events, and persistent Sertim closure with history backfill. No report was submitted, schedule enabled, live customer attribution rebuilt or POP quantity changed.
 - M5: 49 reconciliation/monitoring/Sertim tests passed, 335 assertions; both TypeScript projects and Pint passed. Vanny 100 CSS + 3 cashless, delayed data/replay, excess/effective POP revision, and retained ambiguous/wrong-customer pickup pointers covered. Production build and actual Chromium reconciliation page at 390px passed with no root overflow or runtime errors.
+- M7: 54 refresh/scheduling/monitoring tests passed, 332 assertions; 33 monitoring/detail frontend tests, TypeScript, PHPStan and Pint passed. Fresh/due boundary, status minimums, old snapshot receipt, manual override, pending/failed guards, empty local-only cycle and exact-AWB failure detail covered.
 
 ## Business decisions and limitations
 

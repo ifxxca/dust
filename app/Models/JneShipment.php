@@ -9,7 +9,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** @property CarbonImmutable|null $last_observed_at */
+/**
+ * @property CarbonImmutable|null $last_observed_at
+ * @property-read CarbonImmutable|null $last_report_received_at
+ */
 class JneShipment extends Model
 {
     /** @use HasFactory<JneShipmentFactory> */
@@ -25,7 +28,7 @@ class JneShipment extends Model
 
     protected function casts(): array
     {
-        return ['last_observed_at' => 'immutable_datetime', 'version' => 'integer', 'customer_match_candidates' => 'array'];
+        return ['last_observed_at' => 'immutable_datetime', 'last_report_received_at' => 'immutable_datetime', 'version' => 'integer', 'customer_match_candidates' => 'array'];
     }
 
     /** @return BelongsTo<JneReportAwb, $this> */
@@ -50,5 +53,11 @@ class JneShipment extends Model
     public function sources(): HasMany
     {
         return $this->hasMany(JneReportAwb::class, 'awb', 'awb');
+    }
+
+    /** @return HasMany<JneShipmentObservation, $this> */
+    public function observations(): HasMany
+    {
+        return $this->hasMany(JneShipmentObservation::class);
     }
 }

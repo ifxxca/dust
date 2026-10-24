@@ -50,6 +50,7 @@ class JneMonitoringController extends Controller
         if (! empty($filters['match'])) {
             $query->where('match_status', $filters['match']);
         }
+        $refreshProfile = JneReportProfile::where('source', 'apex')->where('report_type', 'unresolved')->first();
 
         return Inertia::render('jne-monitoring', [
             'shipments' => $query->with(['latestSource:id,status_web,status_pod,consignee_name,shipper_name', 'customer:id,name,customer_code', 'pickup:id,reference,customer_name_snapshot'])->orderByDesc('last_observed_at')->orderByDesc('id')
@@ -64,7 +65,8 @@ class JneMonitoringController extends Controller
             'accounts' => JneShipment::select('customer_account')->distinct()->orderBy('customer_account')->pluck('customer_account'),
             'trackingRefresh' => [
                 'active_count' => JneShipment::whereNotIn('tracking_status', ['DELIVERED', 'CANCELLED'])->count(),
-                'profile' => JneReportProfile::where('source', 'apex')->where('report_type', 'unresolved')->first()?->only(['id', 'enabled', 'interval_minutes', 'lookback_days', 'next_run_at', 'last_run_at', 'last_error']),
+                'due_count' => $refreshProfile ? app(QueryActiveJneAwbs::class)->due($refreshProfile->lookback_days, $refreshProfile->interval_minutes)->count() : null,
+                'profile' => $refreshProfile?->only(['id', 'enabled', 'interval_minutes', 'lookback_days', 'next_run_at', 'last_run_at', 'last_error']),
             ],
             'customers' => Customer::orderBy('name')->get(['id', 'name', 'customer_code']),
             'timezone' => config('pickup.timezone'),
@@ -74,7 +76,8 @@ class JneMonitoringController extends Controller
     public function show(Request $request, int $shipment): Response
     {
         $this->authorizeAdmin($request);
-        $record = JneShipment::with(['latestSource', 'customer:id,name,customer_code', 'pickup:id,reference,customer_name_snapshot'])->findOrFail($shipment);
+        $record = JneShipment::with(['latestSource', 'customer:id,name,customer_code', 'pickup:id,reference,customer_name_snapshot'])->withMax('observations as last_report_received_at', 'created_at')->findOrFail($shipment);
+        $refreshAttempt = ReportJob::where('source', 'apex')->where('report_type', 'unresolved')->whereJsonContains('parameters->awbs', $record->awb)->latest('id')->first();
         $request->validate(['page' => ['sometimes', 'integer', 'min:1']]);
         $history = DB::table('jne_shipment_observations as h')->join('jne_report_awbs as a', 'a.id', '=', 'h.jne_report_awb_id')
             ->where('h.jne_shipment_id', $record->id)->select(['h.id', 'h.observed_at', 'h.tracking_status', 'h.changes_current', 'a.status_web', 'a.status_pod', 'a.awb_cancel', 'a.report_job_id', 'a.source_row'])
@@ -87,6 +90,8 @@ class JneMonitoringController extends Controller
                 'customer_match_candidates' => $record->customer_match_candidates,
                 'customer_name' => $record->customer?->name, 'customer_code' => $record->customer?->customer_code,
                 'observed_at' => $record->last_observed_at?->toIso8601String(), 'pickup_reference' => $record->pickup?->reference,
+                'last_report_received_at' => $record->last_report_received_at?->toIso8601String(),
+                'last_refresh_attempt' => $refreshAttempt ? [...$refreshAttempt->only(['id', 'status', 'error_message', 'import_error', 'projection_error']), 'stage' => $refreshAttempt->workflowStage(), 'requested_at' => $refreshAttempt->created_at->toIso8601String()] : null,
                 'pickup_customer' => $record->pickup?->customer_name_snapshot, 'source' => $record->latestSource?->only(['report_job_id', 'source_row', 'reference', 'shipper_name', 'consignee_name', 'status_web', 'status_pod', 'awb_cancel', 'raw_data'])],
             'history' => $history,
             'matchHistory' => DB::table('jne_shipment_match_events as e')->leftJoin('users as u', 'u.id', '=', 'e.actor_id')

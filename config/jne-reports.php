@@ -12,4 +12,10 @@ return [
     'source_timezone' => env('JNE_REPORT_SOURCE_TIMEZONE', 'Asia/Jakarta'),
     'max_scheduled_jobs_per_cycle' => 200,
     'non_identifying_shipper_names' => ['Shopee International', 'Tokopedia'],
+    'refresh_minimum_minutes' => [
+        'IN_TRANSIT' => (int) env('JNE_REFRESH_IN_TRANSIT_MINUTES', 0),
+        'EXCEPTION' => (int) env('JNE_REFRESH_EXCEPTION_MINUTES', 0),
+        'UNKNOWN' => (int) env('JNE_REFRESH_UNKNOWN_MINUTES', 0),
+        'RETURNED' => (int) env('JNE_REFRESH_RETURNED_MINUTES', 0),
+    ],
 ];

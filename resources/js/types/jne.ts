@@ -67,6 +67,16 @@ export type JneDetail = {
         | 'customer_match_note'
         | 'customer_match_candidates'
     > & {
+        last_report_received_at?: string | null;
+        last_refresh_attempt?: {
+            id: number;
+            status: string;
+            stage: string;
+            requested_at: string;
+            error_message: string | null;
+            import_error: string | null;
+            projection_error: string | null;
+        } | null;
         match_method: string | null;
         match_note: string | null;
         pickup_customer: string | null;

@@ -35,6 +35,10 @@ Sertim evidence now participates in registry matching and the existing reconcili
 
 `BuildJnePickupReconciliation` batches the category view using `QueryCashlessReconciliation`; it excludes retained ambiguous or wrong-customer pickup pointers from confirmed counts. Other confidently linked AWBs remain unclassified. Expected quantity uses the latest authorized POP revision without changing the original. `shortfall_quantity` is provisional, `missing_quantity` remains null, and `reconciled`/`collection_complete` remain false while the external completeness rule is unknown. Sertim closure is displayed separately.
 
+Scheduled tracking selection now uses `QueryActiveJneAwbs::due`: never-observed active AWBs are eligible immediately; a received observation delays automatic refresh by at least the profile interval. Status minimums in `jne-reports.refresh_minimum_minutes` may lengthen that interval with `JNE_REFRESH_IN_TRANSIT_MINUTES`, `JNE_REFRESH_EXCEPTION_MINUTES`, `JNE_REFRESH_UNKNOWN_MINUTES`, and `JNE_REFRESH_RETURNED_MINUTES`. Default zero falls back to the profile; no policy polls faster than the profile or five minutes. Admin's existing explicit refresh bypasses only this freshness delay. Existing lookback, delivered/cancel exclusions, finite batches, source slots, uncertain-worker review and 15-minute scheduling backoff remain enforced.
+
+Receipt time is `max(jne_shipment_observations.created_at)`, the successful local projection receipt, separate from source `observed_at`. A recently received old snapshot can delay polling without making its status newer. Replay does not create another observation or reset the receipt clock. Details expose `last_report_received_at` and the latest exact-AWB unresolved-refresh attempt, including collection/import/projection errors. This is a report snapshot, not real-time tracking or guaranteed external completeness.
+
 ## Sertim API contract (M4)
 
 Extend the existing authenticated web API under `/api/v1/pickup-tasks/{task}/cashless-awbs`:

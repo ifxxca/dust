@@ -106,6 +106,22 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                         {jneTimestamp(shipment.observed_at, timezone)} ·{' '}
                         {timezone}
                     </DetailField>
+                    <DetailField label="Report terakhir diterima">
+                        {jneTimestamp(
+                            shipment.last_report_received_at ?? null,
+                            timezone,
+                        )}
+                    </DetailField>
+                    {shipment.last_refresh_attempt?.stage === 'ATTENTION' && (
+                        <DetailField label="Pembaruan perlu diperiksa">
+                            #{shipment.last_refresh_attempt.id} ·{' '}
+                            {shipment.last_refresh_attempt.error_message ||
+                                shipment.last_refresh_attempt.import_error ||
+                                shipment.last_refresh_attempt
+                                    .projection_error ||
+                                'Periksa proses penarikan report.'}
+                        </DetailField>
+                    )}
                     <DetailField label="Sumber report (nomor penarikan)">
                         {shipment.customer_account}
                     </DetailField>
