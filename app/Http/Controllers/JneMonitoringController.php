@@ -102,7 +102,7 @@ class JneMonitoringController extends Controller
                 'observed_at' => $record->last_observed_at?->toIso8601String(), 'pickup_reference' => $record->pickup?->reference,
                 'last_report_received_at' => $record->last_report_received_at?->toIso8601String(),
                 'last_refresh_attempt' => $refreshAttempt ? [...$refreshAttempt->only(['id', 'status', 'error_message', 'import_error', 'projection_error']), 'stage' => $refreshAttempt->workflowStage(), 'requested_at' => $refreshAttempt->created_at->toIso8601String()] : null,
-                'pickup_customer' => $record->pickup?->customer_name_snapshot, 'source' => $record->latestSource?->only(['report_job_id', 'source_row', 'reference', 'shipper_name', 'consignee_name', 'status_web', 'status_pod', 'awb_cancel', 'raw_data'])],
+                'pickup_customer' => $record->pickup?->customer_name_snapshot, 'source' => $record->latestSource?->only(['report_job_id', 'source_row', 'reference', 'shipper_name', 'consignee_name', 'status_web', 'status_pod', 'awb_cancel', 'raw_data', 'original_customer_code', 'source_evidence'])],
             'history' => $history,
             'matchHistory' => JneShipmentMatchEvent::from('jne_shipment_match_events as e')->leftJoin('users as u', 'u.id', '=', 'e.actor_id')
                 ->leftJoin('pickup_tasks as p', 'p.id', '=', 'e.pickup_task_id')->leftJoin('pickup_tasks as old', 'old.id', '=', 'e.previous_pickup_task_id')

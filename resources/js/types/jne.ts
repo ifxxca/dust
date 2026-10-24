@@ -7,6 +7,20 @@ export type JneFilters = {
     customer_match: string;
 };
 
+export type JneSourceProvenance = {
+    contract: {
+        id: number;
+        revision: number;
+        customer_code_column: string | null;
+    } | null;
+    hybrid_origins: {
+        report_job_id: number;
+        source: string;
+        report_type: string;
+        checksum: string;
+    }[];
+};
+
 export type JneCustomerCandidate = {
     customer_id: number;
     customer_code: string | null;
@@ -101,6 +115,8 @@ export type JneDetail = {
             status_pod: string | null;
             awb_cancel: string | null;
             raw_data: Record<string, string | null> | null;
+            original_customer_code?: string | null;
+            source_evidence?: JneSourceProvenance | null;
         } | null;
     };
     history: JnePage<{

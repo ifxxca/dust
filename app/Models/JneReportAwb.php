@@ -23,7 +23,7 @@ class JneReportAwb extends Model
 
     protected function casts(): array
     {
-        return ['raw_data' => 'array', 'entry_at' => 'immutable_datetime', 'source_status_at' => 'immutable_datetime', 'observed_at' => 'immutable_datetime'];
+        return ['raw_data' => 'array', 'source_evidence' => 'array', 'entry_at' => 'immutable_datetime', 'source_status_at' => 'immutable_datetime', 'observed_at' => 'immutable_datetime'];
     }
 
     /** @return BelongsTo<ReportJob, $this> */

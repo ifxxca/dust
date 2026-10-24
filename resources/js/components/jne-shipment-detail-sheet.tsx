@@ -3,6 +3,7 @@ import { ChevronDown, Copy, ExternalLink } from 'lucide-react';
 import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
 import JneCustomerCandidates from '@/components/jne-customer-candidates';
+import JneSourceEvidence from '@/components/jne-source-evidence';
 import { copyJneAwb } from '@/components/jne-shipment-table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -171,6 +172,10 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                         </CollapsibleContent>
                     </Collapsible>
                 )}
+                <JneSourceEvidence
+                    code={source?.original_customer_code}
+                    evidence={source?.source_evidence}
+                />
             </section>
             <Separator />
             <section className="space-y-3" aria-labelledby="jne-detail-pickup">

@@ -8,6 +8,12 @@ The prior delivery through `6016d67` was pushed at the operator's subsequent req
 
 M1 durable APEX batch checkpoints are implemented behind `JNE_APEX_BATCH_CHECKPOINTS_ENABLED=false`. Each submitted batch has a STARTED guard and each validated downloaded CSV is saved privately with its checksum. Resume reuses SAVED batches, blocks uncertain STARTED batches and requires active Admin review/reason to restore the exact original result or attest that no Process submission occurred. Failed workers retain private recovery files for explicit restoration. Partial results never become a final import. Synthetic worker restart recovery, exact-AWB/auth checks and the complete four-source Chromium/Laravel fixture pass; static/build results are recorded per increment below. This is implemented/tested evidence, not operational acceptance of B1/B2.
 
+Continuation M1 (`2b6a450`): 75 worker tests passed, including 6,001-AWB restart reuse and local Chromium; 13 pipeline/worker PHP tests passed (309 assertions), then three focused recovery tests passed (18 assertions). PHPStan, TypeScript and production build passed. No checkpoint flag or schedule was enabled operationally.
+
+Continuation M2 adds nullable source evidence and original customer-code projections, with all Hybrid process/checksum origins retained when one AWB is deduplicated. Draft source-contract and code-alias registries support later verified configuration; there is no default customer-code column. `JNE_SOURCE_EVIDENCE_ENABLED` and `JNE_EVIDENCE_POLICIES_ENABLED` default false, so existing imports do not require the unapplied migration or adopt new semantics. The immutable original CSV/raw cells remain authoritative evidence. 37 provenance/import/registry tests passed (202 assertions); PHPStan passed. UI provenance and fixture validation follow in this increment.
+
+M2 increment validation: 35 monitoring/detail frontend tests, both TypeScript projects, PHPStan, Pint, production build and the actual Chromium Sertim/monitoring regression passed (seven PHP assertions plus browser checks). Detail/full-sheet provenance displays original code, contract revision and child source/checksum evidence. New schema and activation flags remain unapplied/disabled operationally.
+
 | Milestone | Status | Evidence / outstanding gate |
 |---|---|---|
 | M0 | Complete | Code/schema/routes/worker/UI/test discovery and implementation matrix written |

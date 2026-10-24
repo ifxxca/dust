@@ -1,10 +1,12 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
+import JneSourceEvidence from '@/components/jne-source-evidence';
 import JneCustomerCandidates from '@/components/jne-customer-candidates';
 import type {
     JneCustomerCandidate,
     JneDetail,
     JneMatchEvidence,
+    JneSourceProvenance,
 } from '@/types/jne';
 import PageContainer from '@/components/page-container';
 import InputError from '@/components/input-error';
@@ -36,6 +38,8 @@ type Source = {
     status_pod: string | null;
     awb_cancel: string | null;
     raw_data: Record<string, string | null> | null;
+    original_customer_code?: string | null;
+    source_evidence?: JneSourceProvenance | null;
 };
 type Shipment = {
     id: number;
@@ -158,6 +162,10 @@ export default function JneShipment({
                     )}
                     <JneCustomerCandidates
                         candidates={shipment.customer_match_candidates}
+                    />
+                    <JneSourceEvidence
+                        code={shipment.source?.original_customer_code}
+                        evidence={shipment.source?.source_evidence}
                     />
                     <p className="text-sm whitespace-pre-wrap">
                         Status web: {shipment.source?.status_web || '—'}

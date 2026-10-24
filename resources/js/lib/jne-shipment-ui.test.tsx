@@ -74,6 +74,22 @@ function detailFixture(): JneDetail {
                 status_pod: 'Error On Push',
                 awb_cancel: 'N',
                 raw_data: { EXTRA_COLUMN: 'untouched' },
+                original_customer_code: "'004000A",
+                source_evidence: {
+                    contract: {
+                        id: 11,
+                        revision: 3,
+                        customer_code_column: 'RETAIL_CODE_FIXTURE',
+                    },
+                    hybrid_origins: [
+                        {
+                            report_job_id: 18,
+                            source: 'roberto',
+                            report_type: 'manual',
+                            checksum: 'original-checksum',
+                        },
+                    ],
+                },
             },
         },
         history: { data: [], current_page: 1, last_page: 1, total: 0 },
@@ -97,6 +113,9 @@ test('quick detail retains raw statuses separately from customer, shipper, sourc
     expect(html).toContain('/admin/jne-reports/3/download');
     expect(html).toContain('/admin/jne-monitoring/7');
     expect(html).toContain('Semua kolom CSV asli');
+    expect(html).toContain('004000A');
+    expect(html).toContain('RETAIL_CODE_FIXTURE');
+    expect(html).toContain('original-checksum');
     expect(html).toContain('Belum ada riwayat observasi.');
 });
 
