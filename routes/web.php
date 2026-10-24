@@ -6,6 +6,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DiscrepancyController;
 use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\JneCustomerDashboardController;
+use App\Http\Controllers\JneEvidenceRuleController;
 use App\Http\Controllers\JneMonitoringController;
 use App\Http\Controllers\JneShipperAliasController;
 use App\Http\Controllers\OperationalCorrectionController;
@@ -49,6 +50,9 @@ Route::middleware('auth')->group(function (): void {
     Route::put('/admin/jne-shipper-aliases/{alias}', [JneShipperAliasController::class, 'update'])->whereNumber('alias')->name('jne-shipper-aliases.update');
     Route::post('/admin/jne-shipper-aliases/import', [JneShipperAliasController::class, 'import'])->middleware('throttle:5,1')->name('jne-shipper-aliases.import');
     Route::get('/admin/jne-monitoring', [JneMonitoringController::class, 'index'])->name('jne-monitoring.index');
+    Route::get('/admin/jne-monitoring/evidence-rules', [JneEvidenceRuleController::class, 'index'])->name('jne-evidence.index');
+    Route::post('/admin/jne-monitoring/evidence-rules', [JneEvidenceRuleController::class, 'store'])->middleware('throttle:30,1')->name('jne-evidence.store');
+    Route::post('/admin/jne-monitoring/evidence-rules/disable', [JneEvidenceRuleController::class, 'disable'])->middleware('throttle:30,1')->name('jne-evidence.disable');
     Route::post('/admin/report-runs/{reportJob}/apex-recovery', [ApexBatchController::class, 'review'])->whereNumber('reportJob')->middleware('throttle:20,1')->name('report-runs.apex-recovery');
     Route::get('/admin/jne-monitoring/customer-dashboard', JneCustomerDashboardController::class)->name('jne-monitoring.customer-dashboard');
     Route::get('/admin/jne-monitoring/profiles', [JneMonitoringController::class, 'profiles'])->name('jne-monitoring.profiles');

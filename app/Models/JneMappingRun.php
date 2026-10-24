@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property list<string> $normalized_names
+ * @property bool $reapply_all
  */
 class JneMappingRun extends Model
 {
@@ -18,7 +19,7 @@ class JneMappingRun extends Model
 
     protected function casts(): array
     {
-        return ['normalized_names' => 'array', 'last_id' => 'integer', 'upper_id' => 'integer',
+        return ['normalized_names' => 'array', 'reapply_all' => 'boolean', 'last_id' => 'integer', 'upper_id' => 'integer',
             'affected_count' => 'integer', 'completed_at' => 'immutable_datetime'];
     }
 }

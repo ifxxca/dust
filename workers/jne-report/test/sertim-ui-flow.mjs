@@ -182,6 +182,42 @@ try {
         ),
     );
     assert.deepEqual(errors, []);
+    await admin.page.goto(base + '/admin/jne-monitoring/evidence-rules');
+    await admin.page
+        .getByRole('heading', { name: 'Aturan bukti JNE', exact: true })
+        .waitFor();
+    await admin.page
+        .getByLabel('Jenis aturan', { exact: true })
+        .selectOption('code_alias');
+    await admin.page
+        .getByLabel('Customer pemilik', { exact: true })
+        .selectOption(process.env.SERTIM_UI_CUSTOMER);
+    await admin.page
+        .getByLabel('Kode alias persis', { exact: true })
+        .fill('4000A');
+    await admin.page
+        .getByLabel('Alasan dan referensi verifikasi', { exact: true })
+        .fill('Synthetic browser verified code alias');
+    await admin.page
+        .getByRole('checkbox', { name: /^Verifikasi dan aktifkan/ })
+        .check();
+    await admin.page
+        .getByRole('button', { name: 'Simpan aturan bukti', exact: true })
+        .click();
+    await admin.page
+        .locator('summary')
+        .filter({ hasText: /code_alias.*4000A.*Aktif terverifikasi/ })
+        .waitFor();
+    await admin.page.screenshot({
+        path: path.join(artifacts, 'evidence-rules-390.png'),
+        fullPage: true,
+    });
+    assert.ok(
+        await admin.page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+    );
+    assert.deepEqual(errors, []);
     process.stdout.write('SERTIM_CHROMIUM_UI_OK\n');
 } finally {
     await browser.close();

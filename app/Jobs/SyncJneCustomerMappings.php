@@ -36,7 +36,7 @@ class SyncJneCustomerMappings implements ShouldQueue
             $shipments->load('latestSource', 'pickup', 'sources:id,awb,shipper_name');
             $affected = $shipments->filter(fn (JneShipment $shipment): bool => $shipment->latestSource !== null
                 && $shipment->match_method !== 'MANUAL'
-                && $shipment->sources->contains(fn ($source): bool => in_array(JneShipperAlias::normalize($source->shipper_name ?? ''), $run->normalized_names, true)));
+                && ($run->reapply_all || $shipment->sources->contains(fn ($source): bool => in_array(JneShipperAlias::normalize($source->shipper_name ?? ''), $run->normalized_names, true))));
             $candidates = $matcher->candidates($affected->map->latestSource->unique('id')->values());
             foreach ($affected as $shipment) {
                 $matcher->automatic($shipment, $shipment->latestSource, $candidates);

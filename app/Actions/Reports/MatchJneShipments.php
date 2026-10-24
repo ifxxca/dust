@@ -28,7 +28,7 @@ class MatchJneShipments
     {
         $history = collect();
         foreach ($sources->pluck('awb')->unique()->chunk(500) as $awbs) {
-            $history = $history->concat(JneReportAwb::whereIn('awb', $awbs)->orderBy('id')->get(['id', 'awb', 'shipper_name', 'reference']));
+            $history = $history->concat(JneReportAwb::whereIn('awb', $awbs)->orderBy('id')->get(['id', 'report_job_id', 'awb', 'shipper_name', 'reference', 'customer_account', 'raw_data', 'entry_at']));
         }
         $byAwb = $history->groupBy('awb');
         $exact = $this->resolver->handle($history);
@@ -41,12 +41,13 @@ class MatchJneShipments
             $decisions = $rows->map(fn (JneReportAwb $row): array => $exact[$row->id]);
             $ids = $decisions->where('status', 'MATCHED')->pluck('customer_id')->unique()->values();
             $ambiguous = $decisions->contains('status', 'AMBIGUOUS');
+            $conflict = $decisions->contains('status', 'CONFLICT');
             $customer = $exact[$source->id];
             if ($ids->count() === 1 && ! $ambiguous) {
                 $customer = $decisions->firstWhere('status', 'MATCHED') ?? $customer;
             }
-            $customer['customer_id'] = $ids->count() === 1 && ! $ambiguous ? (int) $ids->first() : null;
-            $customer['status'] = $ids->count() > 1 || ($ambiguous && $ids->isNotEmpty()) ? 'CONFLICT' : ($ambiguous ? 'AMBIGUOUS' : ($ids->count() === 1 ? 'MATCHED' : 'UNMATCHED'));
+            $customer['customer_id'] = $ids->count() === 1 && ! $ambiguous && ! $conflict ? (int) $ids->first() : null;
+            $customer['status'] = $conflict || $ids->count() > 1 || ($ambiguous && $ids->isNotEmpty()) ? 'CONFLICT' : ($ambiguous ? 'AMBIGUOUS' : ($ids->count() === 1 ? 'MATCHED' : 'UNMATCHED'));
             $customer['evidence'] = [];
             foreach ($decisions as $decision) {
                 foreach ($decision['evidence'] as $evidence) {
@@ -57,7 +58,7 @@ class MatchJneShipments
             if ($customer['status'] === 'CONFLICT') {
                 $customer['note'] = 'Bukti nama pengirim dari beberapa report bertentangan. Customer dan pickup harus diperiksa.';
             } elseif ($customer['status'] === 'UNMATCHED') {
-                $customer['candidates'] = array_values($rows->flatMap(fn (JneReportAwb $row): array => $suggestions[JneShipperAlias::normalize($row->shipper_name ?? '')] ?? [])
+                $customer['candidates'] = array_values($rows->flatMap(fn (JneReportAwb $row): array => [...($suggestions[JneShipperAlias::normalize($row->shipper_name ?? '')] ?? []), ...($exact[$row->id]['candidates'] ?? [])])
                     ->unique('customer_id')->take(5)->values()->all());
                 if ($customer['candidates'] !== []) {
                     $customer['status'] = 'CANDIDATE';

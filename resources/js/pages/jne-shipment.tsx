@@ -323,6 +323,28 @@ export default function JneShipment({
                                                 {event.evidence.map(
                                                     (evidence, index) => (
                                                         <li key={index}>
+                                                            {evidence.original_code && (
+                                                                <>
+                                                                    Kode asli{' '}
+                                                                    {
+                                                                        evidence.original_code
+                                                                    }{' '}
+                                                                    · Kontrak #
+                                                                    {
+                                                                        evidence.contract_id
+                                                                    }{' '}
+                                                                    revisi{' '}
+                                                                    {
+                                                                        evidence.contract_revision
+                                                                    }{' '}
+                                                                    ·{' '}
+                                                                    {evidence.registered_code
+                                                                        ? 'Kode terdaftar ' +
+                                                                          evidence.registered_code
+                                                                        : 'Bukti sumber'}{' '}
+                                                                    ·{' '}
+                                                                </>
+                                                            )}
                                                             {evidence.source_id && (
                                                                 <>
                                                                     Baris sumber

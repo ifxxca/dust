@@ -30,6 +30,11 @@ export type JneCustomerCandidate = {
 };
 
 export type JneMatchEvidence = {
+    original_code?: string;
+    registered_code?: string;
+    contract_id?: number;
+    contract_revision?: number;
+    code_alias_id?: number;
     source_id?: number;
     alias_id?: number;
     customer_id?: number;

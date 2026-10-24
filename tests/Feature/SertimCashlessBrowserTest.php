@@ -47,6 +47,7 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
         $server = new Process([PHP_BINARY, '-d', 'extension=pdo_sqlite', '-d', 'extension=sqlite3', '-S', $address, base_path('vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php')], public_path(), [
             'APP_ENV' => 'testing', 'APP_URL' => $url, 'DB_CONNECTION' => 'sqlite', 'DB_DATABASE' => $database, 'DB_URL' => '',
             'QUEUE_CONNECTION' => 'sync', 'SESSION_DRIVER' => 'file', 'CACHE_STORE' => 'array',
+            'JNE_EVIDENCE_POLICIES_ENABLED' => 'true',
         ]);
         $server->start();
         $deadline = microtime(true) + 10;
@@ -55,6 +56,7 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
         }
         $runner = new Process(['node', base_path('workers/jne-report/test/sertim-ui-flow.mjs')], base_path('workers/jne-report'), [
             'RETAIL_OPERATIONS_URL' => $url, 'SERTIM_UI_TASK' => (string) $task->id, 'SERTIM_UI_CLOSED_TASK' => (string) $closed->id,
+            'SERTIM_UI_CUSTOMER' => (string) $task->customer_id,
             'SERTIM_UI_ARTIFACT_DIR' => storage_path('app/private/jne-reconciliation-ui'),
         ], null, 70);
         $runner->run();

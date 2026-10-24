@@ -14,6 +14,8 @@ Continuation M2 adds nullable source evidence and original customer-code project
 
 M2 increment validation: 35 monitoring/detail frontend tests, both TypeScript projects, PHPStan, Pint, production build and the actual Chromium Sertim/monitoring regression passed (seven PHP assertions plus browser checks). Detail/full-sheet provenance displays original code, contract revision and child source/checksum evidence. New schema and activation flags remain unapplied/disabled operationally.
 
+Continuation M3 implements exact primary-code and verified code-alias matching, optional exact account/inclusive entry-date scope, code/alias typo candidates, cross-evidence conflicts and an Admin configuration/revision/audit UI. No authoritative column is preselected; an active verified source contract plus the environment activation flag is required. New aliases default to draft/inactive. Configuration changes queue the existing fenced, resumable mapping replay rather than rewriting raw data. One-off corrections do not implicitly register rules. 51 identity/alias tests passed (315 assertions), 48 identity/Sertim/replay tests passed (417 assertions), and four focused synthetic code scenarios passed (39 assertions), including 400O/400OB remaining candidates. PHPStan and TypeScript passed. Chromium created a verified synthetic code alias through the new Admin UI on disposable SQLite; no live mapping was changed. A form-transform integration defect found by browser/type checks was corrected and the browser fixture rerun successfully.
+
 | Milestone | Status | Evidence / outstanding gate |
 |---|---|---|
 | M0 | Complete | Code/schema/routes/worker/UI/test discovery and implementation matrix written |

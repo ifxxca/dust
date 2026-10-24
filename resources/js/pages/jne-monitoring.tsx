@@ -20,6 +20,7 @@ import {
     jneTimestamp,
 } from '@/lib/jne-monitoring';
 import * as monitoring from '@/routes/jne-monitoring';
+import * as evidenceRules from '@/routes/jne-evidence';
 import * as runs from '@/routes/report-runs';
 import type {
     JneCustomer,
@@ -128,6 +129,12 @@ export default function JneMonitoring({
     return (
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
             <Head title="Pengiriman JNE" />
+            <Link
+                className="text-sm underline"
+                href={evidenceRules.index.url()}
+            >
+                Aturan bukti dan alias kode
+            </Link>
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1">
                     <h1 className="text-2xl font-semibold tracking-tight">

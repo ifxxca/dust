@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Database\Factories\JneCustomerCodeAliasFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property CarbonImmutable|null $valid_from
@@ -34,5 +35,11 @@ class JneCustomerCodeAlias extends Model
     protected function casts(): array
     {
         return ['is_active' => 'boolean', 'verified_at' => 'immutable_datetime', 'valid_from' => 'immutable_date', 'valid_thru' => 'immutable_date', 'version' => 'integer'];
+    }
+
+    /** @return BelongsTo<Customer, $this> */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 }
