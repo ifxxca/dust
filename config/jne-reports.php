@@ -11,4 +11,5 @@ return [
     'max_awbs' => 6000,
     'source_timezone' => env('JNE_REPORT_SOURCE_TIMEZONE', 'Asia/Jakarta'),
     'max_scheduled_jobs_per_cycle' => 200,
+    'non_identifying_shipper_names' => ['Shopee International', 'Tokopedia'],
 ];

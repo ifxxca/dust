@@ -68,14 +68,15 @@ test('ambiguous aliases never choose a customer or pickup even with a unique ref
     expect($shipment->pickup_task_id)->toBeNull();
 });
 
-test('unknown names do not fall back to profile customer or guess from code prefix', function (string $name) {
+test('unknown names do not fall back to profile customer or guess from code prefix', function (string $name, string $status) {
     $customer = Customer::factory()->create();
     $profile = JneReportProfile::factory()->create(['customer_mapping_mode' => 'SHIPPER_NAME', 'customer_id' => $customer->id]);
     createShipperAlias($profile, $customer, '102 ANITA');
     $shipment = projectAliasSource($profile, $name);
     expect($shipment->customer_id)->toBeNull();
-    expect($shipment->customer_match_status)->toBe('UNMATCHED');
-})->with(['102 ANITAA', '102', '102_ANITA', '']);
+    expect($shipment->customer_match_status)->toBe($status);
+    expect($shipment->pickup_task_id)->toBeNull();
+})->with([['102 ANITAA', 'CANDIDATE'], ['102', 'UNMATCHED'], ['102_ANITA', 'CANDIDATE'], ['', 'UNMATCHED']]);
 
 test('customer names work across report sources while inactive mappings are not selected', function () {
     $profile = JneReportProfile::factory()->create(['customer_mapping_mode' => 'SHIPPER_NAME']);

@@ -10,6 +10,8 @@ export const matchLabels: Record<string, string> = {
     MATCHED: 'Terhubung',
     UNMATCHED: 'Belum terhubung',
     AMBIGUOUS: 'Perlu pemeriksaan',
+    CANDIDATE: 'Kandidat · belum dikonfirmasi',
+    CONFLICT: 'Bukti bertentangan',
 };
 export function jneTimestamp(value: string | null, timezone: string): string {
     if (!value) return '—';

@@ -33,10 +33,10 @@ class SyncJneCustomerMappings implements ShouldQueue
             }
             $shipments = JneShipment::where('id', '>', $run->last_id)->where('id', '<=', $run->upper_id)
                 ->orderBy('id')->limit(200)->lockForUpdate()->get();
-            $shipments->load('latestSource', 'pickup');
+            $shipments->load('latestSource', 'pickup', 'sources:id,awb,shipper_name');
             $affected = $shipments->filter(fn (JneShipment $shipment): bool => $shipment->latestSource !== null
                 && $shipment->match_method !== 'MANUAL'
-                && in_array(JneShipperAlias::normalize($shipment->latestSource->shipper_name ?? ''), $run->normalized_names, true));
+                && $shipment->sources->contains(fn ($source): bool => in_array(JneShipperAlias::normalize($source->shipper_name ?? ''), $run->normalized_names, true)));
             $candidates = $matcher->candidates($affected->map->latestSource->unique('id')->values());
             foreach ($affected as $shipment) {
                 $matcher->automatic($shipment, $shipment->latestSource, $candidates);

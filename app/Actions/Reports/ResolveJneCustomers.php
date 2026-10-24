@@ -8,9 +8,11 @@ use Illuminate\Support\Collection;
 
 class ResolveJneCustomers
 {
+    public function __construct(private SuggestJneCustomers $suggestions) {}
+
     /**
      * @param  Collection<int, JneReportAwb>  $sources
-     * @return array<int, array{customer_id: ?int, status: string, method: string, note: string}>
+     * @return array<int, array{customer_id: ?int, status: string, method: string, note: string, evidence: list<array<string, mixed>>}>
      */
     public function handle(Collection $sources): array
     {
@@ -28,6 +30,9 @@ class ResolveJneCustomers
             $method = 'SHIPPER_NAME';
             $name = JneShipperAlias::normalize($source->shipper_name ?? '');
             $matches = $byKey->get(hash('sha256', $name), collect())->filter(fn (JneShipperAlias $alias): bool => $alias->normalized_name === $name);
+            if ($this->suggestions->isNonIdentifying($name)) {
+                $matches = collect();
+            }
             $ids = $matches->pluck('customer_id')->unique();
             $note = 'SHIPPER_NAME belum mempunyai alias customer aktif.';
             if ($ids->count() > 1) {
@@ -40,7 +45,8 @@ class ResolveJneCustomers
                 $status = 'MATCHED';
                 $note = 'Customer dikenali dari daftar nama pengirim milik customer.';
             }
-            $resolved[$source->id] = ['customer_id' => $id, 'status' => $status, 'method' => $method, 'note' => $note];
+            $resolved[$source->id] = ['customer_id' => $id, 'status' => $status, 'method' => $method, 'note' => $note,
+                'evidence' => array_values($matches->map(fn (JneShipperAlias $alias): array => ['source_id' => $source->id, 'alias_id' => $alias->id, 'customer_id' => $alias->customer_id])->values()->all())];
         }
 
         return $resolved;

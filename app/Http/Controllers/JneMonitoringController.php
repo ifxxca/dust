@@ -82,6 +82,7 @@ class JneMonitoringController extends Controller
         return Inertia::render('jne-shipment', [
             'shipment' => [...$record->only(['id', 'awb', 'customer_account', 'tracking_status', 'match_status', 'match_method', 'match_note', 'version', 'pickup_task_id']),
                 ...$record->only(['customer_id', 'customer_match_status', 'customer_match_method', 'customer_match_note']),
+                'customer_match_candidates' => $record->customer_match_candidates,
                 'customer_name' => $record->customer?->name, 'customer_code' => $record->customer?->customer_code,
                 'observed_at' => $record->last_observed_at?->toIso8601String(), 'pickup_reference' => $record->pickup?->reference,
                 'pickup_customer' => $record->pickup?->customer_name_snapshot, 'source' => $record->latestSource?->only(['report_job_id', 'source_row', 'reference', 'shipper_name', 'consignee_name', 'status_web', 'status_pod', 'awb_cancel', 'raw_data'])],

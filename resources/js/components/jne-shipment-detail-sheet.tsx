@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, Copy, ExternalLink } from 'lucide-react';
 import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
+import JneCustomerCandidates from '@/components/jne-customer-candidates';
 import { copyJneAwb } from '@/components/jne-shipment-table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +63,9 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                             : 'Belum dipetakan'}
                     </DetailField>
                     <DetailField label="Pemetaan customer">
-                        {shipment.customer_match_status === 'AMBIGUOUS'
+                        {['AMBIGUOUS', 'CONFLICT'].includes(
+                            shipment.customer_match_status || '',
+                        )
                             ? 'Perlu pemeriksaan'
                             : shipment.customer_match_status === 'MATCHED'
                               ? 'Customer dikenali'
@@ -80,6 +83,9 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                         {shipment.customer_match_note}
                     </p>
                 )}
+                <JneCustomerCandidates
+                    candidates={shipment.customer_match_candidates}
+                />
             </section>
             <Separator />
             <section className="space-y-4" aria-labelledby="jne-detail-source">

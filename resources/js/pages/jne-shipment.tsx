@@ -1,5 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
+import JneCustomerCandidates from '@/components/jne-customer-candidates';
+import type { JneCustomerCandidate } from '@/types/jne';
 import PageContainer from '@/components/page-container';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -50,6 +52,7 @@ type Shipment = {
     customer_match_status?: string;
     customer_match_note?: string | null;
     customer_match_method?: string | null;
+    customer_match_candidates?: JneCustomerCandidate[] | null;
 };
 type Observation = {
     id: number;
@@ -111,14 +114,18 @@ export default function JneShipment({
                         {shipment.customer_name
                             ? `${shipment.customer_code || ''} · ${shipment.customer_name}`
                             : 'Belum dipetakan'}
-                        {shipment.customer_match_status === 'AMBIGUOUS' &&
-                            ' · Perlu pemeriksaan'}
+                        {['AMBIGUOUS', 'CONFLICT'].includes(
+                            shipment.customer_match_status || '',
+                        ) && ' · Perlu pemeriksaan'}
                     </p>
                     {shipment.customer_match_note && (
                         <p className="text-sm text-muted-foreground">
                             {shipment.customer_match_note}
                         </p>
                     )}
+                    <JneCustomerCandidates
+                        candidates={shipment.customer_match_candidates}
+                    />
                     <p className="text-sm whitespace-pre-wrap">
                         Status web: {shipment.source?.status_web || '—'}
                         <br />

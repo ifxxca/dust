@@ -284,7 +284,7 @@ test('manual matching rejects wrong customer or non finalized pickup and require
     $this->postJson(route('jne-monitoring.match', $shipment->id), ['pickup_reference' => null, 'version' => $shipment->version, 'reason' => ''])->assertUnprocessable()->assertJsonValidationErrors('reason');
 
     expect($shipment->fresh()->pickup_task_id)->toBeNull();
-    $this->assertDatabaseCount('jne_shipment_match_events', 0);
+    $this->assertDatabaseCount('jne_shipment_match_events', 1);
 });
 
 test('reconciliation compares distinct linked AWBs without treating missing retail baseline as resolved', function () {

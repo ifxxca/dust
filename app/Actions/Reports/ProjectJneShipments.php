@@ -39,9 +39,7 @@ class ProjectJneShipments
                         $shipment->update(['customer_account' => $source->customer_account, 'latest_report_awb_id' => $source->id, 'latest_report_job_id' => $job->id, 'last_observed_at' => $observedAt,
                             'tracking_status' => $status, 'status_signature' => $signature, 'version' => $shipment->version + 1]);
                     }
-                    if ($shipment->latest_report_awb_id === $source->id) {
-                        $this->matcher->automatic($shipment, $source, $candidates);
-                    }
+                    $this->matcher->automatic($shipment, $source, $candidates);
                 }
                 if ($observations !== []) {
                     JneShipmentObservation::insert($observations);

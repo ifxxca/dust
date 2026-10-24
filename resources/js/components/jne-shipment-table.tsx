@@ -173,9 +173,13 @@ export default function ShipmentDataTable({
                         <p className="text-xs text-muted-foreground">
                             Pengirim JNE: {row.shipper_name || '—'}
                         </p>
-                        {row.customer_match_status === 'AMBIGUOUS' && (
+                        {['AMBIGUOUS', 'CONFLICT', 'CANDIDATE'].includes(
+                            row.customer_match_status || '',
+                        ) && (
                             <Badge variant="outline">
-                                Customer perlu pemeriksaan
+                                {row.customer_match_status === 'CANDIDATE'
+                                    ? 'Kandidat customer'
+                                    : 'Customer perlu pemeriksaan'}
                             </Badge>
                         )}
                     </div>

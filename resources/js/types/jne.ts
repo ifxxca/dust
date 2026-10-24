@@ -7,6 +7,14 @@ export type JneFilters = {
     customer_match: string;
 };
 
+export type JneCustomerCandidate = {
+    customer_id: number;
+    customer_code: string | null;
+    customer_name: string;
+    registered_name: string;
+    distance: number;
+};
+
 export type JneShipment = {
     id: number;
     awb: string;
@@ -23,6 +31,7 @@ export type JneShipment = {
     customer_code?: string | null;
     customer_match_status?: string;
     customer_match_note?: string | null;
+    customer_match_candidates?: JneCustomerCandidate[] | null;
     shipper_name?: string | null;
 };
 
@@ -56,6 +65,7 @@ export type JneDetail = {
         | 'customer_code'
         | 'customer_match_status'
         | 'customer_match_note'
+        | 'customer_match_candidates'
     > & {
         match_method: string | null;
         match_note: string | null;

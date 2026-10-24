@@ -7,6 +7,7 @@ use Database\Factories\JneShipmentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** @property CarbonImmutable|null $last_observed_at */
 class JneShipment extends Model
@@ -18,13 +19,13 @@ class JneShipment extends Model
 
     public const TERMINAL_STATUSES = ['DELIVERED', 'CANCELLED', 'RETURNED'];
 
-    public const MATCH_STATUSES = ['MATCHED', 'UNMATCHED', 'AMBIGUOUS'];
+    public const MATCH_STATUSES = ['MATCHED', 'UNMATCHED', 'AMBIGUOUS', 'CANDIDATE', 'CONFLICT'];
 
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
-        return ['last_observed_at' => 'immutable_datetime', 'version' => 'integer'];
+        return ['last_observed_at' => 'immutable_datetime', 'version' => 'integer', 'customer_match_candidates' => 'array'];
     }
 
     /** @return BelongsTo<JneReportAwb, $this> */
@@ -43,5 +44,11 @@ class JneShipment extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** @return HasMany<JneReportAwb, $this> */
+    public function sources(): HasMany
+    {
+        return $this->hasMany(JneReportAwb::class, 'awb', 'awb');
     }
 }

@@ -30,6 +30,8 @@ const customerMatchLabels = {
     MATCHED: 'Customer dikenali',
     UNMATCHED: 'Belum dipetakan',
     AMBIGUOUS: 'Perlu pemeriksaan',
+    CANDIDATE: 'Kandidat customer',
+    CONFLICT: 'Bukti bertentangan',
 };
 
 function FilterSelect({

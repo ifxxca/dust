@@ -8,7 +8,13 @@
 4. A conflicting new reference/mapping must not silently replace a prior pickup. Existing manual link/unlink decisions survive automatic replay.
 5. Store decisions in `jne_shipment_match_events` with previous/current links, actor/method/reason.
 
-Current storage uses `MATCHED`, `UNMATCHED`, `AMBIGUOUS`. Target candidate/conflict distinctions must be introduced without reinterpreting historical ambiguous records as confirmed matches.
+M3 retains historical `AMBIGUOUS` and adds `CANDIDATE` and `CONFLICT`. Typo candidates have no assigned customer/pickup. Conflicting verified owners across report observations remain conflicts, including when the conflicting source arrives late.
+
+Identity resolution reads original report rows for the AWB independently of the latest tracking snapshot. Blank shipper/reference fields on a refresh do not erase earlier verified evidence. Historical references must still match the current effective processing reference or finalized task; superseded processing declarations are excluded. Alias replay includes historical source names even when the latest tracking row is sparse.
+
+Candidate generation is bounded: up to 100 unique unknown names per resolution batch, a maximum catalog of 5,000 active registered aliases, names 4–120 folded characters, edit distance at most two (one for shorter names), and at most five customer suggestions. Case/space normalization remains the exact mapping rule; punctuation folding and edit distance are suggestions only. Exceeding the bounds leaves records unmatched rather than making a weaker automatic decision. Names configured as non-identifying marketplace labels are excluded from alias-only ownership and suggestions; explicit uncontested AWB evidence may still resolve them later.
+
+Current candidate details are stored in `jne_shipments.customer_match_candidates`. Match events now retain source-row and registered-alias IDs in `evidence`; original raw source values are unchanged. No customer-code source column, code-prefix rule or code-alias relationship is inferred.
 
 ## Target precedence and gates
 
