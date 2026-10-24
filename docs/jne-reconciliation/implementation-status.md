@@ -1,5 +1,11 @@
 # Implementation status
 
+### M5 continuation — 25 October 2026
+
+Configured literal source-column and Hybrid-origin category resolution is implemented behind disabled environment gates. Conflicting categories remain unresolved. POP calculations require separate confident customer, pickup and category evidence. Versioned, idempotent Admin collection attestation records verified required sources, selected ready reports, cutoff, POP/Sertim fingerprints and source high-water mark. Changed evidence invalidates completeness to REVIEW; finalized POP and handover records remain untouched.
+
+Validation: eight configured/legacy reconciliation tests passed (64 assertions); 28 reconciliation/Sertim backend tests passed (214 assertions including browser assertions in the subsequent run); Chromium collection review at 390px passed (1 test/7 assertions). PHPStan, TypeScript and production build passed. A responsive long-reference overflow found by Chromium was fixed and the fixture rerun successfully. Operational acceptance is pending; these are synthetic results.
+
 Updated 24 October 2026. Baseline commit: `d918714` on `codex/ui-ux-remediation`. Unrelated work remains untouched; no push is authorized.
 
 ## Implementation-first continuation

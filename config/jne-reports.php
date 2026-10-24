@@ -4,6 +4,8 @@ return [
     'batch_checkpoints_enabled' => (bool) env('JNE_APEX_BATCH_CHECKPOINTS_ENABLED', false),
     'evidence_policies_enabled' => (bool) env('JNE_EVIDENCE_POLICIES_ENABLED', false),
     'source_provenance_enabled' => (bool) env('JNE_SOURCE_EVIDENCE_ENABLED', false),
+    'category_reconciliation_enabled' => (bool) env('JNE_CATEGORY_RECONCILIATION_ENABLED', false),
+    'collection_attestation_enabled' => (bool) env('JNE_COLLECTION_ATTESTATION_ENABLED', false),
     'worker_token' => env('JNE_REPORT_WORKER_TOKEN'),
     'worker_id' => env('JNE_REPORT_WORKER_ID', 'jne-report-1'),
     'lease_seconds' => (int) env('JNE_REPORT_LEASE_SECONDS', 300),

@@ -13,6 +13,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import * as monitoring from '@/routes/jne-monitoring';
+import * as collections from '@/routes/jne-collections';
 import { show as pickupDetail } from '@/routes/pickup-results';
 
 type Row = {
@@ -30,6 +31,7 @@ type Row = {
         category_confirmed_awbs: number;
         unclassified_awbs: number;
         sertim_window: string;
+        collection_status?: string;
         categories: Record<
             string,
             {
@@ -41,6 +43,7 @@ type Row = {
                 shortfall_quantity: number | null;
                 excess_quantity: number | null;
                 state: string;
+                missing_quantity?: number | null;
             }
         >;
     };
@@ -54,6 +57,9 @@ const states: Record<string, string> = {
     IDENTIFIED_COUNTS:
         'Jumlah bukti sesuai POP · kelengkapan report belum disahkan',
     AWAITING_EVIDENCE: 'Menunggu bukti / report',
+    REVIEW: 'Periksa identitas atau kategori yang belum pasti',
+    RECONCILED: 'Identitas dan kategori sesuai · koleksi disahkan',
+    MISSING: 'Kekurangan setelah pengesahan koleksi',
 };
 const categories = [
     ['manual_hybrid', 'Manual'],
@@ -178,6 +184,17 @@ export default function JneReconciliation({
                                                         {row.reference}
                                                     </Link>
                                                     <p>{row.customer_name}</p>
+                                                    <Link
+                                                        className="text-xs underline"
+                                                        href={collections.show.url(
+                                                            row.id,
+                                                        )}
+                                                    >
+                                                        Koleksi eksternal:{' '}
+                                                        {row.pop_reconciliation
+                                                            ?.collection_status ??
+                                                            'Belum disahkan'}
+                                                    </Link>
                                                     <p className="mt-2 text-xs text-muted-foreground">
                                                         {row.pop_reconciliation
                                                             ?.confirmed_pickup_awbs ??
@@ -243,6 +260,16 @@ export default function JneReconciliation({
                                             <TableCell>
                                                 {result?.shortfall_quantity ??
                                                     '—'}
+                                                {result?.missing_quantity !=
+                                                    null && (
+                                                    <p className="text-xs">
+                                                        Kurang setelah
+                                                        pengesahan:{' '}
+                                                        {
+                                                            result.missing_quantity
+                                                        }
+                                                    </p>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 {result?.excess_quantity ?? '—'}

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property CarbonImmutable|null $last_observed_at
  * @property-read CarbonImmutable|null $last_report_received_at
+ * @property list<array<string, mixed>>|null $category_evidence
  */
 class JneShipment extends Model
 {
@@ -28,7 +29,7 @@ class JneShipment extends Model
 
     protected function casts(): array
     {
-        return ['last_observed_at' => 'immutable_datetime', 'last_report_received_at' => 'immutable_datetime', 'version' => 'integer', 'customer_match_candidates' => 'array'];
+        return ['last_observed_at' => 'immutable_datetime', 'last_report_received_at' => 'immutable_datetime', 'version' => 'integer', 'customer_match_candidates' => 'array', 'category_evidence' => 'array'];
     }
 
     /** @return BelongsTo<JneReportAwb, $this> */

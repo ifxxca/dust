@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Actions\Reports\MatchJneShipments;
+use App\Actions\Reports\ResolveJneCategories;
 use App\Models\JneMappingRun;
 use App\Models\JneShipment;
 use App\Models\JneShipperAlias;
@@ -42,6 +43,7 @@ class SyncJneCustomerMappings implements ShouldQueue
                 $matcher->automatic($shipment, $shipment->latestSource, $candidates);
             }
             $lastId = $shipments->last()?->id;
+            app(ResolveJneCategories::class)->handle($affected);
             $complete = $shipments->count() < 200 || $lastId === $run->upper_id;
             $run->update(['last_id' => $lastId ?? $run->last_id,
                 'affected_count' => $run->affected_count + $affected->count(), 'status' => $complete ? 'COMPLETED' : 'RUNNING',

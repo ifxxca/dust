@@ -218,6 +218,15 @@ try {
         ),
     );
     assert.deepEqual(errors, []);
+    await admin.page.goto(base + '/admin/jne-monitoring/collections/' + process.env.SERTIM_UI_CLOSED_TASK);
+    await admin.page.getByRole('heading', { name: /Koleksi eksternal/ }).waitFor();
+    await admin.page.getByLabel('Keputusan', { exact: true }).selectOption('OPEN');
+    await admin.page.getByLabel('Alasan dan cakupan bukti', { exact: true }).fill('Synthetic browser external review');
+    await admin.page.getByRole('button', { name: 'Simpan pengesahan yang diaudit', exact: true }).click();
+    await admin.page.locator('summary').filter({ hasText: 'Synthetic browser external review' }).waitFor();
+    await admin.page.screenshot({ path: path.join(artifacts, 'collection-review-390.png'), fullPage: true });
+    assert.ok(await admin.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    assert.deepEqual(errors, []);
     process.stdout.write('SERTIM_CHROMIUM_UI_OK\n');
 } finally {
     await browser.close();

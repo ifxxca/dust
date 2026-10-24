@@ -30,10 +30,14 @@ class ManageJneEvidenceRules
                     'definition.customer_code_column' => ['nullable', 'string', 'max:120'], 'definition.category_column' => ['nullable', 'string', 'max:120'],
                     'definition.category_values' => ['sometimes', 'array', 'max:100'], 'definition.category_values.*' => [Rule::in(PickupProcessingRecord::CATEGORIES)],
                     'definition.hybrid_categories' => ['sometimes', 'array', 'max:4'], 'definition.hybrid_categories.*' => [Rule::in(PickupProcessingRecord::CATEGORIES)],
-                    'definition.collection_requirements' => ['sometimes', 'array', 'max:10'], 'definition.collection_requirements.*' => ['string', 'max:50']])->validate();
+                    'definition.collection_requirements' => ['sometimes', 'array', 'max:10'], 'definition.collection_requirements.*' => ['string', 'max:160', 'distinct']])->validate();
                 abort_unless(in_array($data['report_type'], ReportJob::REPORT_TYPES[$data['source']], true), 422);
                 foreach (array_keys($data['definition']['hybrid_categories'] ?? []) as $key) {
                     abort_unless(in_array($key, array_map(fn (array $part): string => implode(':', $part), ReportJob::HYBRID_PARTS), true), 422, 'Proses Hybrid tidak terdaftar.');
+                }
+                foreach ($data['definition']['collection_requirements'] ?? [] as $requirement) {
+                    $parts = explode(':', $requirement, 3);
+                    abort_unless(count($parts) >= 2 && in_array($parts[1], ReportJob::REPORT_TYPES[$parts[0]] ?? [], true) && (! isset($parts[2]) || trim($parts[2]) !== ''), 422, 'Sumber koleksi harus source:type atau source:type:account yang terdaftar.');
                 }
                 $verified = $this->verified($data);
                 $previous = JneSourceContract::where('source', $data['source'])->where('report_type', $data['report_type'])->lockForUpdate()->get();

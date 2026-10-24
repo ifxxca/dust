@@ -48,6 +48,7 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
             'APP_ENV' => 'testing', 'APP_URL' => $url, 'DB_CONNECTION' => 'sqlite', 'DB_DATABASE' => $database, 'DB_URL' => '',
             'QUEUE_CONNECTION' => 'sync', 'SESSION_DRIVER' => 'file', 'CACHE_STORE' => 'array',
             'JNE_EVIDENCE_POLICIES_ENABLED' => 'true',
+            'JNE_CATEGORY_RECONCILIATION_ENABLED' => 'true', 'JNE_COLLECTION_ATTESTATION_ENABLED' => 'true',
         ]);
         $server->start();
         $deadline = microtime(true) + 10;

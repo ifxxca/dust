@@ -23,12 +23,15 @@ class QueryCashlessReconciliation
     public function forTasks(Collection $tasks): array
     {
         $tasks->loadMissing('proof.revisions');
+        $categoryRequired = ResolveJneCategories::enabled() ? " and s.category_status = 'MATCHED' and s.category = 'cashless_hybrid'" : '';
+        $categoryConflict = ResolveJneCategories::enabled() ? " or s.category_status = 'CONFLICT'" : '';
+        $windows = app(QueryJneCollectionWindows::class)->handle($tasks);
         $rows = DB::table('pickup_cashless_awbs as e')->leftJoin('jne_shipments as s', 's.awb', '=', 'e.awb')
             ->whereIn('e.pickup_task_id', $tasks->modelKeys())->whereNotNull('e.awb')->select('e.pickup_task_id')
             ->selectRaw("count(*) as identified, count(s.id) as collected,
-                sum(case when s.customer_match_status = 'MATCHED' and s.match_status = 'MATCHED' and s.customer_id = e.customer_id and s.pickup_task_id = e.pickup_task_id then 1 else 0 end) as confirmed,
+                sum(case when s.customer_match_status = 'MATCHED' and s.match_status = 'MATCHED' and s.customer_id = e.customer_id and s.pickup_task_id = e.pickup_task_id {$categoryRequired} then 1 else 0 end) as confirmed,
                 sum(case when s.customer_match_status = 'CANDIDATE' then 1 else 0 end) as candidates,
-                sum(case when s.customer_match_status in ('CONFLICT', 'AMBIGUOUS') or s.match_status in ('CONFLICT', 'AMBIGUOUS') then 1 else 0 end) as conflicts")
+                sum(case when s.customer_match_status in ('CONFLICT', 'AMBIGUOUS') or s.match_status in ('CONFLICT', 'AMBIGUOUS') {$categoryConflict} then 1 else 0 end) as conflicts")
             ->groupBy('e.pickup_task_id')->get()->keyBy('pickup_task_id');
         $closed = DB::table('handover_items as i')->join('handover_sessions as h', 'h.id', '=', 'i.handover_session_id')
             ->whereIn('i.pickup_task_id', $tasks->modelKeys())->where(fn ($query) => $query->whereNotNull('h.sertim_closed_at')->orWhere('h.status', 'CLOSED'))
@@ -48,7 +51,8 @@ class QueryCashlessReconciliation
                 'awaiting_source_awbs' => $identified - $collected, 'conflicts' => $conflicts,
                 'shortfall_quantity' => $expected === null ? null : max(0, $expected - $confirmed),
                 'excess_quantity' => $expected === null ? null : max(0, $confirmed - $expected),
-                'missing_quantity' => null, 'collection_complete' => false,
+                'missing_quantity' => $windows[$task->id]['complete'] && $conflicts === 0 && $candidates === 0 && $identified === $confirmed && $expected !== null ? max(0, $expected - $confirmed) : null,
+                'collection_complete' => $windows[$task->id]['complete'], 'collection_status' => $windows[$task->id]['status'], 'collection_version' => $windows[$task->id]['version'],
                 'window' => in_array($task->id, $closed, true) ? 'CLOSED' : 'OPEN'];
         }
 

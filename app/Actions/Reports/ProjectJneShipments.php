@@ -46,6 +46,9 @@ class ProjectJneShipments
                 }
             }
             $job->update(['projection_status' => 'PROJECTED', 'projection_error' => null]);
+            if (ResolveJneCategories::enabled()) {
+                app(ResolveJneCategories::class)->handle(JneShipment::whereIn('awb', $sources->pluck('awb'))->orderBy('id')->lockForUpdate()->get());
+            }
         });
     }
 

@@ -19,5 +19,6 @@ class ReevaluateJneAwbs
                 $this->matcher->automatic($shipment, $shipment->latestSource, $candidates);
             }
         }
+        app(ResolveJneCategories::class)->handle($shipments);
     }
 }
