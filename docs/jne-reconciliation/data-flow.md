@@ -27,6 +27,8 @@ flowchart TD
 
 Current tables are retained. Raw CSV and `raw_data` are evidence, report rows/observations preserve each import, and the registry is a derived current view. Customer and pickup decisions belong to separate status fields/events. A tracking snapshot is an observation at a stated time; it is not a real-time feed.
 
+M2 adds a unique `jne_shipments.awb` constraint. The old account/AWB index remains useful for account filtering, but account no longer participates in registry identity. `customer_account` on the registry is the latest observed account; every original account remains on its `jne_report_awbs` source. The upgrade first checks normalized duplicate AWBs and refuses to merge/delete them; only after that guard does it normalize the derived registry identifier and add uniqueness. Original source cells are untouched. Rollback removes the new constraint and does not recreate duplicate shipments.
+
 Hybrid outputs may finish at different times. The parent waits; saved children survive another child's failure. Safe local import/projection replay reuses stored data. Unknown external Process outcomes remain attention states and are not blindly resubmitted. Multi-batch APEX intermediate recovery is not currently durable and remains an explicit limitation.
 
 The Sertim-to-registry and category-reconciliation parts are target boundaries, not a claim of completed implementation. Business gates are listed in `business-rules.md`.

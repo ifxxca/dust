@@ -44,7 +44,7 @@ test('active AWBs from every account are deduplicated and filtered by entry age 
     foreach (['IN_TRANSIT', 'EXCEPTION', 'UNKNOWN', 'RETURNED', 'DELIVERED', 'CANCELLED'] as $index => $status) {
         JneShipment::factory()->create(['awb' => '000'.$index, 'tracking_status' => $status]);
     }
-    JneShipment::factory()->create(['awb' => '0000', 'customer_account' => 'OTHER_ACCOUNT']);
+    JneReportAwb::factory()->create(['awb' => '0000', 'customer_account' => 'OTHER_ACCOUNT']);
     $source = JneReportAwb::create(['report_job_id' => ReportJob::factory()->create()->id, 'source_row' => 2, 'awb' => 'OLD', 'customer_account' => 'TESTACCOUNT', 'entry_at' => '2026-01-01']);
     JneShipment::factory()->create(['awb' => 'OLD', 'tracking_status' => 'IN_TRANSIT', 'latest_report_awb_id' => $source->id]);
 

@@ -72,14 +72,16 @@ test('older out of order report is audited but cannot overwrite newer current st
     expect(JneShipmentObservation::where('jne_report_awb_id', JneReportAwb::where('report_job_id', $old->id)->value('id'))->value('changes_current'))->toBeFalse();
 });
 
-test('account and AWB together identify shipment and unknown statuses are not treated as delivered', function () {
+test('one AWB across accounts retains one shipment and unknown statuses are not treated as delivered', function () {
     Storage::fake('jne_reports');
     monitoringReport(['STATUS_WEB' => 'Error On Push', 'STATUS_POD' => 'Success']);
+    expect(JneShipment::sole()->tracking_status)->toBe('UNKNOWN');
     monitoringReport(['STATUS_WEB' => 'DELIVERED'], 'OTHERACCOUNT');
 
-    $this->assertDatabaseCount('jne_shipments', 2);
-    expect(JneShipment::where('customer_account', 'TESTACCOUNT')->value('tracking_status'))->toBe('UNKNOWN');
-    expect(JneShipment::where('customer_account', 'OTHERACCOUNT')->value('tracking_status'))->toBe('DELIVERED');
+    $this->assertDatabaseCount('jne_shipments', 1);
+    $this->assertDatabaseCount('jne_shipment_observations', 2);
+    expect(JneReportAwb::orderBy('id')->pluck('customer_account')->all())->toBe(['TESTACCOUNT', 'OTHERACCOUNT']);
+    expect(JneShipment::sole()->tracking_status)->toBe('DELIVERED');
 });
 
 test('known source statuses classify conservatively and cancellation takes priority', function (string $web, string $pod, string $cancel, string $expected) {

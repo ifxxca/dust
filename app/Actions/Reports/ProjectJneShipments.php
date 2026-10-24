@@ -21,11 +21,11 @@ class ProjectJneShipments
             $candidates = $this->matcher->candidates($sources);
             foreach ($sources->chunk(250) as $chunk) {
                 JneShipment::insertOrIgnore($chunk->map(fn (JneReportAwb $source): array => ['customer_account' => $source->customer_account, 'awb' => $source->awb, 'created_at' => now(), 'updated_at' => now()])->all());
-                $shipments = JneShipment::whereIn('customer_account', $chunk->pluck('customer_account')->unique())->whereIn('awb', $chunk->pluck('awb'))->with('pickup:id,customer_id')->orderBy('id')->lockForUpdate()->get()->keyBy(fn (JneShipment $shipment): string => $shipment->customer_account.'|'.$shipment->awb);
+                $shipments = JneShipment::whereIn('awb', $chunk->pluck('awb'))->with('pickup:id,customer_id')->orderBy('id')->lockForUpdate()->get()->keyBy('awb');
                 $observedIds = JneShipmentObservation::whereIn('jne_report_awb_id', $chunk->pluck('id'))->pluck('jne_report_awb_id')->all();
                 $observations = [];
                 foreach ($chunk as $source) {
-                    $shipment = $shipments->get($source->customer_account.'|'.$source->awb);
+                    $shipment = $shipments->get($source->awb);
                     $observedAt = $source->observed_at ?? $job->started_at ?? $job->created_at;
                     $status = $this->classify($source);
                     $signature = hash('sha256', json_encode([$source->status_web, $source->status_pod, $source->awb_cancel], JSON_THROW_ON_ERROR));
@@ -36,7 +36,7 @@ class ProjectJneShipments
                             'tracking_status' => $status, 'status_signature' => $signature, 'changes_current' => $newer && $signature !== $shipment->status_signature, 'created_at' => now()];
                     }
                     if ($newer) {
-                        $shipment->update(['latest_report_awb_id' => $source->id, 'latest_report_job_id' => $job->id, 'last_observed_at' => $observedAt,
+                        $shipment->update(['customer_account' => $source->customer_account, 'latest_report_awb_id' => $source->id, 'latest_report_job_id' => $job->id, 'last_observed_at' => $observedAt,
                             'tracking_status' => $status, 'status_signature' => $signature, 'version' => $shipment->version + 1]);
                     }
                     if ($shipment->latest_report_awb_id === $source->id) {
