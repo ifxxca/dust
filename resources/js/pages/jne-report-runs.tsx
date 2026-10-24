@@ -551,11 +551,14 @@ export default function ReportRuns({
                             )}
                             {selected.source === 'hybrid' &&
                                 selected.status === 'NEEDS_ATTENTION' &&
-                                selected.sources.some((source) =>
-                                    ['FAILED', 'NEEDS_ATTENTION'].includes(
-                                        source.status,
-                                    ),
-                                ) && (
+                                (selected.error_message?.startsWith(
+                                    'HYBRID_SOURCE_INVALID:',
+                                ) ||
+                                    selected.sources.some((source) =>
+                                        ['FAILED', 'NEEDS_ATTENTION'].includes(
+                                            source.status,
+                                        ),
+                                    )) && (
                                     <div className="space-y-2 rounded-lg border p-3">
                                         <Button
                                             className="min-h-11"
@@ -572,13 +575,26 @@ export default function ReportRuns({
                                             <RefreshCw aria-hidden="true" />
                                             {retry.processing
                                                 ? 'Mengantrekan ulang…'
-                                                : 'Ulangi sumber gagal'}
+                                                : selected.error_message?.startsWith(
+                                                        'HYBRID_SOURCE_INVALID:',
+                                                    )
+                                                  ? 'Periksa ulang file sumber'
+                                                  : 'Ulangi sumber gagal'}
                                         </Button>
                                         <p className="text-xs text-muted-foreground">
-                                            Hanya report Hybrid yang gagal
-                                            diulang. Sumber yang sudah tersimpan
-                                            dipakai kembali; Process APEX belum
-                                            dijalankan.
+                                            {selected.error_message?.startsWith(
+                                                'HYBRID_SOURCE_INVALID:',
+                                            ) ? (
+                                                'Pulihkan file asli dengan checksum tersimpan terlebih dahulu. Pemeriksaan ini memakai sumber tersimpan tanpa mengulang penarikan Hybrid.'
+                                            ) : (
+                                                <>
+                                                    Hanya report Hybrid yang
+                                                    gagal diulang. Sumber yang
+                                                    sudah tersimpan dipakai
+                                                    kembali; Process APEX belum
+                                                    dijalankan.
+                                                </>
+                                            )}
                                         </p>
                                     </div>
                                 )}

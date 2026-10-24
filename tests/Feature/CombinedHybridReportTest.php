@@ -178,6 +178,40 @@ test('four empty sources complete without submitting an empty APEX request', fun
     $this->postJson(route('internal.report-jobs.claim'), ['claim_key' => (string) Str::uuid()], combinedHeaders('apex'))->assertNoContent();
 });
 
+test('missing or changed saved Hybrid files block APEX and recover from identical source uploads without recollection', function (bool $missing) {
+    Storage::fake('jne_reports');
+    $batch = combinedBatch();
+    $sources = ReportJob::where('hybrid_batch_id', $batch->id)->orderBy('id')->get();
+    $first = $sources->first();
+    [$claim, $original] = saveCombinedSource($first, ['0001']);
+    $first->refresh();
+    if ($missing) {
+        Storage::disk('jne_reports')->delete($first->source_file_path);
+    } else {
+        Storage::disk('jne_reports')->put($first->source_file_path, 'changed source bytes');
+    }
+    foreach ($sources->skip(1) as $index => $source) {
+        saveCombinedSource($source, ['000'.($index + 1)]);
+    }
+
+    expect($batch->fresh()->status)->toBe('NEEDS_ATTENTION');
+    expect($batch->fresh()->error_message)->toStartWith('HYBRID_SOURCE_INVALID:');
+    $this->assertDatabaseCount('report_jobs', 5);
+    expect(ReportJob::where('hybrid_batch_id', $batch->id)->pluck('status')->unique()->all())->toBe(['SOURCE_SAVED']);
+    $this->postJson(route('internal.report-jobs.claim'), ['claim_key' => (string) Str::uuid()], combinedHeaders('apex'))->assertNoContent();
+    $this->actingAs(User::findOrFail($batch->created_by))->post(route('report-runs.retry-sources', $batch))->assertRedirect();
+    expect($batch->fresh()->status)->toBe('NEEDS_ATTENTION');
+
+    $this->postJson(route('internal.report-jobs.source-upload', $first), ['file' => UploadedFile::fake()->createWithContent('report.csv', $original)], combinedHeaders($first->source, $claim))->assertOk();
+    $this->post(route('report-runs.retry-sources', $batch))->assertRedirectToRoute('report-runs.index');
+
+    expect($batch->fresh()->status)->toBe('WAITING_APEX');
+    expect($batch->fresh()->error_message)->toBeNull();
+    expect(ReportJob::where('hybrid_batch_id', $batch->id)->pluck('attempt_count')->all())->toBe([1, 1, 1, 1]);
+    expect(Storage::disk('jne_reports')->get($first->source_file_path))->toBe($original);
+    $this->assertDatabaseCount('report_jobs', 5);
+})->with(['missing file' => true, 'changed checksum' => false]);
+
 test('the scheduled combined cycle runs four Chromium source downloads through one APEX upload and imports its result', function () {
     $root = sys_get_temp_dir().DIRECTORY_SEPARATOR.'combined_hybrid_e2e_'.bin2hex(random_bytes(8));
     File::makeDirectory($root, 0700);

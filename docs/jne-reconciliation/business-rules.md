@@ -21,9 +21,23 @@
 | B2 | Define National Acc/Cust YES/NO, authoritative supplier and Hybrid special-case routing | Profiles/jobs snapshot Y/N; parameter-mode worker sets `P45_NA`; no verified business definition | New automatic National Account/routing policy |
 | B3 | Name the authoritative internal customer-code field in each source, including unknown/empty/incorrect code handling | APEX raw headers include `ID_ACCOUNT`, `NOREF`, `SHIPPER_NAME`; none is verified as Retail code | Exact code/code-alias auto-attribution; never reinterpret account or reference |
 | B4 | Confirm which aliases are globally valid versus scoped by account, customer code, date or context, including marketplace names | Current registered aliases are global and duplicate names are ambiguous | Scoped reusable alias rules and migration of existing mappings |
-| B5 | Identify staff allowed to enter/verify/correct Sertim AWBs, especially late entries and closed handovers; specify accepted scan format | Existing task ownership, active role checks, revision/event history protect POP/handover quantities | Production Sertim write workflow and claims/correction policy |
+| B5 | Confirmed below: Admin-only correction after finalization/closure; permanently latched closure at handover close | Existing task ownership, active role checks, revision/event history protect POP/handover quantities | Implement per-AWB evidence within existing assigned-task workflow |
 | B6 | Define authoritative Manual/Cashless/CSS category evidence and conflicts (including AWB appearing in two Hybrid process types) | Hybrid child type provides source context; APEX raw `PAYMENT_TYPE` and AWB prefixes are not approved category rules | Confirmed per-AWB category and category reconciliation |
 | B7 | Define required collection sources and closure/cutoff per pickup/day, delay/grace period and reopen behavior | Four-source batch completion only proves that batch completed, not all shipments for a pickup were collected | Confirmed missing quantities and reconciliation completion |
 | B8 | Confirm source availability, status terminality (especially RETURNED), terminal confirmation and SLA-risk definitions | Classifier has conservative statuses; active-refresh and terminal constants differ on RETURNED | Business-specific tracking priority/terminal policy |
 
 Questions were presented to the operator during discovery. No answer is assumed from elapsed time. Existing configured behavior remains the starting point while safe technical work proceeds. Resolve decisions here with the supplied answer, date and scope before implementing dependent policy.
+
+## Confirmed Sertim decisions — 24 October 2026
+
+Operator decisions BR-SERTIM-01 through BR-SERTIM-04 supersede provisional correction/window assumptions:
+
+- Only an active Admin may correct, add, replace or remove Sertim AWB evidence after POP finalization, earlier Sertim finalization (if introduced), or handover closure. Pickup/Retail staff are denied at the backend, regardless of UI.
+- Admin corrections require a reason and preserve original evidence plus before/after AWB, customer/pickup, actor, timestamp and affected matching/reconciliation outcomes. Use an explicit correction workflow.
+- The Sertim window closes when the associated handover first closes. Reopening a handover does **not** reopen that window. Closure must be persisted independently of the handover's current status, including existing closed/reopened history during upgrade.
+- Normal entries are blocked once POP is finalized or the window is closed. Before that point use existing assigned-task authorization; do not broaden other pickup/handover permissions.
+- Closure does not require Hybrid/APEX completion. Late data may be imported, matched and reconciled after closure without reopening handover or changing POP/receipt quantities.
+- Exact registered mappings and explicit uncontested Sertim evidence may support automatic identity; shared accounts, marketplace names and fuzzy similarity cannot establish ownership. Customer and pickup attribution stay separate. Duplicate/conflicting claims must be rejected or flagged.
+- Corrected AWBs are normalized/validated; both old and replacement matches are safely re-evaluated. Source evidence and historical audit remain. Unrelated customers/pickups and physical verification remain unchanged.
+
+This closes the Sertim-window part of B7. It does **not** establish when all external shipment collection is complete: a closed scan window is not proof that every Hybrid/APEX report has arrived. Missing-quantity finality remains gated by that separate decision.

@@ -146,6 +146,7 @@ class ManageReportJobs
             if ($job->source_file_path) {
                 abort_unless($job->source_worker_id === $workerId && $claimToken !== '' && is_string($job->source_claim_token) && hash_equals($job->source_claim_token, $claimToken), 403);
                 abort_unless(hash_equals($job->source_file_checksum, $checksum), 409, 'CSV sumber berbeda sudah tersimpan.');
+                abort_unless(Storage::disk('jne_reports')->putFileAs('report-jobs/'.$job->id, $file, 'source-'.$checksum.'.csv', ['visibility' => 'private']) === $job->source_file_path, 503, 'Pemulihan CSV sumber gagal. Ulangi upload file asli yang sama.');
 
                 return $job;
             }
@@ -194,15 +195,17 @@ class ManageReportJobs
             $batch = ReportJob::whereKey($id)->lockForUpdate()->firstOrFail();
             abort_unless($batch->source === 'hybrid' && $batch->report_type === 'combined' && $batch->status === 'NEEDS_ATTENTION' && $batch->source_file_path === null && $batch->file_path === null, 409, 'Hanya pengumpulan Hybrid yang belum dikirim ke APEX yang dapat diulang.');
             $failed = ReportJob::where('hybrid_batch_id', $batch->id)->whereIn('status', ['FAILED', 'NEEDS_ATTENTION'])->whereNull('source_file_path')->lockForUpdate()->get();
-            abort_if($failed->isEmpty(), 409, 'Tidak ada sumber Hybrid gagal yang perlu diulang.');
+            $integrityReview = str_starts_with($batch->error_message ?? '', 'HYBRID_SOURCE_INVALID:');
+            abort_if($failed->isEmpty() && ! $integrityReview, 409, 'Tidak ada sumber Hybrid gagal yang perlu diulang.');
             foreach ($failed as $source) {
                 $source->update(['status' => 'QUEUED', 'worker_id' => null, 'claim_key' => null, 'claim_token' => null, 'active_slot' => null, 'lease_expires_at' => null, 'completed_at' => null, 'error_message' => null, 'reviewed_at' => null, 'reviewed_by' => null, 'review_note' => null]);
                 $source->recordEvent("Admin #{$actorId} mengantrekan ulang sumber yang gagal; sumber tersimpan tetap digunakan.");
             }
             $batch->update(['status' => 'COLLECTING_SOURCES', 'error_message' => null, 'reviewed_at' => null, 'reviewed_by' => null, 'review_note' => null]);
             $batch->recordEvent("Admin #{$actorId} mengulang {$failed->count()} sumber Hybrid gagal. Process APEX belum dijalankan.");
+            $this->combiner->handle($batch->id);
 
-            return $batch;
+            return $batch->refresh();
         });
     }
 
