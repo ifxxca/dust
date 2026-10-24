@@ -30,6 +30,25 @@ The before-fix reproduction used the fresh baseline bundle and confirmed the aud
 
 ## Reproducible browser checks
 
+## Wave 2 — Accessibility
+
+Commit subject: `fix(ui): resolve wave 2 accessibility issues`. Wave 1 commit: `458808d`.
+
+| Issue | Status | Fix and changed files | Verification | Remaining limitations |
+| --- | --- | --- | --- | --- |
+| UI-07 | Fixed | `operational-dashboard-charts.tsx`: responsive max-width/aspect ratio for donut containers | 375 px with root text size 200%: document width remains 375 px | Root text enlargement is not a complete browser zoom/assistive technology certification |
+| UI-08 | Fixed | `pickup-monitoring.tsx`: active TH aria-sort and directional icons | Browser changes customer sorting descending → ascending and finds exactly one active sort column; existing component test covers default sort | Table data/business ordering unchanged |
+| UI-09 | Fixed | `create-pickup.tsx`, `customer-picker.tsx`: linked label/trigger ID; existing Radix DialogTrigger composition | Find picker by stable Customer label; Enter, arrow-key selection, close and return focus succeed | Native screen-reader software not tested |
+| UI-10 | Fixed | `app-shell.tsx`, `app-content.tsx`: first-focus skip link and focusable main landmark | First Tab exposes skip link; Enter focuses main-content | Does not change focus during filter/refetch operations |
+| UI-11 | Fixed | `appearance-tabs.tsx`: named group and aria-pressed state | Dark selection, reload persistence, System selection and emulated OS dark preference pass | OS preference is browser emulation, not a hardware test |
+| UI-14 | Fixed | `resources/css/app.css`, `ui/sidebar.tsx`: reduced-motion overlay rules including overridden slots; shared Radix Sheet root and real trigger for mobile focus return | Dialog and mobile Sheet animation none; transition 0s; 12 Tabs stay trapped; Escape returns to trigger | Scoped nonessential overlay motion; loading feedback remains; no vestibular user study |
+
+Component paths above are under `resources/js/components/`. Existing `DataTable` and operational workflow contracts are unchanged.
+
+Checks: 3 frontend files / 11 tests passed; PickupMonitoringWorkspace and OperationalDashboardAnalytics: 10 PHP tests / 264 assertions passed; web/mobile TypeScript, build and targeted lint passed. Six browser checks passed: [results](remediation/wave-2/browser-results.json). A first theme-persistence check incorrectly reset localStorage on every navigation; the fixture initialization now only supplies a default to empty storage. Browser checks also exposed the sidebar slot and focus-return cases; both were corrected and the six-check run repeated successfully before committing.
+
+## Reproducible browser checks
+
 `tests/Browser/ui-ux-remediation.mjs` uses the Playwright dependency already installed in the report worker; no dependency was added. It requires an isolated loopback fixture application and a JSON fixture-ID file. It refuses non-loopback origins. The fixture login belongs only to synthetic test data.
 
 ```powershell

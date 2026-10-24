@@ -1,0 +1,31 @@
+[
+  {
+    "name": "wave 2 dashboard supports enlarged text without page overflow",
+    "status": "passed",
+    "viewport": 375,
+    "width": 375
+  },
+  {
+    "name": "wave 2 sorting announces the active column and direction",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 customer picker keyboard label selection and return focus",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 skip link bypasses the sidebar",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 theme selection announces and persists the chosen mode",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 reduced motion overlays preserve keyboard focus trapping and return",
+    "status": "passed",
+    "reduce": true,
+    "animation": "none",
+    "transition": "0s"
+  }
+]

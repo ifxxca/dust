@@ -1,7 +1,9 @@
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import {
+    ArrowDown,
     ArrowDownUp,
+    ArrowUp,
     ArrowUpRight,
     Filter,
     PanelRightOpen,
@@ -576,6 +578,15 @@ export default function PickupMonitoring({
                                     ].map(([key, label]) => (
                                         <TableHead
                                             key={key}
+                                            aria-sort={
+                                                (filters.sort ??
+                                                    'scheduled_at') === key
+                                                    ? (filters.direction ??
+                                                          'desc') === 'asc'
+                                                        ? 'ascending'
+                                                        : 'descending'
+                                                    : undefined
+                                            }
                                             className={
                                                 key === 'staff_name'
                                                     ? 'hidden 2xl:table-cell'
@@ -602,7 +613,24 @@ export default function PickupMonitoring({
                                                 }
                                             >
                                                 {label}
-                                                <ArrowDownUp className="size-3" />
+                                                {(filters.sort ??
+                                                    'scheduled_at') !== key ? (
+                                                    <ArrowDownUp
+                                                        aria-hidden="true"
+                                                        className="size-3"
+                                                    />
+                                                ) : (filters.direction ??
+                                                      'desc') === 'asc' ? (
+                                                    <ArrowUp
+                                                        aria-hidden="true"
+                                                        className="size-3"
+                                                    />
+                                                ) : (
+                                                    <ArrowDown
+                                                        aria-hidden="true"
+                                                        className="size-3"
+                                                    />
+                                                )}
                                             </button>
                                         </TableHead>
                                     ))}

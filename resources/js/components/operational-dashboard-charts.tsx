@@ -69,7 +69,7 @@ export function OperationalDonut({
                 <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-                <div className="relative mx-auto size-40">
+                <div className="relative mx-auto aspect-square w-40 max-w-full">
                     <svg
                         viewBox="0 0 120 120"
                         className="size-full"

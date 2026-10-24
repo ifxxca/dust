@@ -178,8 +178,9 @@ export default function CreatePickup({
                     </div>
                 )}
                 <div className="space-y-2">
-                    <Label>Customer</Label>
+                    <Label htmlFor="pickup-customer">Customer</Label>
                     <CustomerPicker
+                        triggerId="pickup-customer"
                         selected={customer}
                         allowCreate={!staff}
                         disabled={

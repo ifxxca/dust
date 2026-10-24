@@ -136,6 +136,7 @@ test('advanced Pickup controls are hidden and the main page ends at the operatio
         />,
     );
     expect(html).toContain('id="pickup-advanced" hidden=""');
+    expect(html.match(/aria-sort="descending"/g)).toHaveLength(1);
     expect(html).toContain('Tidak ada pickup sesuai filter');
     expect(html).not.toContain('Definisi, aktivitas');
     expect(html).not.toContain('Aktivitas Hari Ini');

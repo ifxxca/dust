@@ -47,9 +47,11 @@ function check(name, run) {
             viewport: { width: 1440, height: 1000 },
             reducedMotion: 'reduce',
         });
-        await context.addInitScript(() =>
-            localStorage.setItem('appearance', 'light'),
-        );
+        await context.addInitScript(() => {
+            if (!localStorage.getItem('appearance')) {
+                localStorage.setItem('appearance', 'light');
+            }
+        });
         const page = await context.newPage();
         try {
             await login(page);
@@ -281,5 +283,163 @@ check(
             '7',
         );
         return { tasks: await tasks.count(), panelTop: box.y };
+    },
+);
+
+check(
+    'wave 2 dashboard supports enlarged text without page overflow',
+    async (page) => {
+        await page.setViewportSize({ width: 375, height: 812 });
+        await visit(page, '/dashboard');
+        await page.evaluate(
+            () => (document.documentElement.style.fontSize = '200%'),
+        );
+        await page.waitForTimeout(150);
+        const sizes = await page.evaluate(() => ({
+            viewport: innerWidth,
+            width: document.documentElement.scrollWidth,
+        }));
+        assert(sizes.width <= sizes.viewport + 1, JSON.stringify(sizes));
+        return sizes;
+    },
+);
+
+check(
+    'wave 2 sorting announces the active column and direction',
+    async (page) => {
+        await visit(page, '/hasil-pickup?monitoring=pickup');
+        const sort = page.getByRole('button', {
+            name: 'Pickup / Customer',
+            exact: true,
+        });
+        await sort.click();
+        await page.waitForURL(
+            (url) =>
+                url.searchParams.get('sort') === 'customer_name' &&
+                url.searchParams.get('direction') === 'desc',
+        );
+        const header = page.getByRole('columnheader', {
+            name: 'Pickup / Customer',
+            exact: true,
+        });
+        assert.equal(await header.getAttribute('aria-sort'), 'descending');
+        assert.equal(await page.locator('th[aria-sort]').count(), 1);
+        await sort.click();
+        await page.waitForURL(
+            (url) => url.searchParams.get('direction') === 'asc',
+        );
+        assert.equal(await header.getAttribute('aria-sort'), 'ascending');
+    },
+);
+
+check(
+    'wave 2 customer picker keyboard label selection and return focus',
+    async (page) => {
+        await visit(page, '/operations/create');
+        const trigger = page.getByRole('combobox', {
+            name: 'Customer',
+            exact: true,
+        });
+        await trigger.focus();
+        await page.keyboard.press('Enter');
+        const dialog = page.getByRole('dialog', {
+            name: 'Pilih Customer',
+            exact: true,
+        });
+        await dialog.getByRole('option').first().waitFor();
+        const search = dialog.getByRole('combobox');
+        await search.press('ArrowDown');
+        await search.press('Enter');
+        await dialog.waitFor({ state: 'hidden' });
+        assert.match(await trigger.innerText(), /Customer Audit/);
+        assert(await trigger.evaluate((e) => e === document.activeElement));
+    },
+);
+
+check('wave 2 skip link bypasses the sidebar', async (page) => {
+    await visit(page, '/dashboard');
+    await page.keyboard.press('Tab');
+    const link = page.getByRole('link', {
+        name: 'Lewati navigasi ke konten utama',
+        exact: true,
+    });
+    assert(await link.evaluate((e) => e === document.activeElement));
+    await page.keyboard.press('Enter');
+    assert.equal(
+        await page.evaluate(() => document.activeElement.id),
+        'main-content',
+    );
+});
+
+check(
+    'wave 2 theme selection announces and persists the chosen mode',
+    async (page) => {
+        await visit(page, '/settings/appearance');
+        const group = page.getByRole('group', {
+            name: 'Tema tampilan',
+            exact: true,
+        });
+        const dark = group.getByRole('button', { name: /^(Dark|Gelap)$/ });
+        await dark.click();
+        assert.equal(await dark.getAttribute('aria-pressed'), 'true');
+        assert.equal(
+            await group.locator('button[aria-pressed=true]').count(),
+            1,
+        );
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        assert.equal(await dark.getAttribute('aria-pressed'), 'true');
+        await page.emulateMedia({ colorScheme: 'dark' });
+        const system = group.getByRole('button', { name: /^(System|Sistem)$/ });
+        await system.click();
+        assert.equal(await system.getAttribute('aria-pressed'), 'true');
+        assert(
+            await page
+                .locator('html')
+                .evaluate((e) => e.classList.contains('dark')),
+        );
+    },
+);
+
+check(
+    'wave 2 reduced motion overlays preserve keyboard focus trapping and return',
+    async (page) => {
+        await visit(page, '/operations/customers');
+        await page
+            .getByRole('button', { name: 'Tambah Customer', exact: true })
+            .click();
+        const dialog = page.getByRole('dialog');
+        const motion = await dialog.evaluate((e) => ({
+            reduce: matchMedia('(prefers-reduced-motion: reduce)').matches,
+            animation: getComputedStyle(e).animationName,
+            transition: getComputedStyle(e).transitionDuration,
+        }));
+        assert(motion.reduce);
+        assert.equal(motion.animation, 'none');
+        assert.equal(motion.transition, '0s');
+        await page.keyboard.press('Escape');
+        await dialog.waitFor({ state: 'hidden' });
+        await page.setViewportSize({ width: 375, height: 812 });
+        const trigger = page.getByRole('button', {
+            name: 'Buka atau tutup navigasi',
+            exact: true,
+        });
+        await trigger.click();
+        const sheet = page.getByRole('dialog');
+        await sheet.waitFor();
+        assert.equal(
+            await sheet.evaluate((e) => getComputedStyle(e).animationName),
+            'none',
+        );
+        for (let i = 0; i < 12; i++) {
+            await page.keyboard.press('Tab');
+            assert(
+                await sheet.evaluate((e) => e.contains(document.activeElement)),
+            );
+        }
+        await page.keyboard.press('Escape');
+        await sheet.waitFor({ state: 'hidden' });
+        assert(await trigger.evaluate((e) => e === document.activeElement));
+        return motion;
     },
 );

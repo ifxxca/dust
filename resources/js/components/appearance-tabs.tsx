@@ -19,6 +19,8 @@ export default function AppearanceToggleTab({
 
     return (
         <div
+            role="group"
+            aria-label="Tema tampilan"
             className={cn(
                 'inline-flex gap-1 rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800',
                 className,
@@ -27,7 +29,9 @@ export default function AppearanceToggleTab({
         >
             {tabs.map(({ value, icon: Icon, label }) => (
                 <button
+                    type="button"
                     key={value}
+                    aria-pressed={appearance === value}
                     onClick={() => updateAppearance(value)}
                     className={cn(
                         'flex items-center rounded-md px-3.5 py-1.5 transition-colors',
@@ -36,7 +40,7 @@ export default function AppearanceToggleTab({
                             : 'text-neutral-500 hover:bg-neutral-200/60 hover:text-black dark:text-neutral-400 dark:hover:bg-neutral-700/60',
                     )}
                 >
-                    <Icon className="-ml-1 h-4 w-4" />
+                    <Icon aria-hidden="true" className="-ml-1 h-4 w-4" />
                     <span className="ml-1.5 text-sm">{label}</span>
                 </button>
             ))}

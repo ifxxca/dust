@@ -13,6 +13,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -125,6 +126,7 @@ function SidebarProvider({
   )
 
   return (
+    <Sheet open={openMobile} onOpenChange={setOpenMobile}>
     <SidebarContext.Provider value={contextValue}>
       <div
         data-slot="sidebar-wrapper"
@@ -144,6 +146,7 @@ function SidebarProvider({
         {children}
       </div>
     </SidebarContext.Provider>
+    </Sheet>
   )
 }
 
@@ -178,12 +181,13 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+      <>
         <SheetHeader className="sr-only">
           <SheetTitle>Sidebar</SheetTitle>
           <SheetDescription>Displays the mobile sidebar.</SheetDescription>
         </SheetHeader>
         <SheetContent
+          {...props}
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
@@ -197,7 +201,7 @@ function Sidebar({
         >
           <div className="flex h-full w-full flex-col">{children}</div>
         </SheetContent>
-      </Sheet>
+      </>
     )
   }
 
@@ -253,7 +257,7 @@ function SidebarTrigger({
 }: React.ComponentProps<typeof Button>) {
   const { toggleSidebar, isMobile, state } = useSidebar()
 
-  return (
+  const trigger = (
     <Button
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
@@ -262,7 +266,7 @@ function SidebarTrigger({
       className={cn("h-7 w-7", className)}
       onClick={(event) => {
         onClick?.(event)
-        toggleSidebar()
+        if (!isMobile) toggleSidebar()
       }}
       {...props}
     >
@@ -270,6 +274,8 @@ function SidebarTrigger({
       <span className="sr-only">Toggle sidebar</span>
     </Button>
   )
+
+  return isMobile ? <SheetTrigger asChild>{trigger}</SheetTrigger> : trigger
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
