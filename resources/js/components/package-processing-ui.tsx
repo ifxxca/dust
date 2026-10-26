@@ -106,7 +106,7 @@ export function ProcessingMetrics({
     ] as const;
     return (
         <section
-            className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+            className="grid grid-cols-2 gap-2 xl:grid-cols-4"
             aria-label="Ringkasan operasional"
         >
             {primary.map(([label, value, hint, color]) => (

@@ -228,7 +228,7 @@ test('processing monitoring also leaves analytics out of the main layout', () =>
     expect(html).toContain('Bantuan Metrik');
     expect(html).toContain('Pekerjaan Tertunda');
     expect(html).toContain('Halaman 1 / 1');
-    expect(html.match(/text-3xl/g)).toHaveLength(4);
+    expect(html).toContain('aria-label="Ringkasan operasional"');
 });
 
 test('the shared operational label and subsequent handover context keep the pickup date explicit', () => {

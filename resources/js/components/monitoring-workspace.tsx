@@ -11,7 +11,6 @@ import * as routes from '@/routes/pickup-results';
 
 export function MonitoringWorkspaceHeader({
     current,
-    subtitle,
     filters,
     operations,
     busy,
@@ -24,7 +23,6 @@ export function MonitoringWorkspaceHeader({
     insights,
 }: {
     current: 'pickup' | 'processing';
-    subtitle: string;
     filters: Record<string, string>;
     operations: MonitoringOperations;
     busy: boolean;
@@ -51,9 +49,6 @@ export function MonitoringWorkspaceHeader({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Hasil Pickup
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {subtitle}
-                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <Button
@@ -135,7 +130,14 @@ export function MonitoringWorkspaceHeader({
                     </Button>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    {insights}
+                    {insights && (
+                        <details className="text-sm">
+                            <summary className="cursor-pointer rounded-md px-2 py-2 font-medium focus-visible:outline-2 focus-visible:outline-ring">
+                                Rincian monitoring
+                            </summary>
+                            <div className="mt-2">{insights}</div>
+                        </details>
+                    )}
                     <span className="text-xs text-muted-foreground">
                         {operationalRangeLabel(
                             filters.date_from,
@@ -198,34 +200,48 @@ export function MonitoringMetric({
 }) {
     const body = (
         <>
-            <p className="text-sm text-muted-foreground">{label}</p>
+            <span className="min-w-0 text-xs text-muted-foreground">
+                {label}
+            </span>
             <p
-                className={`mt-1 text-3xl font-semibold tabular-nums ${warning ? 'text-amber-800 dark:text-amber-300' : ''}`}
+                className={`shrink-0 font-semibold tabular-nums ${value === null ? 'text-xs' : 'text-xl'} ${warning ? 'text-amber-800 dark:text-amber-300' : ''}`}
             >
-                {value === null ? '—' : value.toLocaleString('id-ID')}
+                {value === null
+                    ? 'Belum tersedia'
+                    : value.toLocaleString('id-ID')}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">{hint}</p>
+            <span className="sr-only">{hint}</span>
         </>
     );
     return href ? (
-        <MonitoringLink href={href}>{body}</MonitoringLink>
+        <MonitoringLink href={href} hint={hint}>
+            {body}
+        </MonitoringLink>
     ) : (
-        <div className="rounded-xl border bg-card p-4">{body}</div>
+        <div
+            title={hint}
+            className="flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border bg-card p-2"
+        >
+            {body}
+        </div>
     );
 }
 
 function MonitoringLink({
     href,
+    hint,
     children,
 }: {
     href: string;
+    hint: string;
     children: ReactNode;
 }) {
     return (
         <Link
             href={href}
+            title={hint}
             preserveScroll
-            className="rounded-xl border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-2 focus-visible:outline-primary"
+            className="flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg border bg-card p-2 transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:outline-2 focus-visible:outline-primary"
         >
             {children}
         </Link>

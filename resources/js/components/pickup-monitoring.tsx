@@ -171,7 +171,7 @@ export function PickupPrimaryMetrics({
     return (
         <section
             aria-label="Ringkasan operasional"
-            className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
+            className="grid grid-cols-2 gap-2 xl:grid-cols-5"
         >
             {items.map((item) => (
                 <MonitoringMetric
@@ -288,7 +288,7 @@ export default function PickupMonitoring({
         });
     const scope = cohortScope(filters, operations.today);
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             <MonitoringWorkspaceHeader
                 insights={
                     <MonitoringInsights
@@ -301,7 +301,6 @@ export default function PickupMonitoring({
                     />
                 }
                 current="pickup"
-                subtitle="Pantau kunjungan, POP, dan serah terima Retail."
                 filters={filters}
                 operations={operations}
                 busy={form.processing}
@@ -325,25 +324,194 @@ export default function PickupMonitoring({
                     }))
                 }
             />
+            <form
+                className="space-y-3"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    submit();
+                }}
+            >
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative min-w-48 flex-1">
+                        <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
+                        <Input
+                            id="pickup-search"
+                            className="pl-9"
+                            aria-label="Cari referensi, customer, atau petugas"
+                            placeholder="Cari referensi, customer, atau petugas…"
+                            value={form.data.q}
+                            onChange={(event) =>
+                                form.setData('q', event.target.value)
+                            }
+                        />
+                    </div>
+                    <Button size="sm" disabled={form.processing}>
+                        {form.processing ? 'Memuat…' : 'Cari'}
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        aria-expanded={advanced}
+                        aria-controls="pickup-advanced"
+                        onClick={() => setAdvanced(!advanced)}
+                    >
+                        <Filter className="size-4" />
+                        Filter{applied.length ? ` (${applied.length})` : ''}
+                    </Button>
+                    {chips.length > 0 && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={form.processing}
+                            onClick={clear}
+                        >
+                            Bersihkan
+                        </Button>
+                    )}
+                </div>
+                <div
+                    id="pickup-advanced"
+                    hidden={!advanced}
+                    className="rounded-xl border bg-card p-4"
+                >
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        {fields.map(([key, label]) => (
+                            <div key={key} className="space-y-1.5">
+                                <Label htmlFor={`pickup-${key}`}>{label}</Label>
+                                {options[key] ? (
+                                    <select
+                                        id={`pickup-${key}`}
+                                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                                        value={form.data[key]}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                key,
+                                                event.target.value,
+                                            )
+                                        }
+                                    >
+                                        {![
+                                            'per_page',
+                                            'sort',
+                                            'direction',
+                                            'date_basis',
+                                        ].includes(key) && (
+                                            <option value="">
+                                                {key === 'group_by'
+                                                    ? 'Daftar pickup'
+                                                    : 'Semua'}
+                                            </option>
+                                        )}
+                                        {options[key].map(([value, text]) => (
+                                            <option key={value} value={value}>
+                                                {text}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <Input
+                                        id={`pickup-${key}`}
+                                        value={form.data[key]}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                key,
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                )}
+                                {form.errors[key] && (
+                                    <p className="text-xs text-destructive">
+                                        {form.errors[key]}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <Button
+                        className="mt-4"
+                        size="sm"
+                        disabled={form.processing}
+                    >
+                        Terapkan filter
+                    </Button>
+                </div>
+                {chips.length > 0 && (
+                    <div
+                        aria-label="Filter aktif"
+                        className="flex flex-wrap gap-2"
+                    >
+                        {chips.map(([key, value]) => (
+                            <button
+                                key={key}
+                                type="button"
+                                disabled={form.processing}
+                                className="inline-flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-xs hover:bg-accent"
+                                aria-label={`Hapus filter ${fields.find(([field]) => field === key)?.[1] ?? key}`}
+                                onClick={() => {
+                                    const next = { ...filters };
+                                    delete next[key];
+                                    if (
+                                        key === 'pickup_queue' ||
+                                        key === 'scope'
+                                    ) {
+                                        delete next.pickup_queue;
+                                        delete next.scope;
+                                    }
+                                    submit(next);
+                                }}
+                            >
+                                {fields.find(([field]) => field === key)?.[1] ??
+                                    (
+                                        {
+                                            q: 'Cari',
+                                            scope: 'Cakupan',
+                                            pickup_queue: 'Antrean',
+                                            customer_id: 'Customer ID',
+                                            staff_id: 'Petugas ID',
+                                        } as Record<string, string>
+                                    )[key] ??
+                                    key}
+                                :{' '}
+                                <span>
+                                    {options[key]?.find(
+                                        ([option]) => option === String(value),
+                                    )?.[1] ??
+                                        (key === 'pickup_queue'
+                                            ? pickupQueueLabels[value]
+                                            : key === 'scope' &&
+                                                value === 'outstanding'
+                                              ? 'Lintas hari hingga hari ini'
+                                              : value)}
+                                </span>
+                                <X className="size-3" />
+                            </button>
+                        ))}
+                    </div>
+                )}
+                {(error || form.errors.date_from || form.errors.date_to) && (
+                    <p role="alert" className="text-sm text-destructive">
+                        {form.errors.date_from || form.errors.date_to || error}
+                    </p>
+                )}
+            </form>
             <PickupPrimaryMetrics
                 filters={filters}
                 operations={operations}
                 overview={overview}
             />
-            <section
-                aria-label="Perlu Ditindaklanjuti"
-                className="rounded-xl border bg-card px-4 py-3"
-            >
+            <section aria-label="Perlu Ditindaklanjuti" className="min-w-0">
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-1">
                     <h2 className="text-sm font-semibold">
                         Perlu Ditindaklanjuti
                     </h2>
                     <p className="text-xs text-muted-foreground">
-                        Lintas hari · hingga hari operasional {operations.today}{' '}
-                        · status terkini
+                        Lintas hari · hingga {operations.today}
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                     {Object.entries(pickupQueueLabels).map(([key, label]) => (
                         <Link
                             key={key}
@@ -351,7 +519,7 @@ export default function PickupMonitoring({
                             href={routes.index({
                                 query: pickupQueueFilters(filters, key, true),
                             })}
-                            className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent focus-visible:outline-2 focus-visible:outline-primary ${queues[key] ? 'border-amber-200 bg-amber-50/50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200' : 'text-muted-foreground'}`}
+                            className={`inline-flex min-h-11 min-w-0 items-center gap-2 rounded-md border px-2 py-1.5 text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-primary ${queues[key] ? 'border-amber-200 bg-amber-50/50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-200' : 'text-muted-foreground'}`}
                         >
                             <span>{label}</span>
                             <strong className="tabular-nums">
@@ -367,193 +535,6 @@ export default function PickupMonitoring({
                 className="space-y-3"
                 aria-busy={form.processing}
             >
-                <form
-                    className="space-y-3"
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        submit();
-                    }}
-                >
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="relative min-w-48 flex-1">
-                            <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
-                            <Input
-                                id="pickup-search"
-                                className="pl-9"
-                                aria-label="Cari referensi, customer, atau petugas"
-                                placeholder="Cari referensi, customer, atau petugas…"
-                                value={form.data.q}
-                                onChange={(event) =>
-                                    form.setData('q', event.target.value)
-                                }
-                            />
-                        </div>
-                        <Button size="sm" disabled={form.processing}>
-                            {form.processing ? 'Memuat…' : 'Cari'}
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            type="button"
-                            aria-expanded={advanced}
-                            aria-controls="pickup-advanced"
-                            onClick={() => setAdvanced(!advanced)}
-                        >
-                            <Filter className="size-4" />
-                            Filter{applied.length ? ` (${applied.length})` : ''}
-                        </Button>
-                        {chips.length > 0 && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                disabled={form.processing}
-                                onClick={clear}
-                            >
-                                Bersihkan
-                            </Button>
-                        )}
-                    </div>
-                    <div
-                        id="pickup-advanced"
-                        hidden={!advanced}
-                        className="rounded-xl border bg-card p-4"
-                    >
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            {fields.map(([key, label]) => (
-                                <div key={key} className="space-y-1.5">
-                                    <Label htmlFor={`pickup-${key}`}>
-                                        {label}
-                                    </Label>
-                                    {options[key] ? (
-                                        <select
-                                            id={`pickup-${key}`}
-                                            className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                                            value={form.data[key]}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    key,
-                                                    event.target.value,
-                                                )
-                                            }
-                                        >
-                                            {![
-                                                'per_page',
-                                                'sort',
-                                                'direction',
-                                                'date_basis',
-                                            ].includes(key) && (
-                                                <option value="">
-                                                    {key === 'group_by'
-                                                        ? 'Daftar pickup'
-                                                        : 'Semua'}
-                                                </option>
-                                            )}
-                                            {options[key].map(
-                                                ([value, text]) => (
-                                                    <option
-                                                        key={value}
-                                                        value={value}
-                                                    >
-                                                        {text}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
-                                    ) : (
-                                        <Input
-                                            id={`pickup-${key}`}
-                                            value={form.data[key]}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    key,
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                    )}
-                                    {form.errors[key] && (
-                                        <p className="text-xs text-destructive">
-                                            {form.errors[key]}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <Button
-                            className="mt-4"
-                            size="sm"
-                            disabled={form.processing}
-                        >
-                            Terapkan filter
-                        </Button>
-                    </div>
-                    {chips.length > 0 && (
-                        <div
-                            aria-label="Filter aktif"
-                            className="flex flex-wrap gap-2"
-                        >
-                            {chips.map(([key, value]) => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    disabled={form.processing}
-                                    className="inline-flex items-center gap-1 rounded-md border bg-card px-2 py-1 text-xs hover:bg-accent"
-                                    aria-label={`Hapus filter ${fields.find(([field]) => field === key)?.[1] ?? key}`}
-                                    onClick={() => {
-                                        const next = { ...filters };
-                                        delete next[key];
-                                        if (
-                                            key === 'pickup_queue' ||
-                                            key === 'scope'
-                                        ) {
-                                            delete next.pickup_queue;
-                                            delete next.scope;
-                                        }
-                                        submit(next);
-                                    }}
-                                >
-                                    {fields.find(
-                                        ([field]) => field === key,
-                                    )?.[1] ??
-                                        (
-                                            {
-                                                q: 'Cari',
-                                                scope: 'Cakupan',
-                                                pickup_queue: 'Antrean',
-                                                customer_id: 'Customer ID',
-                                                staff_id: 'Petugas ID',
-                                            } as Record<string, string>
-                                        )[key] ??
-                                        key}
-                                    :{' '}
-                                    <span>
-                                        {options[key]?.find(
-                                            ([option]) =>
-                                                option === String(value),
-                                        )?.[1] ??
-                                            (key === 'pickup_queue'
-                                                ? pickupQueueLabels[value]
-                                                : key === 'scope' &&
-                                                    value === 'outstanding'
-                                                  ? 'Lintas hari hingga hari ini'
-                                                  : value)}
-                                    </span>
-                                    <X className="size-3" />
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    {(error ||
-                        form.errors.date_from ||
-                        form.errors.date_to) && (
-                        <p role="alert" className="text-sm text-destructive">
-                            {form.errors.date_from ||
-                                form.errors.date_to ||
-                                error}
-                        </p>
-                    )}
-                </form>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="text-sm font-semibold">
                         {report ? 'Ringkasan operasional' : 'Daftar Pickup'}{' '}
@@ -562,7 +543,11 @@ export default function PickupMonitoring({
                             {report ? 'kelompok' : 'pickup'}
                         </span>
                     </h2>
-                    <p className="text-xs text-muted-foreground">{scope}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {filters.scope && filters.scope !== 'daily'
+                            ? scope
+                            : 'Status terkini'}
+                    </p>
                 </div>
                 {pickups && (
                     <div
