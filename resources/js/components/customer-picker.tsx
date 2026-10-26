@@ -35,6 +35,8 @@ export default function CustomerPicker({
     triggerId,
     className,
     placeholder,
+    invalid = false,
+    errorId,
 }: {
     selected: Pick<PickupCustomer, 'id' | 'name' | 'customer_code'> | null;
     onSelect: (customer: PickupCustomer | null) => void;
@@ -44,6 +46,8 @@ export default function CustomerPicker({
     triggerId?: string;
     className?: string;
     placeholder?: string;
+    invalid?: boolean;
+    errorId?: string;
 }) {
     const id = useId();
     const [open, setOpen] = useState(false);
@@ -112,6 +116,8 @@ export default function CustomerPicker({
                     type="button"
                     variant="outline"
                     role="combobox"
+                    aria-invalid={invalid || undefined}
+                    aria-describedby={invalid ? errorId : undefined}
                     aria-expanded={open}
                     aria-controls={`${id}-list`}
                     disabled={disabled}

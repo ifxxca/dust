@@ -16,6 +16,7 @@ type Props = {
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const confirmationInput = useRef<HTMLInputElement>(null);
 
     return (
         <>
@@ -48,11 +49,16 @@ export default function Security(props: Props) {
 
                         if (errors.current_password) {
                             currentPasswordInput.current?.focus();
+                        } else if (
+                            errors.password_confirmation &&
+                            !errors.password
+                        ) {
+                            confirmationInput.current?.focus();
                         }
                     }}
                     className="space-y-6"
                 >
-                    {({ errors, processing }) => (
+                    {({ errors, processing, recentlySuccessful }) => (
                         <>
                             <div className="grid gap-2">
                                 <Label htmlFor="current_password">
@@ -61,6 +67,12 @@ export default function Security(props: Props) {
 
                                 <PasswordInput
                                     id="current_password"
+                                    aria-invalid={!!errors.current_password}
+                                    aria-describedby={
+                                        errors.current_password
+                                            ? 'current-password-error'
+                                            : undefined
+                                    }
                                     ref={currentPasswordInput}
                                     name="current_password"
                                     className="mt-1 block w-full"
@@ -68,7 +80,10 @@ export default function Security(props: Props) {
                                     placeholder="Kata sandi saat ini"
                                 />
 
-                                <InputError message={errors.current_password} />
+                                <InputError
+                                    id="current-password-error"
+                                    message={errors.current_password}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -78,6 +93,12 @@ export default function Security(props: Props) {
 
                                 <PasswordInput
                                     id="password"
+                                    aria-invalid={!!errors.password}
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'new-password-error'
+                                            : undefined
+                                    }
                                     ref={passwordInput}
                                     name="password"
                                     className="mt-1 block w-full"
@@ -86,7 +107,10 @@ export default function Security(props: Props) {
                                     passwordrules={props.passwordRules}
                                 />
 
-                                <InputError message={errors.password} />
+                                <InputError
+                                    id="new-password-error"
+                                    message={errors.password}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -96,6 +120,15 @@ export default function Security(props: Props) {
 
                                 <PasswordInput
                                     id="password_confirmation"
+                                    ref={confirmationInput}
+                                    aria-invalid={
+                                        !!errors.password_confirmation
+                                    }
+                                    aria-describedby={
+                                        errors.password_confirmation
+                                            ? 'password-confirmation-error'
+                                            : undefined
+                                    }
                                     name="password_confirmation"
                                     className="mt-1 block w-full"
                                     autoComplete="new-password"
@@ -104,6 +137,7 @@ export default function Security(props: Props) {
                                 />
 
                                 <InputError
+                                    id="password-confirmation-error"
                                     message={errors.password_confirmation}
                                 />
                             </div>
@@ -113,8 +147,18 @@ export default function Security(props: Props) {
                                     disabled={processing}
                                     data-test="update-password-button"
                                 >
-                                    Simpan
+                                    {processing
+                                        ? 'Menyimpan…'
+                                        : 'Simpan kata sandi'}
                                 </Button>
+                                {recentlySuccessful && (
+                                    <p
+                                        role="status"
+                                        className="text-sm text-muted-foreground"
+                                    >
+                                        Kata sandi tersimpan.
+                                    </p>
+                                )}
                             </div>
                         </>
                     )}

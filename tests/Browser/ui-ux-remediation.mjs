@@ -568,7 +568,7 @@ check(
             .getByRole('heading', { name: 'Pengaturan', exact: true })
             .waitFor();
         await page
-            .getByRole('button', { name: 'Simpan', exact: true })
+            .getByRole('button', { name: 'Simpan profil', exact: true })
             .waitFor();
         await visit(page, '/settings/security');
         if (new URL(page.url()).pathname === '/user/confirm-password') {

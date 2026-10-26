@@ -11,6 +11,7 @@ import { operations } from '@/routes';
 import * as api from '@/routes/api/tasks';
 import { utcFromLocal } from '@/lib/pickup-time';
 import { submissionKey } from '@/lib/submission-key';
+import { focusFormError } from '@/lib/utils';
 
 export default function CreatePickup({
     timezone,
@@ -36,6 +37,7 @@ export default function CreatePickup({
     const source = useHttp({});
     const [error, setError] = useState('');
     const submitting = useRef(false);
+    const formElement = useRef<HTMLFormElement>(null);
     const form = useHttp({
         customer_id: '',
         pickup_address: '',
@@ -90,6 +92,7 @@ export default function CreatePickup({
     }, [previousId]);
     return (
         <form
+            ref={formElement}
             className={
                 onCancel
                     ? 'space-y-5'
@@ -100,7 +103,11 @@ export default function CreatePickup({
                 if (submitting.current) return;
                 setError('');
                 if (!customer) {
-                    setError('Pilih customer terlebih dahulu.');
+                    form.setError(
+                        'customer_id',
+                        'Pilih customer terlebih dahulu.',
+                    );
+                    focusFormError(event.currentTarget);
                     return;
                 }
                 form.transform((data) => ({
@@ -124,6 +131,8 @@ export default function CreatePickup({
                                         ).data.id,
                                     }),
                                 );
+                        } else if (formElement.current) {
+                            focusFormError(formElement.current);
                         }
                     })
                     .catch((failure: unknown) => {
@@ -172,27 +181,19 @@ export default function CreatePickup({
                 disabled={form.processing || uncertain}
                 className="space-y-5"
             >
-                {!onCancel && (
-                    <div>
-                        <h2 className="text-lg font-semibold">
-                            Customer dan Tujuan Pickup
-                        </h2>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Pilih customer, periksa alamat, lalu tentukan jadwal
-                            kunjungan.
-                        </p>
-                    </div>
-                )}
                 <div className="space-y-2">
                     <Label htmlFor="pickup-customer">Customer</Label>
                     <CustomerPicker
                         triggerId="pickup-customer"
+                        invalid={!!form.errors.customer_id}
+                        errorId="pickup-customer-error"
                         selected={customer}
                         allowCreate={!staff}
                         disabled={
                             form.processing || uncertain || previousId !== null
                         }
                         onSelect={(value) => {
+                            form.clearErrors('customer_id');
                             setCustomer(value);
                             form.setData(
                                 'customer_id',
@@ -205,7 +206,11 @@ export default function CreatePickup({
                         }}
                     />
                     {form.errors.customer_id && (
-                        <p className="text-sm text-destructive">
+                        <p
+                            id="pickup-customer-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                        >
                             {form.errors.customer_id}
                         </p>
                     )}
@@ -222,6 +227,12 @@ export default function CreatePickup({
                     <Label htmlFor="pickup-address">Alamat Pickup</Label>
                     <textarea
                         id="pickup-address"
+                        aria-invalid={!!form.errors.pickup_address}
+                        aria-describedby={
+                            form.errors.pickup_address
+                                ? 'pickup-address-error'
+                                : undefined
+                        }
                         className="min-h-24 w-full rounded-md border bg-background p-3 text-sm"
                         required
                         value={form.data.pickup_address}
@@ -234,7 +245,11 @@ export default function CreatePickup({
                         task ini.
                     </p>
                     {form.errors.pickup_address && (
-                        <p className="text-sm text-destructive">
+                        <p
+                            id="pickup-address-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                        >
                             {form.errors.pickup_address}
                         </p>
                     )}
@@ -245,6 +260,12 @@ export default function CreatePickup({
                     </Label>
                     <Input
                         id="pickup-scheduled"
+                        aria-invalid={!!form.errors.scheduled_at}
+                        aria-describedby={
+                            form.errors.scheduled_at
+                                ? 'pickup-scheduled-error'
+                                : undefined
+                        }
                         className="h-11"
                         type="datetime-local"
                         required
@@ -254,7 +275,11 @@ export default function CreatePickup({
                         }
                     />
                     {form.errors.scheduled_at && (
-                        <p className="text-sm text-destructive">
+                        <p
+                            id="pickup-scheduled-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                        >
                             {form.errors.scheduled_at}
                         </p>
                     )}
@@ -265,6 +290,10 @@ export default function CreatePickup({
                     </Label>
                     <textarea
                         id="pickup-notes"
+                        aria-invalid={!!form.errors.notes}
+                        aria-describedby={
+                            form.errors.notes ? 'pickup-notes-error' : undefined
+                        }
                         required={staff}
                         className="min-h-20 w-full rounded-md border bg-background p-3 text-sm"
                         value={form.data.notes}
@@ -273,7 +302,11 @@ export default function CreatePickup({
                         }
                     />
                     {form.errors.notes && (
-                        <p className="text-sm text-destructive">
+                        <p
+                            id="pickup-notes-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                        >
                             {form.errors.notes}
                         </p>
                     )}

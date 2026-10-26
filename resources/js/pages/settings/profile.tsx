@@ -1,5 +1,6 @@
 import { Form, Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
+import { useRef } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -23,6 +24,8 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage<PageProps>().props;
+    const nameInput = useRef<HTMLInputElement>(null);
+    const emailInput = useRef<HTMLInputElement>(null);
 
     return (
         <>
@@ -43,14 +46,24 @@ export default function Profile({
                         preserveScroll: true,
                     }}
                     className="space-y-6"
+                    onError={(errors) =>
+                        (errors.name ? nameInput : emailInput).current?.focus()
+                    }
                 >
-                    {({ processing, errors }) => (
+                    {({ processing, errors, recentlySuccessful }) => (
                         <>
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Nama</Label>
 
                                 <Input
                                     id="name"
+                                    ref={nameInput}
+                                    aria-invalid={!!errors.name}
+                                    aria-describedby={
+                                        errors.name
+                                            ? 'profile-name-error'
+                                            : undefined
+                                    }
                                     className="mt-1 block w-full"
                                     defaultValue={auth.user.name}
                                     name="name"
@@ -60,6 +73,7 @@ export default function Profile({
                                 />
 
                                 <InputError
+                                    id="profile-name-error"
                                     className="mt-2"
                                     message={errors.name}
                                 />
@@ -70,6 +84,13 @@ export default function Profile({
 
                                 <Input
                                     id="email"
+                                    ref={emailInput}
+                                    aria-invalid={!!errors.email}
+                                    aria-describedby={
+                                        errors.email
+                                            ? 'profile-email-error'
+                                            : undefined
+                                    }
                                     type="email"
                                     className="mt-1 block w-full"
                                     defaultValue={auth.user.email}
@@ -80,6 +101,7 @@ export default function Profile({
                                 />
 
                                 <InputError
+                                    id="profile-email-error"
                                     className="mt-2"
                                     message={errors.email}
                                 />
@@ -115,8 +137,18 @@ export default function Profile({
                                     disabled={processing}
                                     data-test="update-profile-button"
                                 >
-                                    Simpan
+                                    {processing
+                                        ? 'Menyimpan…'
+                                        : 'Simpan profil'}
                                 </Button>
+                                {recentlySuccessful && (
+                                    <p
+                                        role="status"
+                                        className="text-sm text-muted-foreground"
+                                    >
+                                        Profil tersimpan.
+                                    </p>
+                                )}
                             </div>
                         </>
                     )}
