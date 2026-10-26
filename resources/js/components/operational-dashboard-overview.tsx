@@ -170,10 +170,7 @@ export default function OperationalDashboardOverview({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Dashboard operasional
                     </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Ringkasan pickup, paket, performa tim, dan pekerjaan
-                        yang perlu ditangani.
-                    </p>
+
                     <p className="text-xs text-muted-foreground">
                         Data dimuat {date(data.observed_at)} · WIB
                     </p>

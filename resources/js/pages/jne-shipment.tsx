@@ -95,6 +95,19 @@ type MatchEvent = {
     customer_match_status?: string;
     evidence?: JneMatchEvidence[] | null;
 };
+const categoryLabels: Record<string, string> = {
+    manual_hybrid: 'Manual',
+    cashless_hybrid: 'Cashless',
+    css_orion: 'CSS / Orion',
+};
+const categoryStatusLabels: Record<string, string> = {
+    MATCHED: 'Terkonfirmasi',
+    CONFIRMED: 'Terkonfirmasi',
+    UNMATCHED: 'Belum pasti',
+    CONFLICT: 'Konflik',
+    UNCONFIGURED: 'Belum diatur',
+    CANDIDATE: 'Kandidat',
+};
 export default function JneShipment({
     shipment,
     history,
@@ -126,45 +139,19 @@ export default function JneShipment({
     });
     return (
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
-            {decisionPages && (
-                <details className="rounded border p-3">
-                    <summary>
-                        Audit keputusan lengkap ({decisionPages.data.length}{' '}
-                        pada halaman ini)
-                    </summary>
-                    {decisionPages.data.map((event) => (
-                        <details key={event.id} className="my-2">
-                            <summary>
-                                {event.created_at} · {event.method} ·{' '}
-                                {event.reason}
-                            </summary>
-                            <pre className="max-w-full overflow-auto text-xs">
-                                {JSON.stringify(event.evidence, null, 2)}
-                            </pre>
-                        </details>
-                    ))}
-                    <nav className="flex gap-4">
-                        {decisionPages.prev_page_url && (
-                            <Link href={decisionPages.prev_page_url}>
-                                Audit sebelumnya
-                            </Link>
-                        )}
-                        {decisionPages.next_page_url && (
-                            <Link href={decisionPages.next_page_url}>
-                                Audit berikutnya
-                            </Link>
-                        )}
-                    </nav>
-                </details>
-            )}
             <Head title={`AWB ${shipment.awb}`} />
             <h1 className="text-2xl font-semibold">AWB {shipment.awb}</h1>
             <Card>
                 {shipment.category_status && (
                     <details className="px-6">
                         <summary>
-                            Kategori: {shipment.category ?? 'Belum pasti'} ·{' '}
-                            {shipment.category_status}
+                            Kategori POP:{' '}
+                            {categoryLabels[shipment.category ?? ''] ??
+                                shipment.category ??
+                                'Belum pasti'}{' '}
+                            ·{' '}
+                            {categoryStatusLabels[shipment.category_status] ??
+                                shipment.category_status}
                         </summary>
                         <pre className="overflow-auto text-xs">
                             {JSON.stringify(
@@ -337,7 +324,8 @@ export default function JneShipment({
                         <p className="text-sm text-muted-foreground md:col-span-2">
                             Gunakan pickup dengan POP final. Keputusan manual
                             dicatat dan tidak ditimpa pencocokan otomatis.
-                            Pickup Staff tidak perlu memindai AWB.
+                            Cashless dicatat melalui Sertim; CSS / Orion tidak
+                            wajib dipindai satu per satu.
                         </p>
                         <div>
                             <Button disabled={form.processing} type="submit">
@@ -612,6 +600,37 @@ export default function JneShipment({
                     </details>
                 </CardContent>
             </Card>
+            {decisionPages && (
+                <details className="rounded border p-3">
+                    <summary>
+                        Audit keputusan lengkap ({decisionPages.data.length}{' '}
+                        pada halaman ini)
+                    </summary>
+                    {decisionPages.data.map((event) => (
+                        <details key={event.id} className="my-2">
+                            <summary>
+                                {event.created_at} · {event.method} ·{' '}
+                                {event.reason}
+                            </summary>
+                            <pre className="max-w-full overflow-auto text-xs">
+                                {JSON.stringify(event.evidence, null, 2)}
+                            </pre>
+                        </details>
+                    ))}
+                    <nav className="flex gap-4">
+                        {decisionPages.prev_page_url && (
+                            <Link href={decisionPages.prev_page_url}>
+                                Audit sebelumnya
+                            </Link>
+                        )}
+                        {decisionPages.next_page_url && (
+                            <Link href={decisionPages.next_page_url}>
+                                Audit berikutnya
+                            </Link>
+                        )}
+                    </nav>
+                </details>
+            )}
         </PageContainer>
     );
 }

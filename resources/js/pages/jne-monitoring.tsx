@@ -15,6 +15,7 @@ import ShipmentDataTable from '@/components/jne-shipment-table';
 import PageContainer from '@/components/page-container';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 import {
     emptyJneFilters,
@@ -141,34 +142,12 @@ export default function JneMonitoring({
 
     return (
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
-            {operationsSummary && (
-                <JneOperationsSummary data={operationsSummary} />
-            )}
             <Head title="Pengiriman JNE" />
-            <Link
-                className="text-sm underline"
-                href={evidenceRules.index.url()}
-            >
-                Aturan bukti dan alias kode
-            </Link>
-            <Link
-                href={refreshPolicies.index.url()}
-                className="text-sm underline"
-            >
-                Kebijakan pembaruan tracking
-            </Link>
-            <Link href={exceptions.index.url()} className="text-sm underline">
-                Pemeriksaan exception dan keputusan batch
-            </Link>
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1">
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Pengiriman JNE
                     </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Monitoring pengiriman berdasarkan laporan JNE yang
-                        terakhir diproses.
-                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <p className="text-xs text-muted-foreground">
@@ -176,19 +155,26 @@ export default function JneMonitoring({
                             ? `Diamati di halaman ini: ${jneTimestamp(latest, timezone)} · `
                             : ''}
                         {timezone}
-                        <br />
-                        Snapshot report, bukan informasi real-time.
+                        {' · Snapshot report'}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
+                        {!!operationsSummary?.global_collection_failures && (
+                            <Badge variant="destructive" asChild>
+                                <Link href={runs.index.url()}>
+                                    {
+                                        operationsSummary.global_collection_failures
+                                    }{' '}
+                                    report perlu ditinjau
+                                </Link>
+                            </Badge>
+                        )}
                         <Button
                             size="sm"
                             variant="outline"
                             className="min-h-11"
                             asChild
                         >
-                            <Link href={reports.index.url()}>
-                                Tarik report customer
-                            </Link>
+                            <Link href={reports.index.url()}>Tarik report</Link>
                         </Button>
                         <Button
                             variant="outline"
@@ -201,87 +187,11 @@ export default function JneMonitoring({
                             <RefreshCw
                                 className={loading ? 'animate-spin' : ''}
                             />
-                            Segarkan tampilan
+                            Segarkan
                         </Button>
                     </div>
                 </div>
             </header>
-            {identitySummary && (
-                <section
-                    aria-label="Kepastian identitas AWB"
-                    className="space-y-2 rounded-lg border p-4 text-sm"
-                >
-                    <p>
-                        {identitySummary.collected.toLocaleString('id-ID')} AWB
-                        tersimpan ·{' '}
-                        {identitySummary.customer_matched.toLocaleString(
-                            'id-ID',
-                        )}{' '}
-                        AWB memiliki customer terkonfirmasi ·{' '}
-                        {identitySummary.pickup_matched.toLocaleString('id-ID')}{' '}
-                        AWB memiliki pickup terkonfirmasi
-                    </p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                        {[
-                            ['CONFLICT', 'conflicts', 'Konflik'],
-                            ['AMBIGUOUS', 'ambiguous', 'Ambigu'],
-                            ['CANDIDATE', 'candidates', 'Kandidat'],
-                            ['UNMATCHED', 'unmatched', 'Belum dikenali'],
-                        ].map(([status, key, label]) => (
-                            <Link
-                                key={status}
-                                className="underline underline-offset-4"
-                                href={monitoring.index.url({
-                                    query: {
-                                        ...applied,
-                                        customer_match: status,
-                                    },
-                                })}
-                            >
-                                {label}: {identitySummary[key] ?? 0}
-                            </Link>
-                        ))}
-                        <Link
-                            className="underline underline-offset-4"
-                            href={monitoring.reconciliation.url()}
-                        >
-                            Periksa kategori POP
-                        </Link>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                        Cakupan mengikuti filter daftar. Konfirmasi customer,
-                        pickup, kategori dan kelengkapan report diperiksa
-                        terpisah.
-                    </p>
-                </section>
-            )}
-            <JneShipmentSummary
-                summary={summary}
-                status={applied.status}
-                loading={loading}
-                onChange={(status) => visit({ ...applied, status })}
-            />
-            {trackingRefresh && (
-                <JneTrackingRefreshCard
-                    data={trackingRefresh}
-                    timezone={timezone}
-                    processing={refresh.processing}
-                    error={
-                        refresh.errors.profile_id ||
-                        (refresh.errors as Record<string, string>).run
-                    }
-                    onRefresh={() => {
-                        if (!trackingRefresh.profile) return;
-                        refresh.transform(() => ({
-                            profile_id: trackingRefresh.profile!.id,
-                        }));
-                        refresh.post(runs.store.url(), {
-                            preserveScroll: true,
-                            onSuccess: () => router.visit(runs.index.url()),
-                        });
-                    }}
-                />
-            )}
             <section
                 className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm"
                 aria-label="Monitoring AWB"
@@ -303,6 +213,71 @@ export default function JneMonitoring({
                         onApply={() => visit(draft)}
                         onReset={reset}
                         onRemove={(key) => visit({ ...applied, [key]: '' })}
+                    />
+                </div>
+                <div className="flex flex-col gap-3 px-4 pb-4">
+                    {identitySummary && (
+                        <section
+                            aria-label="Kepastian identitas AWB"
+                            className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"
+                        >
+                            <p>
+                                {identitySummary.collected.toLocaleString(
+                                    'id-ID',
+                                )}{' '}
+                                AWB tersimpan ·{' '}
+                                {identitySummary.customer_matched.toLocaleString(
+                                    'id-ID',
+                                )}{' '}
+                                AWB customer terkonfirmasi ·{' '}
+                                {identitySummary.pickup_matched.toLocaleString(
+                                    'id-ID',
+                                )}{' '}
+                                AWB pickup terkonfirmasi
+                            </p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                                {[
+                                    ['CONFLICT', 'conflicts', 'Konflik'],
+                                    ['AMBIGUOUS', 'ambiguous', 'Ambigu'],
+                                    ['CANDIDATE', 'candidates', 'Kandidat'],
+                                    [
+                                        'UNMATCHED',
+                                        'unmatched',
+                                        'Belum dikenali',
+                                    ],
+                                ]
+                                    .filter(
+                                        ([, key]) =>
+                                            (identitySummary[key] ?? 0) > 0,
+                                    )
+                                    .map(([status, key, label]) => (
+                                        <Link
+                                            key={status}
+                                            className="underline underline-offset-4"
+                                            href={monitoring.index.url({
+                                                query: {
+                                                    ...applied,
+                                                    customer_match: status,
+                                                },
+                                            })}
+                                        >
+                                            {label}: {identitySummary[key] ?? 0}
+                                        </Link>
+                                    ))}
+                                <Link
+                                    className="underline underline-offset-4"
+                                    href={monitoring.reconciliation.url()}
+                                >
+                                    Periksa kategori POP
+                                </Link>
+                            </div>
+                        </section>
+                    )}
+                    <JneShipmentSummary
+                        summary={summary}
+                        status={applied.status}
+                        loading={loading}
+                        onChange={(status) => visit({ ...applied, status })}
                     />
                 </div>
                 {error && (
@@ -335,6 +310,61 @@ export default function JneMonitoring({
                     onReset={reset}
                 />
             </section>
+            <details className="rounded-lg border text-sm">
+                <summary className="cursor-pointer px-4 py-3 font-medium">
+                    Koleksi & tracking
+                </summary>
+                <div className="flex flex-col gap-4 border-t p-4">
+                    <nav
+                        aria-label="Pengelolaan JNE"
+                        className="flex flex-wrap gap-4"
+                    >
+                        <Link
+                            className="underline"
+                            href={exceptions.index.url()}
+                        >
+                            Periksa exception
+                        </Link>
+                        <Link
+                            className="underline"
+                            href={evidenceRules.index.url()}
+                        >
+                            Aturan bukti & alias
+                        </Link>
+                        <Link
+                            className="underline"
+                            href={refreshPolicies.index.url()}
+                        >
+                            Kebijakan tracking
+                        </Link>
+                    </nav>
+                    {operationsSummary && (
+                        <JneOperationsSummary data={operationsSummary} />
+                    )}
+                    {trackingRefresh && (
+                        <JneTrackingRefreshCard
+                            data={trackingRefresh}
+                            timezone={timezone}
+                            processing={refresh.processing}
+                            error={
+                                refresh.errors.profile_id ||
+                                (refresh.errors as Record<string, string>).run
+                            }
+                            onRefresh={() => {
+                                if (!trackingRefresh.profile) return;
+                                refresh.transform(() => ({
+                                    profile_id: trackingRefresh.profile!.id,
+                                }));
+                                refresh.post(runs.store.url(), {
+                                    preserveScroll: true,
+                                    onSuccess: () =>
+                                        router.visit(runs.index.url()),
+                                });
+                            }}
+                        />
+                    )}
+                </div>
+            </details>
             <ShipmentDetailSheet
                 id={detailId}
                 origin={detailOrigin}

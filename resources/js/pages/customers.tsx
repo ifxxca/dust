@@ -138,10 +138,6 @@ export default function Customers() {
                         </h1>
                         <Badge variant="secondary">Master Data</Badge>
                     </div>
-                    <p className="mt-1.5 text-sm text-muted-foreground">
-                        Kelola identitas, kontak, alamat pickup, dan status
-                        customer.
-                    </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {auth.user.role === 'admin_supervisor' && (

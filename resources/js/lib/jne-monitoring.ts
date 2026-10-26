@@ -6,6 +6,12 @@ export const trackingLabels: Record<string, string> = {
     EXCEPTION: 'Kendala pengiriman',
     UNKNOWN: 'Status belum dikenali',
 };
+export const collectionLabels: Record<string, string> = {
+    UNCONFIGURED: 'Belum diatur',
+    OPEN: 'Terbuka',
+    COMPLETE: 'Disahkan',
+    REVIEW: 'Perlu ditinjau',
+};
 export const matchLabels: Record<string, string> = {
     MATCHED: 'Terhubung',
     UNMATCHED: 'Belum terhubung',

@@ -266,10 +266,6 @@ export default function Discrepancies({ timezone }: { timezone: string }) {
                     <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                         Monitoring Selisih
                     </h1>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                        Pantau ketidaksesuaian jumlah paket antara POP (pickup)
-                        dan hasil verifikasi retail per kategori.
-                    </p>
                 </div>
                 <Button
                     variant="outline"

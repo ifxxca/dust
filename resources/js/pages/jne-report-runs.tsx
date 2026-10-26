@@ -125,9 +125,6 @@ export default function ReportRuns({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Riwayat run report
                     </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Pantau antrean, hasil APEX, dan pemrosesan data.
-                    </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button variant="outline" className="min-h-11" asChild>

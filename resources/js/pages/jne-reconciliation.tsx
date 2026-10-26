@@ -1,9 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import PageContainer from '@/components/page-container';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { collectionLabels } from '@/lib/jne-monitoring';
 import {
     Table,
     TableBody,
@@ -86,38 +87,47 @@ export default function JneReconciliation({
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
             <Head title="Rekonsiliasi POP & AWB" />
             <h1 className="text-2xl font-semibold">Rekonsiliasi POP & AWB</h1>
-            <p className="text-sm text-muted-foreground">
-                Bandingkan POP efektif per kategori dengan AWB yang customer,
-                pickup dan buktinya dapat diverifikasi. Jumlah total yang sama
-                tidak membuktikan kategori. Kekurangan masih sementara sampai
-                kelengkapan pengumpulan report dapat dipastikan.
-            </p>
-            <div className="space-y-2 rounded-lg border bg-muted/30 p-4">
-                <p className="text-sm font-medium">Syarat perbandingan</p>
-                <p className="text-sm text-muted-foreground">
-                    Bukti Sertim dapat menetapkan Cashless. AWB lain tetap
-                    menunggu bukti kategori yang sah; prefix dan account tidak
-                    menetapkan kategori atau pemilik. Jendela Sertim yang
-                    ditutup tidak menandakan Hybrid/APEX selesai. Perbandingan
-                    jumlah tidak otomatis menutup selisih POP atau verifikasi
-                    Retail.
-                </p>
-                {linkage && (
-                    <p className="text-sm">
-                        {linkage.linked.toLocaleString('id-ID')} dari{' '}
-                        {linkage.total.toLocaleString('id-ID')} AWB tersimpan
-                        sudah terhubung ke pickup.{' '}
-                        {linkage.linked === 0
-                            ? 'Belum ada hubungan yang bisa dipakai untuk membandingkan jumlah paket.'
-                            : 'Jumlah pada tabel hanya mencakup AWB yang sudah terhubung; periksa kelengkapan hubungan sebelum menyimpulkan selisih.'}
+            <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground">
+                    Ketentuan rekonsiliasi
+                    {linkage
+                        ? ' · ' +
+                          linkage.linked.toLocaleString('id-ID') +
+                          '/' +
+                          linkage.total.toLocaleString('id-ID') +
+                          ' AWB terhubung'
+                        : ''}
+                </summary>
+                <div className="mt-2 flex flex-col gap-2 text-muted-foreground">
+                    <p>
+                        Bandingkan POP efektif per kategori dengan AWB yang
+                        customer, pickup dan buktinya dapat diverifikasi. Jumlah
+                        total yang sama tidak membuktikan kategori. Kekurangan
+                        masih sementara sampai kelengkapan pengumpulan report
+                        dapat dipastikan.
                     </p>
-                )}
-            </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Hasil per pickup</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                        Bukti Sertim dapat menetapkan Cashless. AWB lain tetap
+                        menunggu bukti kategori yang sah; prefix dan account
+                        tidak menetapkan kategori atau pemilik. Jendela Sertim
+                        yang ditutup tidak menandakan Hybrid/APEX selesai.
+                        Perbandingan jumlah tidak otomatis menutup selisih POP
+                        atau verifikasi Retail.
+                    </p>
+                    {linkage && (
+                        <p className="text-sm">
+                            {linkage.linked.toLocaleString('id-ID')} dari{' '}
+                            {linkage.total.toLocaleString('id-ID')} AWB
+                            tersimpan sudah terhubung ke pickup.{' '}
+                            {linkage.linked === 0
+                                ? 'Belum ada hubungan yang bisa dipakai untuk membandingkan jumlah paket.'
+                                : 'Jumlah pada tabel hanya mencakup AWB yang sudah terhubung; periksa kelengkapan hubungan sebelum menyimpulkan selisih.'}
+                        </p>
+                    )}
+                </div>
+            </details>
+            <Card className="gap-0 py-0">
+                <CardContent className="flex flex-col gap-4 p-4">
                     <form
                         className="flex flex-wrap items-end gap-3"
                         onSubmit={(event) => {
@@ -191,52 +201,64 @@ export default function JneReconciliation({
                                                         )}
                                                     >
                                                         Koleksi eksternal:{' '}
-                                                        {row.pop_reconciliation
-                                                            ?.collection_status ??
-                                                            'Belum disahkan'}
+                                                        {collectionLabels[
+                                                            row
+                                                                .pop_reconciliation
+                                                                ?.collection_status ??
+                                                                ''
+                                                        ] ?? 'Belum disahkan'}
                                                     </Link>
-                                                    <p className="mt-2 text-xs text-muted-foreground">
-                                                        {row.pop_reconciliation
-                                                            ?.confirmed_pickup_awbs ??
-                                                            row.matched_awbs}{' '}
-                                                        AWB terhubung ·{' '}
-                                                        {row.pop_reconciliation
-                                                            ?.unclassified_awbs ??
-                                                            0}{' '}
-                                                        belum punya bukti
-                                                        kategori
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Sertim:{' '}
-                                                        {row.pop_reconciliation
-                                                            ?.sertim_window ===
-                                                        'CLOSED'
-                                                            ? 'Ditutup'
-                                                            : 'Terbuka'}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Diterima Retail:{' '}
-                                                        {row.received_quantity ??
-                                                            'Belum diverifikasi'}{' '}
-                                                        · Deklarasi berhasil:{' '}
-                                                        {
-                                                            row.declared_successful
-                                                        }
-                                                    </p>
-                                                    <p className="mt-1 text-xs text-muted-foreground">
-                                                        {row.state ===
-                                                        'NO_BASELINE'
-                                                            ? 'Baseline Retail belum tersedia.'
-                                                            : row.state ===
-                                                                'BASELINE_REVIEW'
-                                                              ? 'Baseline POP berubah; periksa deklarasi pemrosesan.'
-                                                              : !row.comparison_ready
-                                                                ? 'Belum ada AWB terhubung; ini bukan bukti paket hilang.'
+                                                    <details className="mt-2 text-xs text-muted-foreground">
+                                                        <summary className="cursor-pointer">
+                                                            Bukti & verifikasi
+                                                        </summary>
+                                                        <p>
+                                                            {row
+                                                                .pop_reconciliation
+                                                                ?.confirmed_pickup_awbs ??
+                                                                row.matched_awbs}{' '}
+                                                            AWB terhubung ·{' '}
+                                                            {row
+                                                                .pop_reconciliation
+                                                                ?.unclassified_awbs ??
+                                                                0}{' '}
+                                                            belum punya bukti
+                                                            kategori
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Sertim:{' '}
+                                                            {row
+                                                                .pop_reconciliation
+                                                                ?.sertim_window ===
+                                                            'CLOSED'
+                                                                ? 'Ditutup'
+                                                                : 'Terbuka'}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Diterima Retail:{' '}
+                                                            {row.received_quantity ??
+                                                                'Belum diverifikasi'}{' '}
+                                                            · Deklarasi
+                                                            berhasil:{' '}
+                                                            {
+                                                                row.declared_successful
+                                                            }
+                                                        </p>
+                                                        <p className="mt-1">
+                                                            {row.state ===
+                                                            'NO_BASELINE'
+                                                                ? 'Baseline Retail belum tersedia.'
                                                                 : row.state ===
-                                                                    'MATCHED_COUNTS'
-                                                                  ? 'Jumlah cocok dengan deklarasi; bukti kategori tetap diperiksa.'
-                                                                  : 'Jumlah berbeda dari deklarasi; periksa bukti dan kelengkapan report.'}
-                                                    </p>
+                                                                    'BASELINE_REVIEW'
+                                                                  ? 'Baseline POP berubah; periksa deklarasi pemrosesan.'
+                                                                  : !row.comparison_ready
+                                                                    ? 'Belum ada AWB terhubung; ini bukan bukti paket hilang.'
+                                                                    : row.state ===
+                                                                        'MATCHED_COUNTS'
+                                                                      ? 'Jumlah cocok dengan deklarasi; bukti kategori tetap diperiksa.'
+                                                                      : 'Jumlah berbeda dari deklarasi; periksa bukti dan kelengkapan report.'}
+                                                        </p>
+                                                    </details>
                                                 </TableCell>
                                             )}
                                             <TableCell>{label}</TableCell>

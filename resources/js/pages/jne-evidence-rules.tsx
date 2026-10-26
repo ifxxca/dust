@@ -1,10 +1,21 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useRef, useState } from 'react';
+import InputError from '@/components/input-error';
+import { focusFormError } from '@/lib/utils';
+import JneSourceContractFields from '@/components/jne-source-contract-fields';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+} from '@/components/ui/sheet';
 import PageContainer from '@/components/page-container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+
 import * as evidence from '@/routes/jne-evidence';
 import * as monitoring from '@/routes/jne-monitoring';
 
@@ -61,6 +72,11 @@ const initialDefinition = JSON.stringify(
     null,
     2,
 );
+const ruleLabels: Record<string, string> = {
+    contract: 'Kontrak sumber',
+    code_alias: 'Alias kode',
+    shipper_alias: 'Nama pengirim',
+};
 
 export default function JneEvidenceRules({
     installed,
@@ -74,6 +90,10 @@ export default function JneEvidenceRules({
     pages = {},
 }: Props) {
     const search = useForm({ q });
+    const [creating, setCreating] = useState(false);
+    const [ruleActionOpen, setRuleActionOpen] = useState(false);
+    const createTrigger = useRef<HTMLButtonElement>(null);
+    const ruleTrigger = useRef<HTMLButtonElement | null>(null);
     const form = useForm({
         kind: 'contract',
         source: 'apex',
@@ -105,8 +125,26 @@ export default function JneEvidenceRules({
         row.shipper_name ||
         row.source + ' / ' + row.report_type + ' revisi ' + row.revision;
     return (
-        <PageContainer className="space-y-4 py-4">
+        <PageContainer className="flex flex-col gap-4 py-4">
             <Head title="Aturan bukti JNE" />
+            <header className="flex flex-wrap items-center justify-between gap-3">
+                <h1 className="text-2xl font-semibold">Aturan bukti JNE</h1>
+                <Button ref={createTrigger} onClick={() => setCreating(true)}>
+                    Tambah aturan
+                </Button>
+            </header>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                <Link className="underline" href={monitoring.index.url()}>
+                    Pengiriman
+                </Link>
+                <span>
+                    {!installed
+                        ? 'Migrasi belum tersedia'
+                        : enabled
+                          ? 'Aktivasi tersedia'
+                          : 'Mode draft · aktivasi nonaktif'}
+                </span>
+            </div>
             <form
                 className="flex gap-2"
                 onSubmit={(event) => {
@@ -140,307 +178,443 @@ export default function JneEvidenceRules({
                     </div>
                 ))}
             </nav>
-            <Link className="text-sm underline" href={monitoring.index.url()}>
-                Kembali ke pengiriman
-            </Link>
-            <h1 className="text-2xl font-semibold">Aturan bukti JNE</h1>
-            <p className="text-sm text-muted-foreground">
-                Simpan kontrak kolom, alias kode dan nama pengirim beserta scope
-                yang telah diperiksa. Akun bersama tidak menetapkan pemilik.
-                Draft tidak dipakai untuk pencocokan.
-            </p>
-            <p role="status" className="rounded-lg border p-3 text-sm">
-                {!installed
-                    ? 'Migrasi konfigurasi belum dipasang. Gunakan lingkungan UAT terisolasi.'
-                    : enabled
-                      ? 'Aktivasi tersedia pada lingkungan ini; setiap aturan tetap memerlukan verifikasi dan alasan.'
-                      : 'Aktivasi aturan baru dinonaktifkan. Draft dapat disiapkan untuk UAT.'}
-            </p>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Daftarkan aturan atau revisi baru</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <form
-                        className="grid gap-4 sm:grid-cols-2"
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            let definition: Record<string, unknown>;
-                            try {
-                                definition = JSON.parse(form.data.definition);
-                            } catch {
-                                form.setError(
-                                    'definition',
-                                    'Definisi harus berupa JSON yang valid.',
-                                );
-                                return;
-                            }
-                            form.transform((data) => ({
-                                ...data,
-                                definition,
-                            }));
-                            form.post(evidence.store.url(), {
-                                preserveScroll: true,
-                                onSuccess: () =>
-                                    form.reset('reason', 'verified'),
-                            });
-                        }}
-                    >
-                        <div className="space-y-2">
-                            <Label htmlFor="evidence-kind">Jenis aturan</Label>
-                            <select
-                                id="evidence-kind"
-                                className="h-10 w-full rounded-md border bg-background px-3"
-                                value={form.data.kind}
-                                onChange={(event) =>
-                                    form.setData('kind', event.target.value)
+            <Sheet open={creating} onOpenChange={setCreating}>
+                <SheetContent
+                    className="w-full overflow-y-auto sm:max-w-2xl"
+                    onCloseAutoFocus={(event) => {
+                        event.preventDefault();
+                        createTrigger.current?.focus();
+                    }}
+                >
+                    <SheetHeader>
+                        <SheetTitle>Tambah aturan bukti</SheetTitle>
+                        <SheetDescription>
+                            Aturan draft tidak digunakan untuk pencocokan.
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="px-4 pb-6">
+                        <form
+                            data-rule-form
+                            className="grid gap-4 sm:grid-cols-2"
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                const element = event.currentTarget;
+                                let definition: Record<string, unknown> = {};
+                                if (form.data.kind === 'contract') {
+                                    try {
+                                        definition = JSON.parse(
+                                            form.data.definition,
+                                        );
+                                    } catch {
+                                        form.setError(
+                                            'definition',
+                                            'Definisi harus berupa JSON yang valid.',
+                                        );
+                                        focusFormError(element);
+                                        return;
+                                    }
                                 }
-                            >
-                                <option value="contract">Kontrak sumber</option>
-                                <option value="code_alias">
-                                    Alias kode customer
-                                </option>
-                                <option value="shipper_alias">
-                                    Nama pengirim berscope
-                                </option>
-                            </select>
-                        </div>
-                        {form.data.kind === 'contract' ? (
-                            <>
-                                <div className="space-y-2">
-                                    <Label htmlFor="evidence-source">
-                                        Sistem sumber
-                                    </Label>
-                                    <select
-                                        id="evidence-source"
-                                        className="h-10 w-full rounded-md border bg-background px-3"
-                                        value={form.data.source}
-                                        onChange={(event) => {
-                                            form.setData(
-                                                'source',
-                                                event.target.value,
-                                            );
-                                            form.setData(
-                                                'report_type',
-                                                event.target.value === 'hybrid'
-                                                    ? 'combined'
-                                                    : event.target.value ===
-                                                        'apex'
-                                                      ? 'apex'
-                                                      : 'cashless',
-                                            );
-                                        }}
-                                    >
-                                        {[
-                                            'apex',
-                                            'hybrid',
-                                            'roberto',
-                                            'nuralamt',
-                                        ].map((source) => (
-                                            <option key={source}>
-                                                {source}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="evidence-type">
-                                        Jenis report
-                                    </Label>
-                                    <Input
-                                        id="evidence-type"
-                                        value={form.data.report_type}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'report_type',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2 sm:col-span-2">
-                                    <Label htmlFor="evidence-definition">
-                                        Definisi kolom dan aturan terverifikasi
-                                    </Label>
-                                    <Textarea
-                                        id="evidence-definition"
-                                        className="min-h-52 font-mono text-xs"
-                                        value={form.data.definition}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'definition',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <p className="text-xs text-muted-foreground">
-                                        Kolom kode customer dibiarkan null
-                                        sampai terbukti. category_values
-                                        memetakan nilai persis ke manual_hybrid,
-                                        cashless_hybrid atau css_orion.
-                                        hybrid_categories memakai kunci proses
-                                        seperti roberto:cashless hanya bila
-                                        disahkan. collection_requirements berisi
-                                        pasangan sumber:jenis report yang wajib
-                                        lengkap.
-                                    </p>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="space-y-2">
-                                    <Label htmlFor="evidence-customer">
-                                        Customer pemilik
-                                    </Label>
-                                    <select
-                                        id="evidence-customer"
-                                        className="h-10 w-full rounded-md border bg-background px-3"
-                                        value={form.data.customer_id}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'customer_id',
-                                                event.target.value,
-                                            )
-                                        }
-                                        required
-                                    >
-                                        <option value="">Pilih customer</option>
-                                        {customers.map((customer) => (
-                                            <option
-                                                key={customer.id}
-                                                value={customer.id}
-                                            >
-                                                {customer.customer_code || '—'}{' '}
-                                                · {customer.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="evidence-value">
-                                        {form.data.kind === 'code_alias'
-                                            ? 'Kode alias persis'
-                                            : 'Nama pengirim persis'}
-                                    </Label>
-                                    <Input
-                                        id="evidence-value"
-                                        required
-                                        value={
-                                            form.data.kind === 'code_alias'
-                                                ? form.data.code
-                                                : form.data.shipper_name
-                                        }
-                                        onChange={(event) =>
-                                            form.setData(
-                                                form.data.kind === 'code_alias'
-                                                    ? 'code'
-                                                    : 'shipper_name',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="evidence-account">
-                                        Scope akun (kosong berarti global)
-                                    </Label>
-                                    <Input
-                                        id="evidence-account"
-                                        value={form.data.account_scope}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'account_scope',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="evidence-from">
-                                        Berlaku mulai
-                                    </Label>
-                                    <Input
-                                        id="evidence-from"
-                                        type="date"
-                                        value={form.data.valid_from}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'valid_from',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="evidence-thru">
-                                        Berlaku sampai
-                                    </Label>
-                                    <Input
-                                        id="evidence-thru"
-                                        type="date"
-                                        value={form.data.valid_thru}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'valid_thru',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </>
-                        )}
-                        <div className="space-y-2 sm:col-span-2">
-                            <Label htmlFor="evidence-reason">
-                                Alasan dan referensi verifikasi
-                            </Label>
-                            <Input
-                                id="evidence-reason"
-                                required
-                                maxLength={500}
-                                value={form.data.reason}
-                                onChange={(event) =>
-                                    form.setData('reason', event.target.value)
-                                }
-                            />
-                        </div>
-                        <label className="flex items-start gap-2 text-sm sm:col-span-2">
-                            <input
-                                type="checkbox"
-                                disabled={!enabled}
-                                checked={form.data.verified}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'verified',
-                                        event.target.checked,
-                                    )
-                                }
-                            />
-                            Verifikasi dan aktifkan aturan ini. Data terdampak
-                            akan dievaluasi ulang; keputusan manual tetap
-                            dilindungi.
-                        </label>
-                        <div className="sm:col-span-2">
-                            {Object.entries(form.errors).map(([key, error]) => (
-                                <p
-                                    key={key}
-                                    role="alert"
-                                    className="text-sm text-destructive"
-                                >
-                                    {error}
-                                </p>
-                            ))}
-                        </div>
-                        <Button
-                            disabled={!installed || form.processing}
-                            type="submit"
+                                form.transform((data) => ({
+                                    ...data,
+                                    definition,
+                                }));
+                                form.post(evidence.store.url(), {
+                                    preserveScroll: true,
+                                    onSuccess: () => {
+                                        form.reset('reason', 'verified');
+                                        setCreating(false);
+                                    },
+                                    onError: () => focusFormError(element),
+                                });
+                            }}
                         >
-                            {form.processing
-                                ? 'Menyimpan…'
-                                : 'Simpan aturan bukti'}
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
+                            <div className="space-y-2">
+                                <Label htmlFor="evidence-kind">
+                                    Jenis aturan
+                                </Label>
+                                <select
+                                    id="evidence-kind"
+                                    aria-invalid={!!form.errors.kind}
+                                    aria-describedby={
+                                        form.errors.kind
+                                            ? 'evidence-kind-error'
+                                            : undefined
+                                    }
+                                    className="h-10 w-full rounded-md border bg-background px-3"
+                                    value={form.data.kind}
+                                    onChange={(event) => {
+                                        form.setData(
+                                            'kind',
+                                            event.target.value,
+                                        );
+                                        form.clearErrors();
+                                    }}
+                                >
+                                    <option value="contract">
+                                        Kontrak sumber
+                                    </option>
+                                    <option value="code_alias">
+                                        Alias kode customer
+                                    </option>
+                                    <option value="shipper_alias">
+                                        Nama pengirim berscope
+                                    </option>
+                                </select>
+                                <InputError
+                                    id="evidence-kind-error"
+                                    message={form.errors.kind}
+                                />
+                            </div>
+                            {form.data.kind === 'contract' ? (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="evidence-source">
+                                            Sistem sumber
+                                        </Label>
+                                        <select
+                                            id="evidence-source"
+                                            aria-invalid={!!form.errors.source}
+                                            aria-describedby={
+                                                form.errors.source
+                                                    ? 'evidence-source-error'
+                                                    : undefined
+                                            }
+                                            className="h-10 w-full rounded-md border bg-background px-3"
+                                            value={form.data.source}
+                                            onChange={(event) => {
+                                                form.setData(
+                                                    'source',
+                                                    event.target.value,
+                                                );
+                                                form.setData(
+                                                    'report_type',
+                                                    event.target.value ===
+                                                        'hybrid'
+                                                        ? 'combined'
+                                                        : event.target.value ===
+                                                            'apex'
+                                                          ? 'apex'
+                                                          : 'cashless',
+                                                );
+                                            }}
+                                        >
+                                            {[
+                                                'apex',
+                                                'hybrid',
+                                                'roberto',
+                                                'nuralamt',
+                                            ].map((source) => (
+                                                <option key={source}>
+                                                    {source}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <InputError
+                                            id="evidence-source-error"
+                                            message={form.errors.source}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="evidence-type">
+                                            Jenis report
+                                        </Label>
+                                        <Input
+                                            id="evidence-type"
+                                            aria-invalid={
+                                                !!form.errors.report_type
+                                            }
+                                            aria-describedby={
+                                                form.errors.report_type
+                                                    ? 'evidence-type-error'
+                                                    : undefined
+                                            }
+                                            value={form.data.report_type}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'report_type',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            id="evidence-type-error"
+                                            message={form.errors.report_type}
+                                        />
+                                    </div>
+                                    <div className="space-y-2 sm:col-span-2">
+                                        <JneSourceContractFields
+                                            value={form.data.definition}
+                                            onChange={(value) => {
+                                                form.setData(
+                                                    'definition',
+                                                    value,
+                                                );
+                                                form.clearErrors('definition');
+                                            }}
+                                            error={form.errors.definition}
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="evidence-customer">
+                                            Customer pemilik
+                                        </Label>
+                                        <select
+                                            id="evidence-customer"
+                                            aria-invalid={
+                                                !!form.errors.customer_id
+                                            }
+                                            aria-describedby={
+                                                form.errors.customer_id
+                                                    ? 'evidence-customer-error'
+                                                    : undefined
+                                            }
+                                            className="h-10 w-full rounded-md border bg-background px-3"
+                                            value={form.data.customer_id}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'customer_id',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            required
+                                        >
+                                            <option value="">
+                                                Pilih customer
+                                            </option>
+                                            {customers.map((customer) => (
+                                                <option
+                                                    key={customer.id}
+                                                    value={customer.id}
+                                                >
+                                                    {customer.customer_code ||
+                                                        '—'}{' '}
+                                                    · {customer.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <InputError
+                                            id="evidence-customer-error"
+                                            message={form.errors.customer_id}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="evidence-value">
+                                            {form.data.kind === 'code_alias'
+                                                ? 'Kode alias persis'
+                                                : 'Nama pengirim persis'}
+                                        </Label>
+                                        <Input
+                                            id="evidence-value"
+                                            spellCheck={false}
+                                            aria-invalid={
+                                                !!(
+                                                    form.errors.code ||
+                                                    form.errors.shipper_name
+                                                )
+                                            }
+                                            aria-describedby={
+                                                form.errors.code ||
+                                                form.errors.shipper_name
+                                                    ? 'evidence-value-error'
+                                                    : undefined
+                                            }
+                                            required
+                                            value={
+                                                form.data.kind === 'code_alias'
+                                                    ? form.data.code
+                                                    : form.data.shipper_name
+                                            }
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    form.data.kind ===
+                                                        'code_alias'
+                                                        ? 'code'
+                                                        : 'shipper_name',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            id="evidence-value-error"
+                                            message={
+                                                form.errors.code ||
+                                                form.errors.shipper_name
+                                            }
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="evidence-account">
+                                            Scope akun (kosong berarti global)
+                                        </Label>
+                                        <Input
+                                            id="evidence-account"
+                                            aria-invalid={
+                                                !!form.errors.account_scope
+                                            }
+                                            aria-describedby={
+                                                form.errors.account_scope
+                                                    ? 'evidence-account-error'
+                                                    : undefined
+                                            }
+                                            value={form.data.account_scope}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'account_scope',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            id="evidence-account-error"
+                                            message={form.errors.account_scope}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="evidence-from">
+                                            Berlaku mulai
+                                        </Label>
+                                        <Input
+                                            id="evidence-from"
+                                            aria-invalid={
+                                                !!form.errors.valid_from
+                                            }
+                                            aria-describedby={
+                                                form.errors.valid_from
+                                                    ? 'evidence-from-error'
+                                                    : undefined
+                                            }
+                                            type="date"
+                                            value={form.data.valid_from}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'valid_from',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            id="evidence-from-error"
+                                            message={form.errors.valid_from}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="evidence-thru">
+                                            Berlaku sampai
+                                        </Label>
+                                        <Input
+                                            id="evidence-thru"
+                                            aria-invalid={
+                                                !!form.errors.valid_thru
+                                            }
+                                            aria-describedby={
+                                                form.errors.valid_thru
+                                                    ? 'evidence-thru-error'
+                                                    : undefined
+                                            }
+                                            type="date"
+                                            value={form.data.valid_thru}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'valid_thru',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            id="evidence-thru-error"
+                                            message={form.errors.valid_thru}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            <div className="space-y-2 sm:col-span-2">
+                                <Label htmlFor="evidence-reason">
+                                    Alasan dan referensi verifikasi
+                                </Label>
+                                <Input
+                                    id="evidence-reason"
+                                    aria-invalid={!!form.errors.reason}
+                                    aria-describedby={
+                                        form.errors.reason
+                                            ? 'evidence-reason-error'
+                                            : undefined
+                                    }
+                                    required
+                                    maxLength={500}
+                                    value={form.data.reason}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'reason',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                <InputError
+                                    id="evidence-reason-error"
+                                    message={form.errors.reason}
+                                />
+                            </div>
+                            <label className="flex items-start gap-2 text-sm sm:col-span-2">
+                                <input
+                                    type="checkbox"
+                                    disabled={!enabled}
+                                    checked={form.data.verified}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'verified',
+                                            event.target.checked,
+                                        )
+                                    }
+                                />
+                                Verifikasi dan aktifkan aturan ini
+                            </label>
+                            <div
+                                data-form-errors
+                                tabIndex={-1}
+                                className="scroll-mt-20 sm:col-span-2"
+                            >
+                                {Object.entries(form.errors)
+                                    .filter(
+                                        ([key]) =>
+                                            ![
+                                                'definition',
+                                                'kind',
+                                                'source',
+                                                'report_type',
+                                                'customer_id',
+                                                'account_scope',
+                                                'valid_from',
+                                                'valid_thru',
+                                                'reason',
+                                                'code',
+                                                'shipper_name',
+                                            ].includes(key),
+                                    )
+                                    .map(([key, error]) => (
+                                        <p
+                                            key={key}
+                                            role="alert"
+                                            className="text-sm text-destructive"
+                                        >
+                                            {error}
+                                        </p>
+                                    ))}
+                            </div>
+                            <Button
+                                disabled={!installed || form.processing}
+                                type="submit"
+                            >
+                                {form.processing
+                                    ? 'Menyimpan…'
+                                    : 'Simpan aturan'}
+                            </Button>
+                        </form>
+                    </div>
+                </SheetContent>
+            </Sheet>
             <Card>
                 <CardHeader>
                     <CardTitle>Aturan tersimpan</CardTitle>
@@ -457,7 +631,8 @@ export default function JneEvidenceRules({
                             className="rounded-lg border p-3 text-sm"
                         >
                             <summary className="cursor-pointer break-words">
-                                #{row.id} · {row.kind} · {label(row)} ·{' '}
+                                #{row.id} · {ruleLabels[row.kind] ?? row.kind} ·{' '}
+                                {label(row)} ·{' '}
                                 {row.active_key || row.is_active
                                     ? 'Aktif terverifikasi'
                                     : 'Draft / dinonaktifkan'}
@@ -478,7 +653,8 @@ export default function JneEvidenceRules({
                                 className="mt-2"
                                 size="sm"
                                 variant="outline"
-                                onClick={() =>
+                                onClick={(event) => {
+                                    ruleTrigger.current = event.currentTarget;
                                     disable.setData({
                                         action:
                                             row.active_key || row.is_active
@@ -489,8 +665,9 @@ export default function JneEvidenceRules({
                                         version:
                                             row.revision ?? row.version ?? 1,
                                         reason: '',
-                                    })
-                                }
+                                    });
+                                    setRuleActionOpen(true);
+                                }}
                             >
                                 {row.active_key || row.is_active
                                     ? 'Pilih untuk dinonaktifkan'
@@ -498,76 +675,102 @@ export default function JneEvidenceRules({
                             </Button>
                         </details>
                     ))}
-                    {disable.data.id && (
-                        <form
-                            className="space-y-2 rounded-lg border p-3"
-                            onSubmit={(event) => {
+                    <Sheet
+                        open={ruleActionOpen}
+                        onOpenChange={setRuleActionOpen}
+                    >
+                        <SheetContent
+                            className="w-full overflow-y-auto sm:max-w-lg"
+                            onCloseAutoFocus={(event) => {
                                 event.preventDefault();
-                                disable.post(
-                                    disable.data.action === 'activate'
-                                        ? evidence.activate.url()
-                                        : evidence.disable.url(),
-                                    {
-                                        preserveScroll: true,
-                                        onSuccess: () => disable.reset(),
-                                    },
-                                );
+                                disable.reset();
+                                ruleTrigger.current?.focus();
                             }}
                         >
-                            <p className="text-sm">
-                                {disable.data.action === 'activate'
-                                    ? 'Verifikasi dan aktifkan'
-                                    : 'Nonaktifkan'}{' '}
-                                {disable.data.kind} #{disable.data.id}; versi{' '}
-                                {disable.data.version}. Riwayat tetap disimpan.
-                            </p>
-                            <Label htmlFor="evidence-disable-reason">
-                                Alasan perubahan aturan
-                            </Label>
-                            <Input
-                                id="evidence-disable-reason"
-                                required
-                                maxLength={500}
-                                value={disable.data.reason}
-                                onChange={(event) =>
-                                    disable.setData(
-                                        'reason',
-                                        event.target.value,
-                                    )
-                                }
-                            />
-                            {Object.values(disable.errors).map(
-                                (error, index) => (
-                                    <p
-                                        key={index}
-                                        role="alert"
-                                        className="text-sm text-destructive"
-                                    >
-                                        {error}
-                                    </p>
-                                ),
-                            )}
-                            <Button
-                                type="submit"
-                                disabled={
-                                    disable.processing ||
-                                    (disable.data.action === 'activate' &&
-                                        !enabled)
-                                }
+                            <SheetHeader>
+                                <SheetTitle>
+                                    {disable.data.action === 'activate'
+                                        ? 'Aktifkan aturan'
+                                        : 'Nonaktifkan aturan'}
+                                </SheetTitle>
+                                <SheetDescription>
+                                    Perubahan dicatat dalam audit.
+                                </SheetDescription>
+                            </SheetHeader>
+                            <form
+                                className="flex flex-col gap-3 px-4 pb-6"
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    disable.post(
+                                        disable.data.action === 'activate'
+                                            ? evidence.activate.url()
+                                            : evidence.disable.url(),
+                                        {
+                                            preserveScroll: true,
+                                            onSuccess: () =>
+                                                setRuleActionOpen(false),
+                                        },
+                                    );
+                                }}
                             >
-                                {disable.data.action === 'activate'
-                                    ? 'Verifikasi, aktifkan dan evaluasi ulang'
-                                    : 'Nonaktifkan dan evaluasi ulang'}
-                            </Button>
-                        </form>
-                    )}
+                                <p className="text-sm">
+                                    {disable.data.action === 'activate'
+                                        ? 'Verifikasi dan aktifkan'
+                                        : 'Nonaktifkan'}{' '}
+                                    {ruleLabels[disable.data.kind] ??
+                                        disable.data.kind}{' '}
+                                    #{disable.data.id}; versi{' '}
+                                    {disable.data.version}. Riwayat tetap
+                                    disimpan.
+                                </p>
+                                <Label htmlFor="evidence-disable-reason">
+                                    Alasan perubahan aturan
+                                </Label>
+                                <Input
+                                    id="evidence-disable-reason"
+                                    required
+                                    maxLength={500}
+                                    value={disable.data.reason}
+                                    onChange={(event) =>
+                                        disable.setData(
+                                            'reason',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                                {Object.values(disable.errors).map(
+                                    (error, index) => (
+                                        <p
+                                            key={index}
+                                            role="alert"
+                                            className="text-sm text-destructive"
+                                        >
+                                            {error}
+                                        </p>
+                                    ),
+                                )}
+                                <Button
+                                    type="submit"
+                                    disabled={
+                                        disable.processing ||
+                                        (disable.data.action === 'activate' &&
+                                            !enabled)
+                                    }
+                                >
+                                    {disable.data.action === 'activate'
+                                        ? 'Verifikasi, aktifkan dan evaluasi ulang'
+                                        : 'Nonaktifkan dan evaluasi ulang'}
+                                </Button>
+                            </form>
+                        </SheetContent>
+                    </Sheet>
                 </CardContent>
             </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Riwayat konfigurasi terbaru</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
+            <details className="rounded-lg border p-3 text-sm">
+                <summary className="cursor-pointer font-medium">
+                    Riwayat konfigurasi
+                </summary>
+                <div className="mt-3 flex flex-col gap-2">
                     {events.map((event) => (
                         <details
                             key={event.id}
@@ -590,8 +793,8 @@ export default function JneEvidenceRules({
                             </pre>
                         </details>
                     ))}
-                </CardContent>
-            </Card>
+                </div>
+            </details>
         </PageContainer>
     );
 }

@@ -136,11 +136,6 @@ export default function JneShipperAliases({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Customer & nama pengirim
                     </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Nama pengirim terdaftar membantu mengenali pemilik
-                        kiriman. Satu customer dapat memiliki banyak nama
-                        pengirim.
-                    </p>
                 </div>
                 <div className="flex gap-2">
                     <Button

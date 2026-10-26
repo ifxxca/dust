@@ -493,15 +493,11 @@ export default function Operations({
                     <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                         {title}
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {screen === 'users'
-                            ? 'Kelola akun aktif dan satu role operasional per pengguna.'
-                            : isTaskList && !manager && !history
-                              ? `Selamat bekerja, ${user.name.split(' ')[0]}. Kelola tugas dan kunjungan Anda.`
-                              : operationalWorkspace
-                                ? `Kelola seluruh pickup customer di ${timezone}.`
-                                : 'Pickup on-demand · ' + timezone}
-                    </p>
+                    {isTaskList && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            {timezone}
+                        </p>
+                    )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {screen === 'users' && (

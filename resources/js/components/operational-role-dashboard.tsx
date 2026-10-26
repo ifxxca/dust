@@ -291,11 +291,6 @@ export default function RoleDashboard({
                             ? `Selamat bekerja, ${user.name.split(' ')[0]}`
                             : 'Ringkasan Operasional'}
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {isRetail
-                            ? 'Prioritaskan penerimaan paket dan pemeriksaan yang belum selesai.'
-                            : 'Pantau aktivitas pickup dan lanjutkan pekerjaan yang memerlukan tindakan.'}
-                    </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button

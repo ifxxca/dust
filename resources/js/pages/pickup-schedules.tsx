@@ -164,8 +164,7 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                 <div>
                     <h1 className="text-2xl font-bold">Jadwal Regular</h1>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Jadwal menghasilkan pickup yang perlu ditugaskan CS ·{' '}
-                        {timezone}.
+                        {timezone}
                     </p>
                 </div>
                 <Button onClick={() => begin(null)}>Tambah Jadwal</Button>

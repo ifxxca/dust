@@ -1,6 +1,16 @@
 # Implementation status
 
-Updated 25 October 2026. The safe technical M1–M8 implementation is complete for consolidated UAT. Operational verification is pending. This continuation did not push, migrate the operational database, change live ownership/finalized POP or enable schedules.
+Updated 26 October 2026. The safe technical M1–M8 implementation is complete for consolidated UAT. Task-first UI remediation has been applied to the JNE workflows and repeated introductory copy on other operational pages. Operational verification is pending. This continuation did not push, migrate the operational database, change live ownership/finalized POP or enable schedules.
+
+## Task-first UI continuation
+
+See [the UX audit and remediation evidence](ui-ux-audit.md). Monitoring now places search and records first, reconciliation uses compact tables with optional detail, and exception selection opens an accessible decision Sheet. Source contracts and refresh policies use structured fields with advanced JSON. External collection forms reflect OPEN versus COMPLETE and preserve selected reports through navigation. Drafts, scope, reason, version checks and production gates retain their backend contracts.
+
+Existing shadcn, Inertia, Wayfinder and disposable Chromium fixtures were reused. No backend/database/dependency changes were required. Local AGENTS.md records the supplied UI policy; the repository intentionally ignores that local instruction file. Other pre-existing auth/welcome work remains separate.
+
+Verification: 123 frontend tests, 53 focused backend regressions, Chromium staff/Admin/review/collection/policy flows, 25 route checks, mobile setup and handover checks, existing role boundaries, contrast checks, TypeScript web/mobile, frontend lint, PHPStan and production build passed. Implementation and automated verification support UAT readiness; they do not constitute operational acceptance or certify every page/state.
+
+The complete PHP suite also passed: 756 passed, five existing skips, 7,067 assertions. The focused Chromium fixture was rerun after the final form recovery refinement. This remains synthetic verification, with no live JNE retrieval or production writes.
 
 ## Milestone states
 

@@ -1,4 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { focusFormError } from '@/lib/utils';
+import InputError from '@/components/input-error';
+import JneRefreshPolicyFields from '@/components/jne-refresh-policy-fields';
 import PageContainer from '@/components/page-container';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -60,35 +63,38 @@ export default function JneRefreshPolicy({
         ),
     });
     return (
-        <PageContainer className="space-y-4 py-4">
+        <PageContainer className="flex flex-col gap-4 py-4">
             <Head title="Kebijakan pembaruan tracking" />
-            <Link href={monitoring.index.url()} className="underline">
-                Monitoring JNE
-            </Link>
             <h1 className="text-2xl font-semibold">
                 Kebijakan pembaruan tracking
             </h1>
-            <p className="text-sm text-muted-foreground">
-                Kebijakan ini mengatur pemilihan AWB pada jadwal status yang
-                sudah ada. Menyimpan kebijakan tidak mengaktifkan jadwal.
-                Interval tetap mengikuti batas minimum jadwal; status terminal,
-                SLA, prioritas dan jam sumber harus diverifikasi saat UAT.
-            </p>
-            <p>
-                Aktivasi lingkungan: {enabled ? 'Diizinkan' : 'Ditutup'} ·
-                Jadwal: {profile?.enabled ? 'Aktif' : 'Nonaktif'}
-            </p>
+            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                <span>Aktivasi: {enabled ? 'Diizinkan' : 'Nonaktif'}</span>
+                <span>
+                    Jadwal:{' '}
+                    {!profile
+                        ? 'Belum diatur'
+                        : profile.enabled
+                          ? 'Aktif'
+                          : 'Nonaktif'}
+                </span>
+            </div>
             {!profile && (
-                <p>
-                    Buat konfigurasi pemantauan AWB aktif pada sumber report
-                    terlebih dahulu.
-                </p>
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border p-4 text-sm">
+                    <span>Konfigurasi pemantauan AWB belum tersedia.</span>
+                    <Button variant="outline" asChild>
+                        <Link href={monitoring.profiles.url()}>
+                            Atur pemantauan AWB
+                        </Link>
+                    </Button>
+                </div>
             )}
             {profile && (
                 <form
-                    className="space-y-3 rounded border p-4"
+                    className="flex max-w-3xl flex-col gap-4 rounded-lg border p-4"
                     onSubmit={(event) => {
                         event.preventDefault();
+                        const element = event.currentTarget;
                         let definition: Record<string, unknown>;
                         try {
                             definition = JSON.parse(form.data.definition);
@@ -97,25 +103,26 @@ export default function JneRefreshPolicy({
                                 'definition',
                                 'Definisi harus berupa JSON valid.',
                             );
+                            focusFormError(element);
                             return;
                         }
                         form.transform((data) => ({ ...data, definition }));
                         form.post(policies.store.url(profile.id), {
+                            onError: () => focusFormError(element),
                             onSuccess: () =>
                                 form.setData('version', form.data.version + 1),
                         });
                     }}
                 >
-                    <Label htmlFor="refresh-definition">
-                        Definisi kebijakan (jam 0–23 pada Asia/Jakarta)
-                    </Label>
-                    <Textarea
-                        id="refresh-definition"
-                        className="min-h-80 font-mono text-sm"
+                    <JneRefreshPolicyFields
+                        activationAllowed={enabled}
+                        errors={form.errors}
                         value={form.data.definition}
-                        onChange={(event) =>
-                            form.setData('definition', event.target.value)
-                        }
+                        onChange={(value) => {
+                            form.setData('definition', value);
+                            form.clearErrors('definition');
+                        }}
+                        error={form.errors.definition}
                     />
                     <Label className="flex gap-2">
                         <input
@@ -132,6 +139,12 @@ export default function JneRefreshPolicy({
                     </Label>
                     <Textarea
                         id="refresh-reason"
+                        aria-invalid={!!form.errors.reason}
+                        aria-describedby={
+                            form.errors.reason
+                                ? 'refresh-reason-error'
+                                : undefined
+                        }
                         required
                         maxLength={500}
                         value={form.data.reason}
@@ -139,41 +152,72 @@ export default function JneRefreshPolicy({
                             form.setData('reason', event.target.value)
                         }
                     />
-                    {Object.entries(form.errors).map(([field, message]) => (
-                        <p
-                            role="alert"
-                            className="text-destructive"
-                            key={field}
-                        >
-                            {message}
-                        </p>
-                    ))}
+                    <InputError
+                        id="refresh-reason-error"
+                        message={form.errors.reason}
+                    />
+                    <div
+                        data-form-errors
+                        tabIndex={-1}
+                        className="scroll-mt-20"
+                    >
+                        {Object.entries(form.errors)
+                            .filter(
+                                ([key]) =>
+                                    !['definition', 'reason'].includes(key),
+                            )
+                            .map(([field, message]) => (
+                                <p
+                                    role="alert"
+                                    className="text-destructive"
+                                    key={field}
+                                >
+                                    {message}
+                                </p>
+                            ))}
+                    </div>
                     <Button disabled={!installed || form.processing}>
-                        Simpan kebijakan tracking
+                        Simpan kebijakan
                     </Button>
                 </form>
             )}
-            <h2 className="text-lg font-semibold">Audit kebijakan</h2>
-            {events?.data.map((event) => (
-                <details key={event.id} className="rounded border p-3">
-                    <summary>
-                        {event.created_at} · {event.reason}
-                    </summary>
-                    <pre className="max-w-full overflow-auto text-xs">
-                        {event.before}
-                        {'\n'}
-                        {event.after}
-                    </pre>
-                </details>
-            ))}
-            <nav className="flex gap-3">
-                {events?.prev_page_url && (
-                    <Link href={events.prev_page_url}>Sebelumnya</Link>
-                )}
-                {events?.next_page_url && (
-                    <Link href={events.next_page_url}>Berikutnya</Link>
-                )}
-            </nav>
+            <details className="text-sm">
+                <summary className="cursor-pointer text-muted-foreground">
+                    Ketentuan kebijakan
+                </summary>
+                <p className="mt-2">
+                    Menyimpan kebijakan tidak mengaktifkan jadwal. Interval
+                    mengikuti batas minimum jadwal. Status terminal, SLA,
+                    prioritas, dan jam sumber memerlukan verifikasi.
+                </p>
+            </details>
+            <details className="rounded-lg border p-3 text-sm">
+                <summary className="cursor-pointer font-medium">
+                    Audit kebijakan
+                </summary>
+                <div className="mt-3 flex flex-col gap-2">
+                    {events?.data.map((event) => (
+                        <details key={event.id} className="rounded border p-3">
+                            <summary>
+                                {event.created_at} · {event.reason}
+                            </summary>
+                            <pre className="max-w-full overflow-auto text-xs">
+                                {event.before}
+                                {'\n'}
+                                {event.after}
+                            </pre>
+                        </details>
+                    ))}
+                    <nav className="flex gap-3">
+                        {events?.prev_page_url && (
+                            <Link href={events.prev_page_url}>Sebelumnya</Link>
+                        )}
+                        {events?.next_page_url && (
+                            <Link href={events.next_page_url}>Berikutnya</Link>
+                        )}
+                    </nav>
+                </div>
+            </details>
         </PageContainer>
     );
 }

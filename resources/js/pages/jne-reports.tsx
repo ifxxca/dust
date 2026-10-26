@@ -113,10 +113,6 @@ export default function JneReports({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Penarikan Report JNE
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Pilih account dan tanggal, lalu pantau hasilnya sampai
-                        siap dimonitor.
-                    </p>
                 </div>
                 <Button variant="outline" className="min-h-11" asChild>
                     <Link href={runs.index.url()}>

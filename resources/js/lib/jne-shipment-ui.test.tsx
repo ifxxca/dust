@@ -226,7 +226,7 @@ test('latest observation comes only from available rows without fabricating an u
     ).toBe('2026-10-21T07:00:00+07:00');
 });
 
-test('selected status is a pressed quick filter and empty results do not claim an observation timestamp', () => {
+test('selected status and its count remain visible and empty results do not claim an observation timestamp', () => {
     const html = renderToStaticMarkup(
         <Monitoring
             shipments={{ data: [], current_page: 1, last_page: 1, total: 0 }}
@@ -237,17 +237,15 @@ test('selected status is a pressed quick filter and empty results do not claim a
         />,
     );
     const selected = html.match(
-        /<button\b[^>]*aria-pressed="true"[\s\S]*?<\/button>/g,
+        /<button\b[^>]*id="jne-status-filter"[\s\S]*?<\/button>/g,
     );
     expect(selected).toHaveLength(1);
-    expect(selected?.[0]).toContain('Terkirim');
-    expect(selected?.[0]).toContain('>9</span>');
+    expect(selected?.[0]).toContain('Terkirim · 9');
     expect(html).not.toContain('Diamati di halaman ini:');
     expect(html).toContain('Tidak ada AWB yang sesuai');
     expect(html).toContain('Urutan: observasi terbaru');
     expect(html).toContain('jne-status-filter');
     expect(html).toContain('Ringkasan status pengiriman');
-    expect(html).toContain('Semua pengiriman');
 });
 
 test('applied advanced filters are visible as removable controls outside the sheet', () => {

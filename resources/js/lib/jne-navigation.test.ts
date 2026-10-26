@@ -12,6 +12,10 @@ test.each([
     ['/admin/jne-reports?source=hybrid', 'Tarik report'],
     ['/admin/jne-reports/24/awbs', 'Tarik report'],
     ['/admin/jne-monitoring/profiles', 'Pengaturan penarikan'],
+    ['/admin/jne-monitoring/evidence-rules', 'Pengaturan penarikan'],
+    ['/admin/jne-monitoring/refresh-policies', 'Pengaturan penarikan'],
+    ['/admin/jne-monitoring/exceptions?cause=pickup', 'Daftar pengiriman'],
+    ['/admin/jne-monitoring/collections/42', 'Daftar pengiriman'],
     ['/admin/report-runs?status=NEEDS_ATTENTION', 'Riwayat run'],
 ])('JNE menu selects exactly one entry for %s', (url, title) => {
     expect(

@@ -654,6 +654,10 @@ check(
             '/admin/report-runs',
             `/admin/jne-reports/${ids.report}/awbs`,
             '/admin/jne-monitoring/reconciliation',
+            '/admin/jne-monitoring/evidence-rules',
+            '/admin/jne-monitoring/refresh-policies',
+            '/admin/jne-monitoring/exceptions',
+            '/admin/jne-monitoring/collections/' + ids.proof,
             '/admin/jne-shipper-aliases',
             `/admin/jne-monitoring/${ids.shipment}`,
         ];
@@ -690,6 +694,173 @@ check(
             routes: routes.length,
             build: 'fresh',
             externalRetrieval: false,
+        };
+    },
+);
+
+check(
+    'task first JNE setup and empty states remain actionable on mobile and desktop',
+    async (page) => {
+        for (const width of [390, 1280]) {
+            await page.setViewportSize({ width, height: 844 });
+            await visit(page, '/admin/jne-monitoring');
+            assert(
+                await page
+                    .getByRole('link', {
+                        name: '1 report perlu ditinjau',
+                        exact: true,
+                    })
+                    .isVisible(),
+            );
+            const search = await page
+                .getByLabel('Cari AWB', { exact: true })
+                .boundingBox();
+            assert(
+                search && search.y < 400,
+                'Collection failure must not obscure shipment search',
+            );
+            const records = page.getByRole('region', {
+                name: 'Monitoring AWB',
+                exact: true,
+            });
+            const firstAwb = await (
+                width < 768
+                    ? records.getByRole('listitem').first()
+                    : records.getByRole('row').nth(1)
+            ).boundingBox();
+            assert(
+                firstAwb && firstAwb.y < 844,
+                'First shipment remains reachable with collection failures',
+            );
+            await page.screenshot({
+                path: path.join(
+                    evidence,
+                    'task-first-monitoring-failure-' + width + '.png',
+                ),
+                animations: 'disabled',
+            });
+            await visit(page, '/admin/jne-monitoring/refresh-policies');
+            assert(
+                await page
+                    .getByRole('link', {
+                        name: 'Atur pemantauan AWB',
+                        exact: true,
+                    })
+                    .isVisible(),
+            );
+            assert.equal(
+                await page
+                    .getByLabel('Definisi kebijakan', { exact: true })
+                    .count(),
+                0,
+            );
+            await page.screenshot({
+                path: path.join(
+                    evidence,
+                    'task-first-refresh-empty-' + width + '.png',
+                ),
+                animations: 'disabled',
+            });
+            await visit(page, '/admin/jne-monitoring/collections/' + ids.proof);
+            assert(
+                await page
+                    .getByRole('link', {
+                        name: 'Atur kontrak sumber',
+                        exact: true,
+                    })
+                    .isVisible(),
+            );
+            assert(
+                await page
+                    .getByRole('button', {
+                        name: 'Simpan pengesahan',
+                        exact: true,
+                    })
+                    .isDisabled(),
+            );
+            await page
+                .getByLabel('Keputusan', { exact: true })
+                .selectOption('OPEN');
+            assert.equal(
+                await page
+                    .getByLabel('Kontrak sumber terverifikasi', { exact: true })
+                    .count(),
+                0,
+            );
+            assert.equal(
+                await page.getByLabel(/Cutoff yang diperiksa/).count(),
+                0,
+            );
+            await page.screenshot({
+                path: path.join(
+                    evidence,
+                    'task-first-collection-open-' + width + '.png',
+                ),
+                animations: 'disabled',
+            });
+            await visit(
+                page,
+                '/admin/jne-monitoring/exceptions?q=NO_SYNTHETIC_MATCH',
+            );
+            assert.equal(
+                await page
+                    .getByLabel('Alasan dan referensi bukti review', {
+                        exact: true,
+                    })
+                    .count(),
+                0,
+            );
+            await visit(page, '/admin/jne-monitoring/evidence-rules');
+            assert(
+                await page
+                    .getByRole('button', { name: 'Tambah aturan', exact: true })
+                    .isVisible(),
+            );
+            await page
+                .getByRole('button', { name: 'Tambah aturan', exact: true })
+                .click();
+            assert.equal(
+                await page
+                    .getByLabel('Kolom kode customer', { exact: true })
+                    .inputValue(),
+                '',
+            );
+            assert.equal(
+                await page
+                    .getByLabel('Definisi kolom dan aturan terverifikasi', {
+                        exact: true,
+                    })
+                    .isVisible(),
+                false,
+            );
+            assert(
+                await page
+                    .getByRole('checkbox', {
+                        name: 'Verifikasi dan aktifkan aturan ini',
+                        exact: true,
+                    })
+                    .isDisabled(),
+            );
+            await page
+                .getByRole('button', { name: 'Tutup', exact: true })
+                .click();
+            await page.getByRole('dialog').waitFor({ state: 'hidden' });
+            assert(
+                await page
+                    .getByRole('button', { name: 'Tambah aturan', exact: true })
+                    .evaluate((element) => element === document.activeElement),
+            );
+            assert(
+                await page.evaluate(
+                    () =>
+                        document.documentElement.scrollWidth <= innerWidth + 1,
+                ),
+            );
+        }
+        return {
+            widths: [390, 1280],
+            productionPolicies: 'disabled',
+            emptyReviewForm: 'absent',
         };
     },
 );

@@ -76,9 +76,9 @@ test('monitoring emphasizes normalized status and preserves the AWB detail link 
     expect(html).toContain('/admin/jne-monitoring/1');
     expect(html).toContain('Salin AWB 001234567890123456789');
     expect(html).toContain('Diamati di halaman ini:');
-    expect(html).toContain('bukan informasi real-time');
-    expect(html).toContain('0 AWB memiliki customer terkonfirmasi');
-    expect(html).toContain('0 AWB memiliki pickup terkonfirmasi');
+    expect(html).toContain('Snapshot report');
+    expect(html).toContain('0 AWB customer terkonfirmasi');
+    expect(html).toContain('0 AWB pickup terkonfirmasi');
     expect(html).toContain('customer_match=CANDIDATE');
     expect(html).toContain('Periksa kategori POP');
 });
@@ -158,7 +158,9 @@ test('shipment detail retains all raw source fields and explains audited manual 
     expect(html).toContain('EXTRA_COLUMN');
     expect(html).toContain('=&quot;Pure Text&quot;');
     expect(html).toContain('tidak ditimpa pencocokan otomatis');
-    expect(html).toContain('Pickup Staff tidak perlu memindai AWB.');
+    expect(html).toContain(
+        'Cashless dicatat melalui Sertim; CSS / Orion tidak wajib dipindai satu per satu.',
+    );
     expect(html).toContain('/admin/jne-reports/2/download');
 });
 
@@ -218,7 +220,7 @@ test('monitoring exposes the active AWB schedule and its next run without confus
     expect(html).toContain('17 menit');
     expect(html).toContain('Perbarui resi aktif sekarang');
     expect(html).toContain('Berikutnya');
-    expect(html).toContain('Segarkan tampilan');
+    expect(html).toContain('Segarkan');
 });
 
 test('matching counts in reconciliation do not claim that POP or retail differences are resolved', () => {
