@@ -23,7 +23,7 @@ export default function JneAccountInput({
                     onChange={(event) => onChange(event.target.value)}
                     placeholder={'11729800\tNO\n80089400\tYES'}
                     className="min-h-36 font-mono text-sm"
-                    aria-describedby={`${id}-help`}
+                    aria-describedby={`${id}-help${parsed.errors.length ? ` ${id}-errors` : ''}`}
                     aria-invalid={parsed.errors.length > 0}
                 />
                 <p
@@ -37,6 +37,7 @@ export default function JneAccountInput({
             </div>
             {parsed.errors.length > 0 && (
                 <div
+                    id={`${id}-errors`}
                     role="alert"
                     className="space-y-1 text-sm text-destructive"
                 >
