@@ -1,0 +1,14 @@
+forgot-validation {"active":"email","errors":["Masukkan alamat email yang valid."],"invalid":[{"id":"email","described":true}],"overflow":false}
+reset-validation {"active":"email","errors":["Tautan atur ulang kata sandi tidak valid atau sudah kedaluwarsa."],"invalid":[{"id":"email","described":true}],"overflow":false}
+confirm-validation {"active":"password","errors":["Kata sandi yang dimasukkan tidak sesuai."],"invalid":[{"id":"password","described":true}],"overflow":false}
+profile-validation {"active":"name","errors":["Nama wajib diisi.","PerhatianTindakan ini bersifat permanen dan tidak dapat dibatalkan."],"invalid":[{"id":"name","described":true}],"overflow":false}
+security-validation {"active":"current_password","errors":["Kata sandi saat ini tidak sesuai."],"invalid":[{"id":"current_password","described":true}],"overflow":false}
+create-validation {"active":"pickup-customer","errors":["Pilih customer terlebih dahulu."],"invalid":[{"id":"pickup-customer","described":true}],"overflow":false}
+schedule-validation {"active":"schedule-customer","errors":["Periksa field. Jadwal belum tersimpan.","Customer wajib diisi.","Hari pickup wajib diisi.","Tanggal mulai wajib diisi.","Periksa field. Jadwal belum tersimpan."],"invalid":[{"id":"schedule-customer","described":true},{"id":"","described":true},{"id":"schedule-starts_on","described":true}],"overflow":false}
+sheet-keyboard {"active":"","errors":[],"invalid":[],"overflow":false}
+monitoring-processing-records {"active":"","errors":[],"invalid":[],"overflow":false}
+monitoring-pickup-records {"active":"","errors":[],"invalid":[],"overflow":false}
+monitoring-help-keyboard {"active":"","errors":[],"invalid":[],"overflow":false}
+pickup-bulk-context {"active":"","errors":[],"invalid":[],"overflow":false}
+operational-date-layouts {"active":"","errors":[],"invalid":[],"overflow":false}
+Recorded 13 after interaction states; no successful business writes requested.

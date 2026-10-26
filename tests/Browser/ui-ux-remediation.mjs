@@ -524,6 +524,7 @@ check(
         );
         assert.equal(await search.inputValue(), 'Customer Audit 2');
         await page
+            .getByRole('region', { name: 'Tabel data', exact: true })
             .getByRole('button', { name: 'Reset Filter', exact: true })
             .click();
         await page.waitForURL((url) => url.search === '');

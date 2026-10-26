@@ -1,0 +1,1676 @@
+[
+  {
+    "id": "P03",
+    "key": "forgot-password",
+    "page": "Lupa kata sandi",
+    "problem": "Error email tidak terkait kontrol; fokus validasi tidak ditangani; status tidak diumumkan dan success text hanya 3,22:1 pada latar terang.",
+    "change": "Error email terasosiasi dan difokuskan; status pengiriman memiliki live semantics dan warna yang lolos kontras terang/gelap; tidak membuka keyboard ponsel saat halaman dimuat.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/forgot-password-1366.png",
+        "after": "after/forgot-password-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 486,
+        "formAfter": 474,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/forgot-password-768.png",
+        "after": "after/forgot-password-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 525,
+        "formAfter": 513,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/forgot-password-390.png",
+        "after": "after/forgot-password-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 433,
+        "formAfter": 433,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/forgot-password-320.png",
+        "after": "after/forgot-password-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 381,
+        "formAfter": 381,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Success UI memakai mail array; request nyata ke provider email dan delivery tidak diuji."
+  },
+  {
+    "id": "P04",
+    "key": "reset-password",
+    "page": "Reset kata sandi",
+    "problem": "Error email dan password tidak terkait kontrol; token invalid perlu jalur koreksi terlihat.",
+    "change": "Error email/password terasosiasi dan difokuskan; tautan meminta reset baru menyediakan recovery token invalid.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/reset-password-1366.png",
+        "after": "after/reset-password-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 400,
+        "formAfter": 378,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/reset-password-768.png",
+        "after": "after/reset-password-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 439,
+        "formAfter": 417,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/reset-password-390.png",
+        "after": "after/reset-password-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 347,
+        "formAfter": 325,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/reset-password-320.png",
+        "after": "after/reset-password-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 315,
+        "formAfter": 315,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Browser memakai token invalid; valid reset/email diuji backend dengan test doubles."
+  },
+  {
+    "id": "P05",
+    "key": "verify-email",
+    "page": "Verifikasi email",
+    "problem": "Status kirim ulang sukses tampil tanpa semantic status; warna sukses perlu kontras AA normal text; baseline kondisional dikonfirmasi dengan akun fixture sementara unverified.",
+    "change": "Status sukses kirim ulang sekarang mempunyai role=status dan warna dengan kontras memadai pada tema terang/gelap; pesan, button pending, logout dan kontrak verifikasi tetap sama.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/verify-email-1366.png",
+        "after": "after/verify-email-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/verify-email-768.png",
+        "after": "after/verify-email-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/verify-email-390.png",
+        "after": "after/verify-email-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/verify-email-320.png",
+        "after": "after/verify-email-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Capture kondisional memakai account admin sementara unverified pada fixture yang sama, lalu dipulihkan. Mail array, bukan delivery email nyata. Baseline khusus diambil pada 0638cfc sebelum koreksi status ini."
+  },
+  {
+    "id": "P06",
+    "key": "confirm-password",
+    "page": "Konfirmasi kata sandi",
+    "problem": "Error belum terhubung; fokus error tidak dikembalikan.",
+    "change": "Error terkait password dan fokus kembali; pesan penolakan sekarang berbahasa Indonesia.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/confirm-password-1366.png",
+        "after": "after/confirm-password-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 508,
+        "formAfter": 508,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/confirm-password-768.png",
+        "after": "after/confirm-password-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 547,
+        "formAfter": 547,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/confirm-password-390.png",
+        "after": "after/confirm-password-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 455,
+        "formAfter": 455,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/confirm-password-320.png",
+        "after": "after/confirm-password-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 421,
+        "formAfter": 421,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak mewakili uji penetrasi; gate dan pesan penolakan diverifikasi."
+  },
+  {
+    "id": "P08",
+    "key": "dashboard-admin",
+    "page": "Dashboard Admin",
+    "problem": "Metrik dan grafik relevan dengan keputusan; tidak ada alasan menyamakan dashboard dengan daftar kerja. SSR React menghasilkan title SVG kosong karena beberapa child text; browser melaporkan hydration mismatch dan meregenerasi chart.",
+    "change": "Judul grafik SVG dijadikan satu string; HTML server sekarang berisi label dan nilai yang sama dengan client, tanpa hydration mismatch. Seluruh data, tooltip, pilihan metrik dan tabel alternatif dipertahankan.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/dashboard-admin-1366.png",
+        "after": "after/dashboard-admin-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 177,
+        "formAfter": 177,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/dashboard-admin-768.png",
+        "after": "after/dashboard-admin-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 237,
+        "formAfter": 237,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/dashboard-admin-390.png",
+        "after": "after/dashboard-admin-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 229,
+        "formAfter": 229,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/dashboard-admin-320.png",
+        "after": "after/dashboard-admin-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 229,
+        "formAfter": 229,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Baseline khusus SSR pada 50a4ff3 sebelum Q1; screenshot sendiri tidak membuktikan label server. Tiga test renderer dan browser error log melengkapi evidence."
+  },
+  {
+    "id": "P09",
+    "key": "dashboard-cs",
+    "page": "Dashboard CS",
+    "problem": "Dispatch role dan cakupan data sudah terpisah; dialog mengikuti perbaikan primitive bersama. SSR React menghasilkan title SVG kosong karena beberapa child text; browser melaporkan hydration mismatch dan meregenerasi chart.",
+    "change": "Judul grafik SVG dijadikan satu string; HTML server sekarang berisi label dan nilai yang sama dengan client, tanpa hydration mismatch. Seluruh data, tooltip, pilihan metrik dan tabel alternatif dipertahankan.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/dashboard-cs-1366.png",
+        "after": "after/dashboard-cs-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 177,
+        "formAfter": 177,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/dashboard-cs-768.png",
+        "after": "after/dashboard-cs-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 237,
+        "formAfter": 237,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/dashboard-cs-390.png",
+        "after": "after/dashboard-cs-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 229,
+        "formAfter": 229,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/dashboard-cs-320.png",
+        "after": "after/dashboard-cs-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 229,
+        "formAfter": 229,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "SSR aktif pada perbandingan Q1; tidak mengklaim pengurangan interaksi atau perubahan angka dashboard."
+  },
+  {
+    "id": "P10",
+    "key": "dashboard-retail",
+    "page": "Dashboard Retail",
+    "problem": "Empat ringkasan satu kolom pada ponsel mendorong sesi penerimaan dan tombol verifikasi ke bawah; semua angka tetap relevan.",
+    "change": "Ringkasan mobile menjadi dua kolom; semua jumlah dipertahankan; sesi pending dan tombol Verifikasi masuk viewport 390px.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/dashboard-retail-1366.png",
+        "after": "after/dashboard-retail-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 428,
+        "formAfter": 428,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/dashboard-retail-768.png",
+        "after": "after/dashboard-retail-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/dashboard-retail-390.png",
+        "after": "after/dashboard-retail-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/dashboard-retail-320.png",
+        "after": "after/dashboard-retail-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Fixture satu sesi aktif; tidak mewakili seluruh volume produksi atau studi waktu pengguna."
+  },
+  {
+    "id": "P11",
+    "key": "dashboard-pickup",
+    "page": "Dashboard Pickup",
+    "problem": "Empat ringkasan satu kolom memperpanjang akses menuju pekerjaan; tren dan exception tetap diperlukan. Sparkline juga mempunyai title kosong/mismatch pada SSR karena beberapa child text.",
+    "change": "Label Sparkline juga menjadi satu string untuk mencegah title kosong/mismatch saat SSR. Ringkasan mobile dua kolom; jumlah, delta, sparkline dan exception tetap utuh sehingga bagian pekerjaan lebih awal.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/dashboard-pickup-1366.png",
+        "after": "after/dashboard-pickup-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/dashboard-pickup-768.png",
+        "after": "after/dashboard-pickup-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/dashboard-pickup-390.png",
+        "after": "after/dashboard-pickup-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/dashboard-pickup-320.png",
+        "after": "after/dashboard-pickup-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Exception esensial tetap terlihat; daftar kerja dapat tetap memerlukan scroll, terutama pada 320px."
+  },
+  {
+    "id": "P12",
+    "key": "customers",
+    "page": "Master customer",
+    "problem": "Search y=240 pada 390px; daftar dan dialog sudah mempunyai recovery dan draft guard. Target tutup overlay hanya 16px; dialog/Sheet perlu target dan containment yang layak.",
+    "change": "Dialog customer mewarisi target tutup 44px, batas viewport dan scroll containment; keyboard/draft guard existing tetap lolos. Navigasi mobile dapat ditutup dengan satu Escape.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/customer-dialog-1366.png",
+        "after": "after/customer-dialog-1366.png",
+        "searchBefore": 271,
+        "searchAfter": 277,
+        "formBefore": 324,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/customer-dialog-768.png",
+        "after": "after/customer-dialog-768.png",
+        "searchBefore": 281,
+        "searchAfter": 288,
+        "formBefore": 412,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/customer-dialog-390.png",
+        "after": "after/customer-dialog-390.png",
+        "searchBefore": 310,
+        "searchAfter": 317,
+        "formBefore": 456,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/customer-dialog-320.png",
+        "after": "after/customer-dialog-320.png",
+        "searchBefore": 326,
+        "searchAfter": 312,
+        "formBefore": 472,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak menambah customer valid di aplikasi operasional; negative submit, lookup, dialog dan navigation diuji pada fixture."
+  },
+  {
+    "id": "P13",
+    "key": "tasks",
+    "page": "Operasional Pickup",
+    "problem": "Lima kartu ringkasan mendahului pencarian; toolbar penugasan tampil tanpa pilihan; tanggal bertumpuk pada 390px.",
+    "change": "Filter mendahului ringkasan padat lima jumlah; toolbar bulk muncul saat ada pilihan. Tanggal berpasangan pada 390px, stack pada 320px; semua kontrol dan seleksi lintas halaman tetap tersedia.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/tasks-1366.png",
+        "after": "after/tasks-1366.png",
+        "searchBefore": null,
+        "searchAfter": 205,
+        "formBefore": 834,
+        "formAfter": 640,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/tasks-768.png",
+        "after": "after/tasks-768.png",
+        "searchBefore": null,
+        "searchAfter": 261,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/tasks-390.png",
+        "after": "after/tasks-390.png",
+        "searchBefore": null,
+        "searchAfter": 245,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/tasks-320.png",
+        "after": "after/tasks-320.png",
+        "searchBefore": null,
+        "searchAfter": 245,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Pada 390px awal daftar terlihat, record lengkap masih memerlukan scroll. Bulk diuji pilih/pagination/clear tanpa mengirim assignment nyata."
+  },
+  {
+    "id": "P14",
+    "key": "mine",
+    "page": "Tugas Saya",
+    "problem": "Ringkasan tugas dan spacing memperpanjang halaman; pasangan tanggal bertumpuk walau 390px menyediakan ruang yang cukup.",
+    "change": "Ringkasan tugas lebih ringkas, spacing daftar dipadatkan, tanggal adaptif tanpa menghilangkan filter atau jadwal berikutnya.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/mine-1366.png",
+        "after": "after/mine-1366.png",
+        "searchBefore": null,
+        "searchAfter": 357,
+        "formBefore": 360,
+        "formAfter": 312,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/mine-768.png",
+        "after": "after/mine-768.png",
+        "searchBefore": null,
+        "searchAfter": 357,
+        "formBefore": 376,
+        "formAfter": 312,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/mine-390.png",
+        "after": "after/mine-390.png",
+        "searchBefore": null,
+        "searchAfter": 413,
+        "formBefore": 452,
+        "formAfter": 372,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/mine-320.png",
+        "after": "after/mine-320.png",
+        "searchBefore": null,
+        "searchAfter": 473,
+        "formBefore": 500,
+        "formAfter": 432,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Semua konteks tugas dan filter tetap terlihat; record dapat tetap di bawah viewport pada ponsel sempit."
+  },
+  {
+    "id": "P15",
+    "key": "available",
+    "page": "Tugas tersedia",
+    "problem": "Filter tanggal menambah satu baris pada 390px; tugas kandidat dan konfirmasi pengambilalihan harus tetap tersedia.",
+    "change": "Spacing dan pasangan tanggal dipadatkan pada 390px; seluruh kandidat, filter dan kapabilitas pengambilalihan dipertahankan.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/available-1366.png",
+        "after": "after/available-1366.png",
+        "searchBefore": null,
+        "searchAfter": 267,
+        "formBefore": 246,
+        "formAfter": 222,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/available-768.png",
+        "after": "after/available-768.png",
+        "searchBefore": null,
+        "searchAfter": 267,
+        "formBefore": 246,
+        "formAfter": 222,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/available-390.png",
+        "after": "after/available-390.png",
+        "searchBefore": null,
+        "searchAfter": 251,
+        "formBefore": 234,
+        "formAfter": 210,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/available-320.png",
+        "after": "after/available-320.png",
+        "searchBefore": null,
+        "searchAfter": 299,
+        "formBefore": 282,
+        "formAfter": 258,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak mengirim pengambilalihan nyata; policy dan transisi diuji backend."
+  },
+  {
+    "id": "P16",
+    "key": "pickup-history",
+    "page": "Riwayat Pickup",
+    "problem": "Filter tanggal bertumpuk pada 390px dan spacing menunda daftar; hasil akhir dan bukti tetap esensial.",
+    "change": "Spacing dan pasangan tanggal dipadatkan pada 390px; hasil akhir, bukti dan seluruh filter tetap tersedia.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/pickup-history-1366.png",
+        "after": "after/pickup-history-1366.png",
+        "searchBefore": null,
+        "searchAfter": 205,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/pickup-history-768.png",
+        "after": "after/pickup-history-768.png",
+        "searchBefore": null,
+        "searchAfter": 205,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/pickup-history-390.png",
+        "after": "after/pickup-history-390.png",
+        "searchBefore": null,
+        "searchAfter": 189,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/pickup-history-320.png",
+        "after": "after/pickup-history-320.png",
+        "searchBefore": null,
+        "searchAfter": 245,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Pada 320px tanggal tetap bertumpuk demi keterbacaan; tidak menjanjikan seluruh record tanpa scroll."
+  },
+  {
+    "id": "P17",
+    "key": "create-pickup",
+    "page": "Buat Pickup",
+    "problem": "Header formulir mengulang tugas; error field tidak terhubung dan respons 422 tidak memfokuskan kontrol.",
+    "change": "Header berulang dihapus; error customer/alamat/jadwal/catatan terkait kontrol dan fokus; submission key/recovery dipertahankan.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/create-pickup-1366.png",
+        "after": "after/create-pickup-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 216,
+        "formAfter": 216,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/create-pickup-768.png",
+        "after": "after/create-pickup-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 216,
+        "formAfter": 216,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/create-pickup-390.png",
+        "after": "after/create-pickup-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 204,
+        "formAfter": 204,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/create-pickup-320.png",
+        "after": "after/create-pickup-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 204,
+        "formAfter": 204,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Validasi dan lookup diuji; tidak menciptakan transaksi operasional nyata."
+  },
+  {
+    "id": "P21",
+    "key": "schedules",
+    "page": "Jadwal Regular",
+    "problem": "Pesan scheduler mendahului pencarian; dialog menghapus draft saat Escape tanpa konfirmasi; error tidak terasosiasi.",
+    "change": "Pencarian mendahului penjelasan scheduler; label dan error inline; Escape/close menanyakan pembuangan hanya jika draft berubah.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/schedules-1366.png",
+        "after": "after/schedules-1366.png",
+        "searchBefore": 278,
+        "searchAfter": 180,
+        "formBefore": 440,
+        "formAfter": 440,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/schedules-768.png",
+        "after": "after/schedules-768.png",
+        "searchBefore": 298,
+        "searchAfter": 180,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/schedules-390.png",
+        "after": "after/schedules-390.png",
+        "searchBefore": 310,
+        "searchAfter": 172,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/schedules-320.png",
+        "after": "after/schedules-320.png",
+        "searchBefore": 378,
+        "searchAfter": 220,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Negative submit dan draft recovery diuji; generasi jadwal/worker live tidak dijalankan."
+  },
+  {
+    "id": "P22",
+    "key": "results-processing",
+    "page": "Monitoring pemrosesan",
+    "problem": "Search y=1270 pada 390px; empat kartu satu kolom dan tabel ringkasan mendahului daftar.",
+    "change": "Search dipindah ke awal, ringkasan padat, kategori disclosure, bantuan kontekstual. Manual dan konfirmasi eksternal tetap terpisah; null ditulis Belum tersedia.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/results-processing-1366.png",
+        "after": "after/results-processing-1366.png",
+        "searchBefore": 716,
+        "searchAfter": 239,
+        "formBefore": 588,
+        "formAfter": 239,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/results-processing-768.png",
+        "after": "after/results-processing-768.png",
+        "searchBefore": 1034,
+        "searchAfter": 323,
+        "formBefore": 906,
+        "formAfter": 323,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/results-processing-390.png",
+        "after": "after/results-processing-390.png",
+        "searchBefore": 1270,
+        "searchAfter": 339,
+        "formBefore": 1142,
+        "formAfter": 339,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/results-processing-320.png",
+        "after": "after/results-processing-320.png",
+        "searchBefore": 1450,
+        "searchAfter": 415,
+        "formBefore": 1322,
+        "formAfter": 415,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tabel lebar tetap memakai scroll lokal. Konfirmasi eksternal yang belum tersedia tidak diganti angka nol."
+  },
+  {
+    "id": "P23",
+    "key": "results-pickup",
+    "page": "Monitoring hasil pickup",
+    "problem": "Search y=1389 pada 390px; lima kartu satu kolom dan antrean mendahului pekerjaan pencarian.",
+    "change": "Search di awal; metrik dan antrean exception padat; semua filter antrean tetap terlihat. Rincian bantuan berada dalam disclosure.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/results-pickup-1366.png",
+        "after": "after/results-pickup-1366.png",
+        "searchBefore": 569,
+        "searchAfter": 239,
+        "formBefore": 569,
+        "formAfter": 239,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/results-pickup-768.png",
+        "after": "after/results-pickup-768.png",
+        "searchBefore": 1061,
+        "searchAfter": 323,
+        "formBefore": 1061,
+        "formAfter": 323,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/results-pickup-390.png",
+        "after": "after/results-pickup-390.png",
+        "searchBefore": 1389,
+        "searchAfter": 339,
+        "formBefore": 1389,
+        "formAfter": 339,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/results-pickup-320.png",
+        "after": "after/results-pickup-320.png",
+        "searchBefore": 1537,
+        "searchAfter": 415,
+        "formBefore": 1537,
+        "formAfter": 415,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Pada 320px record dapat memerlukan scroll karena konteks esensial. Pencarian dan filter tetap dapat diakses. Pengurangan waktu tugas belum diukur dengan pengguna."
+  },
+  {
+    "id": "P25",
+    "key": "handovers",
+    "page": "Daftar Handover",
+    "problem": "Tanggal mulai/selesai bertumpuk pada 390px sehingga daftar sesi turun; full-task selection dan guard penutupan perlu dipertahankan.",
+    "change": "Tanggal mulai/selesai berada satu baris pada 390px dan bertumpuk pada 320px. Filter status, petugas, konteks tanggal dan seleksi tetap sama.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/handovers-1366.png",
+        "after": "after/handovers-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 513,
+        "formAfter": 513,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/handovers-768.png",
+        "after": "after/handovers-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/handovers-390.png",
+        "after": "after/handovers-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/handovers-320.png",
+        "after": "after/handovers-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak membuat atau menutup sesi nyata; seleksi mobile dan validasi diuji pada fixture serta backend."
+  },
+  {
+    "id": "P26",
+    "key": "handover-history",
+    "page": "Riwayat Handover",
+    "problem": "Pasangan tanggal bertumpuk pada 390px; konteks riwayat dan default filter tetap diperlukan.",
+    "change": "Pasangan tanggal adaptif memperpendek area filter pada 390px tanpa mengubah mode riwayat, default atau nilai filter.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/handover-history-1366.png",
+        "after": "after/handover-history-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/handover-history-768.png",
+        "after": "after/handover-history-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/handover-history-390.png",
+        "after": "after/handover-history-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/handover-history-320.png",
+        "after": "after/handover-history-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Fixture riwayat kosong; state empty dan kontrol dicapture, perilaku data selesai dilindungi tests backend."
+  },
+  {
+    "id": "P27",
+    "key": "handover-detail",
+    "page": "Verifikasi Handover",
+    "problem": "Identitas pembuat menjadi kartu kelima dan mengulang tanggal header; kartu tinggi menunda daftar verifikasi.",
+    "change": "Empat jumlah dipadatkan; pembuat menjadi metadata, tanggal tetap pada header; daftar kandidat lebih awal. Jumlah, selisih dan guard tetap sama.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/handover-detail-1366.png",
+        "after": "after/handover-detail-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 909,
+        "formAfter": 880,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/handover-detail-768.png",
+        "after": "after/handover-detail-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 2769,
+        "formAfter": 2658,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/handover-detail-390.png",
+        "after": "after/handover-detail-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 2877,
+        "formAfter": 2750,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/handover-detail-320.png",
+        "after": "after/handover-detail-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 3185,
+        "formAfter": 3022,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak mengirim jumlah fisik atau finalisasi nyata; perbandingan independent dan guard diuji backend."
+  },
+  {
+    "id": "P28",
+    "key": "discrepancies",
+    "page": "Monitoring Selisih",
+    "problem": "Tanggal mulai/selesai bertumpuk pada 390px; filter kategori/status dan konteks selisih tetap esensial.",
+    "change": "Tanggal berpasangan bila cukup lebar; semua filter kategori/status, catatan dan konteks pemeriksaan tetap tersedia.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/discrepancies-1366.png",
+        "after": "after/discrepancies-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 629,
+        "formAfter": 629,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/discrepancies-768.png",
+        "after": "after/discrepancies-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/discrepancies-390.png",
+        "after": "after/discrepancies-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/discrepancies-320.png",
+        "after": "after/discrepancies-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tanggal pemeriksaan dan ketentuan selisih tetap terlihat; penyelesaian selisih nyata tidak dilakukan."
+  },
+  {
+    "id": "P29",
+    "key": "customer-dashboard",
+    "page": "Dashboard customer",
+    "problem": "Filter menjelaskan basis tanggal yang menentukan arti angka; bukan paragraf berlebih untuk dihapus. SSR React menghasilkan title SVG kosong karena beberapa child text; browser melaporkan hydration mismatch dan meregenerasi chart.",
+    "change": "Judul grafik SVG dijadikan satu string; HTML server sekarang berisi label dan nilai yang sama dengan client, tanpa hydration mismatch. Seluruh data, tooltip, pilihan metrik dan tabel alternatif dipertahankan.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/customer-dashboard-1366.png",
+        "after": "after/customer-dashboard-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 287,
+        "formAfter": 287,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/customer-dashboard-768.png",
+        "after": "after/customer-dashboard-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 327,
+        "formAfter": 327,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/customer-dashboard-390.png",
+        "after": "after/customer-dashboard-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 379,
+        "formAfter": 379,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/customer-dashboard-320.png",
+        "after": "after/customer-dashboard-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 399,
+        "formAfter": 399,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "SSR aktif pada perbandingan Q1; tabel harian dan null amount tidak diubah. Browser Chromium, bukan sertifikasi pembaca layar."
+  },
+  {
+    "id": "P34",
+    "key": "reports",
+    "page": "Penarikan Report",
+    "problem": "Empat kartu rencana mendahului input dan mengambil ruang; bukan keputusan dashboard.",
+    "change": "Input account/periode mendahului rencana; counter rencana dekat tombol kirim; kontrol dapat membungkus pada 320px; error terkait field.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/reports-1366.png",
+        "after": "after/reports-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 375,
+        "formAfter": 237,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/reports-768.png",
+        "after": "after/reports-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 501,
+        "formAfter": 237,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/reports-390.png",
+        "after": "after/reports-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 533,
+        "formAfter": 277,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/reports-320.png",
+        "after": "after/reports-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 549,
+        "formAfter": 293,
+        "overflowBefore": true,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak menarik report eksternal; pengiriman dan batas bisnis diuji backend."
+  },
+  {
+    "id": "P35",
+    "key": "report-runs",
+    "page": "Riwayat run",
+    "problem": "Empat kartu statistik halaman mendahului pencarian; counter bukan agregat semua run.",
+    "change": "Counter per halaman menjadi ringkasan padat berlabel; filter lebih awal; scope, log dan recovery tetap tersedia.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/report-runs-1366.png",
+        "after": "after/report-runs-1366.png",
+        "searchBefore": 393,
+        "searchAfter": 365,
+        "formBefore": 371,
+        "formAfter": 343,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/report-runs-768.png",
+        "after": "after/report-runs-768.png",
+        "searchBefore": 551,
+        "searchAfter": 469,
+        "formBefore": 529,
+        "formAfter": 447,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/report-runs-390.png",
+        "after": "after/report-runs-390.png",
+        "searchBefore": 587,
+        "searchAfter": 513,
+        "formBefore": 565,
+        "formAfter": 491,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/report-runs-320.png",
+        "after": "after/report-runs-320.png",
+        "searchBefore": 639,
+        "searchAfter": 533,
+        "formBefore": 617,
+        "formAfter": 511,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak menjalankan recovery ke provider live. Counter tetap hanya run pada halaman."
+  },
+  {
+    "id": "P36",
+    "key": "report-awbs",
+    "page": "AWB dalam report",
+    "problem": "Panel pipeline besar menempatkan search y=757 di ponsel; penjelasan sukses rutin mendominasi.",
+    "change": "Status, error, unduhan dan retry tetap terlihat; penjelasan pipeline dan rincian impor rutin masuk disclosure; pencarian dan AWB lebih awal.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/report-awbs-1366.png",
+        "after": "after/report-awbs-1366.png",
+        "searchBefore": 625,
+        "searchAfter": 447,
+        "formBefore": 601,
+        "formAfter": 423,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/report-awbs-768.png",
+        "after": "after/report-awbs-768.png",
+        "searchBefore": 705,
+        "searchAfter": 447,
+        "formBefore": 681,
+        "formAfter": 423,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/report-awbs-390.png",
+        "after": "after/report-awbs-390.png",
+        "searchBefore": 757,
+        "searchAfter": 439,
+        "formBefore": 733,
+        "formAfter": 415,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/report-awbs-320.png",
+        "after": "after/report-awbs-320.png",
+        "searchBefore": 833,
+        "searchAfter": 459,
+        "formBefore": 809,
+        "formAfter": 435,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tabel snapshot tetap scroll lokal; import/projection live tidak dijalankan."
+  },
+  {
+    "id": "P37",
+    "key": "shipper-aliases",
+    "page": "Customer & nama pengirim",
+    "problem": "Panel penjelasan penerapan dan ownership mendorong search y=773; keadaan berhasil kosong berulang.",
+    "change": "Riwayat penerapan menjadi disclosure; run pending/gagal dibuka otomatis; exception pemilik dan tombol Periksa AWB tetap terlihat.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/shipper-aliases-1366.png",
+        "after": "after/shipper-aliases-1366.png",
+        "searchBefore": 561,
+        "searchAfter": 505,
+        "formBefore": 561,
+        "formAfter": 505,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/shipper-aliases-768.png",
+        "after": "after/shipper-aliases-768.png",
+        "searchBefore": 725,
+        "searchAfter": 653,
+        "formBefore": 725,
+        "formAfter": 653,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/shipper-aliases-390.png",
+        "after": "after/shipper-aliases-390.png",
+        "searchBefore": 773,
+        "searchAfter": 645,
+        "formBefore": 773,
+        "formAfter": 645,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/shipper-aliases-320.png",
+        "after": "after/shipper-aliases-320.png",
+        "searchBefore": 877,
+        "searchAfter": 693,
+        "formBefore": 877,
+        "formAfter": 693,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Tidak mengubah kepemilikan atau mensinkronkan alias ke data produksi."
+  },
+  {
+    "id": "P38",
+    "key": "evidence-rules",
+    "page": "Aturan bukti JNE",
+    "problem": "Editor sudah Sheet; aktivasi menuntut alasan, versi dan bukti; tidak boleh dilipat menjadi auto-toggle. Target tutup overlay hanya 16px; dialog/Sheet perlu target dan containment yang layak.",
+    "change": "Sheet editor memiliki target tutup 44px dan ruang judul; keyboard trap dan focus return diverifikasi. Aturan/aktivasi tidak diubah.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/evidence-sheet-1366.png",
+        "after": "after/evidence-sheet-1366.png",
+        "searchBefore": 220,
+        "searchAfter": null,
+        "formBefore": 220,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/evidence-sheet-768.png",
+        "after": "after/evidence-sheet-768.png",
+        "searchBefore": 220,
+        "searchAfter": null,
+        "formBefore": 220,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/evidence-sheet-390.png",
+        "after": "after/evidence-sheet-390.png",
+        "searchBefore": 212,
+        "searchAfter": null,
+        "formBefore": 212,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/evidence-sheet-320.png",
+        "after": "after/evidence-sheet-320.png",
+        "searchBefore": 256,
+        "searchAfter": null,
+        "formBefore": 256,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Fixture mode draft; aktivasi produksi dan keputusan pencocokan tidak dilakukan."
+  },
+  {
+    "id": "P42",
+    "key": "push-test",
+    "page": "Tes Notifikasi",
+    "problem": "Pagination overflow pada 320px: tombol Berikutnya berakhir di x=338. Diagnostik adalah tujuan layar; actionable konfigurasi tetap terlihat. Fixture tanpa perangkat.",
+    "change": "Pagination membungkus pada 320px sehingga tombol tetap di dalam halaman.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/push-test-1366.png",
+        "after": "after/push-test-1366.png",
+        "searchBefore": 257,
+        "searchAfter": 257,
+        "formBefore": 257,
+        "formAfter": 257,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/push-test-768.png",
+        "after": "after/push-test-768.png",
+        "searchBefore": 277,
+        "searchAfter": 277,
+        "formBefore": 277,
+        "formAfter": 277,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/push-test-390.png",
+        "after": "after/push-test-390.png",
+        "searchBefore": 317,
+        "searchAfter": 317,
+        "formBefore": 317,
+        "formAfter": 317,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/push-test-320.png",
+        "after": "after/push-test-320.png",
+        "searchBefore": 337,
+        "searchAfter": 317,
+        "formBefore": 337,
+        "formAfter": 317,
+        "overflowBefore": true,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Fixture tanpa perangkat; FCM/hardware tidak diuji live."
+  },
+  {
+    "id": "P43",
+    "key": "profile",
+    "page": "Profil",
+    "problem": "Nav tiga baris dan deskripsi global mendorong form; error tanpa asosiasi; simpan tanpa feedback lokal.",
+    "change": "Navigasi akun mendatar pada ponsel; active link memiliki aria-current; field error terkait dan fokus; label simpan spesifik dan feedback sukses.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/profile-1366.png",
+        "after": "after/profile-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 248,
+        "formAfter": 210,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/profile-768.png",
+        "after": "after/profile-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 401,
+        "formAfter": 278,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/profile-390.png",
+        "after": "after/profile-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 393,
+        "formAfter": 270,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/profile-320.png",
+        "after": "after/profile-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 393,
+        "formAfter": 270,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Error recovery diverifikasi di browser; keberhasilan update diuji backend. Tidak menghapus akun fixture."
+  },
+  {
+    "id": "P44",
+    "key": "security",
+    "page": "Keamanan",
+    "problem": "Nav mengambil ruang; tiga error belum terhubung ke field; sukses tidak diumumkan.",
+    "change": "Navigasi akun ringkas; tiga field memiliki asosiasi error/fokus; feedback menyimpan/sukses. Aturan dan password confirmation tetap sama.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/security-1366.png",
+        "after": "after/security-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 248,
+        "formAfter": 210,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/security-768.png",
+        "after": "after/security-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 421,
+        "formAfter": 298,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/security-390.png",
+        "after": "after/security-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 413,
+        "formAfter": 290,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/security-320.png",
+        "after": "after/security-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": 413,
+        "formAfter": 290,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Error recovery diverifikasi di browser; penggantian password valid diuji backend."
+  },
+  {
+    "id": "P45",
+    "key": "appearance",
+    "page": "Tampilan",
+    "problem": "Pilihan sederhana didahului navigasi vertikal besar pada ponsel; active link tanpa aria-current.",
+    "change": "Navigasi ringkas dengan aria-current; pilihan tema dan persistensi tetap sama.",
+    "pairs": [
+      {
+        "width": 1366,
+        "before": "before/appearance-1366.png",
+        "after": "after/appearance-1366.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 768,
+        "before": "before/appearance-768.png",
+        "after": "after/appearance-768.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 390,
+        "before": "before/appearance-390.png",
+        "after": "after/appearance-390.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      },
+      {
+        "width": 320,
+        "before": "before/appearance-320.png",
+        "after": "after/appearance-320.png",
+        "searchBefore": null,
+        "searchAfter": null,
+        "formBefore": null,
+        "formAfter": null,
+        "overflowBefore": false,
+        "overflowAfter": false
+      }
+    ],
+    "limitation": "Chromium/tema saja; tidak mengklaim seluruh kombinasi browser/OS."
+  }
+]

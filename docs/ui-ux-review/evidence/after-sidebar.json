@@ -1,0 +1,30 @@
+[
+  {
+    "width": 390,
+    "role": "admin_supervisor",
+    "screenshot": "after/mobile-sidebar-390.png",
+    "closeTarget": {
+      "x": 235,
+      "y": 8,
+      "width": 44,
+      "height": 44
+    },
+    "hiddenTooltips": 0,
+    "closedWithOneEscape": true,
+    "focusReturned": true
+  },
+  {
+    "width": 320,
+    "role": "admin_supervisor",
+    "screenshot": "after/mobile-sidebar-320.png",
+    "closeTarget": {
+      "x": 235,
+      "y": 8,
+      "width": 44,
+      "height": 44
+    },
+    "hiddenTooltips": 0,
+    "closedWithOneEscape": true,
+    "focusReturned": true
+  }
+]

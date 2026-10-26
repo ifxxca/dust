@@ -8,7 +8,9 @@
     ],
     "role": "guest",
     "active": "",
-    "errors": [],
+    "errors": [
+      "Masukkan alamat email yang valid."
+    ],
     "invalid": [],
     "overflow": false,
     "responseStatus": 302,
@@ -23,7 +25,9 @@
     ],
     "role": "guest",
     "active": "",
-    "errors": [],
+    "errors": [
+      "Tautan atur ulang kata sandi tidak valid atau sudah kedaluwarsa."
+    ],
     "invalid": [],
     "overflow": false,
     "responseStatus": 302,
@@ -38,7 +42,9 @@
     ],
     "role": "admin_supervisor",
     "active": "",
-    "errors": [],
+    "errors": [
+      "The provided password was incorrect."
+    ],
     "invalid": [],
     "overflow": false,
     "responseStatus": 302
@@ -52,7 +58,10 @@
     ],
     "role": "admin_supervisor",
     "active": "",
-    "errors": [],
+    "errors": [
+      "Nama wajib diisi.",
+      "PerhatianTindakan ini bersifat permanen dan tidak dapat dibatalkan."
+    ],
     "invalid": [],
     "overflow": false,
     "responseStatus": 303,
@@ -66,8 +75,10 @@
       844
     ],
     "role": "admin_supervisor",
-    "active": "",
-    "errors": [],
+    "active": "current_password",
+    "errors": [
+      "Kata sandi saat ini tidak sesuai."
+    ],
     "invalid": [],
     "overflow": false,
     "responseStatus": 303
@@ -80,8 +91,10 @@
       844
     ],
     "role": "admin_supervisor",
-    "active": "pickup-address",
-    "errors": [],
+    "active": "",
+    "errors": [
+      "Pilih customer terlebih dahulu."
+    ],
     "invalid": [],
     "overflow": false
   },
@@ -104,7 +117,13 @@
     "invalid": [],
     "overflow": false,
     "responseStatus": 422,
-    "nativeValidationBypassed": true
+    "nativeValidationBypassed": true,
+    "closeTarget": {
+      "x": 341,
+      "y": -72.796875,
+      "width": 16,
+      "height": 16
+    }
   },
   {
     "key": "sheet-keyboard",

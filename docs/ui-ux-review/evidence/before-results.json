@@ -528,246 +528,6 @@
     "errors": []
   },
   {
-    "key": "dashboard-admin",
-    "role": "admin_supervisor",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 1366,
-      "height": 768
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-admin-1366.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 88,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 177,
-      "height": 62
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "dashboard-admin",
-    "role": "admin_supervisor",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 768,
-      "height": 1024
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-admin-768.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 88,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 237,
-      "height": 174
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "dashboard-admin",
-    "role": "admin_supervisor",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 390,
-      "height": 844
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-admin-390.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 80,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 229,
-      "height": 248
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "dashboard-admin",
-    "role": "admin_supervisor",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 320,
-      "height": 740
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-admin-320.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 80,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 229,
-      "height": 248
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "dashboard-cs",
-    "role": "cs",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 1366,
-      "height": 768
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-cs-1366.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 88,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 177,
-      "height": 62
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "dashboard-cs",
-    "role": "cs",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 768,
-      "height": 1024
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-cs-768.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 88,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 237,
-      "height": 174
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "dashboard-cs",
-    "role": "cs",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 390,
-      "height": 844
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-cs-390.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 80,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 229,
-      "height": 248
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "dashboard-cs",
-    "role": "cs",
-    "route": "/dashboard",
-    "viewport": {
-      "width": 320,
-      "height": 740
-    },
-    "status": 200,
-    "screenshot": "before/dashboard-cs-320.png",
-    "url": "/dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 80,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 229,
-      "height": 248
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard operasional"
-    ],
-    "alerts": [],
-    "errors": []
-  },
-  {
     "key": "dashboard-retail",
     "role": "retail_staff",
     "route": "/dashboard",
@@ -3115,138 +2875,6 @@
       "Monitoring Selisih"
     ],
     "alerts": [],
-    "errors": []
-  },
-  {
-    "key": "customer-dashboard",
-    "role": "admin_supervisor",
-    "route": "/admin/jne-monitoring/customer-dashboard",
-    "viewport": {
-      "width": 1366,
-      "height": 768
-    },
-    "status": 200,
-    "screenshot": "before/customer-dashboard-1366.png",
-    "url": "/admin/jne-monitoring/customer-dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 88,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 287,
-      "height": 74
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard customer",
-      "Server resi"
-    ],
-    "alerts": [
-      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
-    ],
-    "errors": []
-  },
-  {
-    "key": "customer-dashboard",
-    "role": "admin_supervisor",
-    "route": "/admin/jne-monitoring/customer-dashboard",
-    "viewport": {
-      "width": 768,
-      "height": 1024
-    },
-    "status": 200,
-    "screenshot": "before/customer-dashboard-768.png",
-    "url": "/admin/jne-monitoring/customer-dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 88,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 347,
-      "height": 224
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard customer",
-      "Server resi"
-    ],
-    "alerts": [
-      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
-    ],
-    "errors": []
-  },
-  {
-    "key": "customer-dashboard",
-    "role": "admin_supervisor",
-    "route": "/admin/jne-monitoring/customer-dashboard",
-    "viewport": {
-      "width": 390,
-      "height": 844
-    },
-    "status": 200,
-    "screenshot": "before/customer-dashboard-390.png",
-    "url": "/admin/jne-monitoring/customer-dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 80,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 379,
-      "height": 404
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard customer",
-      "Server resi"
-    ],
-    "alerts": [
-      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
-    ],
-    "errors": []
-  },
-  {
-    "key": "customer-dashboard",
-    "role": "admin_supervisor",
-    "route": "/admin/jne-monitoring/customer-dashboard",
-    "viewport": {
-      "width": 320,
-      "height": 740
-    },
-    "status": 200,
-    "screenshot": "before/customer-dashboard-320.png",
-    "url": "/admin/jne-monitoring/customer-dashboard",
-    "zoom": 1,
-    "theme": "",
-    "overflow": false,
-    "title": {
-      "top": 80,
-      "height": 32
-    },
-    "search": null,
-    "workingArea": {
-      "top": 399,
-      "height": 404
-    },
-    "unnamedControls": [],
-    "headings": [
-      "Dashboard customer",
-      "Server resi"
-    ],
-    "alerts": [
-      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
-    ],
     "errors": []
   },
   {
@@ -5918,5 +5546,401 @@
     ],
     "alerts": [],
     "errors": []
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-admin-1366.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 177,
+      "height": 62
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-admin-768.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 237,
+      "height": 174
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-admin-390.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-admin-320.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-cs-1366.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 177,
+      "height": 62
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-cs-768.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 237,
+      "height": 174
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-cs-390.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "before/dashboard-cs-320.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <OperationalDashboardOverview data={{filters:{...}, ...}} timezone=\"Asia/Jakarta\">\n      <PageContainer className=\"flex flex-...\">\n        <div data-page-container=\"fluid\" className=\"w-full min...\">\n          <Head>\n          <header>\n          <Card>\n          <section>\n          <div>\n          <div className=\"grid items...\">\n            <div className=\"min-w-0 xl...\">\n              <OperationalActivityChart daily={[...]}>\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardHeader>\n                    <CardContent className=\"flex flex-...\">\n                      <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                        <div>\n                        <div>\n                          <p>\n                          <svg viewBox=\"0 0 700 205\" preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Grafik pic...\" ...>\n                            <line>\n                            <line>\n                            <line>\n                            <line>\n                            <rect x={4.199999999999999} y={192} width={14.933333333333334} height={1} rx=\"2\" ...>\n                              <title>\n+                               27 Sep\n                                ...\n                            ...\n                          ...\n                        ...\n            ...\n          ...\n"
+    ]
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "before/customer-dashboard-1366.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 287,
+      "height": 74
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <SidebarInset id=\"main-content\" tabIndex={-1} className=\"w-full min...\">\n      <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n        <AppSidebarHeader>\n        <JneCustomerDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} summary={{shipments:30, ...}} ...>\n          <PageContainer className=\"flex flex-...\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <Card>\n              <CustomerServerSummary>\n              <JneWorkspaceMetrics>\n              <Alert>\n              <p>\n              <div className=\"grid items...\">\n                <div className=\"flex min-w...\">\n                  <CustomerDailyChart days={[...]}>\n                    <Card className=\"min-w-0\">\n                      <div data-slot=\"card\" className=\"bg-card te...\">\n                        <CardHeader>\n                        <CardContent className=\"flex flex-...\">\n                          <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                            <div>\n                            <div className=\"flex flex-...\">\n                              <p>\n                              <svg viewBox=\"0 0 700 190\" preserveAspectRatio=\"none\" className=\"h-48 w-ful...\" role=\"img\" ...>\n                                <title id=\"_R_1cql_-t...\">\n+                                 Jumlah resi\n                                  ...\n                                ...\n                              ...\n                            ...\n                  ...\n                ...\n              ...\n"
+    ]
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "before/customer-dashboard-768.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 327,
+      "height": 224
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <SidebarInset id=\"main-content\" tabIndex={-1} className=\"w-full min...\">\n      <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n        <AppSidebarHeader>\n        <JneCustomerDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} summary={{shipments:30, ...}} ...>\n          <PageContainer className=\"flex flex-...\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <Card>\n              <CustomerServerSummary>\n              <JneWorkspaceMetrics>\n              <Alert>\n              <p>\n              <div className=\"grid items...\">\n                <div className=\"flex min-w...\">\n                  <CustomerDailyChart days={[...]}>\n                    <Card className=\"min-w-0\">\n                      <div data-slot=\"card\" className=\"bg-card te...\">\n                        <CardHeader>\n                        <CardContent className=\"flex flex-...\">\n                          <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                            <div>\n                            <div className=\"flex flex-...\">\n                              <p>\n                              <svg viewBox=\"0 0 700 190\" preserveAspectRatio=\"none\" className=\"h-48 w-ful...\" role=\"img\" ...>\n                                <title id=\"_R_1cql_-t...\">\n+                                 Jumlah resi\n                                  ...\n                                ...\n                              ...\n                            ...\n                  ...\n                ...\n              ...\n"
+    ]
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "before/customer-dashboard-390.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 379,
+      "height": 404
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <SidebarInset id=\"main-content\" tabIndex={-1} className=\"w-full min...\">\n      <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n        <AppSidebarHeader>\n        <JneCustomerDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} summary={{shipments:30, ...}} ...>\n          <PageContainer className=\"flex flex-...\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <Card>\n              <CustomerServerSummary>\n              <JneWorkspaceMetrics>\n              <Alert>\n              <p>\n              <div className=\"grid items...\">\n                <div className=\"flex min-w...\">\n                  <CustomerDailyChart days={[...]}>\n                    <Card className=\"min-w-0\">\n                      <div data-slot=\"card\" className=\"bg-card te...\">\n                        <CardHeader>\n                        <CardContent className=\"flex flex-...\">\n                          <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                            <div>\n                            <div className=\"flex flex-...\">\n                              <p>\n                              <svg viewBox=\"0 0 700 190\" preserveAspectRatio=\"none\" className=\"h-48 w-ful...\" role=\"img\" ...>\n                                <title id=\"_R_1cql_-t...\">\n+                                 Jumlah resi\n                                  ...\n                                ...\n                              ...\n                            ...\n                  ...\n                ...\n              ...\n"
+    ]
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "before/customer-dashboard-320.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 399,
+      "height": 404
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <SidebarInset id=\"main-content\" tabIndex={-1} className=\"w-full min...\">\n      <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n        <AppSidebarHeader>\n        <JneCustomerDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} summary={{shipments:30, ...}} ...>\n          <PageContainer className=\"flex flex-...\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <Card>\n              <CustomerServerSummary>\n              <JneWorkspaceMetrics>\n              <Alert>\n              <p>\n              <div className=\"grid items...\">\n                <div className=\"flex min-w...\">\n                  <CustomerDailyChart days={[...]}>\n                    <Card className=\"min-w-0\">\n                      <div data-slot=\"card\" className=\"bg-card te...\">\n                        <CardHeader>\n                        <CardContent className=\"flex flex-...\">\n                          <div data-slot=\"card-content\" className=\"px-6 flex ...\">\n                            <div>\n                            <div className=\"flex flex-...\">\n                              <p>\n                              <svg viewBox=\"0 0 700 190\" preserveAspectRatio=\"none\" className=\"h-48 w-ful...\" role=\"img\" ...>\n                                <title id=\"_R_1cql_-t...\">\n+                                 Jumlah resi\n                                  ...\n                                ...\n                              ...\n                            ...\n                  ...\n                ...\n              ...\n"
+    ]
   }
 ]

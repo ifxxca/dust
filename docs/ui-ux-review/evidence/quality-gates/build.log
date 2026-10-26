@@ -1,0 +1,155 @@
+
+> build
+> vp build
+
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+[plugin laravel:fonts] Optimized font fallbacks require the optional "fontaine" package. Install it, or set "optimizedFallbacks: false" on your fonts to disable the feature.
+transforming...
+✓ 2499 modules transformed.
+rendering chunks...
+computing gzip size...
+public/build/fonts-manifest.json                                 5.74 kB │ gzip:   0.71 kB
+public/build/assets/instrument-sans-400-normal-DRC__1Mx.woff2   16.86 kB
+public/build/assets/instrument-sans-500-normal-Dk9ku72i.woff2   17.23 kB
+public/build/assets/instrument-sans-600-normal-B7fBEWYG.woff2   17.40 kB
+public/build/assets/instrument-sans-400-normal-D1W7dsQl.woff    21.24 kB
+public/build/assets/instrument-sans-500-normal-Z6ESRlEs.woff    21.65 kB
+public/build/assets/instrument-sans-600-normal-B9e8oLYv.woff    21.67 kB
+public/build/manifest.json                                      49.37 kB │ gzip:   5.02 kB
+public/build/assets/fonts-C9MNnjVw.css                           2.35 kB │ gzip:   0.38 kB
+public/build/assets/app-g_W4XwRn.css                           128.75 kB │ gzip:  20.79 kB
+public/build/assets/check-l3zgExlj.js                            0.12 kB │ gzip:   0.14 kB
+public/build/assets/chevron-down-CJVdttn-.js                     0.12 kB │ gzip:   0.14 kB
+public/build/assets/chevron-left-B2H5cPYi.js                     0.12 kB │ gzip:   0.14 kB
+public/build/assets/chevron-right-D-MFLqJA.js                    0.12 kB │ gzip:   0.14 kB
+public/build/assets/play-DqgIxxEa.js                             0.13 kB │ gzip:   0.14 kB
+public/build/assets/loader-circle-2Ic6OPNe.js                    0.14 kB │ gzip:   0.15 kB
+public/build/assets/plus-BDqFAcFY.js                             0.15 kB │ gzip:   0.15 kB
+public/build/assets/arrow-up-sHalBA42.js                         0.16 kB │ gzip:   0.16 kB
+public/build/assets/filter-C0H2rW1Q.js                           0.16 kB │ gzip:   0.16 kB
+public/build/assets/arrow-down-DLSzTG1G.js                       0.16 kB │ gzip:   0.16 kB
+public/build/assets/arrow-right-CEH6VFJj.js                      0.16 kB │ gzip:   0.16 kB
+public/build/assets/arrow-up-right-aUMbwvHV.js                   0.16 kB │ gzip:   0.15 kB
+public/build/assets/search-B4GuQXL8.js                           0.17 kB │ gzip:   0.16 kB
+public/build/assets/circle-check-BgWRsr1t.js                     0.17 kB │ gzip:   0.16 kB
+public/build/assets/user-round-61RA36RC.js                       0.18 kB │ gzip:   0.17 kB
+public/build/assets/clock-3-fL42Gq6r.js                          0.18 kB │ gzip:   0.17 kB
+public/build/assets/mail-CPTtSBAO.js                             0.21 kB │ gzip:   0.20 kB
+public/build/assets/ellipsis-BWZT-2UD.js                         0.22 kB │ gzip:   0.16 kB
+public/build/assets/ellipsis-vertical-DS-xtqBU.js                0.23 kB │ gzip:   0.17 kB
+public/build/assets/panel-right-open-D2XZD8FS.js                 0.23 kB │ gzip:   0.20 kB
+public/build/assets/copy-DRqfUU3r.js                             0.23 kB │ gzip:   0.20 kB
+public/build/assets/circle-help-BWjAE7Ws.js                      0.23 kB │ gzip:   0.19 kB
+public/build/assets/circle-alert-DPdXnQ0b.js                     0.24 kB │ gzip:   0.18 kB
+public/build/assets/settings-2-BICyeuW0.js                       0.25 kB │ gzip:   0.19 kB
+public/build/assets/map-pin-DzlF3lbu.js                          0.25 kB │ gzip:   0.22 kB
+public/build/assets/download-BIsJ4-hY.js                         0.26 kB │ gzip:   0.21 kB
+public/build/assets/input-error-DuudtPdk.js                      0.26 kB │ gzip:   0.21 kB
+public/build/assets/inbox-C_9faco0.js                            0.28 kB │ gzip:   0.23 kB
+public/build/assets/submission-key-Bd7_jZUn.js                   0.33 kB │ gzip:   0.23 kB
+public/build/assets/page-container-B1KtrXGR.js                   0.34 kB │ gzip:   0.26 kB
+public/build/assets/chart-column-D9WGWhM4.js                     0.36 kB │ gzip:   0.25 kB
+public/build/assets/confirm-B4fYZoTp.js                          0.36 kB │ gzip:   0.22 kB
+public/build/assets/package-C1If9lGI.js                          0.37 kB │ gzip:   0.25 kB
+public/build/assets/text-link-Cp5zFodV.js                        0.37 kB │ gzip:   0.26 kB
+public/build/assets/phone-BFgIzQdN.js                            0.39 kB │ gzip:   0.25 kB
+public/build/assets/heading-CFbfRTuZ.js                          0.40 kB │ gzip:   0.28 kB
+public/build/assets/truck-BGQ3isXU.js                            0.40 kB │ gzip:   0.26 kB
+public/build/assets/clipboard-list-knWJVGWr.js                   0.41 kB │ gzip:   0.25 kB
+public/build/assets/triangle-alert-BqQ8nKVm.js                   0.41 kB │ gzip:   0.28 kB
+public/build/assets/layers-CJpp7vCp.js                           0.42 kB │ gzip:   0.23 kB
+public/build/assets/package-check-C4Kp4Pho.js                    0.42 kB │ gzip:   0.28 kB
+public/build/assets/building-2-b7-0MtQS.js                       0.43 kB │ gzip:   0.24 kB
+public/build/assets/spinner-BfbG4RWo.js                          0.47 kB │ gzip:   0.34 kB
+public/build/assets/dist-DOJ3Au0x.js                             0.53 kB │ gzip:   0.38 kB
+public/build/assets/register-xKLQLSz6.js                         0.54 kB │ gzip:   0.36 kB
+public/build/assets/rolldown-runtime-CbXtAM7H.js                 0.58 kB │ gzip:   0.36 kB
+public/build/assets/scraping-CWCfx0zJ.js                         0.65 kB │ gzip:   0.45 kB
+public/build/assets/dist-I0kpD5Wz.js                             0.70 kB │ gzip:   0.48 kB
+public/build/assets/dist-C988Cylg.js                             0.79 kB │ gzip:   0.48 kB
+public/build/assets/textarea-CbeS4CWT.js                         0.90 kB │ gzip:   0.56 kB
+public/build/assets/jne-customer-candidates-JQiKCKdq.js          0.92 kB │ gzip:   0.55 kB
+public/build/assets/createLucideIcon-C08s36wa.js                 0.95 kB │ gzip:   0.57 kB
+public/build/assets/label-VYsemavu.js                            0.97 kB │ gzip:   0.61 kB
+public/build/assets/jne-monitoring-C-NNbL0z.js                   1.04 kB │ gzip:   0.66 kB
+public/build/assets/jne-workspace-metrics-CukDw04b.js            1.20 kB │ gzip:   0.63 kB
+public/build/assets/badge-Bh_otGwS.js                            1.25 kB │ gzip:   0.61 kB
+public/build/assets/jne-shipment-status-B7-cOOER.js              1.30 kB │ gzip:   0.73 kB
+public/build/assets/verify-email-Cbt4rdVo.js                     1.32 kB │ gzip:   0.70 kB
+public/build/assets/verification-CgnZkfZV.js                     1.48 kB │ gzip:   0.52 kB
+public/build/assets/push-test-DZ8Xpkmv.js                        1.55 kB │ gzip:   0.55 kB
+public/build/assets/jne-source-evidence-DnNRAhmK.js              1.56 kB │ gzip:   0.81 kB
+public/build/assets/confirm-password-DTYPvl8N.js                 1.58 kB │ gzip:   0.78 kB
+public/build/assets/jne-collections-D4gMJjbH.js                  1.59 kB │ gzip:   0.54 kB
+public/build/assets/customers-B6MxmSd3.js                        1.65 kB │ gzip:   0.58 kB
+public/build/assets/schedules-7f1xHw47.js                        1.67 kB │ gzip:   0.59 kB
+public/build/assets/alert-DV5qlhNc.js                            1.75 kB │ gzip:   0.79 kB
+public/build/assets/card-Bo5fZNwD.js                             1.76 kB │ gzip:   0.49 kB
+public/build/assets/appearance-BmMrzPKC.js                       1.93 kB │ gzip:   0.99 kB
+public/build/assets/password-input-BNwcDs7l.js                   1.96 kB │ gzip:   1.08 kB
+public/build/assets/not-found-llwwIWew.js                        2.15 kB │ gzip:   1.04 kB
+public/build/assets/forgot-password-BN3ZYh7x.js                  2.22 kB │ gzip:   1.07 kB
+public/build/assets/jne-shipper-aliases-Pbrb99J6.js              2.31 kB │ gzip:   0.66 kB
+public/build/assets/password-BAI1ftK9.js                         2.73 kB │ gzip:   0.73 kB
+public/build/assets/table-CWbgbPoZ.js                            2.75 kB │ gzip:   0.71 kB
+public/build/assets/operational-ui-D29PDiqk.js                   2.91 kB │ gzip:   1.48 kB
+public/build/assets/cashless-awbs-Dkj1GdJb.js                    2.93 kB │ gzip:   0.74 kB
+public/build/assets/jne-account-input-CgO5uiXJ.js                3.01 kB │ gzip:   1.36 kB
+public/build/assets/collapsible-BPna4SjP.js                      3.03 kB │ gzip:   1.21 kB
+public/build/assets/reset-password-D8zEAzuS.js                   3.06 kB │ gzip:   1.21 kB
+public/build/assets/operational-change-Dme8zPh0.js               3.09 kB │ gzip:   1.47 kB
+public/build/assets/dialog-CSrpjzaH.js                           4.22 kB │ gzip:   1.36 kB
+public/build/assets/api-cKtcNexX.js                              4.29 kB │ gzip:   1.11 kB
+public/build/assets/login-B51tVuEA.js                            4.30 kB │ gzip:   1.72 kB
+public/build/assets/security-Dac7QQLV.js                         4.38 kB │ gzip:   1.50 kB
+public/build/assets/checkbox-Cl2SquHQ.js                         5.16 kB │ gzip:   2.20 kB
+public/build/assets/button-CqztC7xd.js                           5.19 kB │ gzip:   2.27 kB
+public/build/assets/customer-picker-CrQSPjLW.js                  5.33 kB │ gzip:   2.24 kB
+public/build/assets/handovers-D9DEbzVr.js                        5.44 kB │ gzip:   1.09 kB
+public/build/assets/dist-DSKpjobV.js                             5.44 kB │ gzip:   2.06 kB
+public/build/assets/dist-DpNdYxEM.js                             7.02 kB │ gzip:   2.72 kB
+public/build/assets/profile-ugMK-tRJ.js                          7.39 kB │ gzip:   2.54 kB
+public/build/assets/create-pickup-dialog-ChhFSpkh.js             7.57 kB │ gzip:   3.08 kB
+public/build/assets/jne-reconciliation-FGYTEWFU.js               8.34 kB │ gzip:   3.44 kB
+public/build/assets/tasks-DVCopxNR.js                            8.66 kB │ gzip:   1.32 kB
+public/build/assets/push-test-D5oDckna.js                        8.85 kB │ gzip:   3.22 kB
+public/build/assets/pickup-cashless-awbs-1eANQqWV.js             8.99 kB │ gzip:   3.08 kB
+public/build/assets/customer-form-Be2SqW4W.js                    9.29 kB │ gzip:   3.16 kB
+public/build/assets/jne-collection-window-DRd5MY4t.js           10.88 kB │ gzip:   4.02 kB
+public/build/assets/jne-refresh-policy-B3Rsu6x_.js              10.93 kB │ gzip:   3.78 kB
+public/build/assets/customers-DSWO0NrX.js                       11.18 kB │ gzip:   4.33 kB
+public/build/assets/jne-exceptions-wlyRKhVS.js                  11.71 kB │ gzip:   4.49 kB
+public/build/assets/jne-reports-CnFXbrF9.js                     12.32 kB │ gzip:   3.89 kB
+public/build/assets/welcome-BM0aqArL.js                         12.43 kB │ gzip:   3.75 kB
+public/build/assets/jne-report-awbs-BtI37Lsh.js                 12.47 kB │ gzip:   4.74 kB
+public/build/assets/handover-session-list-CpPu5mMH.js           14.19 kB │ gzip:   5.16 kB
+public/build/assets/jne-shipper-aliases-D71n00GD.js             15.47 kB │ gzip:   4.92 kB
+public/build/assets/pickup-schedules-Dp0EUhrh.js                15.95 kB │ gzip:   5.94 kB
+public/build/assets/jne-shipment-DIm0fWzh.js                    16.16 kB │ gzip:   5.97 kB
+public/build/assets/jne-evidence-rules-2R3SJT--.js              18.15 kB │ gzip:   5.14 kB
+public/build/assets/pickup-wizard-B7XP2baA.js                   19.19 kB │ gzip:   6.75 kB
+public/build/assets/discrepancies-DzRTnCP6.js                   20.47 kB │ gzip:   6.99 kB
+public/build/assets/pickup-monitoring-navigation-9xWXwd-f.js    20.80 kB │ gzip:   7.48 kB
+public/build/assets/es2015-BUi0xlcY.js                          23.75 kB │ gzip:   8.53 kB
+public/build/assets/select-DCuCs5oV.js                          24.83 kB │ gzip:   8.33 kB
+public/build/assets/utils-CaB7qamw.js                           27.99 kB │ gzip:   8.93 kB
+public/build/assets/jne-report-runs-Ij3NBhln.js                 31.85 kB │ gzip:   9.96 kB
+public/build/assets/jne-profiles-DgQQsZpd.js                    35.06 kB │ gzip:  10.16 kB
+public/build/assets/dist-Dkmhtt1W.js                            35.33 kB │ gzip:  13.00 kB
+public/build/assets/data-table-DeuyixXh.js                      37.40 kB │ gzip:  11.69 kB
+public/build/assets/handover-Ba5g4U2S.js                        38.29 kB │ gzip:  13.30 kB
+public/build/assets/pickup-result-detail-VcykAKx4.js            40.12 kB │ gzip:  12.38 kB
+public/build/assets/jne-customer-dashboard-B5qkFahP.js          45.74 kB │ gzip:  15.39 kB
+public/build/assets/dashboard-DoWqrim3.js                       50.26 kB │ gzip:  15.86 kB
+public/build/assets/jne-monitoring-iEw_vq4B.js                  50.27 kB │ gzip:  16.46 kB
+public/build/assets/pickup-results-BGUcWDEs.js                  52.43 kB │ gzip:  14.07 kB
+public/build/assets/operations-CeaehTTQ.js                      64.25 kB │ gzip:  18.57 kB
+public/build/assets/app-3vXxKTDf.js                            158.42 kB │ gzip:  43.13 kB
+public/build/assets/wayfinder-5HO1aGyF.js                      350.76 kB │ gzip: 109.68 kB
+
+✓ built in 7.48s
+[PLUGIN_TIMINGS] Your build spent 96% of 7.5s inside plugin hooks (7.2s).
+Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:
+  - @rolldown/plugin-babel transform (68%, 5.1s, 187 calls)
+  - @laravel/vite-plugin-wayfinder buildStart (16%, 1.2s, 1 call)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.

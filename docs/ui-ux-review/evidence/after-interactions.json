@@ -1,0 +1,366 @@
+[
+  {
+    "key": "forgot-validation",
+    "screenshot": "after/forgot-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "guest",
+    "active": "email",
+    "errors": [
+      "Masukkan alamat email yang valid."
+    ],
+    "invalid": [
+      {
+        "id": "email",
+        "described": true
+      }
+    ],
+    "overflow": false,
+    "responseStatus": 302,
+    "nativeValidationBypassed": true
+  },
+  {
+    "key": "reset-validation",
+    "screenshot": "after/reset-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "guest",
+    "active": "email",
+    "errors": [
+      "Tautan atur ulang kata sandi tidak valid atau sudah kedaluwarsa."
+    ],
+    "invalid": [
+      {
+        "id": "email",
+        "described": true
+      }
+    ],
+    "overflow": false,
+    "responseStatus": 302,
+    "token": "invalid fixture token"
+  },
+  {
+    "key": "confirm-validation",
+    "screenshot": "after/confirm-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "password",
+    "errors": [
+      "Kata sandi yang dimasukkan tidak sesuai."
+    ],
+    "invalid": [
+      {
+        "id": "password",
+        "described": true
+      }
+    ],
+    "overflow": false,
+    "responseStatus": 302
+  },
+  {
+    "key": "profile-validation",
+    "screenshot": "after/profile-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "name",
+    "errors": [
+      "Nama wajib diisi.",
+      "PerhatianTindakan ini bersifat permanen dan tidak dapat dibatalkan."
+    ],
+    "invalid": [
+      {
+        "id": "name",
+        "described": true
+      }
+    ],
+    "overflow": false,
+    "responseStatus": 303,
+    "nativeValidationBypassed": true
+  },
+  {
+    "key": "security-validation",
+    "screenshot": "after/security-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "current_password",
+    "errors": [
+      "Kata sandi saat ini tidak sesuai."
+    ],
+    "invalid": [
+      {
+        "id": "current_password",
+        "described": true
+      }
+    ],
+    "overflow": false,
+    "responseStatus": 303
+  },
+  {
+    "key": "create-validation",
+    "screenshot": "after/create-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "pickup-customer",
+    "errors": [
+      "Pilih customer terlebih dahulu."
+    ],
+    "invalid": [
+      {
+        "id": "pickup-customer",
+        "described": true
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "key": "schedule-validation",
+    "screenshot": "after/schedule-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "schedule-customer",
+    "errors": [
+      "Periksa field. Jadwal belum tersimpan.",
+      "Customer wajib diisi.",
+      "Hari pickup wajib diisi.",
+      "Tanggal mulai wajib diisi.",
+      "Periksa field. Jadwal belum tersimpan."
+    ],
+    "invalid": [
+      {
+        "id": "schedule-customer",
+        "described": true
+      },
+      {
+        "id": "",
+        "described": true
+      },
+      {
+        "id": "schedule-starts_on",
+        "described": true
+      }
+    ],
+    "overflow": false,
+    "responseStatus": 422,
+    "nativeValidationBypassed": true,
+    "closeTarget": {
+      "x": 321,
+      "y": -111.796875,
+      "width": 44,
+      "height": 44
+    }
+  },
+  {
+    "key": "sheet-keyboard",
+    "screenshot": "after/sheet-keyboard-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [],
+    "invalid": [],
+    "overflow": false,
+    "closeTarget": {
+      "x": 338,
+      "y": 8,
+      "width": 44,
+      "height": 44
+    },
+    "focusStayedInside": true
+  },
+  {
+    "key": "monitoring-processing-records",
+    "screenshot": "after/monitoring-processing-records-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [],
+    "invalid": [],
+    "overflow": false,
+    "searchTop": 339,
+    "firstRecordTop": 768
+  },
+  {
+    "key": "monitoring-pickup-records",
+    "screenshot": "after/monitoring-pickup-records-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [],
+    "invalid": [],
+    "overflow": false,
+    "searchTop": 339,
+    "firstRecordTop": 814
+  },
+  {
+    "key": "monitoring-help-keyboard",
+    "screenshot": "after/monitoring-help-keyboard-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [],
+    "invalid": [],
+    "overflow": false
+  },
+  {
+    "key": "pickup-bulk-context",
+    "screenshot": "after/pickup-bulk-context-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [],
+    "invalid": [],
+    "overflow": false,
+    "selectionRetainedAcrossPages": true,
+    "clearRestoresContext": true
+  },
+  {
+    "key": "operational-date-layouts",
+    "screenshot": "after/operational-date-layouts-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [],
+    "invalid": [],
+    "overflow": false,
+    "dateLayouts": [
+      {
+        "route": "/operations/tasks",
+        "width": 390,
+        "from": {
+          "x": 33,
+          "y": 405,
+          "width": 156,
+          "height": 44
+        },
+        "to": {
+          "x": 201,
+          "y": 405,
+          "width": 156,
+          "height": 44
+        },
+        "valuesPreserved": true
+      },
+      {
+        "route": "/operations/tasks",
+        "width": 320,
+        "from": {
+          "x": 33,
+          "y": 405,
+          "width": 254,
+          "height": 44
+        },
+        "to": {
+          "x": 33,
+          "y": 485,
+          "width": 254,
+          "height": 44
+        },
+        "valuesPreserved": true
+      },
+      {
+        "route": "/handover",
+        "width": 390,
+        "from": {
+          "x": 33,
+          "y": 518,
+          "width": 156,
+          "height": 44
+        },
+        "to": {
+          "x": 201,
+          "y": 518,
+          "width": 156,
+          "height": 44
+        },
+        "valuesPreserved": true
+      },
+      {
+        "route": "/handover",
+        "width": 320,
+        "from": {
+          "x": 33,
+          "y": 618,
+          "width": 254,
+          "height": 44
+        },
+        "to": {
+          "x": 33,
+          "y": 698,
+          "width": 254,
+          "height": 44
+        },
+        "valuesPreserved": true
+      },
+      {
+        "route": "/discrepancies",
+        "width": 390,
+        "from": {
+          "x": 33,
+          "y": 386,
+          "width": 158,
+          "height": 44
+        },
+        "to": {
+          "x": 199,
+          "y": 386,
+          "width": 158,
+          "height": 44
+        },
+        "valuesPreserved": true
+      },
+      {
+        "route": "/discrepancies",
+        "width": 320,
+        "from": {
+          "x": 33,
+          "y": 478,
+          "width": 254,
+          "height": 44
+        },
+        "to": {
+          "x": 33,
+          "y": 530,
+          "width": 254,
+          "height": 44
+        },
+        "valuesPreserved": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "before/pickup-sparkline-ssr-1366.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n      <AppSidebarHeader>\n      <Dashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} overview={null} operationalDate=\"2026-10-26\" ...>\n        <RoleDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} operationalDate=\"2026-10-26\" ...>\n          <PageContainer variant=\"fluid\" className=\"space-y-4\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <section aria-label=\"Ringkasan ...\" aria-busy={false} className=\"grid grid-...\">\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardContent className=\"flex gap-3...\">\n                      <div data-slot=\"card-content\" className=\"flex gap-3...\">\n                        <span>\n                        <div className=\"min-w-0 fl...\">\n                          <p>\n                          <p>\n                          <div className=\"mt-1 flex ...\">\n                            <p>\n                            <Sparkline values={[...]} label=\"Pickup har...\" color=\"text-blue-...\">\n                              <svg viewBox=\"0 0 90 32\" className=\"h-7 w-16 s...\" role=\"img\" aria-label=\"Pickup har...\">\n                                <title>\n+                                 Pickup hari ini — status saat ini per hari jadwal, 7 hari terakhir\n                                  ...\n                                ...\n                ...\n              ...\n"
+    ],
+    "baseline": "After O2 layout change, before Q1 sparkline title correction; source 50a4ff3 plus the other chart title fixes"
+  },
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "before/pickup-sparkline-ssr-768.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n      <AppSidebarHeader>\n      <Dashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} overview={null} operationalDate=\"2026-10-26\" ...>\n        <RoleDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} operationalDate=\"2026-10-26\" ...>\n          <PageContainer variant=\"fluid\" className=\"space-y-4\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <section aria-label=\"Ringkasan ...\" aria-busy={false} className=\"grid grid-...\">\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardContent className=\"flex gap-3...\">\n                      <div data-slot=\"card-content\" className=\"flex gap-3...\">\n                        <span>\n                        <div className=\"min-w-0 fl...\">\n                          <p>\n                          <p>\n                          <div className=\"mt-1 flex ...\">\n                            <p>\n                            <Sparkline values={[...]} label=\"Pickup har...\" color=\"text-blue-...\">\n                              <svg viewBox=\"0 0 90 32\" className=\"h-7 w-16 s...\" role=\"img\" aria-label=\"Pickup har...\">\n                                <title>\n+                                 Pickup hari ini — status saat ini per hari jadwal, 7 hari terakhir\n                                  ...\n                                ...\n                ...\n              ...\n"
+    ],
+    "baseline": "After O2 layout change, before Q1 sparkline title correction; source 50a4ff3 plus the other chart title fixes"
+  },
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "before/pickup-sparkline-ssr-390.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n      <AppSidebarHeader>\n      <Dashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} overview={null} operationalDate=\"2026-10-26\" ...>\n        <RoleDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} operationalDate=\"2026-10-26\" ...>\n          <PageContainer variant=\"fluid\" className=\"space-y-4\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <section aria-label=\"Ringkasan ...\" aria-busy={false} className=\"grid grid-...\">\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardContent className=\"flex gap-3...\">\n                      <div data-slot=\"card-content\" className=\"flex gap-3...\">\n                        <span>\n                        <div className=\"min-w-0 fl...\">\n                          <p>\n                          <p>\n                          <div className=\"mt-1 flex ...\">\n                            <p>\n                            <Sparkline values={[...]} label=\"Pickup har...\" color=\"text-blue-...\">\n                              <svg viewBox=\"0 0 90 32\" className=\"h-7 w-16 s...\" role=\"img\" aria-label=\"Pickup har...\">\n                                <title>\n+                                 Pickup hari ini — status saat ini per hari jadwal, 7 hari terakhir\n                                  ...\n                                ...\n                ...\n              ...\n"
+    ],
+    "baseline": "After O2 layout change, before Q1 sparkline title correction; source 50a4ff3 plus the other chart title fixes"
+  },
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "before/pickup-sparkline-ssr-320.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": [
+      "Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\nhttps://react.dev/link/hydration-mismatch\n\n  ...\n    <main data-slot=\"sidebar-inset\" className=\"bg-backgro...\" id=\"main-content\" tabIndex={-1}>\n      <AppSidebarHeader>\n      <Dashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} overview={null} operationalDate=\"2026-10-26\" ...>\n        <RoleDashboard errors={{}} name=\"Laravel\" auth={{...}} sidebarOpen={true} operationalDate=\"2026-10-26\" ...>\n          <PageContainer variant=\"fluid\" className=\"space-y-4\">\n            <div data-page-container=\"fluid\" className=\"w-full min...\">\n              <Head>\n              <header>\n              <section aria-label=\"Ringkasan ...\" aria-busy={false} className=\"grid grid-...\">\n                <Card className=\"min-w-0 ga...\">\n                  <div data-slot=\"card\" className=\"bg-card te...\">\n                    <CardContent className=\"flex gap-3...\">\n                      <div data-slot=\"card-content\" className=\"flex gap-3...\">\n                        <span>\n                        <div className=\"min-w-0 fl...\">\n                          <p>\n                          <p>\n                          <div className=\"mt-1 flex ...\">\n                            <p>\n                            <Sparkline values={[...]} label=\"Pickup har...\" color=\"text-blue-...\">\n                              <svg viewBox=\"0 0 90 32\" className=\"h-7 w-16 s...\" role=\"img\" aria-label=\"Pickup har...\">\n                                <title>\n+                                 Pickup hari ini — status saat ini per hari jadwal, 7 hari terakhir\n                                  ...\n                                ...\n                ...\n              ...\n"
+    ],
+    "baseline": "After O2 layout change, before Q1 sparkline title correction; source 50a4ff3 plus the other chart title fixes"
+  }
+]

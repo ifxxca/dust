@@ -1,0 +1,158 @@
+[
+  {
+    "name": "wave 1 contrast primary and active navigation",
+    "status": "passed",
+    "lightPrimary": 5.5,
+    "lightHover": 4.58,
+    "lightNavigation": 4.76,
+    "darkPrimary": 6.78,
+    "darkHover": 5.73,
+    "darkNavigation": 5.36
+  },
+  {
+    "name": "wave 1 protects dirty customer Escape close and cancel",
+    "status": "passed"
+  },
+  {
+    "name": "wave 1 customer 422 focuses visible invalid field and preserves draft",
+    "status": "passed"
+  },
+  {
+    "name": "wave 1 mobile handover opens selected panel and retains quantities",
+    "status": "passed",
+    "tasks": 12,
+    "panelTop": 160
+  },
+  {
+    "name": "wave 2 dashboard supports enlarged text without page overflow",
+    "status": "passed",
+    "viewport": 375,
+    "width": 375
+  },
+  {
+    "name": "wave 2 sorting announces the active column and direction",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 customer picker keyboard label selection and return focus",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 skip link bypasses the sidebar",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 theme selection announces and persists the chosen mode",
+    "status": "passed"
+  },
+  {
+    "name": "wave 2 reduced motion overlays preserve keyboard focus trapping and return",
+    "status": "passed",
+    "reduce": true,
+    "animation": "none",
+    "transition": "0s"
+  },
+  {
+    "name": "wave 3 customer URL restores search status pagination and browser history",
+    "status": "passed",
+    "restoredSearch": true,
+    "restoredPage": 2,
+    "history": true,
+    "clampedOutOfRangePage": true
+  },
+  {
+    "name": "wave 3 customer validation and settings use Indonesian",
+    "status": "passed"
+  },
+  {
+    "name": "wave 3 password recovery copy and 404 recovery remain usable",
+    "status": "passed"
+  },
+  {
+    "name": "wave 4 active admin workspaces retain their routes and rendering",
+    "status": "passed",
+    "routes": 25,
+    "build": "fresh",
+    "externalRetrieval": false
+  },
+  {
+    "name": "task first JNE setup and empty states remain actionable on mobile and desktop",
+    "status": "passed",
+    "widths": [
+      390,
+      1280
+    ],
+    "productionPolicies": "disabled",
+    "emptyReviewForm": "absent"
+  },
+  {
+    "name": "wave 4 role access and assigned pickup remain unchanged",
+    "status": "passed",
+    "statuses": [
+      {
+        "role": "cs",
+        "route": "/operations/tasks",
+        "status": 200
+      },
+      {
+        "role": "cs",
+        "route": "/operations/customers",
+        "status": 200
+      },
+      {
+        "role": "cs",
+        "route": "/operations/users",
+        "status": 403
+      },
+      {
+        "role": "cs",
+        "route": "/admin/jne-monitoring",
+        "status": 403
+      },
+      {
+        "role": "pickup_staff",
+        "route": "/operations/mine",
+        "status": 200
+      },
+      {
+        "role": "pickup_staff",
+        "route": "/operations/available",
+        "status": 200
+      },
+      {
+        "role": "pickup_staff",
+        "route": "/operations/execute/2",
+        "status": 200
+      },
+      {
+        "role": "pickup_staff",
+        "route": "/operations/customers",
+        "status": 403
+      },
+      {
+        "role": "pickup_staff",
+        "route": "/admin/jne-monitoring",
+        "status": 403
+      },
+      {
+        "role": "retail_staff",
+        "route": "/dashboard",
+        "status": 200
+      },
+      {
+        "role": "retail_staff",
+        "route": "/operations/users",
+        "status": 403
+      },
+      {
+        "role": "retail_staff",
+        "route": "/handover/1",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "name": "wave 4 pickup and embedded customer dialogs preserve unsaved drafts",
+    "status": "passed"
+  }
+]

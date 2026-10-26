@@ -1,0 +1,93 @@
+[
+  {
+    "key": "verify-email",
+    "role": "admin_supervisor (unverified)",
+    "route": "/email/verify",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "screenshot": "after/verify-email-1366.png",
+    "status": 200,
+    "overflow": false,
+    "title": {
+      "top": 407
+    },
+    "unnamedControls": 0,
+    "errors": []
+  },
+  {
+    "key": "verify-email",
+    "role": "admin_supervisor (unverified)",
+    "route": "/email/verify",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "screenshot": "after/verify-email-768.png",
+    "status": 200,
+    "overflow": false,
+    "title": {
+      "top": 446
+    },
+    "unnamedControls": 0,
+    "errors": []
+  },
+  {
+    "key": "verify-email",
+    "role": "admin_supervisor (unverified)",
+    "route": "/email/verify",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "screenshot": "after/verify-email-390.png",
+    "status": 200,
+    "overflow": false,
+    "title": {
+      "top": 346
+    },
+    "unnamedControls": 0,
+    "errors": []
+  },
+  {
+    "key": "verify-email",
+    "role": "admin_supervisor (unverified)",
+    "route": "/email/verify",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "screenshot": "after/verify-email-320.png",
+    "status": 200,
+    "overflow": false,
+    "title": {
+      "top": 294
+    },
+    "unnamedControls": 0,
+    "errors": []
+  },
+  {
+    "key": "verify-email-success",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "screenshot": "after/verify-email-success-390.png",
+    "announced": true,
+    "contrastRatio": 4.95,
+    "darkContrastRatio": 11.33,
+    "errors": []
+  },
+  {
+    "key": "forgot-success",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "screenshot": "after/forgot-success-390.png",
+    "contrastRatio": 4.95,
+    "darkContrastRatio": 11.33,
+    "errors": []
+  }
+]

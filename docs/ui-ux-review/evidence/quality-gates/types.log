@@ -1,0 +1,3 @@
+
+> types:check
+> tsc --noEmit && tsc --noEmit -p tsconfig.mobile.json

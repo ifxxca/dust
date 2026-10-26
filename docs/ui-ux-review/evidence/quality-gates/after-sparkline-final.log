@@ -1,0 +1,5 @@
+after dashboard-pickup 1366: 200 overflow=false unnamed=0
+after dashboard-pickup 768: 200 overflow=false unnamed=0
+after dashboard-pickup 390: 200 overflow=false unnamed=0
+after dashboard-pickup 320: 200 overflow=false unnamed=0
+Captured 188 comparable after states.

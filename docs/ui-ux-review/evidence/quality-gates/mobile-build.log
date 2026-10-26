@@ -1,0 +1,19 @@
+
+> build:mobile
+> php artisan wayfinder:generate --with-form --no-interaction && vite build --config vite.mobile.config.ts --mode development
+
+
+ [Wayfinder] Generated actions in S:\2026\dust\resources\js\actions
+ [Wayfinder] Generated routes in S:\2026\dust\resources\js\routes
+vite v8.3.4 building client environment for development...
+transforming...
+✓ 1685 modules transformed.
+rendering chunks...
+computing gzip size...
+resources/mobile/dist/index.html                      0.83 kB │ gzip:   0.44 kB
+resources/mobile/dist/assets/jne-logo-CjawuxU8.svg    6.29 kB │ gzip:   2.62 kB
+resources/mobile/dist/assets/index-O6oGfMI6.css      96.93 kB │ gzip:  18.11 kB
+resources/mobile/dist/assets/web-Dm2K6UmV.js          0.84 kB │ gzip:   0.39 kB
+resources/mobile/dist/assets/index-BWnqC-KA.js      473.99 kB │ gzip: 143.04 kB
+
+✓ built in 408ms

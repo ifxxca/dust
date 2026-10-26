@@ -1,0 +1,18 @@
+[
+  {
+    "width": 390,
+    "role": "admin_supervisor",
+    "screenshot": "before/mobile-sidebar-390.png",
+    "closeTarget": null,
+    "hiddenTooltips": 1,
+    "closedWithOneEscape": false
+  },
+  {
+    "width": 320,
+    "role": "admin_supervisor",
+    "screenshot": "before/mobile-sidebar-320.png",
+    "closeTarget": null,
+    "hiddenTooltips": 1,
+    "closedWithOneEscape": false
+  }
+]
