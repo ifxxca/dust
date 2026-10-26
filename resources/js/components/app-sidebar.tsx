@@ -188,7 +188,7 @@ export function AppSidebar() {
                   ];
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader className="mb-4 p-3">
+            <SidebarHeader className="mb-4 p-3 pr-14 md:pr-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>

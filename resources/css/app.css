@@ -133,6 +133,15 @@
 }
 
 @layer base {
+    html {
+        color-scheme: light;
+        scroll-padding-top: 5rem;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
     * {
         @apply border-border;
     }

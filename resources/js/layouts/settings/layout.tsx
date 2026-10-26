@@ -1,8 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -32,16 +30,15 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="px-4 py-6">
-            <Heading
-                title="Pengaturan"
-                description="Kelola profil dan pengaturan akun Anda"
-            />
+        <div className="min-w-0 px-4 py-6">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">
+                Pengaturan
+            </h2>
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
+            <div className="flex min-w-0 flex-col gap-6 lg:flex-row lg:gap-12">
                 <aside className="w-full max-w-xl lg:w-48">
                     <nav
-                        className="flex flex-col space-y-1 space-x-0"
+                        className="flex flex-wrap gap-1 lg:flex-col"
                         aria-label="Pengaturan"
                     >
                         {sidebarNavItems.map((item, index) => (
@@ -50,11 +47,23 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 size="sm"
                                 variant="ghost"
                                 asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
-                                })}
+                                className={cn(
+                                    'min-h-11 justify-start lg:w-full',
+                                    {
+                                        'bg-muted': isCurrentOrParentUrl(
+                                            item.href,
+                                        ),
+                                    },
+                                )}
                             >
-                                <Link href={item.href}>
+                                <Link
+                                    href={item.href}
+                                    aria-current={
+                                        isCurrentOrParentUrl(item.href)
+                                            ? 'page'
+                                            : undefined
+                                    }
+                                >
                                     {item.icon && (
                                         <item.icon className="h-4 w-4" />
                                     )}
@@ -65,9 +74,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     </nav>
                 </aside>
 
-                <Separator className="my-6 lg:hidden" />
-
-                <div className="flex-1 md:max-w-2xl">
+                <div className="min-w-0 flex-1 md:max-w-2xl">
                     <section className="max-w-xl space-y-12">
                         {children}
                     </section>
