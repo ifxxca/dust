@@ -101,36 +101,31 @@ export function PickupSummaryCards({
         },
     ] as const;
     return (
-        <section aria-label="Ringkasan pickup hari ini" className="space-y-3">
-            <div className="grid grid-cols-2 gap-3 xl:grid-cols-5 xl:gap-4">
+        <section aria-label="Ringkasan pickup hari ini" className="space-y-2">
+            <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
                 {cards.map(({ label, key, icon: Icon, color }) => (
                     <div
                         key={key}
-                        className="flex min-w-0 items-center gap-3 rounded-xl border bg-card p-4 shadow-sm last:col-span-2 xl:last:col-span-1"
+                        className="flex min-w-0 items-center gap-2 rounded-lg border bg-card p-2 last:col-span-2 xl:last:col-span-1"
                     >
                         <div
-                            className={`hidden size-11 shrink-0 items-center justify-center rounded-xl sm:flex ${color}`}
+                            className={`hidden size-8 shrink-0 items-center justify-center rounded-lg xl:flex ${color}`}
                         >
-                            <Icon className="size-6" aria-hidden="true" />
+                            <Icon className="size-4" aria-hidden="true" />
                         </div>
-                        <div className="min-w-0">
-                            <p className="text-xs leading-5 text-muted-foreground">
+                        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                            <p className="text-xs leading-4 text-muted-foreground">
                                 {label}
                             </p>
-                            <div className="mt-1 flex items-baseline gap-2">
+                            <div className="flex shrink-0 items-baseline gap-2">
                                 {loading ? (
                                     <span
                                         aria-label="Memuat ringkasan"
-                                        className="h-8 w-12 animate-pulse rounded bg-muted"
+                                        className="h-7 w-10 animate-pulse rounded bg-muted"
                                     />
                                 ) : (
-                                    <span className="text-3xl font-bold tracking-tight tabular-nums">
+                                    <span className="text-xl font-semibold tracking-tight tabular-nums">
                                         {summary ? summary[key] : '—'}
-                                    </span>
-                                )}
-                                {key === 'total' && (
-                                    <span className="text-xs text-muted-foreground">
-                                        Hari ini
                                     </span>
                                 )}
                             </div>

@@ -331,7 +331,7 @@ export default function RoleDashboard({
             <section
                 aria-label="Ringkasan operasional"
                 aria-busy={refreshing}
-                className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
+                className="grid grid-cols-2 gap-3 xl:grid-cols-4"
             >
                 {cards.map((card, index) => {
                     const series = !isRetail ? trendSeries[index] : null;

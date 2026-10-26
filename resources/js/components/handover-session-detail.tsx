@@ -467,7 +467,7 @@ export default function HandoverSessionDetail({
                     )}
                 </div>
             </header>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                 {[
                     {
                         label: 'Jumlah Task',
@@ -493,17 +493,10 @@ export default function HandoverSessionDetail({
                         icon: AlertTriangle,
                         color: 'text-rose-600 bg-rose-50 dark:bg-rose-950 dark:text-rose-300',
                     },
-                    {
-                        label: 'Dibuat Oleh',
-                        value:
-                            session.creator?.name ?? 'Pengguna tidak tersedia',
-                        icon: UserRound,
-                        color: 'text-muted-foreground bg-muted',
-                    },
                 ].map((card, index) => (
                     <div
                         key={card.label}
-                        className={`flex min-w-0 items-center gap-3 rounded-xl border bg-card p-4 shadow-sm ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}
+                        className="flex min-w-0 items-center gap-3 rounded-lg border bg-card p-3"
                     >
                         <span
                             className={`hidden size-11 shrink-0 items-center justify-center rounded-xl sm:flex ${card.color}`}
@@ -515,19 +508,17 @@ export default function HandoverSessionDetail({
                                 {card.label}
                             </p>
                             <p
-                                className={`mt-2 font-bold break-words ${index === 4 ? 'text-sm' : 'text-2xl tabular-nums'} ${index === 3 && discrepancies ? 'text-rose-600 dark:text-rose-300' : ''}`}
+                                className={`mt-1 text-xl font-semibold break-words tabular-nums ${index === 3 && discrepancies ? 'text-rose-600 dark:text-rose-300' : ''}`}
                             >
                                 {card.value}
                             </p>
-                            {index === 4 && (
-                                <p className="mt-1 text-[11px] text-muted-foreground">
-                                    {format(session.created_at)}
-                                </p>
-                            )}
                         </div>
                     </div>
                 ))}
             </div>
+            <p className="text-xs text-muted-foreground">
+                Dibuat oleh {session.creator?.name ?? 'Pengguna tidak tersedia'}
+            </p>
             <div className="grid items-start gap-4 xl:grid-cols-[minmax(280px,1fr)_minmax(0,1.85fr)]">
                 <section
                     ref={taskList}

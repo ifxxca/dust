@@ -479,6 +479,7 @@ export default function Operations({
         )[screen] ?? 'Pickup';
     return (
         <PageContainer
+            className={isTaskList ? 'space-y-4 py-4' : undefined}
             variant={
                 screen === 'create'
                     ? 'form'
@@ -630,23 +631,22 @@ export default function Operations({
                 taskScope === 'mine' &&
                 !history && (
                     <div className="grid grid-cols-2 gap-3">
-                        <Card className="gap-2 py-4">
-                            <CardContent>
+                        <Card className="gap-1 py-3">
+                            <CardContent className="px-3">
                                 <p className="text-xs text-muted-foreground">
-                                    Tugas Anda terjadwal hari ini ·{' '}
-                                    {workspaceStats.date}
+                                    Terjadwal hari ini · {workspaceStats.date}
                                 </p>
-                                <p className="mt-2 text-2xl font-bold">
+                                <p className="mt-1 text-xl font-semibold">
                                     {workspaceStats.today}
                                 </p>
                             </CardContent>
                         </Card>
-                        <Card className="gap-2 py-4">
-                            <CardContent>
+                        <Card className="gap-1 py-3">
+                            <CardContent className="px-3">
                                 <p className="text-xs text-muted-foreground">
-                                    Jadwal tugas berikutnya yang belum selesai
+                                    Jadwal tugas aktif berikutnya
                                 </p>
-                                <p className="mt-2 font-semibold">
+                                <p className="mt-1 text-sm font-semibold">
                                     {workspaceStats.next
                                         ? formatTime(workspaceStats.next)
                                         : 'Tidak ada tugas menunggu'}
@@ -710,14 +710,8 @@ export default function Operations({
                     aria-labelledby={
                         showStaffTabs ? `pickup-tab-${taskScope}` : undefined
                     }
-                    className="space-y-6"
+                    className={isTaskList ? 'space-y-4' : 'space-y-6'}
                 >
-                    {operationalWorkspace && (
-                        <PickupSummaryCards
-                            summary={loader.response?.summary}
-                            loading={loader.processing}
-                        />
-                    )}
                     {scheduleFilter && isTaskList && (
                         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm">
                             <span>
@@ -753,7 +747,7 @@ export default function Operations({
                                         className="h-11 pr-10 pl-9"
                                         placeholder={
                                             isTaskList
-                                                ? 'Reference, customer, atau alamat…'
+                                                ? 'Cari referensi, customer, atau alamat…'
                                                 : 'Ketik nama…'
                                         }
                                         value={search}
@@ -823,38 +817,38 @@ export default function Operations({
                                         </Select>
                                     </div>
                                     <div
-                                        className={`min-w-0 space-y-2 ${operationalWorkspace ? 'xl:col-span-2' : 'xl:col-span-3'}`}
+                                        className={`grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-3 sm:col-span-2 ${operationalWorkspace ? 'xl:col-span-4' : 'xl:col-span-6'}`}
                                     >
-                                        <Label htmlFor="date-from">
-                                            Tanggal Mulai
-                                        </Label>
-                                        <Input
-                                            id="date-from"
-                                            className="h-11 w-full min-w-0"
-                                            type="date"
-                                            value={from}
-                                            onChange={(event) => {
-                                                setFrom(event.target.value);
-                                                setPage(1);
-                                            }}
-                                        />
-                                    </div>
-                                    <div
-                                        className={`min-w-0 space-y-2 ${operationalWorkspace ? 'xl:col-span-2' : 'xl:col-span-3'}`}
-                                    >
-                                        <Label htmlFor="date-to">
-                                            Tanggal Selesai
-                                        </Label>
-                                        <Input
-                                            id="date-to"
-                                            className="h-11 w-full min-w-0"
-                                            type="date"
-                                            value={to}
-                                            onChange={(event) => {
-                                                setTo(event.target.value);
-                                                setPage(1);
-                                            }}
-                                        />
+                                        <div className="min-w-0 space-y-2">
+                                            <Label htmlFor="date-from">
+                                                Tanggal Mulai
+                                            </Label>
+                                            <Input
+                                                id="date-from"
+                                                className="h-11 w-full min-w-0"
+                                                type="date"
+                                                value={from}
+                                                onChange={(event) => {
+                                                    setFrom(event.target.value);
+                                                    setPage(1);
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="min-w-0 space-y-2">
+                                            <Label htmlFor="date-to">
+                                                Tanggal Selesai
+                                            </Label>
+                                            <Input
+                                                id="date-to"
+                                                className="h-11 w-full min-w-0"
+                                                type="date"
+                                                value={to}
+                                                onChange={(event) => {
+                                                    setTo(event.target.value);
+                                                    setPage(1);
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </>
                             )}
@@ -1030,6 +1024,12 @@ export default function Operations({
                         )}
                     </div>
                     {operationalWorkspace && (
+                        <PickupSummaryCards
+                            summary={loader.response?.summary}
+                            loading={loader.processing}
+                        />
+                    )}
+                    {operationalWorkspace && assignmentSelection.length > 0 && (
                         <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-4">
                             <div className="mr-auto text-sm">
                                 <p className="font-medium">
