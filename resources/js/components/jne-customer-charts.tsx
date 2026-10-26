@@ -151,10 +151,7 @@ export function CustomerDailyChart({ days }: { days: CustomerDashboardDay[] }) {
                         aria-labelledby={`${id}-title ${id}-desc`}
                     >
                         <title id={`${id}-title`}>
-                            {metric === 'amount'
-                                ? 'Amount APEX'
-                                : 'Jumlah resi'}{' '}
-                            per hari
+                            {`${metric === 'amount' ? 'Amount APEX' : 'Jumlah resi'} per hari`}
                         </title>
                         <desc id={`${id}-desc`}>
                             Setiap resi dihitung sekali dari snapshot terbaru.
@@ -206,10 +203,11 @@ export function CustomerDailyChart({ days }: { days: CustomerDashboardDay[] }) {
                                         }
                                     >
                                         <title>
-                                            {dayLabel(day.date)} ·{' '}
-                                            {metric === 'amount'
-                                                ? dashboardMoney(day.amount)
-                                                : `${day.shipments} resi`}
+                                            {`${dayLabel(day.date)} · ${
+                                                metric === 'amount'
+                                                    ? dashboardMoney(day.amount)
+                                                    : `${day.shipments} resi`
+                                            }`}
                                         </title>
                                     </circle>
                                 ),

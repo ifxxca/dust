@@ -77,15 +77,16 @@ export function OperationalDonut({
                         aria-labelledby={id}
                     >
                         <title id={id}>
-                            {title}:{' '}
-                            {total
-                                ? data
-                                      .map(
-                                          (row) =>
-                                              `${row.label ?? row.key} ${row.value}`,
-                                      )
-                                      .join(', ')
-                                : empty}
+                            {`${title}: ${
+                                total
+                                    ? data
+                                          .map(
+                                              (row) =>
+                                                  `${row.label ?? row.key} ${row.value}`,
+                                          )
+                                          .join(', ')
+                                    : empty
+                            }`}
                         </title>
                         <circle
                             cx="60"
@@ -119,9 +120,7 @@ export function OperationalDonut({
                                             transform="rotate(-90 60 60)"
                                         >
                                             <title>
-                                                {row.label ?? row.key}:{' '}
-                                                {opNumber(row.value)} (
-                                                {opNumber(percent)}%)
+                                                {`${row.label ?? row.key}: ${opNumber(row.value)} (${opNumber(percent)}%)`}
                                             </title>
                                         </circle>
                                     )
@@ -298,8 +297,7 @@ export function OperationalActivityChart({
                                     onFocus={() => setFocused(index)}
                                 >
                                     <title>
-                                        {opDate(row.date)}:{' '}
-                                        {opNumber(row[metric])}
+                                        {`${opDate(row.date)}: ${opNumber(row[metric])}`}
                                     </title>
                                 </rect>
                             );

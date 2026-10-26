@@ -92,9 +92,7 @@ function Sparkline({
             role="img"
             aria-label={`${label}: ${values.join(', ')}`}
         >
-            <title>
-                {label}: {values.join(', ')}
-            </title>
+            <title>{`${label}: ${values.join(', ')}`}</title>
             <polygon
                 points={`3,31 ${points} 87,31`}
                 fill="currentColor"
