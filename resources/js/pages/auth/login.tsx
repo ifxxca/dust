@@ -1,4 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
+import { ArrowRight, CheckCircle2, Mail, ShieldCheck } from 'lucide-react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -20,6 +21,16 @@ export default function Login({ status, canResetPassword }: Props) {
         <>
             <Head title="Masuk" />
 
+            {status && (
+                <div
+                    role="status"
+                    className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
+                >
+                    <CheckCircle2 className="mt-1 size-4 shrink-0" />
+                    {status}
+                </div>
+            )}
+
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
@@ -36,11 +47,19 @@ export default function Login({ status, canResetPassword }: Props) {
                                     name="email"
                                     required
                                     autoFocus
-                                    tabIndex={1}
                                     autoComplete="email"
-                                    placeholder="email@example.com"
+                                    placeholder="nama@perusahaan.com"
+                                    className="h-12 rounded-lg bg-slate-50/60 px-4 dark:bg-slate-900"
+                                    aria-invalid={Boolean(errors.email)}
+                                    aria-describedby={
+                                        errors.email ? 'email-error' : undefined
+                                    }
                                 />
-                                <InputError message={errors.email} />
+                                <InputError
+                                    id="email-error"
+                                    role="alert"
+                                    message={errors.email}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -50,7 +69,6 @@ export default function Login({ status, canResetPassword }: Props) {
                                         <TextLink
                                             href={request()}
                                             className="ml-auto text-sm"
-                                            tabIndex={5}
                                         >
                                             Lupa kata sandi?
                                         </TextLink>
@@ -60,51 +78,74 @@ export default function Login({ status, canResetPassword }: Props) {
                                     id="password"
                                     name="password"
                                     required
-                                    tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Kata sandi"
+                                    placeholder="Masukkan kata sandi Anda"
+                                    className="h-12 rounded-lg bg-slate-50/60 pl-4 dark:bg-slate-900"
+                                    aria-invalid={Boolean(errors.password)}
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'password-error'
+                                            : undefined
+                                    }
                                 />
-                                <InputError message={errors.password} />
+                                <InputError
+                                    id="password-error"
+                                    role="alert"
+                                    message={errors.password}
+                                />
                             </div>
 
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
-                                <Label htmlFor="remember">Ingat saya</Label>
+                            <div className="flex min-h-6 items-center gap-3">
+                                <Checkbox id="remember" name="remember" />
+                                <Label
+                                    htmlFor="remember"
+                                    className="font-normal text-slate-600 dark:text-slate-300"
+                                >
+                                    Ingat saya di perangkat ini
+                                </Label>
                             </div>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
+                                className="h-12 w-full rounded-lg shadow-lg shadow-blue-600/10 dark:bg-blue-600 dark:hover:bg-blue-700"
                                 disabled={processing}
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Masuk
+                                {processing
+                                    ? 'Sedang masuk...'
+                                    : 'Masuk ke workspace'}
+                                {!processing && (
+                                    <ArrowRight className="size-4" />
+                                )}
                             </Button>
                         </div>
 
-                        <p className="text-center text-sm text-muted-foreground">
-                            Akun operasional dikelola oleh Admin retail.
+                        <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+                            <Mail className="mt-0.5 size-4 shrink-0 text-slate-500 dark:text-slate-400" />
+                            <div className="space-y-1">
+                                <p className="text-xs font-medium">
+                                    Belum memiliki akses?
+                                </p>
+                                <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                                    Hubungi Admin retail untuk mendapatkan akun
+                                    atau bantuan akses workspace.
+                                </p>
+                            </div>
+                        </div>
+                        <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                            <ShieldCheck className="size-3.5" />
+                            Gunakan akun dan perangkat kerja Anda.
                         </p>
                     </>
                 )}
             </Form>
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
         </>
     );
 }
 
 Login.layout = {
-    title: 'Masuk ke Retail Pickup',
-    description: 'Gunakan akun operasional Anda untuk melanjutkan.',
+    title: 'Selamat datang kembali.',
+    description:
+        'Masuk ke Retail Pickup untuk melanjutkan pekerjaan Anda hari ini.',
 };

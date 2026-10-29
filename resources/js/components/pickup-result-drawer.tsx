@@ -22,6 +22,7 @@ import {
 } from '@/components/pickup-result-ui';
 import { pickupDetailUrl } from '@/lib/pickup-monitoring-navigation';
 import type { PickupQuickDetail } from '@/types/pickup-result';
+import PickupScannedAwbs from '@/components/pickup-scanned-awbs';
 
 export default function PickupResultDrawer({
     id,
@@ -44,6 +45,7 @@ export default function PickupResultDrawer({
         id: number;
     } | null>(null);
     const [imageError, setImageError] = useState(false);
+    const [scanView, setScanView] = useState(false);
     const back = useRef<HTMLButtonElement | null>(null);
     const detail = (tab = 'summary', operation?: string) =>
         pickupDetailUrl(id!, context, tab, operation);
@@ -71,6 +73,29 @@ export default function PickupResultDrawer({
                         {resultDate(data.result.scheduled_at, data.timezone)} ·{' '}
                         {data.result.staff_name ?? 'Belum ditugaskan'}
                     </p>
+                )}
+                {data && !preview && (
+                    <div
+                        className="flex gap-2 pt-2"
+                        aria-label="Tampilan detail pickup"
+                    >
+                        <Button
+                            size="sm"
+                            variant={scanView ? 'ghost' : 'secondary'}
+                            aria-pressed={!scanView}
+                            onClick={() => setScanView(false)}
+                        >
+                            Ringkasan
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant={scanView ? 'secondary' : 'ghost'}
+                            aria-pressed={scanView}
+                            onClick={() => setScanView(true)}
+                        >
+                            Resi scan
+                        </Button>
+                    </div>
                 )}
             </SheetHeader>
             <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
@@ -124,7 +149,10 @@ export default function PickupResultDrawer({
                         )}
                     </section>
                 )}
-                {data && !preview && (
+                {data && !preview && scanView && id !== null && (
+                    <PickupScannedAwbs key={id} id={id} />
+                )}
+                {data && !preview && !scanView && (
                     <>
                         <section className="rounded-lg border border-primary/15 bg-primary/5 p-3">
                             <OperationalPickupContext
@@ -415,7 +443,7 @@ export default function PickupResultDrawer({
                             <ArrowUpRight className="size-4" />
                         </Link>
                     </Button>
-                    {!preview && (
+                    {!preview && !scanView && (
                         <div className="flex flex-wrap gap-2">
                             {data.proof && (
                                 <Button asChild size="sm" variant="outline">

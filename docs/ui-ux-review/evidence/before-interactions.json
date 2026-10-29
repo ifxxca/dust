@@ -1,0 +1,148 @@
+[
+  {
+    "key": "forgot-validation",
+    "screenshot": "before/forgot-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "guest",
+    "active": "",
+    "errors": [
+      "Masukkan alamat email yang valid."
+    ],
+    "invalid": [],
+    "overflow": false,
+    "responseStatus": 302,
+    "nativeValidationBypassed": true
+  },
+  {
+    "key": "reset-validation",
+    "screenshot": "before/reset-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "guest",
+    "active": "",
+    "errors": [
+      "Tautan atur ulang kata sandi tidak valid atau sudah kedaluwarsa."
+    ],
+    "invalid": [],
+    "overflow": false,
+    "responseStatus": 302,
+    "token": "invalid fixture token"
+  },
+  {
+    "key": "confirm-validation",
+    "screenshot": "before/confirm-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [
+      "The provided password was incorrect."
+    ],
+    "invalid": [],
+    "overflow": false,
+    "responseStatus": 302
+  },
+  {
+    "key": "profile-validation",
+    "screenshot": "before/profile-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [
+      "Nama wajib diisi.",
+      "PerhatianTindakan ini bersifat permanen dan tidak dapat dibatalkan."
+    ],
+    "invalid": [],
+    "overflow": false,
+    "responseStatus": 303,
+    "nativeValidationBypassed": true
+  },
+  {
+    "key": "security-validation",
+    "screenshot": "before/security-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "current_password",
+    "errors": [
+      "Kata sandi saat ini tidak sesuai."
+    ],
+    "invalid": [],
+    "overflow": false,
+    "responseStatus": 303
+  },
+  {
+    "key": "create-validation",
+    "screenshot": "before/create-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [
+      "Pilih customer terlebih dahulu."
+    ],
+    "invalid": [],
+    "overflow": false
+  },
+  {
+    "key": "schedule-validation",
+    "screenshot": "before/schedule-validation-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [
+      "Periksa field. Jadwal belum tersimpan.",
+      "customer_id: customer id wajib diisi.",
+      "weekdays: weekdays wajib diisi.",
+      "starts_on: starts on wajib diisi.",
+      "Periksa field. Jadwal belum tersimpan."
+    ],
+    "invalid": [],
+    "overflow": false,
+    "responseStatus": 422,
+    "nativeValidationBypassed": true,
+    "closeTarget": {
+      "x": 341,
+      "y": -72.796875,
+      "width": 16,
+      "height": 16
+    }
+  },
+  {
+    "key": "sheet-keyboard",
+    "screenshot": "before/sheet-keyboard-interaction-390.png",
+    "viewport": [
+      390,
+      844
+    ],
+    "role": "admin_supervisor",
+    "active": "",
+    "errors": [],
+    "invalid": [],
+    "overflow": false,
+    "closeTarget": {
+      "x": 358,
+      "y": 16,
+      "width": 16,
+      "height": 16
+    },
+    "focusStayedInside": true
+  }
+]

@@ -19,9 +19,10 @@ class CorrectVerification
             $session = HandoverSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
             abort_unless($session->status === 'IN_VERIFICATION', 409, 'Reopen session CLOSED sebelum mengoreksi hasil.');
             abort_if($session->version !== (int) $data['expected_version'], 409, 'SESSION_STALE: Muat ulang session.');
+            $member = $session->items()->whereKey($itemId)->firstOrFail(['id', 'pickup_task_id']);
+            PickupTask::whereKey($member->pickup_task_id)->lockForUpdate()->firstOrFail();
             $item = $session->items()->whereKey($itemId)->lockForUpdate()->firstOrFail();
             abort_if($item->status === 'PENDING', 409, 'Gunakan verifikasi awal untuk item yang belum diperiksa.');
-            PickupTask::whereKey($item->pickup_task_id)->lockForUpdate()->firstOrFail();
             $proof = $item->proof;
             $retail = ['manual_hybrid' => (int) $data['manual_hybrid'], 'cashless_hybrid' => (int) $data['cashless_hybrid'], 'css_orion' => (int) $data['css_orion']];
             $values = $proof->effectiveValues();

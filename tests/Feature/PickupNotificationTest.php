@@ -54,8 +54,9 @@ test('read state is per manager and marking displayed events cannot hide later c
 test('notifications require an active web manager session', function (string $role, bool $active, int $status) {
     $user = User::factory()->create(['role' => $role, 'is_active' => $active]);
     $this->actingAs($user)->getJson(route('api.pickup-notifications.index'))->assertStatus($status);
-    $this->patchJson(route('api.pickup-notifications.update'), ['event_ids' => [1]])->assertStatus($status === 200 ? 422 : $status);
-})->with([['cs', true, 200], ['admin_supervisor', true, 200], ['cs', false, 403], ['admin_supervisor', false, 403], ['pickup_staff', true, 403], ['retail_staff', true, 403]]);
+    $this->patchJson(route('api.pickup-notifications.update'), ['event_ids' => [1]])
+        ->assertStatus($status === 200 ? (in_array($role, ['pickup_staff', 'retail_staff'], true) ? 403 : 422) : $status);
+})->with([['cs', true, 200], ['admin_supervisor', true, 200], ['cs', false, 403], ['admin_supervisor', false, 403], ['pickup_staff', true, 200], ['retail_staff', true, 200]]);
 
 test('guest and mobile bearer cannot access web notification feed', function () {
     $this->getJson(route('api.pickup-notifications.index'))->assertUnauthorized();

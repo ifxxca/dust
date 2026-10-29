@@ -35,6 +35,7 @@ test('conflicting national flags roll back the whole bulk import', function () {
 });
 
 test('batch reports retain each national choice across date parts and worker claims', function () {
+    config(['jne-reports.worker_id' => 'test-worker']);
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
     $this->actingAs($admin)->post(route('jne-reports.store'), [
         'accounts' => [['customer_account' => '11729800', 'national_account' => 'N'], ['customer_account' => '80089400', 'national_account' => 'Y']],

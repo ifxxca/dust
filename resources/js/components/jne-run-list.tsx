@@ -93,7 +93,11 @@ export default function JneRunList({
                         <div className="flex flex-wrap items-start justify-between gap-2">
                             <div>
                                 <p className="text-sm font-semibold">
-                                    Run #{run.id} · {sourceLabel(run.source)}
+                                    Run #{run.id} ·{' '}
+                                    {sourceLabel(
+                                        run.source,
+                                        run.customer_account,
+                                    )}
                                 </p>
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     {reportLabel(run.report_type)}
@@ -183,7 +187,11 @@ export default function JneRunList({
                             <TableRow key={run.id}>
                                 <TableCell className="align-top">
                                     <p className="text-sm font-semibold">
-                                        #{run.id} · {sourceLabel(run.source)}
+                                        #{run.id} ·{' '}
+                                        {sourceLabel(
+                                            run.source,
+                                            run.customer_account,
+                                        )}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         {reportLabel(run.report_type)}
@@ -210,6 +218,14 @@ export default function JneRunList({
                                 </TableCell>
                                 <TableCell className="max-w-48 align-top">
                                     <JneRunState run={run} />
+                                    {run.status === 'NO_DATA' &&
+                                        run.report_type === 'unresolved' && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Tidak ada AWB yang memenuhi
+                                                batas usia dan interval
+                                                pembaruan pada siklus ini.
+                                            </p>
+                                        )}
                                     {run.reviewed_at && (
                                         <p className="mt-1 text-xs text-muted-foreground">
                                             Sudah diperiksa

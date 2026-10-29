@@ -59,6 +59,9 @@ jobs:
         working-directory: workers/jne-report
         run: npm test
 
+      - name: Test web and mobile clients
+        run: node node_modules/vitest/vitest.mjs run resources/js resources/mobile/src --config vite.mobile.config.ts --mode development --root .
+
       - name: Run CI Checks
         env:
           DB_HOST: 127.0.0.1

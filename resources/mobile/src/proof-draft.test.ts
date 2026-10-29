@@ -46,6 +46,32 @@ test('package controls report invalid counts without accepting negative or exces
         expect(packageQuantityError(value)).toBeNull();
 });
 
+test('POP cashless count follows unique captured AWBs and remains inside the frozen submission', () => {
+    const draft = newProofDraft({ ...task, cashless_awbs: ['TG001', 'CM002'] });
+    draft.signature = {
+        name: 'signature',
+        kind: 'signature',
+        mime: 'image/png',
+        bytes: 100,
+        sha256: 'test',
+    };
+    expect(draft.quantities.cashless_hybrid).toBe('2');
+    expect(draftPayload(draft).cashless_awbs).toEqual(['TG001', 'CM002']);
+    expect(draftPayload(draft).cashless_capture).toBe(1);
+    expect(() =>
+        draftPayload({ ...draft, cashlessAwbs: ['TG001', 'TG001'] }),
+    ).toThrow('resi');
+    expect(() =>
+        draftPayload({
+            ...draft,
+            quantities: { ...draft.quantities, cashless_hybrid: '3' },
+        }),
+    ).toThrow('resi');
+    expect(
+        readableProofDraft({ ...draft, cashlessAwbs: ['016660047446626'] }),
+    ).toBe(false);
+});
+
 test('unfinished submission evidence cannot be discarded before server reconciliation', () => {
     const draft = newProofDraft(task);
     const attempt = {

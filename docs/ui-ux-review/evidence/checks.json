@@ -1,0 +1,111 @@
+{
+  "sourceBaseline": "e3a0be0 plus four pre-existing user source changes; three dashboard chart baselines recaptured at 50a4ff3 with SSR active before Q1",
+  "browser": {
+    "engine": "Chromium",
+    "runtime": "Initial captures used production client assets; the existing Vite dev server later became active. Final runtime matrix and Q1 comparison use Vite SSR. Focused interactions and final regression also run against production client assets via the isolated fixture bootstrap; production compilation is a separate gate.",
+    "beforeStates": 188,
+    "afterStates": 188,
+    "viewports": [
+      [
+        1366,
+        768
+      ],
+      [
+        768,
+        1024
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        320,
+        740
+      ]
+    ],
+    "zoom": "100% fresh contexts; deviceScaleFactor 1",
+    "theme": "light",
+    "roles": [
+      "admin_supervisor",
+      "cs",
+      "pickup_staff",
+      "retail_staff"
+    ],
+    "dataset": "same isolated SQLite fixture: 34 users (4 named role accounts and supporting factory users), 28 customers, 34 tasks, 30 shipments",
+    "unhandledErrors": 0,
+    "pageOverflow": 0,
+    "unlabelledVisibleControls": 0,
+    "regressionFlows": 17,
+    "ssrRegressionFlows": 17,
+    "productionAssetFixture": "tests/Fixtures/ui-ux-browser-server.php; private hot-file override, application configuration unchanged",
+    "pairedValidationAndKeyboardStates": 8,
+    "conditionalPagePairs": 4,
+    "conditionalSuccessPairs": 2,
+    "additionalAfterInteractionStates": 5,
+    "pairedSidebarStates": 2
+  },
+  "php": {
+    "tool": "pest",
+    "result": "passed",
+    "tests": 762,
+    "passed": 757,
+    "assertions": 7070,
+    "duration_ms": 295739,
+    "skipped": 5
+  },
+  "conditionalPhp": {
+    "tool": "pest",
+    "result": "passed",
+    "tests": 7,
+    "passed": 7,
+    "assertions": 18,
+    "duration_ms": 9221
+  },
+  "postRefinementPhp": {
+    "tool": "pest",
+    "result": "passed",
+    "tests": 43,
+    "passed": 43,
+    "assertions": 323,
+    "duration_ms": 2855
+  },
+  "frontend": {
+    "command": "npx vp test run resources/js/lib",
+    "files": 19,
+    "passed": 126
+  },
+  "mobile": {
+    "command": "npx vp test run --config vite.mobile.config.ts --mode development",
+    "files": 8,
+    "passed": 63
+  },
+  "types": {
+    "command": "npm run types:check",
+    "result": "passed"
+  },
+  "lint": {
+    "command": "npx vp lint <changed owned frontend files>",
+    "result": "passed"
+  },
+  "formatting": {
+    "commands": [
+      "npx vp fmt <changed owned frontend files>",
+      "vendor/bin/pint --dirty --format agent"
+    ],
+    "result": "passed"
+  },
+  "builds": {
+    "commands": [
+      "npm run build",
+      "npm run build:mobile"
+    ],
+    "result": "passed"
+  },
+  "limitations": [
+    "Source audit and logic tests do not replace native Android device UAT.",
+    "No live external report, email or FCM delivery was requested.",
+    "Inactive registration fallback has source audit only; conditional email verification has separate runtime evidence.",
+    "Browser checks are not WCAG certification, assistive-technology testing or measured user research.",
+    "Server clock was not frozen; generated freshness labels can differ while fixture records remain unchanged."
+  ]
+}

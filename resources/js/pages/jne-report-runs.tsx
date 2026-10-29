@@ -54,6 +54,7 @@ import { jneTimestamp } from '@/lib/jne-monitoring';
 import {
     reportLabel,
     runStatuses,
+    runStatusLabel,
     scrapingSources,
     sourceLabel,
 } from '@/lib/scraping';
@@ -61,7 +62,10 @@ import * as monitoring from '@/routes/jne-monitoring';
 import * as reports from '@/routes/jne-reports';
 import * as routes from '@/routes/report-runs';
 
-type Run = JneRun;
+import JneApexRecovery, {
+    type ApexBatch,
+} from '@/components/jne-apex-recovery';
+type Run = JneRun & { apex_batches?: ApexBatch[] };
 
 type Profile = {
     id: number;
@@ -81,6 +85,7 @@ type Props = {
     filters: { source: string; status: string; q: string };
     timezone: string;
     today: string;
+    checkpointsEnabled?: boolean;
 };
 
 export default function ReportRuns({
@@ -89,6 +94,7 @@ export default function ReportRuns({
     filters,
     timezone,
     today,
+    checkpointsEnabled,
 }: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [runOpen, setRunOpen] = useState(false);
@@ -120,9 +126,6 @@ export default function ReportRuns({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Riwayat run report
                     </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Pantau antrean, hasil APEX, dan pemrosesan data.
-                    </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button variant="outline" className="min-h-11" asChild>
@@ -440,6 +443,7 @@ export default function ReportRuns({
                                                 {profile.label ||
                                                     sourceLabel(
                                                         profile.source,
+                                                        profile.customer_account,
                                                     )}{' '}
                                                 ·{' '}
                                                 {reportLabel(
@@ -476,8 +480,8 @@ export default function ReportRuns({
                                 />
                                 <InputError message={manual.errors.for_date} />
                                 <p className="text-xs text-muted-foreground">
-                                    Keempat report pada tanggal ini digabung
-                                    sebelum dikirim ke APEX.
+                                    Cashless dan manual dari server yang dipilih
+                                    digabung sebelum dikirim ke APEX.
                                 </p>
                             </div>
                         )}
@@ -517,7 +521,7 @@ export default function ReportRuns({
                         <DialogTitle>Run #{selected?.id}</DialogTitle>
                         <DialogDescription>
                             {selected &&
-                                `${sourceLabel(selected.source)} · ${reportLabel(selected.report_type)} · ${selected.customer_account}`}
+                                `${sourceLabel(selected.source, selected.customer_account)} · ${reportLabel(selected.report_type)} · ${selected.customer_account}`}
                         </DialogDescription>
                     </DialogHeader>
                     {selected && (
@@ -551,11 +555,14 @@ export default function ReportRuns({
                             )}
                             {selected.source === 'hybrid' &&
                                 selected.status === 'NEEDS_ATTENTION' &&
-                                selected.sources.some((source) =>
-                                    ['FAILED', 'NEEDS_ATTENTION'].includes(
-                                        source.status,
-                                    ),
-                                ) && (
+                                (selected.error_message?.startsWith(
+                                    'HYBRID_SOURCE_INVALID:',
+                                ) ||
+                                    selected.sources.some((source) =>
+                                        ['FAILED', 'NEEDS_ATTENTION'].includes(
+                                            source.status,
+                                        ),
+                                    )) && (
                                     <div className="space-y-2 rounded-lg border p-3">
                                         <Button
                                             className="min-h-11"
@@ -572,13 +579,26 @@ export default function ReportRuns({
                                             <RefreshCw aria-hidden="true" />
                                             {retry.processing
                                                 ? 'Mengantrekan ulang…'
-                                                : 'Ulangi sumber gagal'}
+                                                : selected.error_message?.startsWith(
+                                                        'HYBRID_SOURCE_INVALID:',
+                                                    )
+                                                  ? 'Periksa ulang file sumber'
+                                                  : 'Ulangi sumber gagal'}
                                         </Button>
                                         <p className="text-xs text-muted-foreground">
-                                            Hanya report Hybrid yang gagal
-                                            diulang. Sumber yang sudah tersimpan
-                                            dipakai kembali; Process APEX belum
-                                            dijalankan.
+                                            {selected.error_message?.startsWith(
+                                                'HYBRID_SOURCE_INVALID:',
+                                            ) ? (
+                                                'Pulihkan file asli dengan checksum tersimpan terlebih dahulu. Pemeriksaan ini memakai sumber tersimpan tanpa mengulang penarikan Hybrid.'
+                                            ) : (
+                                                <>
+                                                    Hanya report Hybrid yang
+                                                    gagal diulang. Sumber yang
+                                                    sudah tersimpan dipakai
+                                                    kembali; Process APEX belum
+                                                    dijalankan.
+                                                </>
+                                            )}
                                         </p>
                                     </div>
                                 )}
@@ -629,8 +649,10 @@ export default function ReportRuns({
                                         className="flex flex-col gap-1"
                                     >
                                         <p className="text-sm font-medium">
-                                            {runStatuses[event.status] ||
-                                                event.status}
+                                            {runStatusLabel(
+                                                event.status,
+                                                selected.report_type,
+                                            )}
                                         </p>
                                         <time className="text-xs text-muted-foreground">
                                             {jneTimestamp(
@@ -647,6 +669,17 @@ export default function ReportRuns({
                                     </li>
                                 ))}
                             </ol>
+                            {checkpointsEnabled && (
+                                <JneApexRecovery
+                                    key={selected.id}
+                                    id={selected.id}
+                                    batches={selected.apex_batches ?? []}
+                                    failed={[
+                                        'FAILED',
+                                        'NEEDS_ATTENTION',
+                                    ].includes(selected.status)}
+                                />
+                            )}
                             {selected.sources?.length > 0 && (
                                 <div className="space-y-3 rounded-lg border p-4">
                                     <p className="text-sm font-medium">

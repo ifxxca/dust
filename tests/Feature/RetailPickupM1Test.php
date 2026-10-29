@@ -31,7 +31,7 @@ test('browser ISO timestamp with milliseconds is accepted and unknown fields are
 test('unauthenticated API requests and bound page access are protected', function () {
     $this->getJson(route('api.tasks.index'))->assertUnauthorized()->assertJsonPath('code', 'UNAUTHENTICATED');
     $staff = User::factory()->create(['role' => 'pickup_staff']);
-    $task = PickupTask::factory()->create();
+    $task = PickupTask::factory()->create(['status' => 'CANCELLED']);
     $this->actingAs($staff)->get(route('operations', ['screen' => 'detail', 'task' => $task->id]))->assertNotFound();
     $this->get(route('operations', ['screen' => 'users']))->assertForbidden();
 });

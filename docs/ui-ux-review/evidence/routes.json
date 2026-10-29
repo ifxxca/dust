@@ -1,0 +1,1819 @@
+[
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "/",
+    "name": "home",
+    "action": "Inertia\\Controller",
+    "middleware": [
+      "web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring",
+    "name": "jne-monitoring.index",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/collections/{pickupTask}",
+    "name": "jne-collections.show",
+    "action": "App\\Http\\Controllers\\JneCollectionWindowController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/collections/{pickupTask}",
+    "name": "jne-collections.store",
+    "action": "App\\Http\\Controllers\\JneCollectionWindowController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/customer-dashboard",
+    "name": "jne-monitoring.customer-dashboard",
+    "action": "App\\Http\\Controllers\\JneCustomerDashboardController",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/evidence-rules",
+    "name": "jne-evidence.index",
+    "action": "App\\Http\\Controllers\\JneEvidenceRuleController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/evidence-rules",
+    "name": "jne-evidence.store",
+    "action": "App\\Http\\Controllers\\JneEvidenceRuleController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/evidence-rules/activate",
+    "name": "jne-evidence.activate",
+    "action": "App\\Http\\Controllers\\JneEvidenceRuleController@activate",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/evidence-rules/disable",
+    "name": "jne-evidence.disable",
+    "action": "App\\Http\\Controllers\\JneEvidenceRuleController@disable",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/exceptions",
+    "name": "jne-exceptions.index",
+    "action": "App\\Http\\Controllers\\JneExceptionController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/exceptions",
+    "name": "jne-exceptions.store",
+    "action": "App\\Http\\Controllers\\JneExceptionController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/profiles",
+    "name": "jne-monitoring.profiles",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@profiles",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/profiles",
+    "name": "jne-monitoring.profile-store",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@saveProfile",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/profiles/bulk",
+    "name": "jne-monitoring.profile-bulk",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@bulkProfiles",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PUT",
+    "uri": "admin/jne-monitoring/profiles/{profile}",
+    "name": "jne-monitoring.profile-update",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@saveProfile",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/rebuild",
+    "name": "jne-monitoring.rebuild",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@rebuild",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/reconciliation",
+    "name": "jne-monitoring.reconciliation",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@reconciliation",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/refresh-policies",
+    "name": "jne-refresh.index",
+    "action": "App\\Http\\Controllers\\JneRefreshPolicyController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/refresh-policies/{profile}",
+    "name": "jne-refresh.store",
+    "action": "App\\Http\\Controllers\\JneRefreshPolicyController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/reports/{reportJob}/review",
+    "name": "jne-monitoring.review-report",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@review",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-monitoring/{shipment}",
+    "name": "jne-monitoring.show",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-monitoring/{shipment}/match",
+    "name": "jne-monitoring.match",
+    "action": "App\\Http\\Controllers\\JneMonitoringController@match",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-reports",
+    "name": "jne-reports.index",
+    "action": "App\\Http\\Controllers\\ReportJobController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-reports",
+    "name": "jne-reports.store",
+    "action": "App\\Http\\Controllers\\ReportJobController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-reports/recover",
+    "name": "jne-reports.recover",
+    "action": "App\\Http\\Controllers\\ReportJobController@recover",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-reports/{reportJob}/awbs",
+    "name": "jne-reports.awbs",
+    "action": "App\\Http\\Controllers\\ReportJobController@awbs",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-reports/{reportJob}/download",
+    "name": "jne-reports.download",
+    "action": "App\\Http\\Controllers\\ReportJobController@download",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-reports/{reportJob}/import-awbs",
+    "name": "jne-reports.import-awbs",
+    "action": "App\\Http\\Controllers\\ReportJobController@importAwbs",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-reports/{reportJob}/project",
+    "name": "jne-reports.project",
+    "action": "App\\Http\\Controllers\\ReportJobController@project",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/jne-shipper-aliases",
+    "name": "jne-shipper-aliases.index",
+    "action": "App\\Http\\Controllers\\JneShipperAliasController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-shipper-aliases",
+    "name": "jne-shipper-aliases.store",
+    "action": "App\\Http\\Controllers\\JneShipperAliasController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-shipper-aliases/import",
+    "name": "jne-shipper-aliases.import",
+    "action": "App\\Http\\Controllers\\JneShipperAliasController@import",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:5,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/jne-shipper-aliases/sync/{run}",
+    "name": "jne-shipper-aliases.retry-sync",
+    "action": "App\\Http\\Controllers\\JneShipperAliasController@retrySync",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PUT",
+    "uri": "admin/jne-shipper-aliases/{alias}",
+    "name": "jne-shipper-aliases.update",
+    "action": "App\\Http\\Controllers\\JneShipperAliasController@update",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/push-test",
+    "name": "push-test",
+    "action": "App\\Http\\Controllers\\AdminPushTestController@page",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "admin/report-runs",
+    "name": "report-runs.index",
+    "action": "App\\Http\\Controllers\\ReportRunController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/report-runs",
+    "name": "report-runs.store",
+    "action": "App\\Http\\Controllers\\ReportRunController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/report-runs/recover",
+    "name": "report-runs.recover",
+    "action": "App\\Http\\Controllers\\ReportRunController@recover",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/report-runs/{reportJob}/apex-recovery",
+    "name": "report-runs.apex-recovery",
+    "action": "App\\Http\\Controllers\\ApexBatchController@review",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:20,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "admin/report-runs/{reportJob}/retry-sources",
+    "name": "report-runs.retry-sources",
+    "action": "App\\Http\\Controllers\\ReportRunController@retrySources",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:10,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/internal/report-jobs/claim",
+    "name": "internal.report-jobs.claim",
+    "action": "App\\Http\\Controllers\\InternalReportJobController@claim",
+    "middleware": [
+      "api",
+      "App\\Http\\Middleware\\EnsureReportWorker"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/internal/report-jobs/{reportJob}/batches/{number}",
+    "name": "internal.report-jobs.batch",
+    "action": "App\\Http\\Controllers\\ApexBatchController@checkpoint",
+    "middleware": [
+      "api",
+      "App\\Http\\Middleware\\EnsureReportWorker"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/internal/report-jobs/{reportJob}/fail",
+    "name": "internal.report-jobs.fail",
+    "action": "App\\Http\\Controllers\\InternalReportJobController@fail",
+    "middleware": [
+      "api",
+      "App\\Http\\Middleware\\EnsureReportWorker"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/internal/report-jobs/{reportJob}/progress",
+    "name": "internal.report-jobs.progress",
+    "action": "App\\Http\\Controllers\\InternalReportJobController@progress",
+    "middleware": [
+      "api",
+      "App\\Http\\Middleware\\EnsureReportWorker"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/internal/report-jobs/{reportJob}/source-upload",
+    "name": "internal.report-jobs.source-upload",
+    "action": "App\\Http\\Controllers\\InternalReportJobController@uploadSource",
+    "middleware": [
+      "api",
+      "App\\Http\\Middleware\\EnsureReportWorker"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/internal/report-jobs/{reportJob}/upload",
+    "name": "internal.report-jobs.upload",
+    "action": "App\\Http\\Controllers\\InternalReportJobController@upload",
+    "middleware": [
+      "api",
+      "App\\Http\\Middleware\\EnsureReportWorker"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "DELETE",
+    "uri": "api/mobile/v1/auth/token",
+    "name": "mobile.auth.destroy",
+    "action": "App\\Http\\Controllers\\MobileTokenController@destroy",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/auth/tokens",
+    "name": "mobile.auth.store",
+    "action": "App\\Http\\Controllers\\MobileTokenController@store",
+    "middleware": [
+      "api",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:login"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/customers",
+    "name": "mobile.customers.index",
+    "action": "App\\Http\\Controllers\\CustomerController@index",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/handovers",
+    "name": "mobile.handovers.index",
+    "action": "App\\Http\\Controllers\\HandoverController@index",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/handovers",
+    "name": "mobile.handovers.store",
+    "action": "App\\Http\\Controllers\\HandoverController@store",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/handovers/candidates",
+    "name": "mobile.handovers.candidates",
+    "action": "App\\Http\\Controllers\\HandoverController@candidates",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/handovers/{session}",
+    "name": "mobile.handovers.show",
+    "action": "App\\Http\\Controllers\\HandoverController@show",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/handovers/{session}/close",
+    "name": "mobile.handovers.close",
+    "action": "App\\Http\\Controllers\\HandoverController@close",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/handovers/{session}/items/{item}/verification",
+    "name": "mobile.handovers.verify",
+    "action": "App\\Http\\Controllers\\HandoverController@verify",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/handovers/{session}/members",
+    "name": "mobile.handovers.amend",
+    "action": "App\\Http\\Controllers\\HandoverController@amend",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/me",
+    "name": "mobile.me",
+    "action": "App\\Http\\Controllers\\MobileTokenController@me",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/pickup-evidence/{attachment}",
+    "name": "mobile.evidence",
+    "action": "App\\Http\\Controllers\\ProofOfPickupController@attachment",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/pickup-tasks",
+    "name": "mobile.tasks.index",
+    "action": "App\\Http\\Controllers\\PickupTaskController@index",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/pickup-tasks",
+    "name": "mobile.tasks.store",
+    "action": "App\\Http\\Controllers\\PickupTaskController@store",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/pickup-tasks/takeover-candidates",
+    "name": "mobile.tasks.candidates",
+    "action": "App\\Http\\Controllers\\PickupTaskController@index",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/pickup-tasks/{task}",
+    "name": "mobile.tasks.show",
+    "action": "App\\Http\\Controllers\\PickupTaskController@show",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/pickup-tasks/{task}/execution",
+    "name": "mobile.tasks.start",
+    "action": "App\\Http\\Controllers\\PickupExecutionController@start",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/pickup-tasks/{task}/proof",
+    "name": "mobile.tasks.proof",
+    "action": "App\\Http\\Controllers\\ProofOfPickupController@store",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/pickup-tasks/{task}/retry",
+    "name": "mobile.tasks.retry",
+    "action": "App\\Http\\Controllers\\PickupLifecycleController@retry",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/pickup-tasks/{task}/takeover",
+    "name": "mobile.tasks.takeover",
+    "action": "App\\Http\\Controllers\\PickupTaskController@takeover",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/pickup-tasks/{task}/visits",
+    "name": "mobile.tasks.visit",
+    "action": "App\\Http\\Controllers\\PickupExecutionController@record",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/mobile/v1/push-device",
+    "name": "mobile.push.store",
+    "action": "App\\Http\\Controllers\\MobilePushDeviceController@store",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:30,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/mobile/v1/submissions/{submission_key}",
+    "name": "mobile.submissions.show",
+    "action": "App\\Http\\Controllers\\MobileSubmissionController@show",
+    "middleware": [
+      "api",
+      "Illuminate\\Auth\\Middleware\\Authenticate:sanctum",
+      "App\\Http\\Middleware\\EnsureMobileToken"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/admin/push-test",
+    "name": "api.push-test.store",
+    "action": "App\\Http\\Controllers\\AdminPushTestController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:6,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/admin/push-test/devices",
+    "name": "api.push-test.devices",
+    "action": "App\\Http\\Controllers\\AdminPushTestController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/admin/push-test/{testId}",
+    "name": "api.push-test.show",
+    "action": "App\\Http\\Controllers\\AdminPushTestController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/customers",
+    "name": "api.customers.index",
+    "action": "App\\Http\\Controllers\\CustomerController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/customers",
+    "name": "api.customers.store",
+    "action": "App\\Http\\Controllers\\CustomerController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PATCH",
+    "uri": "api/v1/customers/{customer}",
+    "name": "api.customers.update",
+    "action": "App\\Http\\Controllers\\CustomerController@update",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/discrepancies",
+    "name": "api.discrepancies.index",
+    "action": "App\\Http\\Controllers\\DiscrepancyController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/handovers",
+    "name": "api.handovers.index",
+    "action": "App\\Http\\Controllers\\HandoverController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/handovers",
+    "name": "api.handovers.store",
+    "action": "App\\Http\\Controllers\\HandoverController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/handovers/candidates",
+    "name": "api.handovers.candidates",
+    "action": "App\\Http\\Controllers\\HandoverController@candidates",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/handovers/{session}",
+    "name": "api.handovers.show",
+    "action": "App\\Http\\Controllers\\HandoverController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/handovers/{session}/close",
+    "name": "api.handovers.close",
+    "action": "App\\Http\\Controllers\\HandoverController@close",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/handovers/{session}/items/{item}/corrections",
+    "name": "api.handovers.correct",
+    "action": "App\\Http\\Controllers\\OperationalCorrectionController@verification",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/handovers/{session}/items/{item}/verification",
+    "name": "api.handovers.verify",
+    "action": "App\\Http\\Controllers\\HandoverController@verify",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PATCH",
+    "uri": "api/v1/handovers/{session}/members",
+    "name": "api.handovers.amend",
+    "action": "App\\Http\\Controllers\\HandoverController@amend",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/handovers/{session}/reopen",
+    "name": "api.handovers.reopen",
+    "action": "App\\Http\\Controllers\\HandoverController@reopen",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/me",
+    "name": "api.me",
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": "routes/web.php:154"
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-evidence/{attachment}",
+    "name": "api.evidence",
+    "action": "App\\Http\\Controllers\\ProofOfPickupController@attachment",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-notifications",
+    "name": "api.pickup-notifications.index",
+    "action": "App\\Http\\Controllers\\PickupNotificationController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PATCH",
+    "uri": "api/v1/pickup-notifications/read",
+    "name": "api.pickup-notifications.update",
+    "action": "App\\Http\\Controllers\\PickupNotificationController@update",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-schedules",
+    "name": "api.schedules.index",
+    "action": "App\\Http\\Controllers\\PickupScheduleController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-schedules",
+    "name": "api.schedules.store",
+    "action": "App\\Http\\Controllers\\PickupScheduleController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PATCH",
+    "uri": "api/v1/pickup-schedules/{schedule}",
+    "name": "api.schedules.update",
+    "action": "App\\Http\\Controllers\\PickupScheduleController@update",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-staff",
+    "name": "api.staff",
+    "action": "App\\Http\\Controllers\\OperationalUserController@staff",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-tasks",
+    "name": "api.tasks.index",
+    "action": "App\\Http\\Controllers\\PickupTaskController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks",
+    "name": "api.tasks.store",
+    "action": "App\\Http\\Controllers\\PickupTaskController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/bulk-assignment",
+    "name": "api.tasks.bulkAssign",
+    "action": "App\\Http\\Controllers\\PickupTaskController@bulkAssign",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-tasks/takeover-candidates",
+    "name": "api.tasks.candidates",
+    "action": "App\\Http\\Controllers\\PickupTaskController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-tasks/{task}",
+    "name": "api.tasks.show",
+    "action": "App\\Http\\Controllers\\PickupTaskController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/assignment",
+    "name": "api.tasks.assign",
+    "action": "App\\Http\\Controllers\\PickupTaskController@assign",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/cancel",
+    "name": "api.tasks.cancel",
+    "action": "App\\Http\\Controllers\\PickupLifecycleController@cancel",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-tasks/{task}/cashless-awbs",
+    "name": "api.cashless-awbs.index",
+    "action": "App\\Http\\Controllers\\PickupCashlessAwbController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/cashless-awbs",
+    "name": "api.cashless-awbs.store",
+    "action": "App\\Http\\Controllers\\PickupCashlessAwbController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:120,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/cashless-awbs/corrections",
+    "name": "api.cashless-awbs.correct",
+    "action": "App\\Http\\Controllers\\PickupCashlessAwbController@correct",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:60,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/pickup-tasks/{task}/cashless-awbs/{evidence}/history",
+    "name": "api.cashless-awbs.history",
+    "action": "App\\Http\\Controllers\\PickupCashlessAwbController@history",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/corrections",
+    "name": "api.tasks.correct",
+    "action": "App\\Http\\Controllers\\OperationalCorrectionController@proof",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/execution",
+    "name": "api.tasks.start",
+    "action": "App\\Http\\Controllers\\PickupExecutionController@start",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/processing",
+    "name": "api.tasks.processing",
+    "action": "App\\Http\\Controllers\\PickupProcessingController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/proof",
+    "name": "api.tasks.proof",
+    "action": "App\\Http\\Controllers\\ProofOfPickupController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/receipt",
+    "name": "api.tasks.receipt",
+    "action": "App\\Http\\Controllers\\PickupReceiptController@send",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/retry",
+    "name": "api.tasks.retry",
+    "action": "App\\Http\\Controllers\\PickupLifecycleController@retry",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/takeover",
+    "name": "api.tasks.takeover",
+    "action": "App\\Http\\Controllers\\PickupTaskController@takeover",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/pickup-tasks/{task}/visits",
+    "name": "api.tasks.visit",
+    "action": "App\\Http\\Controllers\\PickupExecutionController@record",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "api/v1/users",
+    "name": "api.users.index",
+    "action": "App\\Http\\Controllers\\OperationalUserController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "api/v1/users",
+    "name": "api.users.store",
+    "action": "App\\Http\\Controllers\\OperationalUserController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PATCH",
+    "uri": "api/v1/users/{user}",
+    "name": "api.users.update",
+    "action": "App\\Http\\Controllers\\OperationalUserController@update",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "dashboard",
+    "name": "dashboard",
+    "action": "App\\Http\\Controllers\\OperationalDashboardController",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "discrepancies",
+    "name": "discrepancies",
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": "routes/web.php:90"
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "email/verification-notification",
+    "name": "verification.send",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\EmailVerificationNotificationController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate:web",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:6,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "email/verify",
+    "name": "verification.notice",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\EmailVerificationPromptController@__invoke",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "email/verify/{id}/{hash}",
+    "name": "verification.verify",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\VerifyEmailController@__invoke",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate:web",
+      "Illuminate\\Routing\\Middleware\\ValidateSignature",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:6,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "forgot-password",
+    "name": "password.request",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\PasswordResetLinkController@create",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\RedirectIfAuthenticated:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "forgot-password",
+    "name": "password.email",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\PasswordResetLinkController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\RedirectIfAuthenticated:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "handover/{session?}",
+    "name": "handover",
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": "routes/web.php:100"
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "hasil-pickup",
+    "name": "pickup-results.index",
+    "action": "App\\Http\\Controllers\\PickupResultController@index",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "hasil-pickup/export",
+    "name": "pickup-results.export",
+    "action": "App\\Http\\Controllers\\PickupResultController@export",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "hasil-pickup/{task}",
+    "name": "pickup-results.show",
+    "action": "App\\Http\\Controllers\\PickupResultController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "hasil-pickup/{task}/quick",
+    "name": "pickup-results.quick",
+    "action": "App\\Http\\Controllers\\PickupResultController@quick",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "login",
+    "name": "login",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\AuthenticatedSessionController@create",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\RedirectIfAuthenticated:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "login",
+    "name": "login.store",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\AuthenticatedSessionController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\RedirectIfAuthenticated:web",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:login"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "logout",
+    "name": "logout",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\AuthenticatedSessionController@destroy",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "operations/{screen?}/{task?}",
+    "name": "operations",
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": "routes/web.php:108"
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "pickup-schedules",
+    "name": "pickup-schedules",
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": "routes/web.php:95"
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "reset-password",
+    "name": "password.update",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\NewPasswordController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\RedirectIfAuthenticated:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "reset-password/{token}",
+    "name": "password.reset",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\NewPasswordController@create",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\RedirectIfAuthenticated:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "sanctum/csrf-cookie",
+    "name": "sanctum.csrf-cookie",
+    "action": "Laravel\\Sanctum\\Http\\Controllers\\CsrfCookieController@show",
+    "middleware": [
+      "web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "settings",
+    "name": null,
+    "action": "Closure",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": "routes/settings.php:9"
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "settings/appearance",
+    "name": "appearance.edit",
+    "action": "Inertia\\Controller",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PUT",
+    "uri": "settings/password",
+    "name": "user-password.update",
+    "action": "App\\Http\\Controllers\\Settings\\SecurityController@update",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified",
+      "Illuminate\\Routing\\Middleware\\ThrottleRequests:6,1"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "settings/profile",
+    "name": "profile.edit",
+    "action": "App\\Http\\Controllers\\Settings\\ProfileController@edit",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "PATCH",
+    "uri": "settings/profile",
+    "name": "profile.update",
+    "action": "App\\Http\\Controllers\\Settings\\ProfileController@update",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "DELETE",
+    "uri": "settings/profile",
+    "name": "profile.destroy",
+    "action": "App\\Http\\Controllers\\Settings\\ProfileController@destroy",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "settings/security",
+    "name": "security.edit",
+    "action": "App\\Http\\Controllers\\Settings\\SecurityController@edit",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate",
+      "Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified",
+      "Illuminate\\Auth\\Middleware\\RequirePassword"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "storage/{path}",
+    "name": "storage.local",
+    "action": "Closure",
+    "middleware": [],
+    "path": "vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:111"
+  },
+  {
+    "domain": null,
+    "method": "PUT",
+    "uri": "storage/{path}",
+    "name": "storage.local.upload",
+    "action": "Closure",
+    "middleware": [],
+    "path": "vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:119"
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "up",
+    "name": null,
+    "action": "Closure",
+    "middleware": [],
+    "path": "vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php:224"
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "user/confirm-password",
+    "name": "password.confirm",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\ConfirmablePasswordController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "POST",
+    "uri": "user/confirm-password",
+    "name": "password.confirm.store",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\ConfirmablePasswordController@store",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate:web"
+    ],
+    "path": null
+  },
+  {
+    "domain": null,
+    "method": "GET|HEAD",
+    "uri": "user/confirmed-password-status",
+    "name": "password.confirmation",
+    "action": "Laravel\\Fortify\\Http\\Controllers\\ConfirmedPasswordStatusController@show",
+    "middleware": [
+      "web",
+      "Illuminate\\Auth\\Middleware\\Authenticate:web"
+    ],
+    "path": null
+  }
+]

@@ -72,14 +72,16 @@ test('older out of order report is audited but cannot overwrite newer current st
     expect(JneShipmentObservation::where('jne_report_awb_id', JneReportAwb::where('report_job_id', $old->id)->value('id'))->value('changes_current'))->toBeFalse();
 });
 
-test('account and AWB together identify shipment and unknown statuses are not treated as delivered', function () {
+test('one AWB across accounts retains one shipment and unknown statuses are not treated as delivered', function () {
     Storage::fake('jne_reports');
     monitoringReport(['STATUS_WEB' => 'Error On Push', 'STATUS_POD' => 'Success']);
+    expect(JneShipment::sole()->tracking_status)->toBe('UNKNOWN');
     monitoringReport(['STATUS_WEB' => 'DELIVERED'], 'OTHERACCOUNT');
 
-    $this->assertDatabaseCount('jne_shipments', 2);
-    expect(JneShipment::where('customer_account', 'TESTACCOUNT')->value('tracking_status'))->toBe('UNKNOWN');
-    expect(JneShipment::where('customer_account', 'OTHERACCOUNT')->value('tracking_status'))->toBe('DELIVERED');
+    $this->assertDatabaseCount('jne_shipments', 1);
+    $this->assertDatabaseCount('jne_shipment_observations', 2);
+    expect(JneReportAwb::orderBy('id')->pluck('customer_account')->all())->toBe(['TESTACCOUNT', 'OTHERACCOUNT']);
+    expect(JneShipment::sole()->tracking_status)->toBe('DELIVERED');
 });
 
 test('known source statuses classify conservatively and cancellation takes priority', function (string $web, string $pod, string $cancel, string $expected) {
@@ -189,11 +191,23 @@ test('admin can browse monitoring source history raw fields and reconciliation',
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
     $shipment = JneShipment::sole();
 
-    $this->actingAs($admin)->get(route('jne-monitoring.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-monitoring')->where('shipments.total', 1)->where('summary.IN_TRANSIT', 1));
-    $this->get(route('jne-monitoring.show', $shipment->id))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-shipment')->where('shipment.source.raw_data.EXTRA_COLUMN', '="Pure Text"')->has('history.data', 1)->missing('shipment.source.file_path'));
+    $this->actingAs($admin)->get(route('jne-monitoring.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-monitoring')->where('shipments.total', 1)->where('summary.IN_TRANSIT', 1)->where('shipments.data.0.entry_at', '2026-10-13T01:00:00+00:00')->where('shipments.data.0.observed_at', '2026-10-20T01:00:00+00:00'));
+    $this->get(route('jne-monitoring.show', $shipment->id))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-shipment')->where('shipment.entry_at', '2026-10-13T01:00:00+00:00')->where('shipment.source.raw_data.EXTRA_COLUMN', '="Pure Text"')->has('history.data', 1)->missing('shipment.source.file_path'));
     $this->get(route('jne-monitoring.index', ['q' => '%']))->assertOk()->assertInertia(fn (Assert $page) => $page->where('shipments.total', 0));
     $this->get(route('jne-monitoring.profiles'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-profiles'));
     $this->get(route('jne-monitoring.reconciliation'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-reconciliation')->where('linkage.linked', 0));
+});
+
+test('missing JNE entry date is not replaced with observation or import time', function () {
+    Storage::fake('jne_reports');
+    monitoringReport(['TGL_ENTRY' => '']);
+    $shipment = JneShipment::sole();
+
+    $this->actingAs(User::factory()->create(['role' => 'admin_supervisor']))
+        ->get(route('jne-monitoring.index'))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('shipments.data.0.entry_at', null));
+    $this->get(route('jne-monitoring.show', $shipment->id))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('shipment.entry_at', null));
 });
 
 test('monitoring endpoints reject ordinary users even for missing resource IDs', function (string $role) {
@@ -282,7 +296,7 @@ test('manual matching rejects wrong customer or non finalized pickup and require
     $this->postJson(route('jne-monitoring.match', $shipment->id), ['pickup_reference' => null, 'version' => $shipment->version, 'reason' => ''])->assertUnprocessable()->assertJsonValidationErrors('reason');
 
     expect($shipment->fresh()->pickup_task_id)->toBeNull();
-    $this->assertDatabaseCount('jne_shipment_match_events', 0);
+    $this->assertDatabaseCount('jne_shipment_match_events', 1);
 });
 
 test('reconciliation compares distinct linked AWBs without treating missing retail baseline as resolved', function () {

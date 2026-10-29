@@ -48,7 +48,12 @@ export type PullProfile = {
     last_run_at: string | null;
 };
 
-const flowIcons = { apex: Building2, hybrid: Layers3, unresolved: RefreshCw };
+const flowIcons = {
+    apex: Building2,
+    hybrid_pm: Layers3,
+    hybrid_puman: Layers3,
+    unresolved: RefreshCw,
+};
 
 export default function JnePullSettings({
     profiles,
@@ -66,7 +71,11 @@ export default function JnePullSettings({
     timezone: string;
     busy: number | null;
     running: number | null;
-    onCreate: (source: string, reportType: string) => void;
+    onCreate: (
+        source: string,
+        reportType: string,
+        hybridAccount?: string,
+    ) => void;
     onEdit: (profile: PullProfile) => void;
     onRun: (profile: PullProfile) => void;
     onToggle: (profile: PullProfile, enabled: boolean) => void;
@@ -87,7 +96,7 @@ export default function JnePullSettings({
                     Pilih alur penarikan
                 </h2>
             </div>
-            <div className="grid gap-3 lg:grid-cols-3">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
                 {[
                     {
                         key: 'apex',
@@ -97,15 +106,27 @@ export default function JnePullSettings({
                         action: 'Tambah account',
                         source: 'apex',
                         type: 'apex',
+                        account: '',
                     },
                     {
-                        key: 'hybrid',
-                        title: 'Hybrid gabungan',
-                        subtitle: '2 akun · 4 report · data hari ini',
-                        steps: ['4 report', 'AWB unik', 'APEX'],
-                        action: 'Atur Hybrid gabungan',
+                        key: 'hybrid_pm',
+                        title: 'Hybrid Server PM',
+                        subtitle: 'ROBERTO · cashless dan manual',
+                        steps: ['2 report PM', 'AWB unik', 'APEX'],
+                        action: 'Atur Server PM',
                         source: 'hybrid',
                         type: 'combined',
+                        account: 'HYBRID_PM',
+                    },
+                    {
+                        key: 'hybrid_puman',
+                        title: 'Hybrid Server Puman',
+                        subtitle: 'NURALAMT · cashless dan manual',
+                        steps: ['2 report Puman', 'AWB unik', 'APEX'],
+                        action: 'Atur Server Puman',
+                        source: 'hybrid',
+                        type: 'combined',
+                        account: 'HYBRID_PUMAN',
                     },
                     {
                         key: 'unresolved',
@@ -115,6 +136,7 @@ export default function JnePullSettings({
                         action: 'Atur resi aktif',
                         source: 'apex',
                         type: 'unresolved',
+                        account: '',
                     },
                 ].map((flow) => {
                     const Icon = flowIcons[flow.key as keyof typeof flowIcons];
@@ -122,7 +144,9 @@ export default function JnePullSettings({
                         flow.type === 'apex'
                             ? profile.source === 'apex' &&
                               profile.report_type === 'apex'
-                            : profile.report_type === flow.type,
+                            : profile.report_type === flow.type &&
+                              (!flow.account ||
+                                  profile.customer_account === flow.account),
                     );
                     return (
                         <Card key={flow.key} className="gap-4 py-4 shadow-none">
@@ -174,7 +198,11 @@ export default function JnePullSettings({
                                     variant="outline"
                                     className="min-h-11 w-full"
                                     onClick={() =>
-                                        onCreate(flow.source, flow.type)
+                                        onCreate(
+                                            flow.source,
+                                            flow.type,
+                                            flow.account || undefined,
+                                        )
                                     }
                                 >
                                     <Settings2
@@ -315,7 +343,7 @@ export default function JnePullSettings({
                                         role="article"
                                         aria-label={
                                             profile.label ||
-                                            `${sourceLabel(profile.source)} ${reportLabel(profile.report_type)}`
+                                            `${sourceLabel(profile.source, profile.customer_account)} ${reportLabel(profile.report_type)}`
                                         }
                                         className="gap-0 overflow-hidden py-0 shadow-none"
                                     >
@@ -335,6 +363,7 @@ export default function JnePullSettings({
                                                     <p className="mt-1 text-xs text-muted-foreground">
                                                         {sourceLabel(
                                                             profile.source,
+                                                            profile.customer_account,
                                                         )}{' '}
                                                         ·{' '}
                                                         {reportLabel(
@@ -427,7 +456,7 @@ export default function JnePullSettings({
                                             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
                                                 <Label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
                                                     <Checkbox
-                                                        aria-label={`Jadwal otomatis ${profile.label || sourceLabel(profile.source)} ${reportLabel(profile.report_type)}`}
+                                                        aria-label={`Jadwal otomatis ${profile.label || sourceLabel(profile.source, profile.customer_account)} ${reportLabel(profile.report_type)}`}
                                                         checked={
                                                             profile.enabled
                                                         }

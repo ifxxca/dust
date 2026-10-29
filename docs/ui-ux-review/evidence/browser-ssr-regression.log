@@ -1,0 +1,25 @@
+✔ wave 1 contrast primary and active navigation (5153.9585ms)
+✔ wave 1 protects dirty customer Escape close and cancel (2761.6052ms)
+✔ wave 1 customer 422 focuses visible invalid field and preserves draft (2733.2762ms)
+✔ wave 1 mobile handover opens selected panel and retains quantities (2475.4738ms)
+✔ wave 2 dashboard supports enlarged text without page overflow (2495.6316ms)
+✔ wave 2 sorting announces the active column and direction (2706.518ms)
+✔ wave 2 customer picker keyboard label selection and return focus (2471.7131ms)
+✔ wave 2 skip link bypasses the sidebar (2349.4466ms)
+✔ wave 2 theme selection announces and persists the chosen mode (2849.3788ms)
+✔ wave 2 reduced motion overlays preserve keyboard focus trapping and return (2533.4294ms)
+✔ wave 3 customer URL restores search status pagination and browser history (5944.4821ms)
+✔ wave 3 customer validation and settings use Indonesian (4202.6916ms)
+✔ wave 3 password recovery copy and 404 recovery remain usable (3254.7289ms)
+✔ wave 4 active admin workspaces retain their routes and rendering (21861.3498ms)
+✔ task first JNE setup and empty states remain actionable on mobile and desktop (9760.6662ms)
+✔ wave 4 role access and assigned pickup remain unchanged (12229.717ms)
+✔ wave 4 pickup and embedded customer dialogs preserve unsaved drafts (3427.0097ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89654.4245

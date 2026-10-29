@@ -23,7 +23,10 @@ export function reconcileExecution(
             'Versi recovery lokal tidak didukung; data dipertahankan.',
         );
     const action = {
-        takeover: 'taken_over',
+        takeover:
+            operation.body.expected_assigned_staff_id === null
+                ? 'assigned'
+                : 'taken_over',
         start: 'execution_started',
         retry: 'retry_authorized',
         visit: 'visit_recorded',

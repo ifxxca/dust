@@ -1,13 +1,18 @@
 <?php
 
+use App\Http\Controllers\ApexBatchController;
+use App\Http\Controllers\CashlessEntryResultController;
+use App\Http\Controllers\CashlessHandoverController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\HandoverController;
+use App\Http\Controllers\InternalCashlessEntryController;
 use App\Http\Controllers\InternalReportJobController;
 use App\Http\Controllers\MobilePushDeviceController;
 use App\Http\Controllers\MobileSubmissionController;
 use App\Http\Controllers\MobileTokenController;
 use App\Http\Controllers\PickupExecutionController;
 use App\Http\Controllers\PickupLifecycleController;
+use App\Http\Controllers\PickupNotificationController;
 use App\Http\Controllers\PickupTaskController;
 use App\Http\Controllers\ProofOfPickupController;
 use App\Http\Middleware\EnsureMobileToken;
@@ -21,6 +26,13 @@ Route::prefix('internal/report-jobs')->name('internal.report-jobs.')
         Route::post('{reportJob}/upload', [InternalReportJobController::class, 'upload'])->whereNumber('reportJob')->name('upload');
         Route::post('{reportJob}/source-upload', [InternalReportJobController::class, 'uploadSource'])->whereNumber('reportJob')->name('source-upload');
         Route::post('{reportJob}/fail', [InternalReportJobController::class, 'fail'])->whereNumber('reportJob')->name('fail');
+        Route::post('{reportJob}/batches/{number}', [ApexBatchController::class, 'checkpoint'])->whereNumber(['reportJob', 'number'])->name('batch');
+    });
+
+Route::prefix('internal/cashless-entries')->name('internal.cashless-entries.')
+    ->middleware(EnsureReportWorker::class)->group(function (): void {
+        Route::post('claim', [InternalCashlessEntryController::class, 'claim'])->name('claim');
+        Route::post('{batch}/checkpoint', [InternalCashlessEntryController::class, 'checkpoint'])->whereNumber('batch')->name('checkpoint');
     });
 
 Route::prefix('mobile/v1')->name('mobile.')->group(function (): void {
@@ -28,6 +40,11 @@ Route::prefix('mobile/v1')->name('mobile.')->group(function (): void {
     Route::middleware(['auth:sanctum', EnsureMobileToken::class])->group(function (): void {
         Route::delete('auth/token', [MobileTokenController::class, 'destroy'])->name('auth.destroy');
         Route::get('me', [MobileTokenController::class, 'me'])->name('me');
+        Route::get('notifications', [PickupNotificationController::class, 'index'])->name('notifications.index');
+        Route::get('cashless-entry-batches/{batch}', [CashlessEntryResultController::class, 'show'])->whereNumber('batch')->name('cashless-results.show');
+        Route::patch('notifications/read', [PickupNotificationController::class, 'update'])->name('notifications.update');
+        Route::get('cashless-handovers', [CashlessHandoverController::class, 'index'])->name('cashless-handover.index');
+        Route::post('cashless-handovers/{task}', [CashlessHandoverController::class, 'store'])->whereNumber('task')->middleware('throttle:30,1')->name('cashless-handover.store');
         Route::post('push-device', [MobilePushDeviceController::class, 'store'])->middleware('throttle:30,1')->name('push.store');
         Route::get('pickup-tasks/takeover-candidates', [PickupTaskController::class, 'index'])->name('tasks.candidates');
         Route::get('pickup-tasks', [PickupTaskController::class, 'index'])->name('tasks.index');

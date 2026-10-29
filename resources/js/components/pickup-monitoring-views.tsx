@@ -7,6 +7,7 @@ export default function PickupMonitoringViews({
     filters: Record<string, string>;
     current: 'pickup' | 'processing';
 }) {
+    if (current === 'pickup') return null;
     const shared = Object.fromEntries(
         Object.entries(filters).filter(([key]) =>
             [
@@ -26,32 +27,23 @@ export default function PickupMonitoringViews({
     );
     return (
         <nav
-            aria-label="Monitoring Hasil Pickup"
-            className="flex gap-5 overflow-x-auto border-b"
+            aria-label="Kembali ke hasil pickup"
+            className="flex items-center gap-3 text-sm"
         >
-            {(
-                [
-                    ['processing', 'Monitoring Pemrosesan Paket'],
-                    ['pickup', 'Monitoring Pickup'],
-                ] as const
-            ).map(([key, label]) => (
-                <Link
-                    key={key}
-                    href={index({
-                        query: {
-                            ...shared,
-                            ...(shared.scope === 'outstanding'
-                                ? { scope: 'daily' }
-                                : {}),
-                            monitoring: key,
-                        },
-                    })}
-                    aria-current={current === key ? 'page' : undefined}
-                    className={`shrink-0 border-b-2 px-1 py-3 text-sm font-medium ${current === key ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
-                >
-                    {label}
-                </Link>
-            ))}
+            <Link
+                href={index({
+                    query: {
+                        ...shared,
+                        ...(shared.scope === 'outstanding'
+                            ? { scope: 'daily' }
+                            : {}),
+                        monitoring: 'pickup',
+                    },
+                })}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+                Kembali ke Hasil Pickup
+            </Link>
         </nav>
     );
 }

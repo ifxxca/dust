@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { EmptyState, StatusBadge } from '@/components/operational-ui';
+import PickupCashlessAwbs from '@/components/pickup-cashless-awbs';
 import OperationalChange, {
     RecordedValues,
 } from '@/components/operational-change';
@@ -377,6 +378,9 @@ export default function HandoverSessionDetail({
     );
     const [drafts, setDrafts] = useState<Record<number, VerificationDraft>>({});
     const [busy, setBusy] = useState(false);
+    const verificationPanel = useRef<HTMLElement>(null);
+    const taskList = useRef<HTMLElement>(null);
+    const selectedTrigger = useRef<HTMLButtonElement | null>(null);
     const selected = items.find((item) => item.id === selectedId) ?? items[0];
     const dirty = items.some(
         (item) =>
@@ -463,7 +467,7 @@ export default function HandoverSessionDetail({
                     )}
                 </div>
             </header>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                 {[
                     {
                         label: 'Jumlah Task',
@@ -489,17 +493,10 @@ export default function HandoverSessionDetail({
                         icon: AlertTriangle,
                         color: 'text-rose-600 bg-rose-50 dark:bg-rose-950 dark:text-rose-300',
                     },
-                    {
-                        label: 'Dibuat Oleh',
-                        value:
-                            session.creator?.name ?? 'Pengguna tidak tersedia',
-                        icon: UserRound,
-                        color: 'text-muted-foreground bg-muted',
-                    },
                 ].map((card, index) => (
                     <div
                         key={card.label}
-                        className={`flex min-w-0 items-center gap-3 rounded-xl border bg-card p-4 shadow-sm ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}
+                        className="flex min-w-0 items-center gap-3 rounded-lg border bg-card p-3"
                     >
                         <span
                             className={`hidden size-11 shrink-0 items-center justify-center rounded-xl sm:flex ${card.color}`}
@@ -511,21 +508,21 @@ export default function HandoverSessionDetail({
                                 {card.label}
                             </p>
                             <p
-                                className={`mt-2 font-bold break-words ${index === 4 ? 'text-sm' : 'text-2xl tabular-nums'} ${index === 3 && discrepancies ? 'text-rose-600 dark:text-rose-300' : ''}`}
+                                className={`mt-1 text-xl font-semibold break-words tabular-nums ${index === 3 && discrepancies ? 'text-rose-600 dark:text-rose-300' : ''}`}
                             >
                                 {card.value}
                             </p>
-                            {index === 4 && (
-                                <p className="mt-1 text-[11px] text-muted-foreground">
-                                    {format(session.created_at)}
-                                </p>
-                            )}
                         </div>
                     </div>
                 ))}
             </div>
+            <p className="text-xs text-muted-foreground">
+                Dibuat oleh {session.creator?.name ?? 'Pengguna tidak tersedia'}
+            </p>
             <div className="grid items-start gap-4 xl:grid-cols-[minmax(280px,1fr)_minmax(0,1.85fr)]">
                 <section
+                    ref={taskList}
+                    tabIndex={-1}
                     aria-label="Daftar pickup task dalam session"
                     className="min-w-0 space-y-4 rounded-xl border bg-card p-4 shadow-sm sm:p-5"
                 >
@@ -565,7 +562,28 @@ export default function HandoverSessionDetail({
                                     aria-pressed={selected?.id === item.id}
                                     aria-controls="handover-verification-panel"
                                     className={`w-full rounded-lg border p-3 text-left transition-colors disabled:opacity-60 ${selected?.id === item.id ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'hover:border-primary/40 hover:bg-muted/30'}`}
-                                    onClick={() => setSelectedId(item.id)}
+                                    onClick={(event) => {
+                                        selectedTrigger.current =
+                                            event.currentTarget;
+                                        setSelectedId(item.id);
+                                        if (
+                                            !window.matchMedia(
+                                                '(min-width: 1280px)',
+                                            ).matches
+                                        ) {
+                                            requestAnimationFrame(() => {
+                                                verificationPanel.current?.focus(
+                                                    { preventScroll: true },
+                                                );
+                                                verificationPanel.current?.scrollIntoView(
+                                                    {
+                                                        block: 'start',
+                                                        behavior: 'auto',
+                                                    },
+                                                );
+                                            });
+                                        }
+                                    }}
                                 >
                                     <div className="flex items-start gap-3">
                                         <span className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 sm:flex dark:bg-blue-950 dark:text-blue-300">
@@ -610,9 +628,11 @@ export default function HandoverSessionDetail({
                     )}
                 </section>
                 <section
+                    ref={verificationPanel}
+                    tabIndex={-1}
                     id="handover-verification-panel"
                     aria-label="Verifikasi task terpilih"
-                    className="min-w-0 space-y-5 rounded-xl border bg-card p-4 shadow-sm sm:p-5"
+                    className="min-w-0 scroll-mt-20 space-y-5 rounded-xl border bg-card p-4 shadow-sm focus-visible:ring-2 focus-visible:ring-ring sm:p-5"
                 >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
@@ -626,6 +646,23 @@ export default function HandoverSessionDetail({
                         </div>
                         {selected && <ItemStatus item={selected} />}
                     </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="xl:hidden"
+                        onClick={() => {
+                            const target =
+                                selectedTrigger.current ?? taskList.current;
+                            target?.focus({ preventScroll: true });
+                            target?.scrollIntoView({
+                                block: 'center',
+                                behavior: 'auto',
+                            });
+                        }}
+                    >
+                        <ArrowLeft aria-hidden="true" className="size-4" />
+                        Kembali ke daftar task
+                    </Button>
                     {selected && (
                         <>
                             <div className="flex flex-wrap items-start gap-3 rounded-lg border p-4">
@@ -683,6 +720,11 @@ export default function HandoverSessionDetail({
                                     </Link>
                                 </Button>
                             </div>
+                            <PickupCashlessAwbs
+                                key={selected.task_id}
+                                taskId={selected.task_id}
+                                timezone={timezone}
+                            />
                             {selected.status === 'PENDING' &&
                             session.can?.verify &&
                             session.status !== 'CLOSED' ? (

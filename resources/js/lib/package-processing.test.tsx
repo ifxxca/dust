@@ -22,7 +22,7 @@ vi.mock('@inertiajs/react', () => ({
     useForm: () => ({}),
 }));
 
-test('manual success is shown independently while unavailable external confirmation remains a dash', () => {
+test('manual success is shown independently while external confirmation is explicitly unavailable', () => {
     const summary = {
         pop_quantity: 10,
         received_quantity: 12,
@@ -41,14 +41,17 @@ test('manual success is shown independently while unavailable external confirmat
     );
     const confirmedCard = html.split('Berhasil Diinput')[1].split('</div>')[0];
     const manualCard = html.split('Berhasil manual')[1].split('</div>')[0];
-    expect(confirmedCard).toContain('—');
+    expect(confirmedCard).toContain('Belum tersedia');
     expect(confirmedCard).not.toMatch(/>0<|>7</);
     expect(manualCard).toContain('>7<');
-    expect(html.match(/text-3xl/g)).toHaveLength(4);
+    expect(html).toContain('Paket Diterima');
+    expect(html).toContain('Belum Terkonfirmasi');
+    expect(html).toContain('Perlu Perhatian');
 });
 test('processing provenance explicitly explains overlapping unknown and manual quantities', () => {
     const html = renderToStaticMarkup(<ProcessingSource />);
-    expect(html).toContain('Konfirmasi JNE Hybrid / MyORION belum tersedia');
+    expect(html).toContain('Hasil pencocokan resi tersedia di');
+    expect(html).toContain('Rekonsiliasi Paket');
     expect(html).toContain('Berhasil manual bukan konfirmasi sistem');
     expect(html).toContain('dapat tumpang tindih');
 });

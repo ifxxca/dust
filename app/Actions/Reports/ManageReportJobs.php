@@ -29,12 +29,24 @@ class ManageReportJobs
                     return $existing;
                 }
 
-                $slot = ReportJob::SOURCE_SLOTS[$source];
+                $slot = $source === 'apex' ? (ReportJob::apexWorkerSlots()[$workerId] ?? null) : ReportJob::SOURCE_SLOTS[$source];
+                if ($source === 'apex' && config('jne-reports.apex_pool_paused')) {
+                    return null;
+                }
+                if ($slot === null) {
+                    return null;
+                }
                 $job = ReportJob::where(function ($query) use ($source): void {
                     $query->where(fn ($query) => $query->where('source', $source)->where('status', 'QUEUED'));
                     if ($source === 'apex') {
                         $query->orWhere(fn ($query) => $query->where('status', 'WAITING_APEX')->whereNotNull('source_file_path'));
                     }
+                })->where(function ($query): void {
+                    $query->where('report_mode', '<>', 'P')->orWhereNotExists(function ($busy): void {
+                        $busy->selectRaw('1')->from('report_jobs as busy')
+                            ->whereColumn('busy.customer_account', 'report_jobs.customer_account')
+                            ->where('busy.report_mode', 'P')->whereIn('busy.status', ReportJob::ACTIVE_STATUSES);
+                    });
                 })->orderBy('id')->lockForUpdate()->first();
                 if ($job === null || ReportJob::where('active_slot', $slot)->lockForUpdate()->exists()) {
                     return null;
@@ -77,6 +89,20 @@ class ManageReportJobs
         $job = DB::transaction(function () use ($id, $workerId, $claimToken, $status, $message): ReportJob {
             $job = ReportJob::whereKey($id)->lockForUpdate()->firstOrFail();
             $this->assertOwner($job, $workerId, $claimToken, false);
+            if ($status === 'NO_DATA') {
+                abort_unless($job->source === 'apex' && $job->report_type === 'apex' && $job->report_mode === 'P'
+                    && str_starts_with($message, 'APEX_NO_DATA:') && str_contains($workerId, '-instance-'), 422);
+                if ($job->status === 'NO_DATA' && ($job->parameters['no_data_evidence'] ?? null) === $message) {
+                    return $job;
+                }
+                abort_unless(in_array($job->status, ReportJob::ACTIVE_STATUSES, true) && $job->lease_expires_at?->isFuture(), 409, 'Job tidak lagi aktif.');
+                $job->update(['status' => 'NO_DATA', 'row_count' => 0, 'awb_count' => 0, 'error_message' => null,
+                    'parameters' => [...($job->parameters ?? []), 'no_data_evidence' => $message],
+                    'active_slot' => null, 'lease_expires_at' => null, 'completed_at' => now()]);
+                $job->recordEvent($message);
+
+                return $job;
+            }
             if ($job->status === $status && $job->error_message === $message) {
                 return $job;
             }
@@ -146,6 +172,7 @@ class ManageReportJobs
             if ($job->source_file_path) {
                 abort_unless($job->source_worker_id === $workerId && $claimToken !== '' && is_string($job->source_claim_token) && hash_equals($job->source_claim_token, $claimToken), 403);
                 abort_unless(hash_equals($job->source_file_checksum, $checksum), 409, 'CSV sumber berbeda sudah tersimpan.');
+                abort_unless(Storage::disk('jne_reports')->putFileAs('report-jobs/'.$job->id, $file, 'source-'.$checksum.'.csv', ['visibility' => 'private']) === $job->source_file_path, 503, 'Pemulihan CSV sumber gagal. Ulangi upload file asli yang sama.');
 
                 return $job;
             }
@@ -188,21 +215,42 @@ class ManageReportJobs
         });
     }
 
+    public function retryApexSourceFailure(int $id, int $actorId): ReportJob
+    {
+        return DB::transaction(function () use ($id, $actorId): ReportJob {
+            $job = ReportJob::whereKey($id)->lockForUpdate()->firstOrFail();
+            $parameterReport = $job->source === 'apex' && $job->report_type === 'apex' && $job->report_mode === 'P';
+            $hybridReport = $job->source === 'hybrid' && $job->report_type === 'combined' && $job->report_mode === 'A' && $job->source_file_path !== null;
+            abort_unless(($parameterReport || $hybridReport) && $job->status === 'NEEDS_ATTENTION'
+                && str_starts_with($job->error_message ?? '', 'APEX_SOURCE_API:') && $job->file_path === null
+                && $job->attempt_count === 1 && $job->active_slot === null && $job->lease_expires_at === null, 409,
+                'Hanya kegagalan API 500 APEX yang terkonfirmasi pada percobaan pertama dapat diulang sekali.');
+            $job->recordEvent('Admin #'.$actorId.' mengulang satu kali kegagalan APEX terkonfirmasi: '.$job->error_message);
+            $job->update(['status' => $hybridReport ? 'WAITING_APEX' : 'QUEUED', 'worker_id' => null,
+                'claim_key' => null, 'claim_token' => null, 'error_message' => null, 'completed_at' => null,
+                'reviewed_at' => null, 'reviewed_by' => null, 'review_note' => null]);
+
+            return $job;
+        }, 3);
+    }
+
     public function retryHybridSources(int $id, int $actorId): ReportJob
     {
         return DB::transaction(function () use ($id, $actorId): ReportJob {
             $batch = ReportJob::whereKey($id)->lockForUpdate()->firstOrFail();
             abort_unless($batch->source === 'hybrid' && $batch->report_type === 'combined' && $batch->status === 'NEEDS_ATTENTION' && $batch->source_file_path === null && $batch->file_path === null, 409, 'Hanya pengumpulan Hybrid yang belum dikirim ke APEX yang dapat diulang.');
             $failed = ReportJob::where('hybrid_batch_id', $batch->id)->whereIn('status', ['FAILED', 'NEEDS_ATTENTION'])->whereNull('source_file_path')->lockForUpdate()->get();
-            abort_if($failed->isEmpty(), 409, 'Tidak ada sumber Hybrid gagal yang perlu diulang.');
+            $integrityReview = str_starts_with($batch->error_message ?? '', 'HYBRID_SOURCE_INVALID:');
+            abort_if($failed->isEmpty() && ! $integrityReview, 409, 'Tidak ada sumber Hybrid gagal yang perlu diulang.');
             foreach ($failed as $source) {
                 $source->update(['status' => 'QUEUED', 'worker_id' => null, 'claim_key' => null, 'claim_token' => null, 'active_slot' => null, 'lease_expires_at' => null, 'completed_at' => null, 'error_message' => null, 'reviewed_at' => null, 'reviewed_by' => null, 'review_note' => null]);
                 $source->recordEvent("Admin #{$actorId} mengantrekan ulang sumber yang gagal; sumber tersimpan tetap digunakan.");
             }
             $batch->update(['status' => 'COLLECTING_SOURCES', 'error_message' => null, 'reviewed_at' => null, 'reviewed_by' => null, 'review_note' => null]);
             $batch->recordEvent("Admin #{$actorId} mengulang {$failed->count()} sumber Hybrid gagal. Process APEX belum dijalankan.");
+            $this->combiner->handle($batch->id);
 
-            return $batch;
+            return $batch->refresh();
         });
     }
 

@@ -14,6 +14,7 @@ export type CustomerDashboardFilters = {
 export type CustomerDashboardDay = {
     date: string;
     shipments: number;
+    delivered: number;
     amount: number | null;
     amount_known: number;
 };
@@ -55,6 +56,9 @@ export type CustomerDashboardProps = {
         customers: number;
         accounts: number;
         mapped: number;
+        pickup_matched?: number;
+        candidates?: number;
+        conflicts?: number;
         unmapped: number;
         ambiguous: number;
         undated: number;

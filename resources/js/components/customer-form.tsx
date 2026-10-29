@@ -1,5 +1,5 @@
 import { useHttp } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,12 +40,14 @@ export default function CustomerForm({
     customer = null,
     onSaved,
     onProcessingChange,
+    onDirtyChange,
     onCancel,
     inDialog = false,
 }: {
     customer?: CustomerDetails | null;
     onSaved: (customer: CustomerDetails) => void;
     onProcessingChange?: (busy: boolean) => void;
+    onDirtyChange?: (dirty: boolean) => void;
     onCancel?: () => void;
     inDialog?: boolean;
 }) {
@@ -61,13 +63,45 @@ export default function CustomerForm({
         is_active: customer?.is_active ?? true,
     });
     const [message, setMessage] = useState('');
+    const formElement = useRef<HTMLFormElement>(null);
+    const scrollArea = useRef<HTMLDivElement>(null);
     const [contactOpen, setContactOpen] = useState(false);
     useEffect(() => {
         onProcessingChange?.(form.processing);
     }, [form.processing, onProcessingChange]);
     useEffect(() => () => onProcessingChange?.(false), [onProcessingChange]);
+    useEffect(() => {
+        onDirtyChange?.(form.isDirty);
+    }, [form.isDirty, onDirtyChange]);
+    useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+    useEffect(() => {
+        if (form.processing || !form.hasErrors) return;
+        const frame = requestAnimationFrame(() => {
+            const invalid = formElement.current?.querySelector<HTMLElement>(
+                '[aria-invalid="true"]',
+            );
+            invalid?.focus({ preventScroll: true });
+            if (invalid && inDialog && scrollArea.current) {
+                const area = scrollArea.current;
+                const offset =
+                    invalid.getBoundingClientRect().top -
+                    area.getBoundingClientRect().top;
+                area.scrollTo({
+                    top:
+                        area.scrollTop +
+                        offset -
+                        (area.clientHeight - invalid.offsetHeight) / 2,
+                    behavior: 'auto',
+                });
+            } else {
+                invalid?.scrollIntoView({ block: 'center', behavior: 'auto' });
+            }
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [form.errors, form.hasErrors, form.processing, inDialog]);
     return (
         <form
+            ref={formElement}
             className={
                 inDialog
                     ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
@@ -113,6 +147,7 @@ export default function CustomerForm({
             }}
         >
             <div
+                ref={scrollArea}
                 className={
                     inDialog
                         ? 'min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5'
@@ -183,6 +218,11 @@ export default function CustomerForm({
                                                 : '08xxxxxxxxxx'
                                     }
                                     aria-invalid={!!form.errors[key]}
+                                    aria-describedby={
+                                        form.errors[key]
+                                            ? `customer-${key}-error`
+                                            : undefined
+                                    }
                                     value={form.data[key]}
                                     onChange={(event) =>
                                         form.setData(key, event.target.value)
@@ -196,6 +236,7 @@ export default function CustomerForm({
                                 )}
                                 {form.errors[key] && (
                                     <p
+                                        id={`customer-${key}-error`}
                                         role="alert"
                                         className="text-sm text-destructive"
                                     >
@@ -230,6 +271,11 @@ export default function CustomerForm({
                             placeholder="Jalan, nomor bangunan, kelurahan, kecamatan, dan kota"
                             autoComplete="street-address"
                             aria-invalid={!!form.errors.pickup_address}
+                            aria-describedby={
+                                form.errors.pickup_address
+                                    ? 'customer-pickup_address-error'
+                                    : undefined
+                            }
                             required
                             maxLength={2000}
                             disabled={form.processing}
@@ -243,6 +289,7 @@ export default function CustomerForm({
                         />
                         {form.errors.pickup_address && (
                             <p
+                                id="customer-pickup_address-error"
                                 role="alert"
                                 className="text-sm text-destructive"
                             >
@@ -281,6 +328,11 @@ export default function CustomerForm({
                                                 : '106.8166667'
                                         }
                                         aria-invalid={!!form.errors[key]}
+                                        aria-describedby={
+                                            form.errors[key]
+                                                ? `customer-${key}-error`
+                                                : undefined
+                                        }
                                         value={form.data[key]}
                                         onChange={(event) =>
                                             form.setData(
@@ -291,6 +343,7 @@ export default function CustomerForm({
                                     />
                                     {form.errors[key] && (
                                         <p
+                                            id={`customer-${key}-error`}
                                             role="alert"
                                             className="text-sm text-destructive"
                                         >
@@ -342,6 +395,11 @@ export default function CustomerForm({
                             maxLength={255}
                             disabled={form.processing}
                             aria-invalid={!!form.errors.contact}
+                            aria-describedby={
+                                form.errors.contact
+                                    ? 'customer-contact-error'
+                                    : undefined
+                            }
                             value={form.data.contact}
                             onChange={(event) =>
                                 form.setData('contact', event.target.value)
@@ -349,6 +407,7 @@ export default function CustomerForm({
                         />
                         {form.errors.contact && (
                             <p
+                                id="customer-contact-error"
                                 role="alert"
                                 className="text-sm text-destructive"
                             >
@@ -371,6 +430,11 @@ export default function CustomerForm({
                             id="customer-is_active"
                             className="w-full sm:w-56"
                             aria-invalid={!!form.errors.is_active}
+                            aria-describedby={
+                                form.errors.is_active
+                                    ? 'customer-is_active-error'
+                                    : undefined
+                            }
                         >
                             <SelectValue />
                         </SelectTrigger>
@@ -384,7 +448,11 @@ export default function CustomerForm({
                         Task dan riwayat sebelumnya tetap tersimpan.
                     </p>
                     {form.errors.is_active && (
-                        <p role="alert" className="text-sm text-destructive">
+                        <p
+                            id="customer-is_active-error"
+                            role="alert"
+                            className="text-sm text-destructive"
+                        >
                             {form.errors.is_active}
                         </p>
                     )}

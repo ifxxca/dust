@@ -7,6 +7,7 @@ import {
     unlink,
     readdir,
     chmod,
+    rename,
 } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
@@ -81,6 +82,13 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
                       progress,
                       controller.signal,
                       Math.min(config.maxFileBytes, job.max_file_kb * 1024),
+                      job.batch_checkpoints
+                          ? {
+                                begin: (number) => api.beginBatch(job, number),
+                                save: (number, file) =>
+                                    api.saveBatch(job, number, file),
+                            }
+                          : null,
                   )
                 : await apex.retrieve(
                       job,
@@ -104,20 +112,24 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
         const safe = safeError(
             controller.signal.aborted ? controller.signal.reason : error,
         );
-        if (apex.captureFailure)
+        if (safe.status !== 'NO_DATA' && apex.captureFailure)
             await apex.captureFailure(job.id, safe.code).catch(() => {});
         clearInterval(heartbeat);
         await pending;
         try {
-            await api.fail(job, safe);
-            log('job_failed', {
-                job_id: job.id,
-                status: safe.status,
-                code: safe.code,
-                phase: apex.phase,
-                control: apex.activeControl,
-                error_type: error?.name,
-            });
+            const result = await api.fail(job, safe);
+            if (safe.status === 'NO_DATA' && result?.status === 'NO_DATA') {
+                completed = true;
+                log('job_no_data', { job_id: job.id });
+            } else
+                log('job_failed', {
+                    job_id: job.id,
+                    status: safe.status,
+                    code: safe.code,
+                    phase: apex.phase,
+                    control: apex.activeControl,
+                    error_type: error?.name,
+                });
         } catch {
             log('job_failure_unconfirmed', {
                 job_id: job.id,
@@ -131,8 +143,21 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
         clearTimeout(timeout);
         shutdownSignal?.removeEventListener('abort', shutdown);
         controller.signal.removeEventListener('abort', cancelBrowser);
-        if (tempDir && path.dirname(tempDir) === config.dataDir)
-            await rm(tempDir, { recursive: true, force: true });
+        if (tempDir && path.dirname(tempDir) === config.dataDir) {
+            if (job.batch_checkpoints && !completed) {
+                const recovery = path.join(
+                    config.dataDir,
+                    'recovery-' + path.basename(tempDir),
+                );
+                await rename(tempDir, recovery);
+                log('job_recovery_files_retained', {
+                    job_id: job.id,
+                    directory: path.basename(recovery),
+                });
+            } else {
+                await rm(tempDir, { recursive: true, force: true });
+            }
+        }
     }
     return completed;
 }

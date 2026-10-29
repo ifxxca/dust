@@ -16,26 +16,10 @@ class QueryJneCustomerDashboard
      */
     public function handle(array $filters, CarbonImmutable $from, CarbonImmutable $thru): array
     {
-        $scope = DB::table('jne_shipments as s')->join('jne_report_awbs as a', 'a.id', '=', 's.latest_report_awb_id');
-        if ($filters['customer_id']) {
-            $scope->where('s.customer_id', $filters['customer_id']);
-        }
-        if ($filters['mapping'] === 'unmapped') {
-            $scope->whereNull('s.customer_id');
-        } elseif ($filters['mapping'] === 'ambiguous') {
-            $scope->where('s.customer_match_status', 'AMBIGUOUS');
-        }
-        foreach (['service' => 'a.service', 'destination' => 'a.destination', 'status' => 's.tracking_status'] as $filter => $column) {
-            if ($filters[$filter] !== '') {
-                $scope->where($column, $filters[$filter]);
-            }
-        }
+        $scope = $this->scope($filters);
         $today = CarbonImmutable::today(config('jne-reports.source_timezone'));
         $cutoff7 = $today->subDays(6)->utc()->format('Y-m-d H:i:s');
         $cutoff14 = $today->subDays(13)->utc()->format('Y-m-d H:i:s');
-        if ($filters['age'] !== 'all') {
-            $scope->whereNotIn('s.tracking_status', ['DELIVERED', 'CANCELLED', 'RETURNED'])->where('a.entry_at', '<', $filters['age'] === '14_plus' ? $cutoff14 : $cutoff7);
-        }
         $sourceSql = JneAwbSource::sql();
         $sourceRows = (clone $scope)->where('a.entry_at', '>=', $from->utc()->format('Y-m-d H:i:s'))
             ->where('a.entry_at', '<', $thru->addDay()->utc()->format('Y-m-d H:i:s'))
@@ -51,9 +35,12 @@ class QueryJneCustomerDashboard
         $undated = (clone $scope)->whereNull('a.entry_at')->count();
         $query = (clone $scope)->where('a.entry_at', '>=', $from->utc()->format('Y-m-d H:i:s'))
             ->where('a.entry_at', '<', $thru->addDay()->utc()->format('Y-m-d H:i:s'));
-        $summary = (array) (clone $query)->selectRaw("COUNT(*) as shipments, COUNT(DISTINCT s.customer_id) as customers, COUNT(DISTINCT s.customer_account) as accounts,
-            SUM(CASE WHEN s.customer_id IS NOT NULL THEN 1 ELSE 0 END) as mapped,
+        $summary = (array) (clone $query)->leftJoin('pickup_tasks as p', 'p.id', '=', 's.pickup_task_id')->selectRaw("COUNT(*) as shipments, COUNT(DISTINCT CASE WHEN s.customer_match_status = 'MATCHED' THEN s.customer_id END) as customers, COUNT(DISTINCT s.customer_account) as accounts,
+            SUM(CASE WHEN s.customer_id IS NOT NULL AND s.customer_match_status = 'MATCHED' THEN 1 ELSE 0 END) as mapped,
+            SUM(CASE WHEN s.customer_match_status = 'MATCHED' AND s.match_status = 'MATCHED' AND s.customer_id = p.customer_id THEN 1 ELSE 0 END) as pickup_matched,
             SUM(CASE WHEN s.customer_match_status = 'AMBIGUOUS' THEN 1 ELSE 0 END) as ambiguous,
+            SUM(CASE WHEN s.customer_match_status = 'CANDIDATE' THEN 1 ELSE 0 END) as candidates,
+            SUM(CASE WHEN s.customer_match_status = 'CONFLICT' THEN 1 ELSE 0 END) as conflicts,
             COUNT(a.amount_cents) as amount_known, SUM(a.amount_cents) as amount_cents,
             COUNT(a.weight_grams) as weight_known, SUM(a.weight_grams) as weight_grams,
             COUNT(a.quantity) as quantity_known, SUM(a.quantity) as quantity,
@@ -63,7 +50,7 @@ class QueryJneCustomerDashboard
             SUM(CASE WHEN s.tracking_status = 'EXCEPTION' THEN 1 ELSE 0 END) as exceptions,
             SUM(CASE WHEN s.tracking_status NOT IN ('DELIVERED','CANCELLED','RETURNED') THEN 1 ELSE 0 END) as active,
             MAX(s.last_observed_at) as last_observed_at")->first();
-        foreach (['shipments', 'customers', 'accounts', 'mapped', 'ambiguous', 'amount_known', 'weight_known', 'quantity_known', 'quantity', 'delivered', 'active', 'cancelled', 'returned', 'exceptions'] as $key) {
+        foreach (['shipments', 'customers', 'accounts', 'mapped', 'pickup_matched', 'ambiguous', 'candidates', 'conflicts', 'amount_known', 'weight_known', 'quantity_known', 'quantity', 'delivered', 'active', 'cancelled', 'returned', 'exceptions'] as $key) {
             $summary[$key] = (int) ($summary[$key] ?? 0);
         }
         $summary['amount'] = $summary['amount_known'] > 0 ? (int) $summary['amount_cents'] / 100 : null;
@@ -104,18 +91,39 @@ class QueryJneCustomerDashboard
         $summary['destination_multiple'] = (int) $destinationCounts->sum(fn ($row): int => ($names[$row->destination]['ambiguous'] ?? false) ? (int) $row->shipments : 0);
         $summary['destination_count'] = $destinationCounts->whereNotNull('destination')->count();
         $day = $sqlite ? 'DATE(a.entry_at, ?)' : 'DATE(DATE_ADD(a.entry_at, INTERVAL ? MINUTE))';
-        $daily = (clone $query)->selectRaw($day.' as day, COUNT(*) as shipments, SUM(a.amount_cents) as amount_cents, COUNT(a.amount_cents) as amount_known', [$sqlite ? "{$offset} minutes" : $offset])
+        $daily = (clone $query)->selectRaw($day." as day, COUNT(*) as shipments, SUM(CASE WHEN s.tracking_status = 'DELIVERED' THEN 1 ELSE 0 END) as delivered, SUM(a.amount_cents) as amount_cents, COUNT(a.amount_cents) as amount_known", [$sqlite ? "{$offset} minutes" : $offset])
             ->groupBy('day')->orderBy('day')->get()->keyBy('day');
         $days = [];
         for ($date = $from; $date->lessThanOrEqualTo($thru); $date = $date->addDay()) {
             $row = $daily->get($date->toDateString());
             $days[] = ['date' => $date->toDateString(), 'shipments' => (int) ($row->shipments ?? 0),
+                'delivered' => (int) ($row->delivered ?? 0),
                 'amount' => ! $row ? 0 : ((int) $row->amount_known > 0 ? (int) $row->amount_cents / 100 : null),
                 'amount_known' => (int) ($row->amount_known ?? 0)];
         }
         $statuses = (clone $query)->selectRaw('s.tracking_status as label, COUNT(*) as shipments')->groupBy('s.tracking_status')->orderByDesc('shipments')->get()
             ->map(fn ($row): array => ['label' => $row->label, 'shipments' => (int) $row->shipments])->all();
-        $shipments = (clone $query)->leftJoin('customers as c', 'c.id', '=', 's.customer_id')
+        $destinations = array_map(fn (array $row): array => [...$row, 'key' => $row['label'], 'label' => $names[$row['label']]['name'] ?? null, 'multiple_names' => $names[$row['label']]['ambiguous'] ?? false], $this->breakdown($query, 'destination'));
+
+        return ['summary' => $summary, 'daily' => $days, 'destinations' => $destinations, 'servers' => $servers, 'ages' => $ages, 'comparison' => $comparison,
+            'services' => $this->breakdown($query, 'service'), 'statuses' => $statuses,
+            'selectedDestination' => $filters['destination'] !== '' ? ($names[$filters['destination']]['name'] ?? 'Nama daerah belum tersedia') : null];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
+    public function shipments(array $filters, CarbonImmutable $from, CarbonImmutable $thru): array
+    {
+        $query = $this->scope($filters)->where('a.entry_at', '>=', $from->utc()->format('Y-m-d H:i:s'))
+            ->where('a.entry_at', '<', $thru->addDay()->utc()->format('Y-m-d H:i:s'));
+        if ($filters['server'] !== 'all') {
+            $query->whereRaw('('.JneAwbSource::sql().') = ?', [$filters['server']]);
+        }
+        $names = $this->destinationNames->handle();
+
+        return $query->leftJoin('customers as c', 'c.id', '=', 's.customer_id')
             ->select(['s.id', 's.awb', 's.customer_account', 's.tracking_status', 's.customer_match_status', 'a.entry_at', 'a.service', 'a.destination', 'a.amount_cents', 'a.weight_grams', 'a.quantity', 'a.etd_days', 'c.name as customer_name', 'c.customer_code'])
             ->orderByDesc('a.entry_at')->orderByDesc('s.id')->paginate(25)->withQueryString()->through(fn ($row): array => [
                 ...array_diff_key((array) $row, array_flip(['amount_cents', 'weight_grams'])),
@@ -125,13 +133,35 @@ class QueryJneCustomerDashboard
                 'server' => JneAwbSource::classify($row->awb),
                 'destination_name' => $names[$row->destination]['name'] ?? null,
                 'destination_multiple' => $names[$row->destination]['ambiguous'] ?? false,
-            ]);
+            ])->toArray();
 
-        $destinations = array_map(fn (array $row): array => [...$row, 'key' => $row['label'], 'label' => $names[$row['label']]['name'] ?? null, 'multiple_names' => $names[$row['label']]['ambiguous'] ?? false], $this->breakdown($query, 'destination'));
+    }
 
-        return ['summary' => $summary, 'daily' => $days, 'destinations' => $destinations, 'servers' => $servers, 'ages' => $ages, 'comparison' => $comparison,
-            'services' => $this->breakdown($query, 'service'), 'statuses' => $statuses, 'shipments' => $shipments,
-            'selectedDestination' => $filters['destination'] !== '' ? ($names[$filters['destination']]['name'] ?? 'Nama daerah belum tersedia') : null];
+    /** @param array<string, mixed> $filters */
+    private function scope(array $filters): Builder
+    {
+        $scope = DB::table('jne_shipments as s')->join('jne_report_awbs as a', 'a.id', '=', 's.latest_report_awb_id');
+        if ($filters['customer_id']) {
+            $scope->where('s.customer_id', $filters['customer_id'])->where('s.customer_match_status', 'MATCHED');
+        }
+        if ($filters['mapping'] === 'unmapped') {
+            $scope->where(fn (Builder $query) => $query->whereNull('s.customer_id')->orWhere('s.customer_match_status', '<>', 'MATCHED'));
+        } elseif ($filters['mapping'] === 'matched') {
+            $scope->whereNotNull('s.customer_id')->where('s.customer_match_status', 'MATCHED');
+        } elseif (in_array($filters['mapping'], ['ambiguous', 'candidate', 'conflict'], true)) {
+            $scope->where('s.customer_match_status', strtoupper($filters['mapping']));
+        }
+        foreach (['service' => 'a.service', 'destination' => 'a.destination', 'status' => 's.tracking_status'] as $filter => $column) {
+            if ($filters[$filter] !== '') {
+                $scope->where($column, $filters[$filter]);
+            }
+        }
+        if ($filters['age'] !== 'all') {
+            $cutoff = CarbonImmutable::today(config('jne-reports.source_timezone'))->subDays($filters['age'] === '14_plus' ? 13 : 6)->utc()->format('Y-m-d H:i:s');
+            $scope->whereNotIn('s.tracking_status', ['DELIVERED', 'CANCELLED', 'RETURNED'])->where('a.entry_at', '<', $cutoff);
+        }
+
+        return $scope;
     }
 
     /**

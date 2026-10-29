@@ -12,10 +12,14 @@ test('mobile mine and available reuse separate ownership and candidate scopes', 
     $own = PickupTask::factory()->create(['status' => 'ASSIGNED', 'assigned_staff_id' => $staff->id]);
     $candidate = PickupTask::factory()->create(['status' => 'ASSIGNED', 'assigned_staff_id' => $other->id]);
     PickupTask::factory()->create(['status' => 'ASSIGNED', 'assigned_staff_id' => $other->id, 'execution_started_at' => now()]);
-    PickupTask::factory()->create(['status' => 'SCHEDULED']);
+    $unassigned = PickupTask::factory()->create(['status' => 'SCHEDULED']);
+    PickupTask::factory()->create(['status' => 'CANCELLED']);
+    PickupTask::factory()->create(['status' => 'SCHEDULED', 'execution_started_at' => now()]);
 
     $this->withToken($token->plainTextToken)->getJson(route('mobile.tasks.index', ['mine' => 1]))->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $own->id);
-    $this->getJson(route('mobile.tasks.candidates'))->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $candidate->id)->assertJsonPath('data.0.can.take_over', true)->assertJsonMissingPath('data.0.contact');
+    $available = $this->getJson(route('mobile.tasks.candidates'))->assertOk()->assertJsonCount(2, 'data')->assertJsonPath('data.0.id', $candidate->id)->assertJsonPath('data.0.can.take_over', true)->assertJsonMissingPath('data.0.contact');
+    expect(array_column($available->json('data'), 'id'))->toEqualCanonicalizing([$candidate->id, $unassigned->id]);
+    $this->getJson(route('mobile.tasks.show', $unassigned))->assertOk()->assertJsonPath('data.can.take_over', true)->assertJsonMissingPath('data.contact');
     $this->getJson(route('mobile.tasks.show', $candidate))->assertOk()->assertJsonMissingPath('data.contact');
     $this->getJson(route('mobile.tasks.show', $own))->assertOk()->assertJsonPath('data.contact', $own->contact_snapshot);
 });

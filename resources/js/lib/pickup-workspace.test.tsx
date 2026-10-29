@@ -136,6 +136,7 @@ test('advanced Pickup controls are hidden and the main page ends at the operatio
         />,
     );
     expect(html).toContain('id="pickup-advanced" hidden=""');
+    expect(html.match(/aria-sort="descending"/g)).toHaveLength(1);
     expect(html).toContain('Tidak ada pickup sesuai filter');
     expect(html).not.toContain('Definisi, aktivitas');
     expect(html).not.toContain('Aktivitas Hari Ini');
@@ -227,7 +228,7 @@ test('processing monitoring also leaves analytics out of the main layout', () =>
     expect(html).toContain('Bantuan Metrik');
     expect(html).toContain('Pekerjaan Tertunda');
     expect(html).toContain('Halaman 1 / 1');
-    expect(html.match(/text-3xl/g)).toHaveLength(4);
+    expect(html).toContain('aria-label="Ringkasan operasional"');
 });
 
 test('the shared operational label and subsequent handover context keep the pickup date explicit', () => {

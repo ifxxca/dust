@@ -12,6 +12,7 @@ export async function fixture(t, options = {}) {
         expired: false,
         sessions: new Map(),
         homeReads: 0,
+        views: 0,
     };
     const server = http.createServer(async (request, response) => {
         const url = new URL(request.url, 'http://localhost');
@@ -77,6 +78,12 @@ export async function fixture(t, options = {}) {
         }
         if (action?.endsWith('_CSV')) {
             state.downloads.push(page);
+            if (options.oracleExportError) {
+                return send(
+                    `<div class="a-Form-error">${options.oracleCode || 'ORA-22275'}: invalid LOB locator specified\n</div>`,
+                    'text/csv; charset=utf-8',
+                );
+            }
             if (
                 options.download503Always ||
                 (options.download503Once && state.downloads.length === 1)
@@ -107,6 +114,10 @@ export async function fixture(t, options = {}) {
             `<label>${name}<select><option>${option}</option></select></label>`;
         const input = (name, value = '') =>
             `<label>${name}<input value="${options.paddedDates && name.startsWith('Date ') && value ? ` ${value.toLowerCase()} ` : value}" name="${name === 'Date From' ? 'from' : 'thru'}"></label>`;
+        if (url.searchParams.has('from')) state.views++;
+        const dropDateThru =
+            options.dropDateThruAlways ||
+            (options.dropDateThruOnce && state.views === 1);
         send(
             hidden +
                 `<form action="/apex/f"><input type="hidden" name="p" value="113:${page}:${session}">` +
@@ -115,7 +126,10 @@ export async function fixture(t, options = {}) {
                     page === '57' ? '&lt; ALL &gt;' : '&lt;ALL USERS&gt;',
                 ) +
                 input('Date From', url.searchParams.get('from') || '') +
-                input('Date Thru', url.searchParams.get('thru') || '') +
+                input(
+                    'Date Thru',
+                    dropDateThru ? '' : url.searchParams.get('thru') || '',
+                ) +
                 (page === '57'
                     ? input('Marketplace') +
                       input('Service') +
@@ -126,7 +140,21 @@ export async function fixture(t, options = {}) {
                       input('Shipper / Cust Id') +
                       input('Disc#')) +
                 '<button>View</button></form><button id="actions">Actions</button><div id="menu" hidden><button role="menuitem" id="reset">Reset</button><button role="menuitem" id="download">Download</button></div>' +
+                (options.emptyReport
+                    ? `<section class="t-IRR-region"><div class="a-IRR-noDataMsg" ${options.hiddenEmptyMarker ? 'hidden' : ''}>No data found.</div>` +
+                      (options.reportFilter
+                          ? '<div class="a-IRR-controls-item--filter">Hidden rows</div>'
+                          : '') +
+                      (options.reportRows
+                          ? '<table class="a-IRR-table"><tr><td>001</td></tr></table>'
+                          : '') +
+                      (options.reportError
+                          ? '<div class="a-Form-error">Report unavailable</div>'
+                          : '') +
+                      '</section>'
+                    : '') +
                 `<script>
+            ${options.datepickerClearsFocusedThru ? 'document.querySelector("form button").addEventListener("mousedown",()=>{const e=document.activeElement;if(e?.name==="thru") e.value="";});' : ''}
             ${options.resetManualDates && page === '40' ? 'document.querySelectorAll("select").forEach(select=>select.addEventListener("change",()=>{document.querySelectorAll("label").forEach(label=>{if(/^Date (From|Thru)/.test(label.textContent))label.querySelector("input").value="23-OCT-2026";});}));' : ''}
             document.getElementById('actions').onclick=()=>document.getElementById('menu').hidden=false;
             document.getElementById('reset').onclick=()=>{document.getElementById('menu').hidden=true;const d=document.createElement('div');d.setAttribute('role','dialog');d.innerHTML='<button id="apply">Apply</button>';document.body.append(d);document.getElementById('apply').onclick=async()=>{await fetch('/reset',{method:'POST'});d.remove();};};

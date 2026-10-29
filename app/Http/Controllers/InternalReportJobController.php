@@ -27,6 +27,7 @@ class InternalReportJobController extends Controller
             'source' => $job->source, 'report_type' => $job->report_type,
             'date_from' => $job->date_from->toDateString(), 'date_thru' => $job->date_thru->toDateString(),
             'report_mode' => $job->report_mode, 'parameters' => $job->parameters,
+            'batch_checkpoints' => (bool) config('jne-reports.batch_checkpoints_enabled'),
             'status' => $job->status, 'claim_token' => $job->claim_token,
             'lease_seconds' => config('jne-reports.lease_seconds'), 'max_file_kb' => config('jne-reports.max_file_kb'),
         ]]);
@@ -82,7 +83,7 @@ class InternalReportJobController extends Controller
     public function fail(Request $request, int $reportJob, ManageReportJobs $jobs): JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['FAILED', 'NEEDS_ATTENTION'])],
+            'status' => ['required', Rule::in(['FAILED', 'NEEDS_ATTENTION', 'NO_DATA'])],
             'error_message' => ['required', 'string', 'max:1000'],
         ]);
         $job = $jobs->fail($reportJob, $request->header('X-Worker-ID'), $request->header('X-Report-Claim', ''), $data['status'], $data['error_message']);

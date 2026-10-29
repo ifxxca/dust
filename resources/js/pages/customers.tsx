@@ -1,4 +1,4 @@
-import { Head, Link, useHttp, usePage } from '@inertiajs/react';
+import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { AlertCircle, Plus, RefreshCw, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,13 +22,18 @@ import {
 import { index } from '@/routes/api/customers';
 import { operations } from '@/routes';
 import { index as shipperNames } from '@/routes/jne-shipper-aliases';
+import {
+    customerListFilters,
+    customerListUrl,
+    type CustomerListFilters,
+} from '@/lib/customer-list-navigation';
 
 export default function Customers() {
     const { auth } = usePage().props;
-    const [search, setSearch] = useState('');
-    const [query, setQuery] = useState('');
-    const [status, setStatus] = useState('all');
-    const [page, setPage] = useState(1);
+    const { url } = usePage();
+    const filters = customerListFilters(url);
+    const { q: query, status, page } = filters;
+    const [search, setSearch] = useState(query);
     const [revision, setRevision] = useState(0);
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<CustomerDetails | null>(null);
@@ -39,13 +44,27 @@ export default function Customers() {
     } | null>(null);
     const [loading, setLoading] = useState(true);
     const loader = useHttp({});
+    const navigate = (next: CustomerListFilters) => {
+        router.push({
+            url: customerListUrl(next),
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
     useEffect(() => {
+        setSearch(query);
+    }, [url, query]);
+    useEffect(() => {
+        if (search.trim() === query) return;
         const timer = setTimeout(() => {
-            setPage(1);
-            setQuery(search.trim());
+            router.replace({
+                url: customerListUrl({ q: search.trim(), status, page: 1 }),
+                preserveState: true,
+                preserveScroll: true,
+            });
         }, 300);
         return () => clearTimeout(timer);
-    }, [search]);
+    }, [search, query, status, url]);
     useEffect(() => {
         let cancelled = false;
         setError('');
@@ -70,7 +89,15 @@ export default function Customers() {
                         meta: CustomerPagination;
                     };
                     if (page > next.meta.last_page) {
-                        setPage(Math.max(1, next.meta.last_page));
+                        router.replace({
+                            url: customerListUrl({
+                                q: query,
+                                status,
+                                page: Math.max(1, next.meta.last_page),
+                            }),
+                            preserveState: true,
+                            preserveScroll: true,
+                        });
                         return;
                     }
                     setData(next);
@@ -97,9 +124,7 @@ export default function Customers() {
     }, [query, page, status, revision]);
     const reset = () => {
         setSearch('');
-        setQuery('');
-        setStatus('all');
-        setPage(1);
+        navigate({ q: '', status: 'all', page: 1 });
     };
     const searching = search.trim() !== query;
     return (
@@ -113,10 +138,6 @@ export default function Customers() {
                         </h1>
                         <Badge variant="secondary">Master Data</Badge>
                     </div>
-                    <p className="mt-1.5 text-sm text-muted-foreground">
-                        Kelola identitas, kontak, alamat pickup, dan status
-                        customer.
-                    </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {auth.user.role === 'admin_supervisor' && (
@@ -174,8 +195,11 @@ export default function Customers() {
                 <Select
                     value={status}
                     onValueChange={(value) => {
-                        setStatus(value);
-                        setPage(1);
+                        navigate({
+                            q: search.trim(),
+                            status: value as CustomerListFilters['status'],
+                            page: 1,
+                        });
                     }}
                 >
                     <SelectTrigger
@@ -220,7 +244,7 @@ export default function Customers() {
                 loading={loading || searching}
                 error={error}
                 filtered={!!query || status !== 'all'}
-                onPage={setPage}
+                onPage={(next) => navigate({ q: query, status, page: next })}
                 onEdit={(customer) => {
                     setEditing(customer);
                     setOpen(true);

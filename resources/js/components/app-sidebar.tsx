@@ -9,6 +9,8 @@ import {
     ContactRound,
     CalendarDays,
     BellRing,
+    ListChecks,
+    AlertTriangle,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -25,6 +27,7 @@ import {
 } from '@/components/ui/sidebar';
 import {
     dashboard,
+    discrepancies,
     handover,
     operations,
     pickupSchedules,
@@ -32,7 +35,9 @@ import {
 } from '@/routes';
 import type { NavItem } from '@/types';
 import { index as pickupResults } from '@/routes/pickup-results';
+import { index as pickupReconciliation } from '@/routes/pickup-automation';
 import { jneNavigation } from '@/lib/jne-navigation';
+import { index as cashlessHandover } from '@/routes/cashless-handover';
 
 export function AppSidebar() {
     const { setOpenMobile } = useSidebar();
@@ -41,6 +46,8 @@ export function AppSidebar() {
     const history =
         new URL(url, 'http://localhost').searchParams.get('history') === '1';
     const path = url.split('?')[0];
+    const physicalHandover =
+        path === '/handover' || path.startsWith('/handover/');
     const role = auth.user.role;
     const pickup =
         path.startsWith('/operations') &&
@@ -72,7 +79,9 @@ export function AppSidebar() {
         handover(),
         PackageCheck,
         path === '/discrepancies' ||
-            (path.startsWith('/handover') &&
+            ((physicalHandover ||
+                (role === 'admin_supervisor' &&
+                    path === cashlessHandover.url())) &&
                 (!history || role === 'admin_supervisor')),
     );
     const groups =
@@ -132,7 +141,7 @@ export function AppSidebar() {
                                   'Riwayat Handover',
                                   handover({}, { query: { history: 1 } }),
                                   History,
-                                  path.startsWith('/handover') && history,
+                                  physicalHandover && history,
                               ),
                           ],
                       },
@@ -142,19 +151,61 @@ export function AppSidebar() {
                           label: 'Retail Operations',
                           items: [
                               overview,
-                              item(
-                                  'Hasil Pickup',
-                                  pickupResults(),
-                                  ClipboardList,
-                                  path.startsWith('/hasil-pickup'),
-                              ),
+                              {
+                                  ...item(
+                                      'Hasil Pickup',
+                                      pickupResults(),
+                                      ClipboardList,
+                                      path.startsWith('/hasil-pickup') ||
+                                          path === pickupReconciliation.url(),
+                                  ),
+                                  children: [
+                                      item(
+                                          'Monitoring Pickup',
+                                          pickupResults(),
+                                          ClipboardList,
+                                          path.startsWith('/hasil-pickup'),
+                                      ),
+                                      item(
+                                          'Rekonsiliasi Paket',
+                                          pickupReconciliation(),
+                                          ListChecks,
+                                          path === pickupReconciliation.url(),
+                                      ),
+                                  ],
+                              },
                               item(
                                   'Operasional Pickup',
                                   operations({ screen: 'tasks' }),
                                   Truck,
                                   pickup,
                               ),
-                              reception,
+                              {
+                                  ...reception,
+                                  children: [
+                                      item(
+                                          'Menunggu Penerimaan',
+                                          handover(),
+                                          PackageCheck,
+                                          physicalHandover && !history,
+                                      ),
+                                      item(
+                                          'Riwayat Handover',
+                                          handover(
+                                              {},
+                                              { query: { history: 1 } },
+                                          ),
+                                          History,
+                                          physicalHandover && history,
+                                      ),
+                                      item(
+                                          'Monitoring Selisih',
+                                          discrepancies(),
+                                          AlertTriangle,
+                                          path === '/discrepancies',
+                                      ),
+                                  ],
+                              },
                               item(
                                   'Jadwal Regular',
                                   pickupSchedules(),
@@ -188,7 +239,7 @@ export function AppSidebar() {
                   ];
     return (
         <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader className="mb-4 p-3">
+            <SidebarHeader className="mb-4 p-3 pr-14 md:pr-3">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>

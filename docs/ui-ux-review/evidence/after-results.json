@@ -1,0 +1,5824 @@
+[
+  {
+    "key": "welcome",
+    "role": null,
+    "route": "/",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/welcome-1366.png",
+    "url": "/",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 280,
+      "height": 212
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pickup teratur.Tim terhubung.Kerja lebih tenang.",
+      "Semua yang tim butuhkan.Dalam satu tempat.",
+      "Customer lebih terorganisir",
+      "Pembagian tugas lebih jelas",
+      "Proses tercatat sampai akhir",
+      "Dari permintaanke penyelesaian.",
+      "01Buat & atur penugasan",
+      "02Jalankan penjemputan",
+      "03Selesaikan serah terima",
+      "Siap untuk pickup berikutnya?"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "welcome",
+    "role": null,
+    "route": "/",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/welcome-768.png",
+    "url": "/",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 219,
+      "height": 194
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pickup teratur.Tim terhubung.Kerja lebih tenang.",
+      "Semua yang tim butuhkan.Dalam satu tempat.",
+      "Customer lebih terorganisir",
+      "Pembagian tugas lebih jelas",
+      "Proses tercatat sampai akhir",
+      "Dari permintaanke penyelesaian.",
+      "01Buat & atur penugasan",
+      "02Jalankan penjemputan",
+      "03Selesaikan serah terima",
+      "Siap untuk pickup berikutnya?"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "welcome",
+    "role": null,
+    "route": "/",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/welcome-390.png",
+    "url": "/",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 203,
+      "height": 207
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pickup teratur.Tim terhubung.Kerja lebih tenang.",
+      "Semua yang tim butuhkan.Dalam satu tempat.",
+      "Customer lebih terorganisir",
+      "Pembagian tugas lebih jelas",
+      "Proses tercatat sampai akhir",
+      "Dari permintaanke penyelesaian.",
+      "01Buat & atur penugasan",
+      "02Jalankan penjemputan",
+      "03Selesaikan serah terima",
+      "Siap untuk pickup berikutnya?"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "welcome",
+    "role": null,
+    "route": "/",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/welcome-320.png",
+    "url": "/",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 203,
+      "height": 311
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pickup teratur.Tim terhubung.Kerja lebih tenang.",
+      "Semua yang tim butuhkan.Dalam satu tempat.",
+      "Customer lebih terorganisir",
+      "Pembagian tugas lebih jelas",
+      "Proses tercatat sampai akhir",
+      "Dari permintaanke penyelesaian.",
+      "01Buat & atur penugasan",
+      "02Jalankan penjemputan",
+      "03Selesaikan serah terima",
+      "Siap untuk pickup berikutnya?"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "login",
+    "role": null,
+    "route": "/login",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/login-1366.png",
+    "url": "/login",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 211,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 343,
+      "height": 449
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Selamat datang kembali."
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "login",
+    "role": null,
+    "route": "/login",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/login-768.png",
+    "url": "/login",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 249,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 381,
+      "height": 449
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Selamat datang kembali."
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "login",
+    "role": null,
+    "route": "/login",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/login-390.png",
+    "url": "/login",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 175,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 303,
+      "height": 449
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Selamat datang kembali."
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "login",
+    "role": null,
+    "route": "/login",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/login-320.png",
+    "url": "/login",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 175,
+      "height": 72
+    },
+    "search": null,
+    "workingArea": {
+      "top": 339,
+      "height": 469
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Selamat datang kembali."
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "forgot-password",
+    "role": null,
+    "route": "/forgot-password",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/forgot-password-1366.png",
+    "url": "/forgot-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 366,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 474,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Lupa kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "forgot-password",
+    "role": null,
+    "route": "/forgot-password",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/forgot-password-768.png",
+    "url": "/forgot-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 405,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 513,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Lupa kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "forgot-password",
+    "role": null,
+    "route": "/forgot-password",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/forgot-password-390.png",
+    "url": "/forgot-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 305,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 433,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Lupa kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "forgot-password",
+    "role": null,
+    "route": "/forgot-password",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/forgot-password-320.png",
+    "url": "/forgot-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 253,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 381,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Lupa kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reset-password",
+    "role": null,
+    "route": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/reset-password-1366.png",
+    "url": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 270,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 378,
+      "height": 354
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Atur ulang kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reset-password",
+    "role": null,
+    "route": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/reset-password-768.png",
+    "url": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 309,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 417,
+      "height": 354
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Atur ulang kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reset-password",
+    "role": null,
+    "route": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/reset-password-390.png",
+    "url": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 221,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 325,
+      "height": 354
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Atur ulang kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reset-password",
+    "role": null,
+    "route": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/reset-password-320.png",
+    "url": "/reset-password/audit-invalid?email=audit-admin_supervisor%40example.test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 175,
+      "height": 72
+    },
+    "search": null,
+    "workingArea": {
+      "top": 315,
+      "height": 354
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Atur ulang kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-admin-1366.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 177,
+      "height": 62
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-admin-768.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 237,
+      "height": 174
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-admin-390.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-admin",
+    "role": "admin_supervisor",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-admin-320.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-cs-1366.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 177,
+      "height": 62
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-cs-768.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 237,
+      "height": 174
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-cs-390.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-cs",
+    "role": "cs",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-cs-320.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 229,
+      "height": 248
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-retail",
+    "role": "retail_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-retail-1366.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 428,
+      "height": 58
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Ringkasan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-retail",
+    "role": "retail_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-retail-768.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Ringkasan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-retail",
+    "role": "retail_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-retail-390.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Ringkasan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-retail",
+    "role": "retail_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-retail-320.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Ringkasan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customers",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/customers-1366.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": {
+      "top": 156,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 324,
+      "height": 73
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer",
+      "Daftar Customer (28)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customers",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/customers-768.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 140,
+      "height": 36
+    },
+    "search": {
+      "top": 244,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 412,
+      "height": 73
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer",
+      "Daftar Customer (28)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customers",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/customers-390.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 240,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 456,
+      "height": 73
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer",
+      "Daftar Customer (28)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customers",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/customers-320.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 240,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 472,
+      "height": 73
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer",
+      "Daftar Customer (28)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "tasks",
+    "role": "admin_supervisor",
+    "route": "/operations/tasks",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/tasks-1366.png",
+    "url": "/operations/tasks",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 205,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 640,
+      "height": 77
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Operasional Pickup",
+      "Daftar Pickup (34)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "tasks",
+    "role": "admin_supervisor",
+    "route": "/operations/tasks",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/tasks-768.png",
+    "url": "/operations/tasks",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 261,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Operasional Pickup",
+      "Daftar Pickup (34)",
+      "Customer Audit 6",
+      "Customer Audit 5",
+      "Customer Audit 4",
+      "Customer Audit 3",
+      "Customer Audit 2",
+      "Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks",
+      "Customer Audit 28",
+      "Customer Audit 27",
+      "Customer Audit 26",
+      "Customer Audit 25"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "tasks",
+    "role": "admin_supervisor",
+    "route": "/operations/tasks",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/tasks-390.png",
+    "url": "/operations/tasks",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 245,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Operasional Pickup",
+      "Daftar Pickup (34)",
+      "Customer Audit 6",
+      "Customer Audit 5",
+      "Customer Audit 4",
+      "Customer Audit 3",
+      "Customer Audit 2",
+      "Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks",
+      "Customer Audit 28",
+      "Customer Audit 27",
+      "Customer Audit 26",
+      "Customer Audit 25"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "tasks",
+    "role": "admin_supervisor",
+    "route": "/operations/tasks",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/tasks-320.png",
+    "url": "/operations/tasks",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 245,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Operasional Pickup",
+      "Daftar Pickup (34)",
+      "Customer Audit 6",
+      "Customer Audit 5",
+      "Customer Audit 4",
+      "Customer Audit 3",
+      "Customer Audit 2",
+      "Customer Audit dengan Nama Perusahaan yang Sangat Panjang untuk Pemeriksaan Layout dan Pemotongan Teks",
+      "Customer Audit 28",
+      "Customer Audit 27",
+      "Customer Audit 26",
+      "Customer Audit 25"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "mine",
+    "role": "pickup_staff",
+    "route": "/operations/mine",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/mine-1366.png",
+    "url": "/operations/mine",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 357,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 312,
+      "height": 1095
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "mine",
+    "role": "pickup_staff",
+    "route": "/operations/mine",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/mine-768.png",
+    "url": "/operations/mine",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 357,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 312,
+      "height": 1423
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "mine",
+    "role": "pickup_staff",
+    "route": "/operations/mine",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/mine-390.png",
+    "url": "/operations/mine",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 413,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 372,
+      "height": 2231
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "mine",
+    "role": "pickup_staff",
+    "route": "/operations/mine",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/mine-320.png",
+    "url": "/operations/mine",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 473,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 432,
+      "height": 2403
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "available",
+    "role": "pickup_staff",
+    "route": "/operations/available",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/available-1366.png",
+    "url": "/operations/available",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 267,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 222,
+      "height": 433
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya",
+      "Tidak ada tugas tersedia"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "available",
+    "role": "pickup_staff",
+    "route": "/operations/available",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/available-768.png",
+    "url": "/operations/available",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 267,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 222,
+      "height": 593
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya",
+      "Tidak ada tugas tersedia"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "available",
+    "role": "pickup_staff",
+    "route": "/operations/available",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/available-390.png",
+    "url": "/operations/available",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 251,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 210,
+      "height": 585
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya",
+      "Tidak ada tugas tersedia"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "available",
+    "role": "pickup_staff",
+    "route": "/operations/available",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/available-320.png",
+    "url": "/operations/available",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 299,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 258,
+      "height": 725
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tugas Saya",
+      "Tidak ada tugas tersedia"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-history",
+    "role": "pickup_staff",
+    "route": "/operations/mine?history=1",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/pickup-history-1366.png",
+    "url": "/operations/mine?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 205,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-history",
+    "role": "pickup_staff",
+    "route": "/operations/mine?history=1",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/pickup-history-768.png",
+    "url": "/operations/mine?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 36
+    },
+    "search": {
+      "top": 205,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-history",
+    "role": "pickup_staff",
+    "route": "/operations/mine?history=1",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/pickup-history-390.png",
+    "url": "/operations/mine?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 189,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-history",
+    "role": "pickup_staff",
+    "route": "/operations/mine?history=1",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/pickup-history-320.png",
+    "url": "/operations/mine?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 245,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "create-pickup",
+    "role": "cs",
+    "route": "/operations/create",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/create-pickup-1366.png",
+    "url": "/operations/create",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 216,
+      "height": 591
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Buat Pickup On-Demand"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "create-pickup",
+    "role": "cs",
+    "route": "/operations/create",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/create-pickup-768.png",
+    "url": "/operations/create",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 216,
+      "height": 591
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Buat Pickup On-Demand"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "create-pickup",
+    "role": "cs",
+    "route": "/operations/create",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/create-pickup-390.png",
+    "url": "/operations/create",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 204,
+      "height": 599
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Buat Pickup On-Demand"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "create-pickup",
+    "role": "cs",
+    "route": "/operations/create",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/create-pickup-320.png",
+    "url": "/operations/create",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 204,
+      "height": 599
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Buat Pickup On-Demand"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "task-detail",
+    "role": "admin_supervisor",
+    "route": "/operations/detail/3",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/task-detail-1366.png",
+    "url": "/operations/detail/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 100,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 1557,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Pickup",
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Ringkasan Eksekusi",
+      "Jumlah Paket per Kategori",
+      "Bukti Pickup",
+      "Jejak Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "task-detail",
+    "role": "admin_supervisor",
+    "route": "/operations/detail/3",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/task-detail-768.png",
+    "url": "/operations/detail/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 100,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 1935,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Pickup",
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Ringkasan Eksekusi",
+      "Jumlah Paket per Kategori",
+      "Bukti Pickup",
+      "Jejak Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "task-detail",
+    "role": "admin_supervisor",
+    "route": "/operations/detail/3",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/task-detail-390.png",
+    "url": "/operations/detail/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 94,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 2162,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Pickup",
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Ringkasan Eksekusi",
+      "Jumlah Paket per Kategori",
+      "Bukti Pickup",
+      "Jejak Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "task-detail",
+    "role": "admin_supervisor",
+    "route": "/operations/detail/3",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/task-detail-320.png",
+    "url": "/operations/detail/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 94,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 2342,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Pickup",
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Ringkasan Eksekusi",
+      "Jumlah Paket per Kategori",
+      "Bukti Pickup",
+      "Jejak Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "users",
+    "role": "admin_supervisor",
+    "route": "/operations/users",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/users-1366.png",
+    "url": "/operations/users",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 100,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 400,
+      "height": 69
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengguna"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "users",
+    "role": "admin_supervisor",
+    "route": "/operations/users",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/users-768.png",
+    "url": "/operations/users",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 100,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengguna"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "users",
+    "role": "admin_supervisor",
+    "route": "/operations/users",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/users-390.png",
+    "url": "/operations/users",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengguna"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "users",
+    "role": "admin_supervisor",
+    "route": "/operations/users",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/users-320.png",
+    "url": "/operations/users",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengguna"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-wizard",
+    "role": "pickup_staff",
+    "route": "/operations/execute/2",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/pickup-wizard-1366.png",
+    "url": "/operations/execute/2",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 116,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 447,
+      "height": 368
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 2",
+      "Hasil Kunjungan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-wizard",
+    "role": "pickup_staff",
+    "route": "/operations/execute/2",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/pickup-wizard-768.png",
+    "url": "/operations/execute/2",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 116,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 455,
+      "height": 384
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 2",
+      "Hasil Kunjungan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-wizard",
+    "role": "pickup_staff",
+    "route": "/operations/execute/2",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/pickup-wizard-390.png",
+    "url": "/operations/execute/2",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 108,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 419,
+      "height": 400
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 2",
+      "Hasil Kunjungan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "pickup-wizard",
+    "role": "pickup_staff",
+    "route": "/operations/execute/2",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/pickup-wizard-320.png",
+    "url": "/operations/execute/2",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 108,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 487,
+      "height": 400
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 2",
+      "Hasil Kunjungan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedules",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/schedules-1366.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 32
+    },
+    "search": {
+      "top": 180,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 440,
+      "height": 113
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Jadwal Regular"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedules",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/schedules-768.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 32
+    },
+    "search": {
+      "top": 180,
+      "height": 36
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Jadwal Regular",
+      "Customer Audit 2"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedules",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/schedules-390.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 172,
+      "height": 36
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Jadwal Regular",
+      "Customer Audit 2"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedules",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/schedules-320.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 220,
+      "height": 36
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Jadwal Regular",
+      "Customer Audit 2"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-processing",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/results-processing-1366.png",
+    "url": "/hasil-pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 239,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 239,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-processing",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/results-processing-768.png",
+    "url": "/hasil-pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 323,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 323,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-processing",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/results-processing-390.png",
+    "url": "/hasil-pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 339,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 339,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-processing",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/results-processing-320.png",
+    "url": "/hasil-pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 415,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 415,
+      "height": 76
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-pickup",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup?monitoring=pickup",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/results-pickup-1366.png",
+    "url": "/hasil-pickup?monitoring=pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 239,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 239,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup",
+      "Perlu Ditindaklanjuti",
+      "Daftar Pickup 29 pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-pickup",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup?monitoring=pickup",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/results-pickup-768.png",
+    "url": "/hasil-pickup?monitoring=pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 323,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 323,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup",
+      "Perlu Ditindaklanjuti",
+      "Daftar Pickup 29 pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-pickup",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup?monitoring=pickup",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/results-pickup-390.png",
+    "url": "/hasil-pickup?monitoring=pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 339,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 339,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup",
+      "Perlu Ditindaklanjuti",
+      "Daftar Pickup 29 pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "results-pickup",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup?monitoring=pickup",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/results-pickup-320.png",
+    "url": "/hasil-pickup?monitoring=pickup",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 415,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 415,
+      "height": 76
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Hasil Pickup",
+      "Perlu Ditindaklanjuti",
+      "Daftar Pickup 29 pickup"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "result-detail",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup/3",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/result-detail-1366.png",
+    "url": "/hasil-pickup/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 128,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 377,
+      "height": 384
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Tahapan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "result-detail",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup/3",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/result-detail-768.png",
+    "url": "/hasil-pickup/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 128,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 425,
+      "height": 712
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Tahapan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "result-detail",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup/3",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/result-detail-390.png",
+    "url": "/hasil-pickup/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 120,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 417,
+      "height": 732
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Tahapan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "result-detail",
+    "role": "admin_supervisor",
+    "route": "/hasil-pickup/3",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/result-detail-320.png",
+    "url": "/hasil-pickup/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 120,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 509,
+      "height": 784
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer Audit 3",
+      "Informasi Pickup",
+      "Tahapan Operasional"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handovers",
+    "role": "admin_supervisor",
+    "route": "/handover",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/handovers-1366.png",
+    "url": "/handover",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 100,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 513,
+      "height": 85
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handovers",
+    "role": "admin_supervisor",
+    "route": "/handover",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/handovers-768.png",
+    "url": "/handover",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi",
+      "HO-0001"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handovers",
+    "role": "admin_supervisor",
+    "route": "/handover",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/handovers-390.png",
+    "url": "/handover",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi",
+      "HO-0001"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handovers",
+    "role": "admin_supervisor",
+    "route": "/handover",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/handovers-320.png",
+    "url": "/handover",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi",
+      "HO-0001"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handover-history",
+    "role": "retail_staff",
+    "route": "/handover?history=1",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/handover-history-1366.png",
+    "url": "/handover?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 100,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi"
+    ],
+    "alerts": [
+      "Daftar petugas belum dapat dimuat. Gunakan pencarian nama atau muat ulang."
+    ],
+    "errors": []
+  },
+  {
+    "key": "handover-history",
+    "role": "retail_staff",
+    "route": "/handover?history=1",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/handover-history-768.png",
+    "url": "/handover?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 100,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi"
+    ],
+    "alerts": [
+      "Daftar petugas belum dapat dimuat. Gunakan pencarian nama atau muat ulang."
+    ],
+    "errors": []
+  },
+  {
+    "key": "handover-history",
+    "role": "retail_staff",
+    "route": "/handover?history=1",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/handover-history-390.png",
+    "url": "/handover?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi"
+    ],
+    "alerts": [
+      "Daftar petugas belum dapat dimuat. Gunakan pencarian nama atau muat ulang."
+    ],
+    "errors": []
+  },
+  {
+    "key": "handover-history",
+    "role": "retail_staff",
+    "route": "/handover?history=1",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/handover-history-320.png",
+    "url": "/handover?history=1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Handover & Verifikasi"
+    ],
+    "alerts": [
+      "Daftar petugas belum dapat dimuat. Gunakan pencarian nama atau muat ulang."
+    ],
+    "errors": []
+  },
+  {
+    "key": "handover-detail",
+    "role": "retail_staff",
+    "route": "/handover/1",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/handover-detail-1366.png",
+    "url": "/handover/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 880,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Handover Session HO-0001",
+      "Daftar Pickup Task",
+      "Verifikasi Paket"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handover-detail",
+    "role": "retail_staff",
+    "route": "/handover/1",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/handover-detail-768.png",
+    "url": "/handover/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 2658,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Handover Session HO-0001",
+      "Daftar Pickup Task",
+      "Verifikasi Paket"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handover-detail",
+    "role": "retail_staff",
+    "route": "/handover/1",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/handover-detail-390.png",
+    "url": "/handover/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 2750,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Handover Session HO-0001",
+      "Daftar Pickup Task",
+      "Verifikasi Paket"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "handover-detail",
+    "role": "retail_staff",
+    "route": "/handover/1",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/handover-detail-320.png",
+    "url": "/handover/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 64
+    },
+    "search": null,
+    "workingArea": {
+      "top": 3022,
+      "height": 37
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Handover Session HO-0001",
+      "Daftar Pickup Task",
+      "Verifikasi Paket"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "discrepancies",
+    "role": "admin_supervisor",
+    "route": "/discrepancies",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/discrepancies-1366.png",
+    "url": "/discrepancies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 629,
+      "height": 111
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Monitoring Selisih"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "discrepancies",
+    "role": "admin_supervisor",
+    "route": "/discrepancies",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/discrepancies-768.png",
+    "url": "/discrepancies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Monitoring Selisih"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "discrepancies",
+    "role": "admin_supervisor",
+    "route": "/discrepancies",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/discrepancies-390.png",
+    "url": "/discrepancies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Monitoring Selisih"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "discrepancies",
+    "role": "admin_supervisor",
+    "route": "/discrepancies",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/discrepancies-320.png",
+    "url": "/discrepancies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Monitoring Selisih"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/customer-dashboard-1366.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 287,
+      "height": 74
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": []
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/customer-dashboard-768.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 327,
+      "height": 224
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": []
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/customer-dashboard-390.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 379,
+      "height": 404
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": []
+  },
+  {
+    "key": "customer-dashboard",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/customer-dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/customer-dashboard-320.png",
+    "url": "/admin/jne-monitoring/customer-dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 399,
+      "height": 404
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Dashboard customer",
+      "Server resi"
+    ],
+    "alerts": [
+      "Cakupan data10 resi belum terkonfirmasi customernya. 0 kandidat · 0 konflik.Periksa belum terpetakanKelola nama pengirim"
+    ],
+    "errors": []
+  },
+  {
+    "key": "shipments",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/shipments-1366.png",
+    "url": "/admin/jne-monitoring",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 165,
+      "height": 44
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengiriman JNE",
+      "Tindak lanjut koleksi dan rekonsiliasi",
+      "Pembaruan resi aktif"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipments",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/shipments-768.png",
+    "url": "/admin/jne-monitoring",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 237,
+      "height": 96
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengiriman JNE",
+      "Tindak lanjut koleksi dan rekonsiliasi",
+      "Pembaruan resi aktif"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipments",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/shipments-390.png",
+    "url": "/admin/jne-monitoring",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 245,
+      "height": 148
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengiriman JNE",
+      "Tindak lanjut koleksi dan rekonsiliasi",
+      "Pembaruan resi aktif"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipments",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/shipments-320.png",
+    "url": "/admin/jne-monitoring",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 285,
+      "height": 148
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengiriman JNE",
+      "Tindak lanjut koleksi dan rekonsiliasi",
+      "Pembaruan resi aktif"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipment-detail",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/1",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/shipment-detail-1366.png",
+    "url": "/admin/jne-monitoring/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 766,
+      "height": 168
+    },
+    "unnamedControls": [],
+    "headings": [
+      "AWB 0101000000000000"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipment-detail",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/1",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/shipment-detail-768.png",
+    "url": "/admin/jne-monitoring/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 846,
+      "height": 212
+    },
+    "unnamedControls": [],
+    "headings": [
+      "AWB 0101000000000000"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipment-detail",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/1",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/shipment-detail-390.png",
+    "url": "/admin/jne-monitoring/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 898,
+      "height": 284
+    },
+    "unnamedControls": [],
+    "headings": [
+      "AWB 0101000000000000"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipment-detail",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/1",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/shipment-detail-320.png",
+    "url": "/admin/jne-monitoring/1",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 942,
+      "height": 348
+    },
+    "unnamedControls": [],
+    "headings": [
+      "AWB 0101000000000000"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reconciliation",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/reconciliation",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/reconciliation-1366.png",
+    "url": "/admin/jne-monitoring/reconciliation",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 189,
+      "height": 60
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Rekonsiliasi POP & AWB"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reconciliation",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/reconciliation",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/reconciliation-768.png",
+    "url": "/admin/jne-monitoring/reconciliation",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 189,
+      "height": 60
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Rekonsiliasi POP & AWB"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reconciliation",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/reconciliation",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/reconciliation-390.png",
+    "url": "/admin/jne-monitoring/reconciliation",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 181,
+      "height": 60
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Rekonsiliasi POP & AWB"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reconciliation",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/reconciliation",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/reconciliation-320.png",
+    "url": "/admin/jne-monitoring/reconciliation",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 201,
+      "height": 108
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Rekonsiliasi POP & AWB"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profiles",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/profiles",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/profiles-1366.png",
+    "url": "/admin/jne-monitoring/profiles",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 681,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan penarikan",
+      "Pilih alur penarikan",
+      "Report customer",
+      "Hybrid gabungan",
+      "Resi aktif",
+      "Account APEX (1)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profiles",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/profiles",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/profiles-768.png",
+    "url": "/admin/jne-monitoring/profiles",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 1419,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan penarikan",
+      "Pilih alur penarikan",
+      "Report customer",
+      "Hybrid gabungan",
+      "Resi aktif",
+      "Account APEX (1)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profiles",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/profiles",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/profiles-390.png",
+    "url": "/admin/jne-monitoring/profiles",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 1411,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan penarikan",
+      "Pilih alur penarikan",
+      "Report customer",
+      "Hybrid gabungan",
+      "Resi aktif",
+      "Account APEX (1)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profiles",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/profiles",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/profiles-320.png",
+    "url": "/admin/jne-monitoring/profiles",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 1547,
+      "height": 44
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan penarikan",
+      "Pilih alur penarikan",
+      "Report customer",
+      "Hybrid gabungan",
+      "Resi aktif",
+      "Account APEX (1)"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reports",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/reports-1366.png",
+    "url": "/admin/jne-reports",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 237,
+      "height": 541
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Penarikan Report JNE",
+      "Permintaan report",
+      "Setelah report diminta"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reports",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/reports-768.png",
+    "url": "/admin/jne-reports",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 237,
+      "height": 665
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Penarikan Report JNE",
+      "Permintaan report",
+      "Setelah report diminta"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reports",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/reports-390.png",
+    "url": "/admin/jne-reports",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 277,
+      "height": 869
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Penarikan Report JNE",
+      "Permintaan report",
+      "Setelah report diminta"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "reports",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/reports-320.png",
+    "url": "/admin/jne-reports",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 293,
+      "height": 989
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Penarikan Report JNE",
+      "Permintaan report",
+      "Setelah report diminta"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-runs",
+    "role": "admin_supervisor",
+    "route": "/admin/report-runs",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/report-runs-1366.png",
+    "url": "/admin/report-runs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 365,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 343,
+      "height": 66
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat run report"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-runs",
+    "role": "admin_supervisor",
+    "route": "/admin/report-runs",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/report-runs-768.png",
+    "url": "/admin/report-runs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 469,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 447,
+      "height": 144
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat run report"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-runs",
+    "role": "admin_supervisor",
+    "route": "/admin/report-runs",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/report-runs-390.png",
+    "url": "/admin/report-runs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 513,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 491,
+      "height": 278
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat run report"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-runs",
+    "role": "admin_supervisor",
+    "route": "/admin/report-runs",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/report-runs-320.png",
+    "url": "/admin/report-runs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 533,
+      "height": 44
+    },
+    "workingArea": {
+      "top": 511,
+      "height": 278
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Riwayat run report"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-awbs",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports/1/awbs",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/report-awbs-1366.png",
+    "url": "/admin/jne-reports/1/awbs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 128,
+      "height": 32
+    },
+    "search": {
+      "top": 447,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 423,
+      "height": 60
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Report JNE #1"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-awbs",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports/1/awbs",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/report-awbs-768.png",
+    "url": "/admin/jne-reports/1/awbs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 128,
+      "height": 32
+    },
+    "search": {
+      "top": 447,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 423,
+      "height": 60
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Report JNE #1"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-awbs",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports/1/awbs",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/report-awbs-390.png",
+    "url": "/admin/jne-reports/1/awbs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 120,
+      "height": 32
+    },
+    "search": {
+      "top": 439,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 415,
+      "height": 60
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Report JNE #1"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "report-awbs",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-reports/1/awbs",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/report-awbs-320.png",
+    "url": "/admin/jne-reports/1/awbs",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 120,
+      "height": 32
+    },
+    "search": {
+      "top": 459,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 435,
+      "height": 108
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Detail Report JNE #1"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipper-aliases",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-shipper-aliases",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/shipper-aliases-1366.png",
+    "url": "/admin/jne-shipper-aliases",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 152,
+      "height": 32
+    },
+    "search": {
+      "top": 505,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 505,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer & nama pengirim",
+      "Mulai dari kode customer"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipper-aliases",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-shipper-aliases",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/shipper-aliases-768.png",
+    "url": "/admin/jne-shipper-aliases",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 152,
+      "height": 32
+    },
+    "search": {
+      "top": 653,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 653,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer & nama pengirim",
+      "Mulai dari kode customer"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipper-aliases",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-shipper-aliases",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/shipper-aliases-390.png",
+    "url": "/admin/jne-shipper-aliases",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 144,
+      "height": 32
+    },
+    "search": {
+      "top": 645,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 645,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer & nama pengirim",
+      "Mulai dari kode customer"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "shipper-aliases",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-shipper-aliases",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/shipper-aliases-320.png",
+    "url": "/admin/jne-shipper-aliases",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 144,
+      "height": 32
+    },
+    "search": {
+      "top": 693,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 693,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Customer & nama pengirim",
+      "Mulai dari kode customer"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-rules",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/evidence-rules-1366.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 90,
+      "height": 32
+    },
+    "search": {
+      "top": 220,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 220,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Aturan bukti JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-rules",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/evidence-rules-768.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 90,
+      "height": 32
+    },
+    "search": {
+      "top": 220,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 220,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Aturan bukti JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-rules",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/evidence-rules-390.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 82,
+      "height": 32
+    },
+    "search": {
+      "top": 212,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 212,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Aturan bukti JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-rules",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/evidence-rules-320.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 256,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 256,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Aturan bukti JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "exceptions",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/exceptions",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/exceptions-1366.png",
+    "url": "/admin/jne-monitoring/exceptions",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 176,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 176,
+      "height": 41
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pemeriksaan exception JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "exceptions",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/exceptions",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/exceptions-768.png",
+    "url": "/admin/jne-monitoring/exceptions",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 176,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 176,
+      "height": 85
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pemeriksaan exception JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "exceptions",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/exceptions",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/exceptions-390.png",
+    "url": "/admin/jne-monitoring/exceptions",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": {
+      "top": 192,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 192,
+      "height": 85
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pemeriksaan exception JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "exceptions",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/exceptions",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/exceptions-320.png",
+    "url": "/admin/jne-monitoring/exceptions",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 64
+    },
+    "search": {
+      "top": 224,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 224,
+      "height": 129
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pemeriksaan exception JNE"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "collection-window",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/collections/3",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/collection-window-1366.png",
+    "url": "/admin/jne-monitoring/collections/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 348,
+      "height": 311
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Koleksi eksternal · AUD-PICKUP-0002"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "collection-window",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/collections/3",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/collection-window-768.png",
+    "url": "/admin/jne-monitoring/collections/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": {
+      "top": 348,
+      "height": 311
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Koleksi eksternal · AUD-PICKUP-0002"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "collection-window",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/collections/3",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/collection-window-390.png",
+    "url": "/admin/jne-monitoring/collections/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 64
+    },
+    "search": null,
+    "workingArea": {
+      "top": 372,
+      "height": 343
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Koleksi eksternal · AUD-PICKUP-0002"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "collection-window",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/collections/3",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/collection-window-320.png",
+    "url": "/admin/jne-monitoring/collections/3",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 64
+    },
+    "search": null,
+    "workingArea": {
+      "top": 372,
+      "height": 343
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Koleksi eksternal · AUD-PICKUP-0002"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "refresh-policy",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/refresh-policies",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/refresh-policy-1366.png",
+    "url": "/admin/jne-monitoring/refresh-policies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Kebijakan pembaruan tracking"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "refresh-policy",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/refresh-policies",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/refresh-policy-768.png",
+    "url": "/admin/jne-monitoring/refresh-policies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Kebijakan pembaruan tracking"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "refresh-policy",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/refresh-policies",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/refresh-policy-390.png",
+    "url": "/admin/jne-monitoring/refresh-policies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Kebijakan pembaruan tracking"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "refresh-policy",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/refresh-policies",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/refresh-policy-320.png",
+    "url": "/admin/jne-monitoring/refresh-policies",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 80,
+      "height": 64
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Kebijakan pembaruan tracking"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "push-test",
+    "role": "admin_supervisor",
+    "route": "/admin/push-test",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/push-test-1366.png",
+    "url": "/admin/push-test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 32
+    },
+    "search": {
+      "top": 257,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 257,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tes Push Notifikasi",
+      "Pilih perangkat penerima",
+      "Belum ada perangkat terdaftar",
+      "Pesan tes"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "push-test",
+    "role": "admin_supervisor",
+    "route": "/admin/push-test",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/push-test-768.png",
+    "url": "/admin/push-test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 32
+    },
+    "search": {
+      "top": 277,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 277,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tes Push Notifikasi",
+      "Pilih perangkat penerima",
+      "Belum ada perangkat terdaftar",
+      "Pesan tes"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "push-test",
+    "role": "admin_supervisor",
+    "route": "/admin/push-test",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/push-test-390.png",
+    "url": "/admin/push-test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 317,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 317,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tes Push Notifikasi",
+      "Pilih perangkat penerima",
+      "Belum ada perangkat terdaftar",
+      "Pesan tes"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "push-test",
+    "role": "admin_supervisor",
+    "route": "/admin/push-test",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/push-test-320.png",
+    "url": "/admin/push-test",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": {
+      "top": 317,
+      "height": 36
+    },
+    "workingArea": {
+      "top": 317,
+      "height": 36
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Tes Push Notifikasi",
+      "Pilih perangkat penerima",
+      "Belum ada perangkat terdaftar",
+      "Pesan tes"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profile",
+    "role": "admin_supervisor",
+    "route": "/settings/profile",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/profile-1366.png",
+    "url": "/settings/profile",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 139,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 210,
+      "height": 208
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan profil",
+      "Profil",
+      "Hapus akun"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profile",
+    "role": "admin_supervisor",
+    "route": "/settings/profile",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/profile-768.png",
+    "url": "/settings/profile",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 207,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 278,
+      "height": 208
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan profil",
+      "Profil",
+      "Hapus akun"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profile",
+    "role": "admin_supervisor",
+    "route": "/settings/profile",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/profile-390.png",
+    "url": "/settings/profile",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 199,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 270,
+      "height": 208
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan profil",
+      "Profil",
+      "Hapus akun"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "profile",
+    "role": "admin_supervisor",
+    "route": "/settings/profile",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/profile-320.png",
+    "url": "/settings/profile",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 199,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 270,
+      "height": 208
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan profil",
+      "Profil",
+      "Hapus akun"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "security",
+    "role": "admin_supervisor",
+    "route": "/settings/security",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/security-1366.png",
+    "url": "/settings/security",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 139,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 210,
+      "height": 294
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan keamanan",
+      "Ubah kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "security",
+    "role": "admin_supervisor",
+    "route": "/settings/security",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/security-768.png",
+    "url": "/settings/security",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 207,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 298,
+      "height": 294
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan keamanan",
+      "Ubah kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "security",
+    "role": "admin_supervisor",
+    "route": "/settings/security",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/security-390.png",
+    "url": "/settings/security",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 199,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 290,
+      "height": 294
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan keamanan",
+      "Ubah kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "security",
+    "role": "admin_supervisor",
+    "route": "/settings/security",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/security-320.png",
+    "url": "/settings/security",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 199,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": {
+      "top": 290,
+      "height": 294
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan keamanan",
+      "Ubah kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "appearance",
+    "role": "admin_supervisor",
+    "route": "/settings/appearance",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/appearance-1366.png",
+    "url": "/settings/appearance",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 139,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan tampilan",
+      "Pengaturan tampilan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "appearance",
+    "role": "admin_supervisor",
+    "route": "/settings/appearance",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/appearance-768.png",
+    "url": "/settings/appearance",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 207,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan tampilan",
+      "Pengaturan tampilan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "appearance",
+    "role": "admin_supervisor",
+    "route": "/settings/appearance",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/appearance-390.png",
+    "url": "/settings/appearance",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 199,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan tampilan",
+      "Pengaturan tampilan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "appearance",
+    "role": "admin_supervisor",
+    "route": "/settings/appearance",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/appearance-320.png",
+    "url": "/settings/appearance",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 199,
+      "height": 1
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Pengaturan",
+      "Pengaturan tampilan",
+      "Pengaturan tampilan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "confirm-password",
+    "role": "admin_supervisor",
+    "route": "/user/confirm-password",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/confirm-password-1366.png",
+    "url": "/user/confirm-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 376,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 508,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Konfirmasi kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "confirm-password",
+    "role": "admin_supervisor",
+    "route": "/user/confirm-password",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/confirm-password-768.png",
+    "url": "/user/confirm-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 415,
+      "height": 40
+    },
+    "search": null,
+    "workingArea": {
+      "top": 547,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Konfirmasi kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "confirm-password",
+    "role": "admin_supervisor",
+    "route": "/user/confirm-password",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/confirm-password-390.png",
+    "url": "/user/confirm-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 327,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": {
+      "top": 455,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Konfirmasi kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "confirm-password",
+    "role": "admin_supervisor",
+    "route": "/user/confirm-password",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/confirm-password-320.png",
+    "url": "/user/confirm-password",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 257,
+      "height": 72
+    },
+    "search": null,
+    "workingArea": {
+      "top": 421,
+      "height": 118
+    },
+    "unnamedControls": [],
+    "headings": [
+      "Konfirmasi kata sandi"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "not-found",
+    "role": null,
+    "route": "/ui-ux-review-missing-page",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 404,
+    "screenshot": "after/not-found-1366.png",
+    "url": "/ui-ux-review-missing-page",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 356,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Halaman tidak ditemukan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "not-found",
+    "role": null,
+    "route": "/ui-ux-review-missing-page",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 404,
+    "screenshot": "after/not-found-768.png",
+    "url": "/ui-ux-review-missing-page",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 484,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Halaman tidak ditemukan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "not-found",
+    "role": null,
+    "route": "/ui-ux-review-missing-page",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 404,
+    "screenshot": "after/not-found-390.png",
+    "url": "/ui-ux-review-missing-page",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 358,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Halaman tidak ditemukan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "not-found",
+    "role": null,
+    "route": "/ui-ux-review-missing-page",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 404,
+    "screenshot": "after/not-found-320.png",
+    "url": "/ui-ux-review-missing-page",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 278,
+      "height": 64
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Halaman tidak ditemukan"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customer-dialog",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/customer-dialog-1366.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": {
+      "top": 277,
+      "height": 36
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customer-dialog",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/customer-dialog-768.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": {
+      "top": 288,
+      "height": 36
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customer-dialog",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/customer-dialog-390.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": {
+      "top": 317,
+      "height": 36
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "customer-dialog",
+    "role": "admin_supervisor",
+    "route": "/operations/customers",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/customer-dialog-320.png",
+    "url": "/operations/customers",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": {
+      "top": 312,
+      "height": 36
+    },
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedule-dialog",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/schedule-dialog-1366.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedule-dialog",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/schedule-dialog-768.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedule-dialog",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/schedule-dialog-390.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "schedule-dialog",
+    "role": "admin_supervisor",
+    "route": "/pickup-schedules",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/schedule-dialog-320.png",
+    "url": "/pickup-schedules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-sheet",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/evidence-sheet-1366.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-sheet",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/evidence-sheet-768.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-sheet",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/evidence-sheet-390.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "evidence-sheet",
+    "role": "admin_supervisor",
+    "route": "/admin/jne-monitoring/evidence-rules",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/evidence-sheet-320.png",
+    "url": "/admin/jne-monitoring/evidence-rules",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": null,
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 1366,
+      "height": 768
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-pickup-1366.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-pickup-768.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 96,
+      "height": 36
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-pickup-390.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": []
+  },
+  {
+    "key": "dashboard-pickup",
+    "role": "pickup_staff",
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 740
+    },
+    "status": 200,
+    "screenshot": "after/dashboard-pickup-320.png",
+    "url": "/dashboard",
+    "zoom": 1,
+    "theme": "",
+    "overflow": false,
+    "title": {
+      "top": 88,
+      "height": 32
+    },
+    "search": null,
+    "workingArea": null,
+    "unnamedControls": [],
+    "headings": [
+      "Selamat bekerja, Audit"
+    ],
+    "alerts": [],
+    "errors": []
+  }
+]

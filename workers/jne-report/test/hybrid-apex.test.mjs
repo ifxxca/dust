@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { ApexClient } from '../src/apex.mjs';
@@ -9,6 +10,62 @@ import { parseCsv, parseCsvBytes } from '../src/csv.mjs';
 import { correlateHistory } from '../src/history.mjs';
 import { apexUploadFixture } from './apex-upload-fixture.mjs';
 import { runJob } from '../src/worker.mjs';
+
+test('durable saved batches are reused after a restart without another APEX Process call', async (t) => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'apex-checkpoint-'));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const awbs = Array.from({ length: 6001 }, (_, index) =>
+        String(index + 1).padStart(8, '0'),
+    );
+    const first = Buffer.from(
+        'AWB,ID_ACCOUNT\n' +
+            awbs
+                .slice(0, 6000)
+                .map((awb) => awb + ',SHARED')
+                .join('\n') +
+            '\n',
+    );
+    const calls = [];
+    const saved = [];
+    const checkpoints = {
+        begin: async (number) =>
+            number === 1
+                ? {
+                      status: 'SAVED',
+                      content_base64: first.toString('base64'),
+                      checksum: createHash('sha256')
+                          .update(first)
+                          .digest('hex'),
+                  }
+                : { status: 'STARTED' },
+        save: async (number, file) =>
+            saved.push([number, await readFile(file, 'utf8')]),
+    };
+    const apex = {
+        retrieve: async (job, folder) => {
+            calls.push(job.awbs);
+            const file = path.join(folder, 'download.csv');
+            await writeFile(
+                file,
+                'AWB,ID_ACCOUNT\n' + job.awbs[0] + ',OTHER\n',
+            );
+            return file;
+        },
+    };
+    const file = await retrieveHybridApex(
+        { id: 80, source: 'hybrid', parameters: { awbs } },
+        apex,
+        directory,
+        async () => {},
+        new AbortController().signal,
+        20971520,
+        checkpoints,
+    );
+    assert.deepEqual(calls, [[awbs[6000]]]);
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0][0], 2);
+    assert.equal(parseCsv(await readFile(file, 'utf8'), ',').length, 6002);
+});
 
 test('CSV byte parsing preserves UTF8 cells and legacy Windows names without replacement characters', () => {
     const bytes = Buffer.concat([
@@ -121,12 +178,125 @@ test('APEX active AWB jobs use Upload Connote and publish the original APEX CSV'
 
     assert.equal(completed, true, failure?.message);
     assert.equal(site.state.uploads.length, 1);
-    assert.equal(site.state.uploads[0].name, 'active-awbs-21-1.csv');
+    assert.match(
+        site.state.uploads[0].name,
+        /^active-awbs-21-1-[0-9a-f-]{36}\.csv$/,
+    );
     assert.deepEqual(site.state.uploads[0].awbs, ['00001', '00002']);
     assert.equal(
         uploaded,
         'AWB,ID_ACCOUNT,STATUS_WEB\n00001,ACCOUNT1,Delivered\n00002,ACCOUNT2,Delivered\n',
     );
+});
+
+test('APEX waits for deferred Process submission before opening History', async (t) => {
+    const site = await apexUploadFixture({ delayedSubmission: true });
+    const directory = await mkdtemp(
+        path.join(os.tmpdir(), 'apex-deferred-submit-'),
+    );
+    const config = { ...site.config(directory), reportTimeout: 1500 };
+    const apex = new ApexClient(config);
+    t.after(async () => {
+        await apex.close();
+        await site.close();
+        await rm(directory, { recursive: true, force: true });
+    });
+
+    const file = await retrieveHybridApex(
+        {
+            id: 22,
+            source: 'apex',
+            report_type: 'unresolved',
+            report_mode: 'A',
+            date_from: '2026-10-23',
+            date_thru: '2026-10-23',
+            parameters: { awbs: ['00001'] },
+            max_file_kb: 20480,
+        },
+        apex,
+        directory,
+        async () => {},
+        new AbortController().signal,
+        20971520,
+    );
+
+    assert.equal(site.state.uploads.length, 1);
+    assert.deepEqual(site.state.downloads, [site.state.uploads[0].name]);
+    assert.equal(
+        await readFile(file, 'utf8'),
+        'AWB,ID_ACCOUNT,STATUS_WEB\n00001,ACCOUNT1,Delivered\n',
+    );
+});
+
+test('APEX upload filenames do not collide when database IDs are reused', async (t) => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'apex-filenames-'));
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const names = [];
+    const apex = {
+        retrieve: async (job) => {
+            names.push(job.upload_filename);
+            return 'saved.csv';
+        },
+    };
+    const job = {
+        id: 24,
+        source: 'hybrid',
+        report_mode: 'A',
+        parameters: { awbs: ['001'] },
+    };
+
+    for (const folder of ['before-reset', 'after-reset']) {
+        const target = path.join(directory, folder);
+        await mkdir(target);
+        await retrieveHybridApex(
+            job,
+            apex,
+            target,
+            async () => {},
+            new AbortController().signal,
+            20971520,
+        );
+    }
+
+    assert.equal(new Set(names).size, 2);
+    for (const name of names)
+        assert.match(name, /^hybrid-hybrid-24-1-[0-9a-f-]{36}\.csv$/);
+});
+
+test('APEX reports a source form error immediately without polling History for a missing report', async (t) => {
+    const site = await apexUploadFixture({ rejectForm: true });
+    const directory = await mkdtemp(
+        path.join(os.tmpdir(), 'apex-rejected-form-'),
+    );
+    const apex = new ApexClient(site.config(directory));
+    t.after(async () => {
+        await apex.close();
+        await site.close();
+        await rm(directory, { recursive: true, force: true });
+    });
+
+    await assert.rejects(
+        retrieveHybridApex(
+            {
+                id: 25,
+                source: 'hybrid',
+                report_mode: 'A',
+                date_from: '2026-10-23',
+                date_thru: '2026-10-23',
+                parameters: { awbs: ['001'] },
+                max_file_kb: 20480,
+            },
+            apex,
+            directory,
+            async () => {},
+            new AbortController().signal,
+            20971520,
+        ),
+        { code: 'FORM_REJECTED' },
+    );
+
+    assert.equal(site.state.uploads.length, 0);
+    assert.deepEqual(site.state.downloads, []);
 });
 
 test('Combined Hybrid waits through an APEX Error and a delayed Download after one upload', async (t) => {
@@ -160,7 +330,7 @@ test('Combined Hybrid waits through an APEX Error and a delayed Download after o
     assert.equal(site.state.uploads.length, 1);
     assert.deepEqual(site.state.uploads[0].awbs, awbs);
     assert.ok(site.state.uploads[0].historyReads >= 3);
-    assert.deepEqual(site.state.downloads, ['hybrid-hybrid-20-1.csv']);
+    assert.deepEqual(site.state.downloads, [site.state.uploads[0].name]);
     assert.equal(
         await readFile(file, 'utf8'),
         'AWB,ID_ACCOUNT,STATUS_WEB\n00000001,ACCOUNT1,Delivered\n00000002,ACCOUNT2,Delivered\n',

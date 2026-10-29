@@ -253,29 +253,31 @@ export default function HandoverSessionList({
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="min-w-0 space-y-2 xl:col-span-2">
-                        <Label htmlFor="handover-from">Tanggal Mulai</Label>
-                        <Input
-                            id="handover-from"
-                            className="h-11 min-w-0"
-                            type="date"
-                            value={filters.from}
-                            onChange={(event) =>
-                                onFilter('from', event.target.value)
-                            }
-                        />
-                    </div>
-                    <div className="min-w-0 space-y-2 xl:col-span-2">
-                        <Label htmlFor="handover-to">Tanggal Selesai</Label>
-                        <Input
-                            id="handover-to"
-                            className="h-11 min-w-0"
-                            type="date"
-                            value={filters.to}
-                            onChange={(event) =>
-                                onFilter('to', event.target.value)
-                            }
-                        />
+                    <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-3 sm:col-span-2 xl:col-span-4">
+                        <div className="min-w-0 space-y-2">
+                            <Label htmlFor="handover-from">Tanggal Mulai</Label>
+                            <Input
+                                id="handover-from"
+                                className="h-11 min-w-0"
+                                type="date"
+                                value={filters.from}
+                                onChange={(event) =>
+                                    onFilter('from', event.target.value)
+                                }
+                            />
+                        </div>
+                        <div className="min-w-0 space-y-2">
+                            <Label htmlFor="handover-to">Tanggal Selesai</Label>
+                            <Input
+                                id="handover-to"
+                                className="h-11 min-w-0"
+                                type="date"
+                                value={filters.to}
+                                onChange={(event) =>
+                                    onFilter('to', event.target.value)
+                                }
+                            />
+                        </div>
                     </div>
                     <Button
                         variant="outline"

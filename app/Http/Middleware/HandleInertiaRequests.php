@@ -2,11 +2,25 @@
 
 namespace App\Http\Middleware;
 
+use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function handle(Request $request, Closure $next): Response
+    {
+        $locale = app()->getLocale();
+        app()->setLocale('id');
+
+        try {
+            return parent::handle($request, $next);
+        } finally {
+            app()->setLocale($locale);
+        }
+    }
+
     /**
      * The root template that's loaded on the first page visit.
      *

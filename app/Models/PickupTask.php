@@ -40,8 +40,9 @@ class PickupTask extends Model
 
     public function eligibleFor(User $user): bool
     {
-        return $user->canExecutePickup() && $this->status === 'ASSIGNED'
-            && $this->execution_started_at === null && $this->assigned_staff_id !== null && $this->assigned_staff_id !== $user->id;
+        return $user->canExecutePickup() && $this->execution_started_at === null
+            && (($this->status === 'SCHEDULED' && $this->assigned_staff_id === null)
+                || ($this->status === 'ASSIGNED' && $this->assigned_staff_id !== null && $this->assigned_staff_id !== $user->id));
     }
 
     /** @return HasMany<PickupVisit, $this> */
@@ -66,5 +67,24 @@ class PickupTask extends Model
     public function handoverItem(): HasOne
     {
         return $this->hasOne(HandoverItem::class);
+    }
+
+    /** @return HasOne<PickupProcessingReconciliation, $this> */
+    public function processingReconciliation(): HasOne
+    {
+        return $this->hasOne(PickupProcessingReconciliation::class);
+    }
+
+    /** @return HasMany<PickupCashlessAwb, $this> */
+    public function cashlessAwbs(): HasMany
+    {
+        return $this->hasMany(PickupCashlessAwb::class);
+    }
+
+    public function sertimWindowClosed(): bool
+    {
+        $sessionId = $this->handoverItem()->value('handover_session_id');
+
+        return $sessionId !== null && HandoverSession::whereKey($sessionId)->where(fn ($query) => $query->whereNotNull('sertim_closed_at')->orWhere('status', 'CLOSED'))->exists();
     }
 }

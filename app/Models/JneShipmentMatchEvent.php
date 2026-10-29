@@ -9,4 +9,9 @@ class JneShipmentMatchEvent extends Model
     public const UPDATED_AT = null;
 
     protected $guarded = ['id'];
+
+    protected function casts(): array
+    {
+        return ['evidence' => 'array'];
+    }
 }

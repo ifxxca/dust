@@ -64,7 +64,8 @@ class JneShipperAliasController extends Controller
             'aliases' => $query->with('customer:id,name,customer_code,is_active')->orderByDesc('id')->paginate(50)->withQueryString(),
             'conflictGroups' => $conflictGroups,
             'ownership' => ['total' => (int) $ownership->sum(), 'recognized' => (int) ($ownership['MATCHED'] ?? 0),
-                'ambiguous' => (int) ($ownership['AMBIGUOUS'] ?? 0), 'unmatched' => (int) ($ownership['UNMATCHED'] ?? 0)],
+                'ambiguous' => (int) ($ownership['AMBIGUOUS'] ?? 0), 'unmatched' => (int) ($ownership['UNMATCHED'] ?? 0),
+                'candidates' => (int) ($ownership['CANDIDATE'] ?? 0), 'conflicts' => (int) ($ownership['CONFLICT'] ?? 0)],
             'directory' => $directory->select(['id', 'name', 'customer_code', 'is_active'])->withCount(['shipperAliases as alias_count' => fn ($aliases) => $aliases->where('is_active', true)])
                 ->orderBy('customer_code')->orderBy('id')->paginate(30, ['*'], 'directory_page')->withQueryString(),
             'selectedCustomer' => $selected ? [...$selected->only(['id', 'name', 'customer_code', 'is_active']),

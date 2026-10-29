@@ -11,8 +11,6 @@ import {
     Plus,
     RefreshCw,
     AlertTriangle,
-    ArrowUp,
-    ArrowDown,
     Inbox,
     Package,
     Truck,
@@ -92,9 +90,7 @@ function Sparkline({
             role="img"
             aria-label={`${label}: ${values.join(', ')}`}
         >
-            <title>
-                {label}: {values.join(', ')}
-            </title>
+            <title>{`${label}: ${values.join(', ')}`}</title>
             <polygon
                 points={`3,31 ${points} 87,31`}
                 fill="currentColor"
@@ -144,12 +140,6 @@ export default function RoleDashboard({
         'text-amber-600 dark:text-amber-300',
         'text-blue-600 dark:text-blue-300',
         'text-emerald-600 dark:text-emerald-300',
-    ];
-    const backgrounds = [
-        'bg-blue-50 dark:bg-blue-950',
-        'bg-amber-50 dark:bg-amber-950',
-        'bg-blue-50 dark:bg-blue-950',
-        'bg-emerald-50 dark:bg-emerald-950',
     ];
     const format = (value: string) =>
         new Date(value).toLocaleString('id-ID', {
@@ -288,14 +278,11 @@ export default function RoleDashboard({
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                         {user.role === 'pickup_staff'
-                            ? `Selamat bekerja, ${user.name.split(' ')[0]}`
-                            : 'Ringkasan Operasional'}
+                            ? 'Tugas pickup'
+                            : isRetail
+                              ? 'Handover & verifikasi'
+                              : 'Ringkasan operasional'}
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {isRetail
-                            ? 'Prioritaskan penerimaan paket dan pemeriksaan yang belum selesai.'
-                            : 'Pantau aktivitas pickup dan lanjutkan pekerjaan yang memerlukan tindakan.'}
-                    </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button
@@ -333,114 +320,16 @@ export default function RoleDashboard({
                     {error}
                 </p>
             )}
-            <section
-                aria-label="Ringkasan operasional"
-                aria-busy={refreshing}
-                className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4"
-            >
-                {cards.map((card, index) => {
-                    const series = !isRetail ? trendSeries[index] : null;
-                    const delta = series ? series[6] - series[5] : 0;
-                    return (
-                        <Card
-                            key={card.title}
-                            className="min-w-0 gap-0 py-0 shadow-sm"
-                        >
-                            <CardContent className="flex gap-3 p-4 sm:p-5">
-                                <span
-                                    className={`hidden size-11 shrink-0 items-center justify-center rounded-xl sm:flex ${backgrounds[index]} ${colors[index]}`}
-                                >
-                                    <card.icon className="size-6" />
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-xs leading-5 text-muted-foreground">
-                                        {card.title}
-                                    </p>
-                                    <p
-                                        className={`mt-1 text-3xl font-bold tracking-tight tabular-nums ${refreshing ? 'animate-pulse' : ''}`}
-                                    >
-                                        {card.value}
-                                    </p>
-                                    <div className="mt-1 flex flex-wrap items-end justify-between gap-2 sm:flex-nowrap">
-                                        {!isRetail && (
-                                            <p
-                                                className={`flex min-w-0 items-center gap-1 text-[10px] leading-4 sm:flex-1 ${(index === 1 && manager) || delta === 0 ? 'text-muted-foreground' : delta > 0 ? 'text-emerald-600 dark:text-emerald-300' : 'text-muted-foreground'}`}
-                                            >
-                                                {index === 1 && manager ? (
-                                                    'Semua jadwal'
-                                                ) : (
-                                                    <>
-                                                        {delta !== 0 &&
-                                                            (delta > 0 ? (
-                                                                <ArrowUp className="size-3" />
-                                                            ) : (
-                                                                <ArrowDown className="size-3" />
-                                                            ))}
-                                                        {delta === 0
-                                                            ? 'Sama dengan kemarin'
-                                                            : `${Math.abs(delta)} ${delta > 0 ? 'lebih banyak' : 'lebih sedikit'} dari kemarin`}
-                                                    </>
-                                                )}
-                                            </p>
-                                        )}
-                                        {series && (
-                                            <Sparkline
-                                                values={series}
-                                                label={`${card.title} — status saat ini per hari jadwal, 7 hari terakhir`}
-                                                color={colors[index]}
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </section>
-            <p className="text-[11px] text-muted-foreground">
-                Tanggal operasional {operationalDate} · {timezone}. Grafik
-                berdasarkan status saat ini per hari jadwal, bukan snapshot
-                historis.
-            </p>
             {!isRetail && (
                 <p className="sr-only">
                     Antrean assignment mencakup semua tanggal.
                 </p>
             )}
-            {!isRetail && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs dark:border-amber-900 dark:bg-amber-950/50">
-                    <p className="flex min-w-0 flex-1 items-start gap-2 leading-5">
-                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-                        <span>
-                            <span className="font-semibold">
-                                {stats.no_packages_today}
-                            </span>{' '}
-                            task terjadwal hari ini selesai tanpa paket.
-                            Kunjungan berikutnya dibuat sebagai task baru.
-                        </span>
-                    </p>
-                    <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs text-primary"
-                    >
-                        <Link
-                            href={operations(
-                                { screen: manager ? 'tasks' : 'mine' },
-                                { query: { history: 1 } },
-                            )}
-                        >
-                            Lihat riwayat <ArrowRight className="size-3.5" />
-                        </Link>
-                    </Button>
-                </div>
-            )}
             {user.role === 'pickup_staff' ? (
                 <>
                     {taskSection(
                         'Tugas berikutnya',
-                        'Diurutkan berdasarkan jadwal; tidak menggunakan lokasi atau GPS.',
+                        'Urutan jadwal',
                         nextTasks,
                     )}
                     <Button asChild>
@@ -708,6 +597,92 @@ export default function RoleDashboard({
                     </p>
                 </Card>
             )}
+            {!isRetail && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs dark:border-amber-900 dark:bg-amber-950/50">
+                    <p className="flex min-w-0 flex-1 items-start gap-2 leading-5">
+                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+                        <span>
+                            <span className="font-semibold">
+                                {stats.no_packages_today}
+                            </span>{' '}
+                            task terjadwal hari ini selesai tanpa paket.
+                        </span>
+                    </p>
+                    <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-primary"
+                    >
+                        <Link
+                            href={operations(
+                                { screen: manager ? 'tasks' : 'mine' },
+                                { query: { history: 1 } },
+                            )}
+                        >
+                            Lihat riwayat <ArrowRight className="size-3.5" />
+                        </Link>
+                    </Button>
+                </div>
+            )}
+            <details className="rounded-lg border px-4">
+                <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
+                    {isRetail ? 'Ringkasan handover' : 'Ringkasan & tren'}
+                </summary>
+                <section
+                    aria-label="Ringkasan operasional"
+                    aria-busy={refreshing}
+                    className="grid gap-4 pb-4 sm:grid-cols-2"
+                >
+                    {cards.map((card, index) => {
+                        const series = !isRetail ? trendSeries[index] : null;
+                        const delta = series ? series[6] - series[5] : 0;
+                        return (
+                            <div
+                                key={card.title}
+                                className="flex min-w-0 items-center justify-between gap-3"
+                            >
+                                <div className="min-w-0">
+                                    <p className="text-xs text-muted-foreground">
+                                        {card.title}
+                                    </p>
+                                    <p className="text-xl font-semibold tabular-nums">
+                                        {card.value}
+                                    </p>
+                                    {series && (
+                                        <p className="text-xs text-muted-foreground">
+                                            {index === 1 && manager
+                                                ? 'Semua jadwal'
+                                                : delta === 0
+                                                  ? 'Sama dengan kemarin'
+                                                  : Math.abs(delta) +
+                                                    (delta > 0
+                                                        ? ' lebih banyak'
+                                                        : ' lebih sedikit') +
+                                                    ' dari kemarin'}
+                                        </p>
+                                    )}
+                                </div>
+                                {series && (
+                                    <Sparkline
+                                        values={series}
+                                        label={
+                                            card.title +
+                                            ' — status saat ini per hari jadwal, 7 hari terakhir'
+                                        }
+                                        color={colors[index]}
+                                    />
+                                )}
+                            </div>
+                        );
+                    })}
+                </section>
+                <p className="pb-4 text-xs text-muted-foreground">
+                    Tanggal operasional {operationalDate} · {timezone}. Grafik
+                    berdasarkan status saat ini per hari jadwal, bukan snapshot
+                    historis.
+                </p>
+            </details>
             {(manager || user.role === 'pickup_staff') && (
                 <CreatePickupDialog
                     open={createOpen}
@@ -723,10 +698,6 @@ export default function RoleDashboard({
                             Jalankan Tugas Pickup
                         </Link>
                     </Button>
-                    <p className="self-center text-xs text-muted-foreground">
-                        Akses pickup tetap tersedia sesuai permission
-                        operasional existing.
-                    </p>
                 </div>
             )}
         </PageContainer>

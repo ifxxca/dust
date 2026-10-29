@@ -86,10 +86,11 @@ test('saving a sender queues scoped reapplication to old AWBs and preserves unre
     $customer = Customer::factory()->create();
     $report = ReportJob::factory()->create();
     $source = JneReportAwb::factory()->create(['report_job_id' => $report->id, 'shipper_name' => '  Sender   One  ']);
-    $shipment = JneShipment::factory()->create(['latest_report_awb_id' => $source->id]);
-    $manual = JneShipment::factory()->create(['latest_report_awb_id' => $source->id, 'match_method' => 'MANUAL']);
+    $shipment = JneShipment::factory()->create(['awb' => $source->awb, 'latest_report_awb_id' => $source->id]);
+    $manualSource = JneReportAwb::factory()->create(['report_job_id' => $report->id, 'shipper_name' => 'Sender One']);
+    $manual = JneShipment::factory()->create(['awb' => $manualSource->awb, 'latest_report_awb_id' => $manualSource->id, 'match_method' => 'MANUAL']);
     $otherSource = JneReportAwb::factory()->create(['report_job_id' => $report->id, 'source_row' => 3, 'shipper_name' => 'Other sender']);
-    $other = JneShipment::factory()->create(['latest_report_awb_id' => $otherSource->id]);
+    $other = JneShipment::factory()->create(['awb' => $otherSource->awb, 'latest_report_awb_id' => $otherSource->id]);
 
     $this->actingAs($admin)->post(route('jne-shipper-aliases.store'), ['customer_id' => $customer->id, 'shipper_name' => 'Sender One'])->assertRedirect();
     $run = JneMappingRun::sole();
@@ -113,7 +114,7 @@ test('disabling a conflicting sender reapplies all customers sharing that name',
     $correct = JneShipperAlias::factory()->create(['shipper_name' => 'Shared Name']);
     $incorrect = JneShipperAlias::factory()->create(['shipper_name' => 'Shared Name']);
     $source = JneReportAwb::factory()->create(['shipper_name' => 'Shared Name']);
-    $shipment = JneShipment::factory()->create(['latest_report_awb_id' => $source->id, 'customer_match_status' => 'AMBIGUOUS']);
+    $shipment = JneShipment::factory()->create(['awb' => $source->awb, 'latest_report_awb_id' => $source->id, 'customer_match_status' => 'AMBIGUOUS']);
     $this->actingAs($admin)->put(route('jne-shipper-aliases.update', $incorrect), ['is_active' => false, 'version' => 1])->assertRedirect();
     $run = JneMappingRun::sole();
     (new SyncJneCustomerMappings($run->id))->handle(app(MatchJneShipments::class));

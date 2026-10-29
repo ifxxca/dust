@@ -2,6 +2,8 @@ import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, Copy, ExternalLink } from 'lucide-react';
 import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
+import JneCustomerCandidates from '@/components/jne-customer-candidates';
+import JneSourceEvidence from '@/components/jne-source-evidence';
 import { copyJneAwb } from '@/components/jne-shipment-table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +64,9 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                             : 'Belum dipetakan'}
                     </DetailField>
                     <DetailField label="Pemetaan customer">
-                        {shipment.customer_match_status === 'AMBIGUOUS'
+                        {['AMBIGUOUS', 'CONFLICT'].includes(
+                            shipment.customer_match_status || '',
+                        )
                             ? 'Perlu pemeriksaan'
                             : shipment.customer_match_status === 'MATCHED'
                               ? 'Customer dikenali'
@@ -80,6 +84,9 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                         {shipment.customer_match_note}
                     </p>
                 )}
+                <JneCustomerCandidates
+                    candidates={shipment.customer_match_candidates}
+                />
             </section>
             <Separator />
             <section className="space-y-4" aria-labelledby="jne-detail-source">
@@ -96,10 +103,29 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                     <DetailField label="Pembatalan (CSV)">
                         {source?.awb_cancel}
                     </DetailField>
+                    <DetailField label="Tanggal AWB (JNE)">
+                        {jneTimestamp(shipment.entry_at, timezone)}
+                    </DetailField>
                     <DetailField label="Terakhir diamati">
                         {jneTimestamp(shipment.observed_at, timezone)} ·{' '}
                         {timezone}
                     </DetailField>
+                    <DetailField label="Report terakhir diterima">
+                        {jneTimestamp(
+                            shipment.last_report_received_at ?? null,
+                            timezone,
+                        )}
+                    </DetailField>
+                    {shipment.last_refresh_attempt?.stage === 'ATTENTION' && (
+                        <DetailField label="Pembaruan perlu diperiksa">
+                            #{shipment.last_refresh_attempt.id} ·{' '}
+                            {shipment.last_refresh_attempt.error_message ||
+                                shipment.last_refresh_attempt.import_error ||
+                                shipment.last_refresh_attempt
+                                    .projection_error ||
+                                'Periksa proses penarikan report.'}
+                        </DetailField>
+                    )}
                     <DetailField label="Sumber report (nomor penarikan)">
                         {shipment.customer_account}
                     </DetailField>
@@ -149,6 +175,10 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                         </CollapsibleContent>
                     </Collapsible>
                 )}
+                <JneSourceEvidence
+                    code={source?.original_customer_code}
+                    evidence={source?.source_evidence}
+                />
             </section>
             <Separator />
             <section className="space-y-3" aria-labelledby="jne-detail-pickup">
@@ -224,6 +254,11 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                                     POD: {row.status_pod || '—'}
                                     <br />
                                     Pembatalan: {row.awb_cancel || '—'}
+                                    <br />
+                                    Pengirim: {row.shipper_name || '—'} ·
+                                    Account: {row.customer_account || '—'}
+                                    <br />
+                                    Referensi: {row.reference || '—'}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     Report #{row.report_job_id} · Baris{' '}

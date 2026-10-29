@@ -223,10 +223,6 @@ export default function Handover({
                         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                             Handover & Verifikasi
                         </h1>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            Kelola sesi handover dari petugas pickup dan
-                            verifikasi jumlah paket per kategori.
-                        </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {!sessionId && !history && (

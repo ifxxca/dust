@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useMemo, useState, type ReactNode } from 'react';
 import {
     columnVisibilityFeature,
     createColumnHelper,
@@ -188,6 +188,9 @@ export default function DataTable<T extends object>({
     className,
     tableClassName,
     bordered = true,
+    toolbar,
+    expandedRow,
+    renderExpandedRow,
 }: {
     data: T[];
     columns: DataTableColumn<T>[];
@@ -203,6 +206,9 @@ export default function DataTable<T extends object>({
     className?: string;
     tableClassName?: string;
     bordered?: boolean;
+    toolbar?: ReactNode;
+    expandedRow?: string | null;
+    renderExpandedRow?: (row: T) => ReactNode;
 }) {
     const [columnVisibility, setColumnVisibility] =
         useState<ColumnVisibilityState>(() =>
@@ -245,39 +251,42 @@ export default function DataTable<T extends object>({
             {(title || hideable.length > 0) && (
                 <div className="flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
                     <div className="min-w-0 text-sm font-semibold">{title}</div>
-                    {hideable.length > 0 && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    aria-label="Atur kolom tabel"
-                                >
-                                    <Settings2 className="mr-1 size-4" />
-                                    Kolom
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>
-                                    Tampilkan kolom
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {hideable.map((column) => (
-                                    <DropdownMenuCheckboxItem
-                                        key={column.id}
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
-                                        }
+                    <div className="flex shrink-0 items-center gap-2">
+                        {hideable.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        aria-label="Atur kolom tabel"
                                     >
-                                        {byId.get(column.id)?.header ??
-                                            column.id}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
+                                        <Settings2 className="mr-1 size-4" />
+                                        Kolom
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>
+                                        Tampilkan kolom
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {hideable.map((column) => (
+                                        <DropdownMenuCheckboxItem
+                                            key={column.id}
+                                            checked={column.getIsVisible()}
+                                            onCheckedChange={(value) =>
+                                                column.toggleVisibility(!!value)
+                                            }
+                                        >
+                                            {byId.get(column.id)?.header ??
+                                                column.id}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                        {toolbar}
+                    </div>
                 </div>
             )}
             <Table className={tableClassName}>
@@ -327,27 +336,51 @@ export default function DataTable<T extends object>({
                         </TableRow>
                     ) : table.getRowModel().rows.length ? (
                         table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                                {row.getVisibleCells().map((cell) => {
-                                    const column = byId.get(cell.column.id);
-                                    return (
-                                        <TableCell
-                                            key={cell.id}
-                                            className={cn(
-                                                'px-4 py-4 align-top whitespace-normal',
-                                                typeof column?.className ===
-                                                    'function'
-                                                    ? column.className(
-                                                          row.original,
-                                                      )
-                                                    : column?.className,
-                                            )}
-                                        >
-                                            <table.FlexRender cell={cell} />
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
+                            <Fragment key={row.id}>
+                                <TableRow
+                                    data-state={
+                                        expandedRow === row.id
+                                            ? 'selected'
+                                            : undefined
+                                    }
+                                >
+                                    {row.getVisibleCells().map((cell) => {
+                                        const column = byId.get(cell.column.id);
+                                        return (
+                                            <TableCell
+                                                key={cell.id}
+                                                className={cn(
+                                                    'px-4 py-4 align-top whitespace-normal',
+                                                    typeof column?.className ===
+                                                        'function'
+                                                        ? column.className(
+                                                              row.original,
+                                                          )
+                                                        : column?.className,
+                                                )}
+                                            >
+                                                <table.FlexRender cell={cell} />
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                                {expandedRow === row.id &&
+                                    renderExpandedRow && (
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableCell
+                                                colSpan={
+                                                    table.getVisibleLeafColumns()
+                                                        .length
+                                                }
+                                                className="p-4 whitespace-normal"
+                                            >
+                                                {renderExpandedRow(
+                                                    row.original,
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                            </Fragment>
                         ))
                     ) : (
                         <TableRow>

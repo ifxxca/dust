@@ -266,10 +266,6 @@ export default function Discrepancies({ timezone }: { timezone: string }) {
                     <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
                         Monitoring Selisih
                     </h1>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                        Pantau ketidaksesuaian jumlah paket antara POP (pickup)
-                        dan hasil verifikasi retail per kategori.
-                    </p>
                 </div>
                 <Button
                     variant="outline"
@@ -322,7 +318,7 @@ export default function Discrepancies({ timezone }: { timezone: string }) {
                         <Label htmlFor="discrepancy-from">
                             Rentang Tanggal Pemeriksaan
                         </Label>
-                        <div className="grid min-w-0 gap-2 md:grid-cols-2">
+                        <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-2">
                             <Input
                                 id="discrepancy-from"
                                 aria-label="Tanggal pemeriksaan mulai"

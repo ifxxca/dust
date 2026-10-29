@@ -54,8 +54,8 @@ export function ProcessingSource() {
     return (
         <div className="space-y-2 rounded-lg border bg-muted/30 p-4 text-sm">
             <p className="font-medium">
-                Sumber: deklarasi manual Admin. Konfirmasi JNE Hybrid / MyORION
-                belum tersedia.
+                Sumber: catatan manual Admin. Hasil pencocokan resi tersedia di
+                Rekonsiliasi Paket.
             </p>
             <p className="text-muted-foreground">
                 Berhasil manual bukan konfirmasi sistem. Status belum diketahui
@@ -88,7 +88,7 @@ export function ProcessingMetrics({
         [
             'Berhasil Diinput',
             confirmed,
-            'Konfirmasi JNE Hybrid / MyORION belum tersedia',
+            'Konfirmasi resi tidak dihitung pada catatan manual',
             '',
         ],
         [
@@ -106,7 +106,7 @@ export function ProcessingMetrics({
     ] as const;
     return (
         <section
-            className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+            className="grid grid-cols-2 gap-2 xl:grid-cols-4"
             aria-label="Ringkasan operasional"
         >
             {primary.map(([label, value, hint, color]) => (

@@ -23,7 +23,9 @@ import * as monitoring from '@/routes/jne-monitoring';
 import * as runs from '@/routes/report-runs';
 
 export type TrackingRefresh = {
+    policy_active?: boolean;
     active_count: number;
+    due_count?: number | null;
     profile: {
         id: number;
         enabled: boolean;
@@ -66,9 +68,18 @@ export default function JneTrackingRefreshCard({
                                     {data.active_count.toLocaleString('id-ID')}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
-                                    resi belum delivered/cancel
+                                    {data.policy_active
+                                        ? 'resi memenuhi kebijakan terverifikasi'
+                                        : 'resi belum delivered/cancel'}
                                 </span>
                             </p>
+                            {data.due_count != null && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {data.due_count.toLocaleString('id-ID')}{' '}
+                                    memenuhi usia dan interval pembaruan
+                                    otomatis
+                                </p>
+                            )}
                         </div>
                     </div>
                     <dl className="grid grid-cols-3 gap-3 sm:flex sm:flex-wrap sm:gap-x-8">
@@ -230,7 +241,10 @@ export default function JneTrackingRefreshCard({
                         ? `Batas usia entry ${profile.lookback_days} hari; `
                         : ''}
                     resi tanpa tanggal entry tetap ikut. Delivered/cancel
-                    berhenti diperbarui dan tetap tersimpan di monitoring.
+                    berhenti diperbarui dan tetap tersimpan di monitoring.{' '}
+                    Jadwal otomatis melewati AWB yang report-nya baru diterima.
+                    Pembaruan sekarang dapat melewati interval itu; proses yang
+                    masih berjalan atau gagal tetap perlu diperiksa.
                 </CollapsibleContent>
             </Collapsible>
         </Card>

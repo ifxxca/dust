@@ -8,6 +8,13 @@ use Illuminate\Validation\Validator;
 
 class FinalizePickupRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->boolean('cashless_capture') && is_array($this->input('cashless_awbs'))) {
+            $this->merge(['cashless_awbs' => array_map(fn (mixed $awb): mixed => is_string($awb) ? mb_strtoupper(trim($awb)) : $awb, $this->input('cashless_awbs'))]);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -28,6 +35,9 @@ class FinalizePickupRequest extends FormRequest
             'submission_key' => ['required', 'uuid'],
             'manual_hybrid' => ['required', 'integer', 'min:0', 'max:1000000'],
             'cashless_hybrid' => ['required', 'integer', 'min:0', 'max:1000000'],
+            'cashless_capture' => ['sometimes', 'boolean'],
+            'cashless_awbs' => ['sometimes', 'array', 'list', 'max:500'],
+            'cashless_awbs.*' => ['required', 'string', 'max:100', 'distinct:strict', 'regex:/^[A-Z0-9_-]{1,100}$/D', 'not_regex:/^(0101|0166)[0-9]+$/D'],
             'css_orion' => ['required', 'integer', 'min:0', 'max:1000000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'photos' => ['sometimes', 'array', 'max:4'],
@@ -50,6 +60,10 @@ class FinalizePickupRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            if ($this->boolean('cashless_capture') && is_array($this->input('cashless_awbs', []))
+                && count($this->input('cashless_awbs', [])) !== (int) $this->input('cashless_hybrid')) {
+                $validator->errors()->add('cashless_awbs', 'Jumlah Cashless Hybrid harus sama dengan jumlah resi yang dicatat.');
+            }
             if ((int) $this->input('manual_hybrid') + (int) $this->input('cashless_hybrid') + (int) $this->input('css_orion') <= 0) {
                 $validator->errors()->add('manual_hybrid', 'Pickup berhasil harus memiliki paket. Gunakan hasil kunjungan tanpa paket untuk total nol.');
             }

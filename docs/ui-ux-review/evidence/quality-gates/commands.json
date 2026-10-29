@@ -1,0 +1,19 @@
+{
+  "php-full-suite-final.log": "php -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest --compact (OPENSSL_CONF menunjuk konfigurasi bawaan PHP)",
+  "operational-php-tests.log": "Pest: PickupOperationalListTest, PickupBulkAssignmentTest, HandoverListRefinementTest, DiscrepancyRefinementTest",
+  "conditional-php-tests.log": "Pest: tests/Feature/Auth/EmailVerificationTest.php",
+  "frontend-tests.log": "npx vp test run resources/js/lib",
+  "mobile-tests.log": "MOBILE_API_URL=loopback; npx vp test run --config vite.mobile.config.ts --mode development",
+  "types.log": "npm run types:check",
+  "build.log": "npm run build",
+  "mobile-build.log": "MOBILE_API_URL=loopback; npm run build:mobile",
+  "pint-final.log": "vendor/bin/pint --dirty --format agent",
+  "chart-lint.log": "npx vp lint <changed chart files and regression test>",
+  "conditional-lint.log": "npx vp lint <changed auth feedback files>",
+  "operational-lint.log": "npx vp lint <changed operational files>",
+  "browser-regression.log": "node --test tests/Browser/ui-ux-remediation.mjs (production client assets)",
+  "after-sparkline-final.log": "node tests/Browser/ui-ux-review.mjs (188-state matrix; four updated sparkline captures, SSR)",
+  "after-interactions.log": "node tests/Browser/ui-ux-review-interactions.mjs",
+  "after-sidebar.log": "node tests/Browser/ui-ux-review-sidebar.mjs",
+  "after-conditional.log": "node tests/Browser/ui-ux-review-conditional.mjs"
+}

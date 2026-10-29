@@ -34,3 +34,17 @@ test('replayed polls do not repeat previously displayed events', () => {
         newPickupNotifications(new Set([1, 2]), [notice(2), notice(1)]),
     ).toEqual([]);
 });
+
+test('cashless and pickup events with the same numeric id remain distinct', () => {
+    const cashless: PickupNotification = {
+        ...notice(1),
+        type: 'cashless_entry_attention',
+        batch_id: 2,
+    };
+    expect(newPickupNotifications(new Set([1]), [notice(1), cashless])).toEqual(
+        [cashless],
+    );
+    expect(
+        newPickupNotifications(new Set([1, 'cashless:1']), [cashless]),
+    ).toEqual([]);
+});

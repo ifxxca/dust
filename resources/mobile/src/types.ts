@@ -35,6 +35,7 @@ export type Task = {
     visits?: Visit[];
     events?: { action: string; actor_id: number; task_version: number }[];
     proof?: Proof | null;
+    cashless_awbs?: string[];
     handover_session_id?: number | null;
 };
 export type Visit = {

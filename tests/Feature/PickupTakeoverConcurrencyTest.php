@@ -23,6 +23,9 @@ test('mysql concurrent operational requests preserve one owner or handover membe
         $b = User::factory()->create(['role' => 'pickup_staff']);
         $c = User::factory()->create(['role' => 'pickup_staff']);
         $task = PickupTask::factory()->create(['status' => 'ASSIGNED', 'assigned_staff_id' => $a->id]);
+        if ($scenario === 'claim') {
+            $task->update(['status' => 'SCHEDULED', 'assigned_staff_id' => null]);
+        }
         if (in_array($scenario, ['handover', 'correction'], true)) {
             $task->update(['status' => 'PICKED_UP']);
             PickupRecord::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $a->id]);
@@ -119,7 +122,7 @@ test('mysql concurrent operational requests preserve one owner or handover membe
         if ($event->action === 'execution_started') {
             expect($task->fresh()->assigned_staff_id)->toBe($a->id)->and($task->visits()->count())->toBe(1);
         } else {
-            expect($event->previous_staff_id)->toBe($a->id)->and($task->fresh()->execution_started_at)->toBeNull();
+            expect($event->previous_staff_id)->toBe($scenario === 'claim' ? null : $a->id)->and($task->fresh()->execution_started_at)->toBeNull();
         }
     } finally {
         foreach ($processes as $process) {
@@ -136,4 +139,4 @@ test('mysql concurrent operational requests preserve one owner or handover membe
             }
         }
     }
-})->with(['takeover', 'start', 'handover', 'generation', 'correction', 'manual', 'manual_generation', 'bulk_assignment'])->group('mysql-concurrency');
+})->with(['takeover', 'claim', 'start', 'handover', 'generation', 'correction', 'manual', 'manual_generation', 'bulk_assignment'])->group('mysql-concurrency');

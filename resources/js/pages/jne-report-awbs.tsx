@@ -17,6 +17,7 @@ import {
 import * as reports from '@/routes/jne-reports';
 import * as monitoring from '@/routes/jne-monitoring';
 import { reportStage } from '@/lib/jne-report-flow';
+import { focusFormError } from '@/lib/utils';
 
 type Awb = {
     id: number;
@@ -98,19 +99,12 @@ export default function JneReportAwbs({
                     {report.date_from} s.d. {report.date_thru}
                 </p>
             </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Progres penarikan & pemrosesan</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+            <Card className="gap-0 py-0">
+                <CardContent className="space-y-3 p-4">
                     <Badge variant={stage.issue ? 'destructive' : 'secondary'}>
                         {stage.label}
                     </Badge>
-                    <p className="text-sm text-muted-foreground">
-                        Mengambil report → CSV tersimpan → Memproses data → Siap
-                        dimonitor. CSV tersimpan belum berarti monitoring sudah
-                        diperbarui.
-                    </p>
+
                     {(report.error_message || report.projection_error) && (
                         <p role="alert" className="text-sm text-destructive">
                             {report.error_message || report.projection_error}
@@ -161,19 +155,7 @@ export default function JneReportAwbs({
                         {importStatuses[report.import_status] ??
                             report.import_status}
                     </Badge>
-                    <p className="text-sm">
-                        {report.imported_awb_count.toLocaleString('id-ID')} AWB
-                        diimpor ·{' '}
-                        {report.duplicate_awb_count.toLocaleString('id-ID')}{' '}
-                        baris duplikat identik dilewati · Waktu impor:{' '}
-                        {importedAt}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        Status di bawah adalah isi CSV pada saat report ditarik.
-                        Buka daftar pengiriman untuk observasi terakhir,
-                        riwayat, dan hubungan pickup. Snapshot report ini tetap
-                        dipertahankan.
-                    </p>
+
                     {report.import_error && (
                         <p role="alert" className="text-sm text-destructive">
                             {report.import_error}
@@ -205,14 +187,47 @@ export default function JneReportAwbs({
                             </Button>
                         </div>
                     )}
+                    <details className="text-sm">
+                        <summary className="cursor-pointer font-medium">
+                            Rincian penarikan & impor
+                        </summary>
+                        <div className="mt-3 flex flex-col gap-3">
+                            <p className="text-sm text-muted-foreground">
+                                Mengambil report → CSV tersimpan → Memproses
+                                data → Siap dimonitor. CSV tersimpan belum
+                                berarti monitoring sudah diperbarui.
+                            </p>
+                            <p className="text-sm">
+                                {report.imported_awb_count.toLocaleString(
+                                    'id-ID',
+                                )}{' '}
+                                AWB diimpor ·{' '}
+                                {report.duplicate_awb_count.toLocaleString(
+                                    'id-ID',
+                                )}{' '}
+                                baris duplikat identik dilewati · Waktu impor:{' '}
+                                {importedAt}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Status di bawah adalah isi CSV pada saat report
+                                ditarik. Buka daftar pengiriman untuk observasi
+                                terakhir, riwayat, dan hubungan pickup. Snapshot
+                                report ini tetap dipertahankan.
+                            </p>
+                        </div>
+                    </details>
                     {stage.issue && (
                         <form
                             className="space-y-2 rounded-md border p-3"
                             onSubmit={(event) => {
                                 event.preventDefault();
+                                const element = event.currentTarget;
                                 review.post(
                                     monitoring.reviewReport.url(report.id),
-                                    { preserveScroll: true },
+                                    {
+                                        preserveScroll: true,
+                                        onError: () => focusFormError(element),
+                                    },
                                 );
                             }}
                         >
@@ -227,6 +242,12 @@ export default function JneReportAwbs({
                             </p>
                             <Input
                                 id="report-review"
+                                aria-invalid={!!review.errors.reason}
+                                aria-describedby={
+                                    review.errors.reason
+                                        ? 'report-review-error'
+                                        : undefined
+                                }
                                 required
                                 maxLength={500}
                                 value={review.data.reason}
@@ -234,7 +255,10 @@ export default function JneReportAwbs({
                                     review.setData('reason', event.target.value)
                                 }
                             />
-                            <InputError message={review.errors.reason} />
+                            <InputError
+                                id="report-review-error"
+                                message={review.errors.reason}
+                            />
                             <Button
                                 variant="outline"
                                 disabled={review.processing}
@@ -271,13 +295,22 @@ export default function JneReportAwbs({
                             </Label>
                             <Input
                                 id="awb-search"
+                                aria-invalid={!!search.errors.q}
+                                aria-describedby={
+                                    search.errors.q
+                                        ? 'awb-search-error'
+                                        : undefined
+                                }
                                 value={search.data.q}
                                 maxLength={100}
                                 onChange={(event) =>
                                     search.setData('q', event.target.value)
                                 }
                             />
-                            <InputError message={search.errors.q} />
+                            <InputError
+                                id="awb-search-error"
+                                message={search.errors.q}
+                            />
                         </div>
                         <Button
                             type="submit"

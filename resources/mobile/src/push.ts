@@ -10,6 +10,7 @@ export type AssignmentLink = {
     taskId: number;
     recipientId: number;
     eventId: number;
+    batchId?: number;
 };
 export function registrationFailure(error: unknown): string {
     const value = typeof error === 'string' ? error : '';
@@ -37,8 +38,18 @@ export function registrationFailure(error: unknown): string {
 export function assignmentLink(data: unknown): AssignmentLink | null {
     if (!data || typeof data !== 'object') return null;
     const value = data as Record<string, unknown>;
-    if (value.type !== 'pickup_assigned') return null;
-    const values = [value.task_id, value.recipient_id, value.event_id];
+    if (
+        !['pickup_assigned', 'cashless_entry_attention'].includes(
+            String(value.type),
+        )
+    )
+        return null;
+    const values = [
+        value.task_id,
+        value.recipient_id,
+        value.event_id,
+        ...(value.type === 'cashless_entry_attention' ? [value.batch_id] : []),
+    ];
     if (
         values.some(
             (id) =>
@@ -52,6 +63,9 @@ export function assignmentLink(data: unknown): AssignmentLink | null {
         taskId: Number(value.task_id),
         recipientId: Number(value.recipient_id),
         eventId: Number(value.event_id),
+        ...(value.type === 'cashless_entry_attention'
+            ? { batchId: Number(value.batch_id) }
+            : {}),
     };
 }
 
@@ -160,7 +174,9 @@ export async function listenPush(
                 ) {
                     received?.(link);
                     notice(
-                        'Pickup baru ditugaskan. Ketuk notifikasi untuk melihat detail tugas.',
+                        link.batchId
+                            ? 'Cashless perlu diperiksa. Buka notifikasi untuk melihat hasil batch.'
+                            : 'Pickup baru ditugaskan. Ketuk notifikasi untuk melihat detail tugas.',
                     );
                 }
             },

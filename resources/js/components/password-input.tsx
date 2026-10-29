@@ -28,7 +28,7 @@ export default function PasswordInput({
                         ? 'Sembunyikan kata sandi'
                         : 'Tampilkan kata sandi'
                 }
-                tabIndex={-1}
+                aria-pressed={showPassword}
             >
                 {showPassword ? (
                     <EyeOff className="size-4" />

@@ -1,0 +1,6 @@
+simulation: cashless-entry
+routing: header
+mocks:
+  - name: hybrid
+    routeKey: hybrid
+    path: workers/jne-report/test/cashless-postman.cjs

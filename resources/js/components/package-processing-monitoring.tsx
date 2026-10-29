@@ -198,7 +198,7 @@ export default function PackageProcessingMonitoring({
             ? filters.date_from
             : `${filters.date_from} – ${filters.date_to}`;
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             <MonitoringWorkspaceHeader
                 insights={
                     <MonitoringInsights
@@ -211,7 +211,6 @@ export default function PackageProcessingMonitoring({
                     />
                 }
                 current="processing"
-                subtitle="Pantau penerimaan dan pemrosesan paket Retail."
                 filters={filters}
                 operations={operations}
                 busy={form.processing}
@@ -235,6 +234,105 @@ export default function PackageProcessingMonitoring({
                     }))
                 }
             />
+            <form
+                className="space-y-3"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    submit();
+                }}
+            >
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative min-w-48 flex-1">
+                        <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
+                        <Input
+                            id="processing-search"
+                            aria-label="Cari pickup, customer, atau petugas"
+                            placeholder="Cari pickup, customer, atau petugas…"
+                            className="pl-9"
+                            value={form.data.q}
+                            onChange={(event) =>
+                                form.setData('q', event.target.value)
+                            }
+                        />
+                    </div>
+                    <Button disabled={form.processing} size="sm">
+                        {form.processing ? 'Memuat…' : 'Cari'}
+                    </Button>
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant={advanced ? 'secondary' : 'outline'}
+                        aria-expanded={advanced}
+                        aria-controls="processing-advanced"
+                        onClick={() => setAdvanced(!advanced)}
+                    >
+                        <Filter className="size-4" />
+                        Filter{applied.length > 0 && ` (${applied.length})`}
+                    </Button>
+                    {applied.length > 0 || filters.q ? (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={form.processing}
+                            onClick={clear}
+                        >
+                            Bersihkan
+                        </Button>
+                    ) : null}
+                </div>
+                <div
+                    id="processing-advanced"
+                    hidden={!advanced}
+                    className="space-y-3 rounded-lg border bg-card p-4"
+                >
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        {fields.map(([key, label]) => (
+                            <div className="space-y-1" key={key}>
+                                <Label htmlFor={`processing-${key}`}>
+                                    {label}
+                                </Label>
+                                {options[key] ? (
+                                    <select
+                                        id={`processing-${key}`}
+                                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                                        value={form.data[key]}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                key,
+                                                event.target.value,
+                                            )
+                                        }
+                                    >
+                                        {!defaults[key] && (
+                                            <option value="">Semua</option>
+                                        )}
+                                        {options[key].map(([value, title]) => (
+                                            <option key={value} value={value}>
+                                                {title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <Input
+                                        id={`processing-${key}`}
+                                        value={form.data[key]}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                key,
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    <Button size="sm" disabled={form.processing}>
+                        Terapkan filter
+                    </Button>
+                </div>
+            </form>
             <ProcessingMetrics
                 summary={data.summary}
                 received={data.summary.received_quantity}
@@ -279,10 +377,10 @@ export default function PackageProcessingMonitoring({
                 {scope}. Backlog: pickup sebelum hari operasional{' '}
                 {operations.today}; terpisah dari periode pilihan.
             </p>
-            <section
-                className="overflow-hidden rounded-xl border bg-card"
-                aria-label="Ringkasan kategori"
-            >
+            <details className="overflow-hidden rounded-xl border bg-card">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
+                    Ringkasan kategori
+                </summary>
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -326,112 +424,8 @@ export default function PackageProcessingMonitoring({
                         ))}
                     </TableBody>
                 </Table>
-            </section>
+            </details>
             <section className="space-y-3" aria-label="Daftar pemrosesan">
-                <form
-                    className="space-y-3"
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        submit();
-                    }}
-                >
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="relative min-w-48 flex-1">
-                            <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
-                            <Input
-                                id="processing-search"
-                                aria-label="Cari pickup, customer, atau petugas"
-                                placeholder="Cari pickup, customer, atau petugas…"
-                                className="pl-9"
-                                value={form.data.q}
-                                onChange={(event) =>
-                                    form.setData('q', event.target.value)
-                                }
-                            />
-                        </div>
-                        <Button disabled={form.processing} size="sm">
-                            {form.processing ? 'Memuat…' : 'Cari'}
-                        </Button>
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant={advanced ? 'secondary' : 'outline'}
-                            aria-expanded={advanced}
-                            aria-controls="processing-advanced"
-                            onClick={() => setAdvanced(!advanced)}
-                        >
-                            <Filter className="size-4" />
-                            Filter{applied.length > 0 && ` (${applied.length})`}
-                        </Button>
-                        {applied.length > 0 || filters.q ? (
-                            <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                disabled={form.processing}
-                                onClick={clear}
-                            >
-                                Bersihkan
-                            </Button>
-                        ) : null}
-                    </div>
-                    <div
-                        id="processing-advanced"
-                        hidden={!advanced}
-                        className="space-y-3 rounded-lg border bg-card p-4"
-                    >
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            {fields.map(([key, label]) => (
-                                <div className="space-y-1" key={key}>
-                                    <Label htmlFor={`processing-${key}`}>
-                                        {label}
-                                    </Label>
-                                    {options[key] ? (
-                                        <select
-                                            id={`processing-${key}`}
-                                            className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                                            value={form.data[key]}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    key,
-                                                    event.target.value,
-                                                )
-                                            }
-                                        >
-                                            {!defaults[key] && (
-                                                <option value="">Semua</option>
-                                            )}
-                                            {options[key].map(
-                                                ([value, title]) => (
-                                                    <option
-                                                        key={value}
-                                                        value={value}
-                                                    >
-                                                        {title}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </select>
-                                    ) : (
-                                        <Input
-                                            id={`processing-${key}`}
-                                            value={form.data[key]}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    key,
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <Button size="sm" disabled={form.processing}>
-                            Terapkan filter
-                        </Button>
-                    </div>
-                </form>
                 {(applied.length > 0 || filters.q) && (
                     <div
                         className="flex flex-wrap gap-2"

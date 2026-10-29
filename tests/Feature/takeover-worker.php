@@ -50,7 +50,7 @@ try {
     } elseif ($operation === 'correction') {
         $application->make(CorrectPickupRecord::class)->handle($actor, (int) $taskId, ['expected_version' => 1, 'customer_name' => 'Koreksi Concurrent', 'pickup_address' => 'Jl. Test', 'contact' => 'test@example.test', 'manual_hybrid' => 3, 'cashless_hybrid' => 1, 'css_orion' => 0, 'notes' => null, 'reason' => 'Salah pencatatan']);
     } else {
-        $application->make(TakeOverTask::class)->handle($actor, (int) $taskId, 1, (int) $oldId);
+        $application->make(TakeOverTask::class)->handle($actor, (int) $taskId, 1, $operation === 'claim' ? null : (int) $oldId);
     }
     echo '200';
 } catch (HttpException $exception) {

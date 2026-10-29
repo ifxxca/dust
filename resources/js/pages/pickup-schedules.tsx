@@ -3,7 +3,7 @@ import DataTable, {
     type DataTablePageMeta,
 } from '@/components/data-table';
 import { Head, Link, useHttp } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import PageContainer from '@/components/page-container';
@@ -27,6 +27,8 @@ import { EmptyState } from '@/components/operational-ui';
 import * as api from '@/routes/api/schedules';
 import * as customers from '@/routes/api/customers';
 import { operations } from '@/routes';
+import InputError from '@/components/input-error';
+import { focusFormError } from '@/lib/utils';
 
 type Customer = { id: number; name: string; pickup_address: string };
 type Schedule = {
@@ -71,6 +73,17 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
     const loader = useHttp({});
     const lookup = useHttp({});
     const form = useHttp(initial);
+    const originalForm = useRef(JSON.stringify(initial));
+    const changeOpen = (value: boolean) => {
+        if (form.processing) return;
+        if (
+            !value &&
+            JSON.stringify(form.data) !== originalForm.current &&
+            !window.confirm('Perubahan jadwal belum disimpan. Buang perubahan?')
+        )
+            return;
+        setOpen(value);
+    };
     useEffect(() => {
         let cancelled = false;
         const timer = setTimeout(() => {
@@ -123,21 +136,22 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
         setEditing(schedule);
         setError('');
         setCustomerSearch('');
-        form.setData(
-            schedule
-                ? {
-                      customer_id: String(schedule.customer_id),
-                      pickup_address: schedule.pickup_address,
-                      weekdays: schedule.weekdays,
-                      pickup_time: schedule.pickup_time,
-                      starts_on: schedule.starts_on.slice(0, 10),
-                      ends_on: schedule.ends_on?.slice(0, 10) ?? '',
-                      notes: schedule.notes ?? '',
-                      is_active: schedule.is_active,
-                      expected_version: schedule.version,
-                  }
-                : initial,
-        );
+        const values = schedule
+            ? {
+                  customer_id: String(schedule.customer_id),
+                  pickup_address: schedule.pickup_address,
+                  weekdays: schedule.weekdays,
+                  pickup_time: schedule.pickup_time,
+                  starts_on: schedule.starts_on.slice(0, 10),
+                  ends_on: schedule.ends_on?.slice(0, 10) ?? '',
+                  notes: schedule.notes ?? '',
+                  is_active: schedule.is_active,
+                  expected_version: schedule.version,
+              }
+            : initial;
+        form.setData(values);
+        form.clearErrors();
+        originalForm.current = JSON.stringify(values);
         setOpen(true);
     };
     const actions = (schedule: Schedule) => (
@@ -164,29 +178,11 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                 <div>
                     <h1 className="text-2xl font-bold">Jadwal Regular</h1>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Jadwal menghasilkan pickup yang perlu ditugaskan CS ·{' '}
-                        {timezone}.
+                        {timezone}
                     </p>
                 </div>
                 <Button onClick={() => begin(null)}>Tambah Jadwal</Button>
             </div>
-            {!policy && (
-                <p className="rounded-lg border bg-amber-500/10 p-4 text-sm">
-                    Generasi otomatis belum aktif. Aturan hari libur dan
-                    occurrence yang terlewat masih menunggu keputusan
-                    operasional. Jadwal dapat disiapkan tanpa membuat task.
-                </p>
-            )}
-            {policy && (
-                <p className="text-sm text-muted-foreground">
-                    Generasi:{' '}
-                    {policy === 'today'
-                        ? 'hari ini saja'
-                        : 'hari ini dan enam hari sebelumnya'}
-                    . Scheduler server harus berjalan. Jadwal tidak
-                    mengecualikan hari libur secara otomatis.
-                </p>
-            )}
             <div className="flex gap-3">
                 <Input
                     aria-label="Cari jadwal customer"
@@ -207,6 +203,23 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                     Muat ulang
                 </Button>
             </div>
+            {!policy && (
+                <p className="rounded-lg border bg-amber-500/10 p-4 text-sm">
+                    Generasi otomatis belum aktif. Aturan hari libur dan
+                    occurrence yang terlewat masih menunggu keputusan
+                    operasional. Jadwal dapat disiapkan tanpa membuat task.
+                </p>
+            )}
+            {policy && (
+                <p className="text-sm text-muted-foreground">
+                    Generasi:{' '}
+                    {policy === 'today'
+                        ? 'hari ini saja'
+                        : 'hari ini dan enam hari sebelumnya'}
+                    . Scheduler server harus berjalan. Jadwal tidak
+                    mengecualikan hari libur secara otomatis.
+                </p>
+            )}
             {error && (
                 <p role="alert" className="text-sm text-destructive">
                     {error}
@@ -388,12 +401,7 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                 loading={loader.processing}
                 itemLabel="jadwal"
             />
-            <Dialog
-                open={open}
-                onOpenChange={(value) => {
-                    if (!form.processing) setOpen(value);
-                }}
-            >
+            <Dialog open={open} onOpenChange={changeOpen}>
                 <DialogContent className="max-h-[90dvh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
@@ -408,6 +416,7 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                         className="space-y-4"
                         onSubmit={(event) => {
                             event.preventDefault();
+                            const element = event.currentTarget;
                             setError('');
                             form.transform((data) => ({
                                 ...data,
@@ -423,10 +432,12 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                         toast.success('Jadwal tersimpan');
                                         setOpen(false);
                                         setRevision((value) => value + 1);
-                                    } else
+                                    } else {
                                         setError(
                                             'Periksa field. Jadwal belum tersimpan.',
                                         );
+                                        focusFormError(element);
+                                    }
                                 })
                                 .catch(() =>
                                     setError(
@@ -443,6 +454,7 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                 setCustomerSearch(event.target.value)
                             }
                         />
+                        <Label htmlFor="schedule-customer">Customer</Label>
                         <Select
                             value={form.data.customer_id}
                             onValueChange={(value) => {
@@ -457,7 +469,16 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                     );
                             }}
                         >
-                            <SelectTrigger aria-label="Customer">
+                            <SelectTrigger
+                                id="schedule-customer"
+                                aria-label="Customer"
+                                aria-invalid={!!form.errors.customer_id}
+                                aria-describedby={
+                                    form.errors.customer_id
+                                        ? 'schedule-customer-error'
+                                        : undefined
+                                }
+                            >
                                 <SelectValue
                                     placeholder={
                                         editing?.customer.name ??
@@ -476,9 +497,19 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                 ))}
                             </SelectContent>
                         </Select>
+                        <InputError
+                            id="schedule-customer-error"
+                            message={form.errors.customer_id}
+                        />
                         <Label htmlFor="schedule-address">Alamat Pickup</Label>
                         <Input
                             id="schedule-address"
+                            aria-invalid={!!form.errors.pickup_address}
+                            aria-describedby={
+                                form.errors.pickup_address
+                                    ? 'schedule-address-error'
+                                    : undefined
+                            }
                             required
                             value={form.data.pickup_address}
                             onChange={(event) =>
@@ -488,7 +519,20 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                 )
                             }
                         />
-                        <fieldset className="space-y-2">
+                        <InputError
+                            id="schedule-address-error"
+                            message={form.errors.pickup_address}
+                        />
+                        <fieldset
+                            tabIndex={form.errors.weekdays ? -1 : undefined}
+                            aria-invalid={!!form.errors.weekdays}
+                            aria-describedby={
+                                form.errors.weekdays
+                                    ? 'schedule-weekdays-error'
+                                    : undefined
+                            }
+                            className="space-y-2"
+                        >
                             <legend className="text-sm font-medium">
                                 Hari Pickup
                             </legend>
@@ -525,6 +569,10 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                 ))}
                             </div>
                         </fieldset>
+                        <InputError
+                            id="schedule-weekdays-error"
+                            message={form.errors.weekdays}
+                        />
                         <div className="grid gap-3 sm:grid-cols-3">
                             {(
                                 ['pickup_time', 'starts_on', 'ends_on'] as const
@@ -541,6 +589,12 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                     </Label>
                                     <Input
                                         id={`schedule-${key}`}
+                                        aria-invalid={!!form.errors[key]}
+                                        aria-describedby={
+                                            form.errors[key]
+                                                ? `schedule-${key}-error`
+                                                : undefined
+                                        }
                                         type={
                                             key === 'pickup_time'
                                                 ? 'time'
@@ -555,16 +609,30 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                             )
                                         }
                                     />
+                                    <InputError
+                                        id={`schedule-${key}-error`}
+                                        message={form.errors[key]}
+                                    />
                                 </div>
                             ))}
                         </div>
                         <Label htmlFor="schedule-notes">Catatan</Label>
                         <Input
                             id="schedule-notes"
+                            aria-invalid={!!form.errors.notes}
+                            aria-describedby={
+                                form.errors.notes
+                                    ? 'schedule-notes-error'
+                                    : undefined
+                            }
                             value={form.data.notes}
                             onChange={(event) =>
                                 form.setData('notes', event.target.value)
                             }
+                        />
+                        <InputError
+                            id="schedule-notes-error"
+                            message={form.errors.notes}
                         />
                         <label className="flex min-h-11 items-center gap-2">
                             <input
@@ -579,11 +647,24 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                             />
                             Jadwal Aktif
                         </label>
-                        {Object.entries(form.errors).map(([key, value]) => (
-                            <p key={key} className="text-sm text-destructive">
-                                {key}: {value}
-                            </p>
-                        ))}
+                        <div data-form-errors tabIndex={-1}>
+                            {Object.entries(form.errors)
+                                .filter(
+                                    ([key]) =>
+                                        ![
+                                            'customer_id',
+                                            'pickup_address',
+                                            'weekdays',
+                                            'pickup_time',
+                                            'starts_on',
+                                            'ends_on',
+                                            'notes',
+                                        ].includes(key),
+                                )
+                                .map(([key, value]) => (
+                                    <InputError key={key} message={value} />
+                                ))}
+                        </div>
                         {error && (
                             <p
                                 role="alert"

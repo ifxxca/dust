@@ -1,0 +1,12 @@
+{
+  "protectedUserFilesUnchanged": {
+    "resources/js/components/password-input.tsx": true,
+    "resources/js/layouts/auth/auth-simple-layout.tsx": true,
+    "resources/js/pages/auth/login.tsx": true,
+    "resources/js/pages/welcome.tsx": true
+  },
+  "businessInfrastructureOrDependencyChanges": [],
+  "routesUnchanged": true,
+  "routeCount": 135,
+  "legacyCustomerBranchesRemoved": true
+}

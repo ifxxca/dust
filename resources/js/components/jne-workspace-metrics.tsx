@@ -1,5 +1,4 @@
 import type { LucideIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 
 export default function JneWorkspaceMetrics({
     items,
@@ -15,38 +14,31 @@ export default function JneWorkspaceMetrics({
 }) {
     return (
         <section aria-label="Ringkasan halaman" className="flex flex-col gap-2">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border bg-card p-3 lg:grid-cols-4">
                 {items.map(({ label, value, icon: Icon, detail }) => (
-                    <Card
-                        key={label}
-                        className="min-w-0 gap-0 py-4 shadow-none"
-                    >
-                        <CardContent className="px-4">
-                            <div className="flex items-center justify-between gap-2 text-muted-foreground">
-                                <p className="text-xs font-medium sm:text-sm">
-                                    {label}
-                                </p>
-                                <Icon
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0"
-                                />
-                            </div>
-                            <p
-                                className={`mt-2 font-semibold tracking-tight break-words tabular-nums ${typeof value === 'number' ? 'text-3xl' : 'text-lg sm:text-2xl'}`}
-                            >
+                    <div key={label} className="flex min-w-0 items-start gap-2">
+                        <Icon
+                            aria-hidden="true"
+                            className="mt-0.5 hidden size-4 shrink-0 text-muted-foreground sm:block"
+                        />
+                        <div className="min-w-0">
+                            <dt className="text-xs font-medium text-muted-foreground">
+                                {label}
+                            </dt>
+                            <dd className="text-lg font-semibold break-words tabular-nums">
                                 {typeof value === 'number'
                                     ? value.toLocaleString('id-ID')
                                     : value}
-                            </p>
+                            </dd>
                             {detail && (
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     {detail}
                                 </p>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 ))}
-            </div>
+            </dl>
             {scope && <p className="text-xs text-muted-foreground">{scope}</p>}
         </section>
     );

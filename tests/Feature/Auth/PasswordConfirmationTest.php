@@ -20,3 +20,12 @@ test('password confirmation requires authentication', function () {
 
     $response->assertRedirect(route('login'));
 });
+
+test('incorrect password confirmation explains recovery in Indonesian and leaves the session unconfirmed', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('password.confirm.store'), ['password' => 'incorrect-password'])
+        ->assertSessionHasErrors(['password' => 'Kata sandi yang dimasukkan tidak sesuai.'])
+        ->assertSessionMissing('auth.password_confirmed_at');
+});

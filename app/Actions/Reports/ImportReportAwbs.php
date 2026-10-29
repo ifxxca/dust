@@ -25,6 +25,9 @@ class ImportReportAwbs
                 $this->invalid('CSV belum selesai disimpan.');
             }
             $stream = $this->openCsv($job);
+            $evidence = app(ReadJneSourceEvidence::class);
+            $context = $evidence->context($job);
+            $captureEvidence = config('jne-reports.source_provenance_enabled') || config('jne-reports.evidence_policies_enabled') || config('jne-reports.category_markers_enabled');
             try {
                 [$headers, $delimiter] = $this->headers($stream);
                 $rows = [];
@@ -60,6 +63,9 @@ class ImportReportAwbs
                         $this->invalid("AWB kosong atau formatnya tidak valid pada baris {$sourceRow}.");
                     }
                     $row['awb'] = strtoupper($row['awb']);
+                    if ($captureEvidence) {
+                        $row = [...$row, ...$evidence->row($context, array_combine($headers, $values), $row['awb'])];
+                    }
                     if (! is_string($row['customer_account']) || ! preg_match('/^[\pL\pN._\- ]{1,100}$/uD', $row['customer_account']) || ($job->source === 'apex' && $job->report_mode !== 'A' && strcasecmp($row['customer_account'], $this->normalize($job->customer_account)) !== 0)) {
                         $this->invalid("ID_ACCOUNT tidak sesuai dengan akun permintaan pada baris {$sourceRow}.");
                     }
@@ -78,7 +84,7 @@ class ImportReportAwbs
                 $now = now();
                 foreach (array_chunk(array_values($rows), 250) as $chunk) {
                     $recordsToStore = array_map(fn (array $row): array => [...$row['data'], 'source_row' => $row['source_row'], 'report_job_id' => $job->id, 'created_at' => $now, 'updated_at' => $now], $chunk);
-                    JneReportAwb::upsert($recordsToStore, ['report_job_id', 'awb'], ['source_row', 'customer_account', 'status_web', 'status_pod', 'awb_cancel', 'shipper_name', 'consignee_name', 'raw_data', 'reference', 'entry_at', 'source_status_at', 'observed_at', 'service', 'destination', 'destination_name', 'delivered_at', 'etd_days', 'amount_cents', 'weight_grams', 'quantity', 'metrics_version', 'updated_at']);
+                    JneReportAwb::upsert($recordsToStore, ['report_job_id', 'awb'], ['source_row', 'customer_account', 'status_web', 'status_pod', 'awb_cancel', 'shipper_name', 'consignee_name', 'raw_data', 'reference', 'entry_at', 'source_status_at', 'observed_at', 'service', 'destination', 'destination_name', 'delivered_at', 'etd_days', 'amount_cents', 'weight_grams', 'quantity', 'metrics_version', ...($captureEvidence ? ['original_customer_code', 'source_evidence'] : []), 'updated_at']);
                 }
                 $job->update(['import_status' => 'IMPORTED', 'imported_awb_count' => count($rows), 'duplicate_awb_count' => $duplicates, 'imported_at' => $now, 'import_error' => null]);
             } finally {

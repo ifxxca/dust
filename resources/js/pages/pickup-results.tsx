@@ -1,3 +1,4 @@
+import { setLayoutProps } from '@inertiajs/react';
 import PageContainer from '@/components/page-container';
 import PackageProcessingMonitoring from '@/components/package-processing-monitoring';
 import PickupMonitoring from '@/components/pickup-monitoring';
@@ -17,7 +18,23 @@ export default function PickupResults(props: {
     timezone: string;
     processing?: ProcessingMonitor;
     operations: MonitoringOperations;
+    staffOptions?: { id: number; name: string }[];
 }) {
+    setLayoutProps({
+        breadcrumbs: [
+            { title: 'Hasil Pickup', href: routes.index() },
+            {
+                title: props.processing
+                    ? 'Catatan pemrosesan manual'
+                    : 'Monitoring Pickup',
+                href: routes.index({
+                    query: {
+                        monitoring: props.processing ? 'processing' : 'pickup',
+                    },
+                }),
+            },
+        ],
+    });
     return (
         <PageContainer className="py-4">
             {props.processing ? (
@@ -33,6 +50,3 @@ export default function PickupResults(props: {
         </PageContainer>
     );
 }
-PickupResults.layout = {
-    breadcrumbs: [{ title: 'Hasil Pickup', href: routes.index() }],
-};

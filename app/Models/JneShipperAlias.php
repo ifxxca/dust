@@ -19,7 +19,8 @@ class JneShipperAlias extends Model
         static::creating(function (self $alias): void {
             $alias->normalized_name = self::normalize($alias->shipper_name);
             $alias->alias_key = hash('sha256', $alias->normalized_name);
-            $alias->mapping_key = hash('sha256', $alias->customer_id.':'.$alias->alias_key);
+            $scope = $alias->account_scope || $alias->valid_from || $alias->valid_thru ? ':'.implode('|', [$alias->account_scope, $alias->getRawOriginal('valid_from') ?? $alias->getAttributes()['valid_from'] ?? '', $alias->getRawOriginal('valid_thru') ?? $alias->getAttributes()['valid_thru'] ?? '']) : '';
+            $alias->mapping_key = hash('sha256', $alias->customer_id.':'.$alias->alias_key.$scope);
         });
     }
 

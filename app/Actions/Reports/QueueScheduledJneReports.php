@@ -21,7 +21,8 @@ class QueueScheduledJneReports
         foreach ($ids as $id) {
             try {
                 $created += $this->queueProfile($id);
-            } catch (Throwable) {
+            } catch (Throwable $exception) {
+                app(ReportPipelineFailure::class)->handle($exception, 'queue_profile', profileId: $id);
                 JneReportProfile::whereKey($id)->update(['last_error' => 'Gagal membuat antrean report. Periksa konfigurasi dan database.', 'next_run_at' => now()->addMinutes(15)]);
             }
         }
@@ -43,6 +44,16 @@ class QueueScheduledJneReports
                 return 0;
             }
             $local = CarbonImmutable::now('Asia/Jakarta');
+            $policy = $profile->report_type === 'unresolved' ? ManageJneRefreshPolicy::active($profile) : null;
+            if ($policy !== null && ($policy['availability_hours'] ?? []) !== [] && ! in_array($local->hour, $policy['availability_hours'], true)) {
+                $next = $local->startOfHour()->addHour();
+                while (! in_array($next->hour, $policy['availability_hours'], true)) {
+                    $next = $next->addHour();
+                }
+                $profile->update(['last_error' => 'Di luar jam ketersediaan sumber pada kebijakan terverifikasi.', 'next_run_at' => $profile->enabled ? $next->utc() : null]);
+
+                return 0;
+            }
             if ($forDate !== null && $profile->source !== 'hybrid') {
                 throw ValidationException::withMessages(['for_date' => 'Tanggal khusus tersedia untuk Hybrid gabungan.']);
             }
@@ -58,7 +69,13 @@ class QueueScheduledJneReports
                     ->orWhere(fn ($query) => $query->where('status', 'COMPLETED')->whereNull('reviewed_at')->where(fn ($query) => $query->where('import_status', 'FAILED')->orWhere('projection_status', 'FAILED')));
             })->exists();
             if ($blocked) {
-                $profile->update(['last_error' => 'Masih ada report diproses atau kegagalan yang belum diperiksa Admin. Tinjau daftar report sebelum siklus baru.', 'next_run_at' => $profile->enabled ? now()->addMinutes(15) : null]);
+                $minutes = 15;
+                if ($policy !== null) {
+                    $recent = ReportJob::where('source', $profile->source)->where('report_type', $profile->report_type)->where('customer_account', $profile->customer_account)->orderByDesc('id')->limit(10)->get();
+                    $failures = $recent->takeUntil(fn (ReportJob $job): bool => ! in_array($job->status, ['FAILED', 'NEEDS_ATTENTION'], true) && $job->import_status !== 'FAILED' && $job->projection_status !== 'FAILED')->count();
+                    $minutes = min($policy['max_failure_backoff_minutes'], $policy['failure_backoff_minutes'] * (2 ** max(0, $failures - 1)));
+                }
+                $profile->update(['last_error' => 'Masih ada report diproses atau kegagalan yang belum diperiksa Admin. Tinjau daftar report sebelum siklus baru.', 'next_run_at' => $profile->enabled ? now()->addMinutes($minutes) : null]);
 
                 return 0;
             }
@@ -83,7 +100,7 @@ class QueueScheduledJneReports
                     'date_from' => $from, 'date_thru' => $thru, 'report_mode' => config('jne-reports.report_mode'), 'status' => $profile->source === 'hybrid' ? 'COLLECTING_SOURCES' : 'QUEUED', 'created_by' => $profile->updated_by,
                 ]);
                 if ($profile->source === 'hybrid') {
-                    foreach (ReportJob::HYBRID_PARTS as [$source, $kind]) {
+                    foreach (ReportJob::hybridParts($profile->customer_account) as [$source, $kind]) {
                         ReportJob::firstOrCreate(['schedule_key' => hash('sha256', $job->id.'|'.$source.'|'.$kind)], [
                             'hybrid_batch_id' => $job->id, 'request_key' => $requestKey, 'source' => $source,
                             'report_type' => $kind, 'customer_account' => strtoupper($source),
@@ -101,7 +118,21 @@ class QueueScheduledJneReports
     private function queueActiveAwbs(JneReportProfile $profile, bool $force, CarbonImmutable $local): int
     {
         $maximum = config('jne-reports.max_scheduled_jobs_per_cycle') * config('jne-reports.max_awbs');
-        $awbs = app(QueryActiveJneAwbs::class)->handle($profile->lookback_days)->select('awb')->distinct()->orderBy('awb')->limit($maximum + 1)->pluck('awb')->all();
+        $selector = app(QueryActiveJneAwbs::class);
+        $policy = ManageJneRefreshPolicy::active($profile);
+        $query = $force ? $selector->handle($profile->lookback_days, $policy) : $selector->due($profile->lookback_days, $profile->interval_minutes, $policy);
+        $query->select('awb');
+        if ($policy !== null) {
+            $query->withMax('observations', 'created_at')->orderByRaw('case when not exists (select 1 from jne_shipment_observations o where o.jne_shipment_id = jne_shipments.id) then 0 else 1 end');
+            foreach ($policy['priority_statuses'] ?? [] as $status) {
+                $query->orderByRaw('case when tracking_status = ? then 0 else 1 end', [$status]);
+            }
+            if (! empty($policy['sla_after_days'])) {
+                $query->orderByRaw('case when exists (select 1 from jne_report_awbs a where a.id = jne_shipments.latest_report_awb_id and a.entry_at <= ?) then 0 else 1 end', [now()->subDays($policy['sla_after_days'])]);
+            }
+            $query->orderBy('observations_max_created_at');
+        }
+        $awbs = $query->orderBy('awb')->limit($maximum + 1)->pluck('awb')->all();
         if (count($awbs) > $maximum || array_any($awbs, fn (string $awb): bool => preg_match('/^[A-Z0-9_-]{1,100}$/D', $awb) !== 1)) {
             $profile->update(['last_error' => 'Daftar AWB aktif terlalu besar atau berisi format AWB yang tidak didukung. Periksa data sumber.', 'next_run_at' => $profile->enabled ? now()->addMinutes(15) : null]);
 
@@ -118,7 +149,7 @@ class QueueScheduledJneReports
                 'status' => $batch === [] ? 'NO_DATA' : 'QUEUED', 'completed_at' => $batch === [] ? now() : null, 'created_by' => $profile->updated_by,
             ]);
             if ($job->wasRecentlyCreated) {
-                $job->recordEvent($batch === [] ? 'Tidak ada resi aktif yang memenuhi batas usia penarikan.' : count($batch).' AWB aktif diantrekan untuk Upload Connote APEX. Delivered dan cancel dikecualikan.');
+                $job->recordEvent($batch === [] ? 'Tidak ada resi aktif yang memenuhi batas usia dan interval pembaruan.' : count($batch).' AWB aktif diantrekan untuk Upload Connote APEX.'.($policy === null ? ' Delivered dan cancel dikecualikan.' : ' Seleksi menggunakan kebijakan tracking terverifikasi.'));
             }
         }
         $profile->update(['last_run_at' => now(), 'next_run_at' => $profile->enabled ? now()->addMinutes($profile->interval_minutes) : null, 'last_error' => null]);

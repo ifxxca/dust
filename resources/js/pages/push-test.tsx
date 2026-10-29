@@ -260,7 +260,7 @@ export default function PushTest({
                             ))}
                         </div>
                     )}
-                    <div className="flex items-center justify-between gap-3 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
                         <span>{list.response?.meta.total ?? 0} perangkat</span>
                         <div className="flex gap-2">
                             <Button

@@ -2,7 +2,9 @@
 
 namespace App\Actions\Handover;
 
+use App\Models\HandoverItem;
 use App\Models\HandoverSession;
+use App\Models\PickupRecord;
 use App\Models\PickupTask;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -27,16 +29,17 @@ class AmendSession
                 abort_unless($session->status === 'DRAFT', 409, 'Anggota hanya dapat diubah selama DRAFT.');
                 $oldIds = $session->items()->pluck('pickup_task_id')->map(fn ($id) => (int) $id)->all();
                 $tasks = PickupTask::whereIn('id', array_unique([...$oldIds, ...$taskIds]))->orderBy('id')->lockForUpdate()->get();
+                $proofIds = PickupRecord::whereIn('pickup_task_id', $taskIds)->pluck('id', 'pickup_task_id');
+                $memberships = HandoverItem::whereIn('pickup_task_id', $taskIds)->orderBy('pickup_task_id')->lockForUpdate()->pluck('handover_session_id', 'pickup_task_id');
                 foreach ($taskIds as $id) {
                     $task = $tasks->firstWhere('id', $id);
-                    abort_unless($task && $task->status === 'PICKED_UP' && $task->proof()->exists(), 409, 'Task belum siap diserahkan.');
-                    $member = $task->handoverItem()->lockForUpdate()->first();
-                    abort_if($member && $member->handover_session_id !== $session->id, 409, 'Task sudah masuk session lain.');
+                    abort_unless($task && $task->status === 'PICKED_UP' && $proofIds->has($id), 409, 'Task belum siap diserahkan.');
+                    $memberSessionId = $memberships->get($id);
+                    abort_if($memberSessionId !== null && $memberSessionId !== $session->id, 409, 'Task sudah masuk session lain.');
                 }
                 $session->items()->whereNotIn('pickup_task_id', $taskIds)->delete();
                 foreach (array_diff($taskIds, $oldIds) as $id) {
-                    $task = $tasks->firstWhere('id', $id);
-                    $session->items()->create(['pickup_task_id' => $id, 'pickup_record_id' => $task->proof->id]);
+                    $session->items()->create(['pickup_task_id' => $id, 'pickup_record_id' => $proofIds->get($id)]);
                 }
                 $changes = ['previous_task_ids' => $oldIds, 'new_task_ids' => $taskIds];
                 $session->update(['version' => $session->version + 1]);

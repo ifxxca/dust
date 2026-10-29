@@ -1,0 +1,41 @@
+{
+  "php": {
+    "tool": "pest",
+    "result": "passed",
+    "tests": 691,
+    "passed": 686,
+    "assertions": 6373,
+    "duration_ms": 178058,
+    "skipped": 5
+  },
+  "web": {
+    "result": "passed",
+    "files": 16,
+    "tests": 114
+  },
+  "mobileSource": {
+    "result": "passed",
+    "files": 8,
+    "tests": 63,
+    "configuration": "vite.mobile.config.ts",
+    "hardwareTested": false
+  },
+  "worker": {
+    "result": "passed",
+    "tests": 74,
+    "externalJneTested": false
+  },
+  "browser": {
+    "result": "passed",
+    "scenarios": 16,
+    "data": "isolated synthetic SQLite fixture"
+  },
+  "types": "passed (web and mobile)",
+  "build": "passed (all waves and final build)",
+  "phpstan": {
+    "result": "passed",
+    "errors": 0
+  },
+  "pint": "passed",
+  "targetedFrontendLint": "passed"
+}

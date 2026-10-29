@@ -22,6 +22,13 @@ class FcmClient
     }
 
     /** @param array<string, string> $data */
+    public function sendCashlessAlert(string $token, array $data, int $ttl): bool
+    {
+        return $this->deliver($token, $data, $ttl, 'Cashless perlu diperiksa',
+            'Ada resi cashless yang belum berhasil diproses. Ketuk untuk melihat hasil batch.', 'cashless-alert-'.$data['event_id']);
+    }
+
+    /** @param array<string, string> $data */
     private function deliver(string $token, array $data, int $ttl, string $title, string $body, string $tag): bool
     {
         $project = config('mobile_push.project_id');

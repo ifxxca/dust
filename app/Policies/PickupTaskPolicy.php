@@ -7,6 +7,41 @@ use App\Models\User;
 
 class PickupTaskPolicy
 {
+    public function handoverCashlessAwb(User $user, PickupTask $pickupTask): bool
+    {
+        if (! $user->canExecutePickup() || $pickupTask->assigned_staff_id !== $user->id) {
+            return false;
+        }
+        $pickupTask->loadMissing('proof', 'handoverItem.session', 'processingReconciliation');
+        $session = $pickupTask->handoverItem?->session;
+        $reconciliation = $pickupTask->processingReconciliation;
+
+        return (($pickupTask->status === 'ASSIGNED' && $pickupTask->execution_started_at !== null)
+                || ($pickupTask->status === 'PICKED_UP' && $pickupTask->proof?->finalized_at !== null))
+            && $session?->sertim_closed_at === null && $session?->status !== 'CLOSED'
+            && $reconciliation?->locked_at === null && $reconciliation?->status !== 'DONE';
+    }
+
+    public function viewCashlessAwb(User $user, PickupTask $pickupTask): bool
+    {
+        return $user->canManagePickup() || ($user->canExecutePickup()
+            && ($pickupTask->assigned_staff_id === $user->id || $pickupTask->handoverItem()->exists()));
+    }
+
+    public function recordCashlessAwb(User $user, PickupTask $pickupTask): bool
+    {
+        return $user->canExecutePickup() && $pickupTask->assigned_staff_id === $user->id
+            && $pickupTask->status === 'ASSIGNED' && $pickupTask->execution_started_at !== null
+            && ! $pickupTask->proof()->whereNotNull('finalized_at')->exists() && ! $pickupTask->sertimWindowClosed();
+    }
+
+    public function correctCashlessAwb(User $user, PickupTask $pickupTask): bool
+    {
+        return $user->is_active && $user->role === 'admin_supervisor'
+            && in_array($pickupTask->status, ['ASSIGNED', 'PICKED_UP'], true)
+            && ($pickupTask->execution_started_at !== null || $pickupTask->proof()->whereNotNull('finalized_at')->exists());
+    }
+
     /**
      * Determine whether the user can view any models.
      */

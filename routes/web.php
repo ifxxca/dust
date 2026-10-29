@@ -1,15 +1,24 @@
 <?php
 
 use App\Http\Controllers\AdminPushTestController;
+use App\Http\Controllers\ApexBatchController;
+use App\Http\Controllers\CashlessEntryResultController;
+use App\Http\Controllers\CashlessHandoverController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DiscrepancyController;
 use App\Http\Controllers\HandoverController;
+use App\Http\Controllers\JneCollectionWindowController;
 use App\Http\Controllers\JneCustomerDashboardController;
+use App\Http\Controllers\JneEvidenceRuleController;
+use App\Http\Controllers\JneExceptionController;
 use App\Http\Controllers\JneMonitoringController;
+use App\Http\Controllers\JneRefreshPolicyController;
 use App\Http\Controllers\JneShipperAliasController;
 use App\Http\Controllers\OperationalCorrectionController;
 use App\Http\Controllers\OperationalDashboardController;
 use App\Http\Controllers\OperationalUserController;
+use App\Http\Controllers\PickupAutomationController;
+use App\Http\Controllers\PickupCashlessAwbController;
 use App\Http\Controllers\PickupExecutionController;
 use App\Http\Controllers\PickupLifecycleController;
 use App\Http\Controllers\PickupNotificationController;
@@ -47,6 +56,18 @@ Route::middleware('auth')->group(function (): void {
     Route::put('/admin/jne-shipper-aliases/{alias}', [JneShipperAliasController::class, 'update'])->whereNumber('alias')->name('jne-shipper-aliases.update');
     Route::post('/admin/jne-shipper-aliases/import', [JneShipperAliasController::class, 'import'])->middleware('throttle:5,1')->name('jne-shipper-aliases.import');
     Route::get('/admin/jne-monitoring', [JneMonitoringController::class, 'index'])->name('jne-monitoring.index');
+    Route::get('/admin/jne-monitoring/export', [JneMonitoringController::class, 'export'])->name('jne-monitoring.export');
+    Route::get('/admin/jne-monitoring/evidence-rules', [JneEvidenceRuleController::class, 'index'])->name('jne-evidence.index');
+    Route::get('/admin/jne-monitoring/exceptions', [JneExceptionController::class, 'index'])->name('jne-exceptions.index');
+    Route::get('/admin/jne-monitoring/refresh-policies', [JneRefreshPolicyController::class, 'index'])->name('jne-refresh.index');
+    Route::post('/admin/jne-monitoring/refresh-policies/{profile}', [JneRefreshPolicyController::class, 'store'])->middleware('throttle:30,1')->name('jne-refresh.store');
+    Route::post('/admin/jne-monitoring/exceptions', [JneExceptionController::class, 'store'])->middleware('throttle:30,1')->name('jne-exceptions.store');
+    Route::get('/admin/jne-monitoring/collections/{pickupTask}', [JneCollectionWindowController::class, 'show'])->name('jne-collections.show');
+    Route::post('/admin/jne-monitoring/collections/{pickupTask}', [JneCollectionWindowController::class, 'store'])->middleware('throttle:30,1')->name('jne-collections.store');
+    Route::post('/admin/jne-monitoring/evidence-rules', [JneEvidenceRuleController::class, 'store'])->middleware('throttle:30,1')->name('jne-evidence.store');
+    Route::post('/admin/jne-monitoring/evidence-rules/disable', [JneEvidenceRuleController::class, 'disable'])->middleware('throttle:30,1')->name('jne-evidence.disable');
+    Route::post('/admin/jne-monitoring/evidence-rules/activate', [JneEvidenceRuleController::class, 'activate'])->middleware('throttle:30,1')->name('jne-evidence.activate');
+    Route::post('/admin/report-runs/{reportJob}/apex-recovery', [ApexBatchController::class, 'review'])->whereNumber('reportJob')->middleware('throttle:20,1')->name('report-runs.apex-recovery');
     Route::get('/admin/jne-monitoring/customer-dashboard', JneCustomerDashboardController::class)->name('jne-monitoring.customer-dashboard');
     Route::get('/admin/jne-monitoring/profiles', [JneMonitoringController::class, 'profiles'])->name('jne-monitoring.profiles');
     Route::post('/admin/jne-monitoring/profiles', [JneMonitoringController::class, 'saveProfile'])->name('jne-monitoring.profile-store');
@@ -65,8 +86,19 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/admin/jne-reports/{reportJob}/project', [ReportJobController::class, 'project'])->whereNumber('reportJob')->middleware('throttle:10,1')->name('jne-reports.project');
     Route::post('/admin/jne-shipper-aliases/sync/{run}', [JneShipperAliasController::class, 'retrySync'])->whereNumber('run')->middleware('throttle:10,1')->name('jne-shipper-aliases.retry-sync');
     Route::post('/admin/jne-reports/{reportJob}/import-awbs', [ReportJobController::class, 'importAwbs'])->whereNumber('reportJob')->middleware('throttle:10,1')->name('jne-reports.import-awbs');
+    Route::get('/rekonsiliasi-resi', [PickupAutomationController::class, 'index'])->name('pickup-automation.index');
+    Route::get('/rekonsiliasi-resi/export', [PickupAutomationController::class, 'export'])->name('pickup-automation.export');
+    Route::post('/rekonsiliasi-resi/validate', [PickupAutomationController::class, 'bulkRecheck'])->middleware('throttle:10,1')->name('pickup-automation.bulk-recheck');
+    Route::get('/rekonsiliasi-resi/pending', [PickupAutomationController::class, 'pending'])->name('pickup-automation.pending');
+    Route::get('/hasil-pickup/{task}/automation/candidates', [PickupAutomationController::class, 'candidates'])->whereNumber('task')->name('pickup-automation.candidates');
+    Route::post('/hasil-pickup/{task}/automation/review', [PickupAutomationController::class, 'review'])->whereNumber('task')->middleware('throttle:30,1')->name('pickup-automation.review');
     Route::get('/hasil-pickup', [PickupResultController::class, 'index'])->name('pickup-results.index');
     Route::get('/hasil-pickup/export', [PickupResultController::class, 'export'])->name('pickup-results.export');
+    Route::get('/hasil-pickup/{task}/automation', [PickupAutomationController::class, 'show'])->whereNumber('task')->name('pickup-automation.show');
+    Route::post('/hasil-pickup/{task}/automation/recheck', [PickupAutomationController::class, 'recheck'])->whereNumber('task')->middleware('throttle:30,1')->name('pickup-automation.recheck');
+    Route::post('/hasil-pickup/{task}/awb-preferences', [PickupAutomationController::class, 'preference'])->whereNumber('task')->name('pickup-automation.preference');
+    Route::get('/hasil-pickup/{task}/awb-manifests/{manifest}/{format}', [PickupAutomationController::class, 'download'])->whereNumber(['task', 'manifest'])->name('pickup-automation.download');
+    Route::post('/hasil-pickup/{task}/awb-manifests/{manifest}/retry', [PickupAutomationController::class, 'retryDocument'])->whereNumber(['task', 'manifest'])->middleware('throttle:10,1')->name('pickup-automation.retry-document');
     Route::get('/hasil-pickup/{task}/quick', [PickupResultController::class, 'quick'])->whereNumber('task')->name('pickup-results.quick');
     Route::get('/hasil-pickup/{task}', [PickupResultController::class, 'show'])->whereNumber('task')->name('pickup-results.show');
     Route::get('/admin/push-test', [AdminPushTestController::class, 'page'])->name('push-test');
@@ -80,6 +112,9 @@ Route::middleware('auth')->group(function (): void {
 
         return Inertia::render('pickup-schedules', ['timezone' => config('pickup.timezone')]);
     })->name('pickup-schedules');
+    Route::get('/handover-cashless', [CashlessHandoverController::class, 'index'])->name('cashless-handover.index');
+    Route::get('/hasil-cashless/{batch}', [CashlessEntryResultController::class, 'show'])->whereNumber('batch')->name('cashless-results.show');
+    Route::post('/handover-cashless/{task}', [CashlessHandoverController::class, 'store'])->whereNumber('task')->middleware('throttle:30,1')->name('cashless-handover.store');
     Route::get('/handover/{session?}', function (Request $request, ?string $session = null): Response {
         abort_unless($request->user()->canExecutePickup(), 403);
         if ($session !== null) {
@@ -121,6 +156,10 @@ Route::middleware('auth')->group(function (): void {
     })->whereNumber('task')->name('operations');
 
     Route::prefix('api/v1')->name('api.')->group(function (): void {
+        Route::get('pickup-tasks/{task}/cashless-awbs', [PickupCashlessAwbController::class, 'index'])->whereNumber('task')->name('cashless-awbs.index');
+        Route::get('pickup-tasks/{task}/cashless-awbs/{evidence}/history', [PickupCashlessAwbController::class, 'history'])->whereNumber(['task', 'evidence'])->name('cashless-awbs.history');
+        Route::post('pickup-tasks/{task}/cashless-awbs', [PickupCashlessAwbController::class, 'store'])->whereNumber('task')->middleware('throttle:120,1')->name('cashless-awbs.store');
+        Route::post('pickup-tasks/{task}/cashless-awbs/corrections', [PickupCashlessAwbController::class, 'correct'])->whereNumber('task')->middleware('throttle:60,1')->name('cashless-awbs.correct');
         Route::get('pickup-notifications', [PickupNotificationController::class, 'index'])->name('pickup-notifications.index');
         Route::patch('pickup-notifications/read', [PickupNotificationController::class, 'update'])->name('pickup-notifications.update');
         Route::get('admin/push-test/devices', [AdminPushTestController::class, 'index'])->name('push-test.devices');

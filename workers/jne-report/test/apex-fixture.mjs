@@ -158,7 +158,7 @@ export async function apexFixture(options = {}) {
             if (endpoint === 'fail') {
                 state.failed = JSON.parse(body);
                 return send(
-                    '{"data":{"status":"NEEDS_ATTENTION"}}',
+                    JSON.stringify({ data: { status: state.failed.status } }),
                     'application/json',
                 );
             }

@@ -10,6 +10,7 @@ import { correlateHistory, csvReady, parseCreated } from '../src/history.mjs';
 import { validateCsv } from '../src/csv.mjs';
 import { validateReportPeriod } from '../src/limits.mjs';
 import { loadConfig } from '../src/config.mjs';
+import { poolSize } from '../src/apex-pool.mjs';
 import { apexFixture } from './apex-fixture.mjs';
 
 const historyConfig = {
@@ -18,6 +19,34 @@ const historyConfig = {
     clockSkew: 1000,
 };
 const baseTime = Date.parse('2026-10-20T08:00:00Z');
+
+test('pool configuration isolates each identity session and process directory', () => {
+    const env = {
+        RETAIL_OPERATIONS_URL: 'http://localhost:8000',
+        APEX_LOGIN_URL: 'https://example.test',
+        JNE_REPORT_WORKER_TOKEN: 'x'.repeat(32),
+        APEX_USERNAME: 'fixture',
+        APEX_PASSWORD: 'fixture',
+    };
+    const instances = [1, 2, 3, 4, 5].map((instance) =>
+        loadConfig({ ...env, JNE_APEX_INSTANCE: String(instance) }),
+    );
+    assert.equal(new Set(instances.map((config) => config.workerId)).size, 5);
+    assert.equal(
+        new Set(instances.map((config) => config.sessionPath)).size,
+        5,
+    );
+    assert.ok(instances.every((config) => config.strictHistoryIdentity));
+    assert.equal(loadConfig(env).workerId, 'jne-report-1');
+    assert.equal(poolSize({}), 5);
+    for (const value of ['0', '21', '1.5', 'invalid'])
+        assert.throws(() => poolSize({ JNE_APEX_CONCURRENCY: value }), {
+            code: 'CONFIG_INVALID',
+        });
+    assert.throws(() => loadConfig({ ...env, JNE_APEX_INSTANCE: '21' }), {
+        code: 'CONFIG_INVALID',
+    });
+});
 const job = {
     customer_account: 'TEST001',
     date_from: '2026-10-01',
@@ -32,6 +61,63 @@ const row = (id, changes = {}) => ({
     error: '',
     columns: {},
     ...changes,
+});
+
+test('parallel history correlation excludes foreign accounts periods upload jobs and missing identity even after successful submit', () => {
+    const own = row('own', {
+        filename: 'SLA0_Y_NA_TEST001_261001_261002_123.csv',
+        columns: { CREATEDUSER: 'fixture' },
+    });
+    const others = [
+        row('foreign', {
+            filename: 'SLA0_Y_NA_TEST002_261001_261002_124.csv',
+            columns: { CREATEDUSER: 'fixture' },
+        }),
+        row('period', {
+            filename: 'SLA0_Y_NA_TEST001_261003_261004_125.csv',
+            columns: { CREATEDUSER: 'fixture' },
+        }),
+        row('creator', {
+            filename: own.filename,
+            columns: { CREATEDUSER: 'someone-else' },
+        }),
+        row('anonymous'),
+        row('upload', {
+            filename: 'active-awbs-50-1-uuid.csv',
+            columns: { CREATEDUSER: 'fixture' },
+        }),
+    ];
+    const config = {
+        ...historyConfig,
+        username: 'fixture',
+        strictHistoryIdentity: true,
+    };
+    assert.equal(
+        correlateHistory(
+            [],
+            [own, ...others],
+            job,
+            baseTime,
+            config,
+            null,
+            true,
+            baseTime,
+        ).id,
+        'own',
+    );
+    assert.equal(
+        correlateHistory(
+            [],
+            others,
+            job,
+            baseTime,
+            config,
+            null,
+            true,
+            baseTime,
+        ),
+        null,
+    );
 });
 
 test('correlation ignores old Done rows and matches stable ID rather than filename or order', () => {
@@ -397,6 +483,8 @@ async function browserRun(t, options = {}) {
         password: 'fixture-password',
         dataDir: dir,
         sessionPath: path.join(dir, 'apex-session.json'),
+        strictHistoryIdentity: Boolean(options.strictHistoryIdentity),
+        upstreamErrorGrace: options.upstreamErrorGrace,
         appId: '',
         baseUrl: '',
         navigationTimeout: 3000,
@@ -411,6 +499,7 @@ async function browserRun(t, options = {}) {
         maxFileBytes: 1048576,
         extraFields: {
             ...(options.configuredBranch ? { '#branch': 'BR' } : {}),
+            ...(options.nativeBranch ? { '#P45_BRANCH': 'CGK000' } : {}),
             ...(options.globalNational
                 ? { '#P45_NA': options.globalNational }
                 : {}),
@@ -452,6 +541,60 @@ for (const nationalAccount of ['Y', 'N']) {
         assert.equal(fixture.state.submitted.get('from'), '2026-10-01');
         assert.equal(fixture.state.submissions, 1);
     });
+}
+
+test('changing National Account restores parameter mode when the server navigates back to Upload', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        nationalAccount: 'Y',
+        globalNational: 'N',
+        navigationParameters: true,
+        nativeBranch: true,
+    });
+    assert.equal(completed, true);
+    assert.equal(fixture.state.submitted.get('national'), 'Y');
+    assert.equal(fixture.state.submitted.get('customer'), 'TEST001');
+    assert.equal(fixture.state.submissions, 1);
+});
+
+test('verified native No Data Found completes an empty report immediately without CSV or a second Process', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        strictHistoryIdentity: true,
+        historyStates: [
+            {
+                status: 'Error',
+                download: false,
+                error: 'TEST001 01-OCT-2026 02-OCT-2026 No Data Found',
+            },
+        ],
+    });
+    assert.equal(completed, true);
+    assert.equal(fixture.state.failed.status, 'NO_DATA');
+    assert.match(fixture.state.failed.error_message, /^APEX_NO_DATA:/);
+    assert.equal(fixture.state.submissions, 1);
+    assert.equal(fixture.state.uploadAttempts, 0);
+});
+
+for (const error of [
+    'OTHER 01-OCT-2026 02-OCT-2026 No Data Found',
+    'TEST001 03-OCT-2026 04-OCT-2026 No Data Found',
+]) {
+    test(
+        'mismatched empty report evidence is not accepted: ' + error,
+        async (t) => {
+            const { fixture, completed } = await browserRun(t, {
+                strictHistoryIdentity: true,
+                neverReady: true,
+                historyStates: [{ status: 'Error', download: false, error }],
+            });
+            assert.equal(completed, false);
+            assert.equal(fixture.state.failed.status, 'NEEDS_ATTENTION');
+            assert.match(
+                fixture.state.failed.error_message,
+                /^REPORT_TIMEOUT:/,
+            );
+            assert.equal(fixture.state.submissions, 1);
+        },
+    );
 }
 
 test('APEX restores its saved session after restart without opening Login', async (t) => {
@@ -737,6 +880,33 @@ test('persistent upstream API 500 remains polled and is explained in the timeout
         download_available: false,
         api_error_code: '500',
     });
+});
+
+test('persistent confirmed upstream errors release the worker after a grace period without repeating Process', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        upstreamErrorGrace: 100,
+        historyStates: [
+            { status: 'Error', download: false, error: 'Error API 500.' },
+        ],
+    });
+    assert.equal(completed, false);
+    assert.equal(fixture.state.submissions, 1);
+    assert.ok(fixture.state.pollReads >= 3);
+    assert.match(fixture.state.failed.error_message, /^APEX_SOURCE_API:/);
+    assert.equal(fixture.state.uploaded, false);
+});
+
+test('temporary upstream errors can recover during the grace period', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        upstreamErrorGrace: 1000,
+        historyStates: [
+            { status: 'Error', download: false, error: 'Error API 500.' },
+            { status: 'Done', download: true, error: '-' },
+        ],
+    });
+    assert.equal(completed, true);
+    assert.equal(fixture.state.submissions, 1);
+    assert.equal(fixture.state.uploaded, true);
 });
 
 test('lost upload response retries upload without generating a second report', async (t) => {

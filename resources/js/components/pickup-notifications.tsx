@@ -13,9 +13,11 @@ import {
 } from '@/components/ui/sheet';
 import {
     newPickupNotifications,
+    notificationKey,
     type PickupNotification,
 } from '@/lib/pickup-notifications';
 import { operations } from '@/routes';
+import { show as cashlessResult } from '@/routes/cashless-results';
 import { index, update } from '@/routes/api/pickup-notifications';
 
 type Feed = {
@@ -30,10 +32,17 @@ export function PickupNotifications() {
     const [feed, setFeed] = useState<Feed | null>(null);
     const [error, setError] = useState('');
     const [stopped, setStopped] = useState(false);
-    const seen = useRef<Set<number> | null>(null);
+    const seen = useRef<Set<number | string> | null>(null);
     const active = useRef(true);
     const list = useHttp<Record<string, never>, Feed>({});
-    const read = useHttp({ event_ids: [] as number[] });
+    const read = useHttp<{
+        event_ids?: number[];
+        cashless_alert_ids?: number[];
+    }>({});
+    const target = (item: PickupNotification) =>
+        item.type === 'cashless_entry_attention'
+            ? cashlessResult.url(item.batch_id!)
+            : operations.url({ screen: 'detail', task: item.task_id });
 
     useEffect(() => {
         active.current = true;
@@ -71,7 +80,8 @@ export function PickupNotifications() {
                         response.data,
                     );
                     seen.current ??= new Set();
-                    for (const item of response.data) seen.current.add(item.id);
+                    for (const item of response.data)
+                        seen.current.add(notificationKey(item));
                     if (added.length > 0) {
                         const newest = added[0];
                         toast.info(
@@ -82,14 +92,8 @@ export function PickupNotifications() {
                                 id: 'pickup-activity',
                                 description: `${newest.staff_name ?? 'Petugas'} · ${newest.customer_name} · ${newest.reference}`,
                                 action: {
-                                    label: 'Lihat task',
-                                    onClick: () =>
-                                        router.visit(
-                                            operations.url({
-                                                screen: 'detail',
-                                                task: newest.task_id,
-                                            }),
-                                        ),
+                                    label: 'Lihat detail',
+                                    onClick: () => router.visit(target(newest)),
                                 },
                             },
                         );
@@ -132,9 +136,18 @@ export function PickupNotifications() {
     }, [page, revision, stopped]);
 
     const markRead = async (items: PickupNotification[]) => {
-        const ids = items.filter((item) => !item.read).map((item) => item.id);
-        if (ids.length === 0) return;
-        read.transform(() => ({ event_ids: ids }));
+        const unread = items.filter((item) => !item.read);
+        const eventIds = unread
+            .filter((item) => item.type === 'pickup_finalized')
+            .map((item) => item.id);
+        const cashlessIds = unread
+            .filter((item) => item.type === 'cashless_entry_attention')
+            .map((item) => item.id);
+        if (unread.length === 0) return;
+        read.transform(() => ({
+            ...(eventIds.length ? { event_ids: eventIds } : {}),
+            ...(cashlessIds.length ? { cashless_alert_ids: cashlessIds } : {}),
+        }));
         try {
             await read.patch(update.url());
             if (active.current) setRevision((value) => value + 1);
@@ -174,10 +187,9 @@ export function PickupNotifications() {
             </SheetTrigger>
             <SheetContent className="flex w-full flex-col sm:max-w-md">
                 <SheetHeader>
-                    <SheetTitle>Aktivitas Pickup</SheetTitle>
+                    <SheetTitle>Notifikasi operasional</SheetTitle>
                     <SheetDescription>
-                        Pickup selesai setelah POP tersimpan. Diperbarui setiap
-                        10 detik saat tab aktif.
+                        Aktivitas pickup dan masalah pemrosesan cashless.
                     </SheetDescription>
                 </SheetHeader>
                 <div className="flex items-center justify-between gap-2 border-y px-4 py-2">
@@ -215,7 +227,7 @@ export function PickupNotifications() {
                     )}
                     {feed?.data.map((item) => (
                         <button
-                            key={item.id}
+                            key={notificationKey(item)}
                             type="button"
                             disabled={read.processing || stopped}
                             className={`mb-2 w-full rounded-lg border p-3 text-left transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 ${!item.read ? 'border-primary/30 bg-primary/5' : ''}`}
@@ -223,12 +235,7 @@ export function PickupNotifications() {
                                 await markRead([item]);
                                 if (!active.current) return;
                                 setOpen(false);
-                                router.visit(
-                                    operations.url({
-                                        screen: 'detail',
-                                        task: item.task_id,
-                                    }),
-                                );
+                                router.visit(target(item));
                             }}
                         >
                             <div className="flex items-center justify-between gap-2">
@@ -243,6 +250,11 @@ export function PickupNotifications() {
                                 )}
                             </div>
                             <p className="mt-1 text-sm">{item.customer_name}</p>
+                            {item.message && (
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    {item.message}
+                                </p>
+                            )}
                             <p className="mt-1 text-xs text-muted-foreground">
                                 {item.staff_name ?? 'Petugas'} ·{' '}
                                 {item.reference}

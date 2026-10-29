@@ -8,10 +8,11 @@ import {
     Minus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { runStatuses } from '@/lib/scraping';
+import { runStatusLabel } from '@/lib/scraping';
 
 type State = {
     status: string;
+    report_type?: string;
     workflow_stage?: string;
     reviewed_at?: string | null;
 };
@@ -31,7 +32,7 @@ export function JneRunState({ run }: { run: State }) {
             ? run.workflow_stage === 'PROCESSING'
                 ? 'Memproses CSV APEX'
                 : 'CSV tersimpan'
-            : runStatuses[run.status] || run.status;
+            : runStatusLabel(run.status, run.report_type);
     const Icon = attention
         ? CircleAlert
         : ready

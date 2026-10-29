@@ -13,9 +13,12 @@ menugaskan pickup, mencatat hasil kunjungan, mengumpulkan Proof of Pickup (POP),
 serta memverifikasi paket saat serah terima. Tim kantor bekerja melalui web;
 petugas lapangan menggunakan aplikasi Android yang terhubung ke backend yang sama.
 
-> **Status:** pengembangan aktif. Implementasi dan hasil verifikasi engineering
-> tercatat di dokumentasi proyek. UAT perangkat fisik, pengujian FCM nyata, signing,
-> konfigurasi HTTPS pilot, dan persetujuan pilot masih menjadi pekerjaan lanjutan.
+> **Retail Pickup V1: FEATURE FROZEN, RELEASE NOT APPROVED.**
+> Ditetapkan pada 29 Oktober 2026. Cakupan fitur V1 dibekukan; pengembangan fitur
+> baru untuk V1 dihentikan. Rilis dan aktivasi pilot belum disetujui.
+> Hasil verifikasi engineering tidak merupakan persetujuan rilis.
+> Blocker penerimaan yang belum ditutup tetap berlaku.
+> Rilis memerlukan persetujuan terpisah setelah blocker penerimaan ditutup.
 
 [Fitur](#fitur) · [Mulai](#menjalankan-lokal) · [Android](#aplikasi-android) ·
 [Pengecekan](#pengecekan-kualitas) · [Dokumentasi](#dokumentasi)

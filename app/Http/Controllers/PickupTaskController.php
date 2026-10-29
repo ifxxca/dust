@@ -32,7 +32,10 @@ class PickupTaskController extends Controller
         $query = PickupTask::with(['assignedStaff', 'visits'])->withExists('handoverItem');
         if ($request->routeIs('api.tasks.candidates', 'mobile.tasks.candidates')) {
             abort_unless($request->user()->canExecutePickup(), 403);
-            $query->where('status', 'ASSIGNED')->whereNull('execution_started_at')->whereNotNull('assigned_staff_id')->where('assigned_staff_id', '!=', $request->user()->id);
+            $query->whereNull('execution_started_at')->where(function ($available) use ($request): void {
+                $available->where(fn ($unassigned) => $unassigned->where('status', 'SCHEDULED')->whereNull('assigned_staff_id'))
+                    ->orWhere(fn ($assigned) => $assigned->where('status', 'ASSIGNED')->whereNotNull('assigned_staff_id')->where('assigned_staff_id', '!=', $request->user()->id));
+            });
         } elseif (! $request->user()->canManagePickup() || $request->boolean('mine')) {
             $query->where('assigned_staff_id', $request->user()->id);
         }
@@ -91,7 +94,7 @@ class PickupTaskController extends Controller
     {
         abort_unless($request->user()->can('view', $task), 404);
 
-        return new PickupTaskResource($task->load(['assignedStaff', 'events.actor', 'events.previousStaff', 'events.newStaff', 'visits', 'proof.attachments', 'proof.receipt', 'proof.revisions', 'handoverItem']));
+        return new PickupTaskResource($task->load(['assignedStaff', 'events.actor', 'events.previousStaff', 'events.newStaff', 'visits', 'proof.attachments', 'proof.receipt', 'proof.revisions', 'handoverItem', 'cashlessAwbs']));
     }
 
     public function store(StorePickupTaskRequest $request, CreatePickupTask $create): JsonResponse
@@ -119,7 +122,8 @@ class PickupTaskController extends Controller
 
     public function takeover(TakeoverRequest $request, PickupTask $task, TakeOverTask $takeover): PickupTaskResource
     {
-        $task = $takeover->handle($request->user(), $task->id, $request->integer('expected_version'), $request->integer('expected_assigned_staff_id'), $request->validated('reason'));
+        $expectedStaff = $request->validated('expected_assigned_staff_id');
+        $task = $takeover->handle($request->user(), $task->id, $request->integer('expected_version'), $expectedStaff === null ? null : (int) $expectedStaff, $request->validated('reason'));
 
         return new PickupTaskResource($task->load(['assignedStaff', 'events']));
     }

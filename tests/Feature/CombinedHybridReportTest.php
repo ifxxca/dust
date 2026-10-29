@@ -78,9 +78,9 @@ test('a combined configuration queues exactly four source reports once per sched
 
 test('admin saves the combined source and can request yesterday without enabling the schedule', function () {
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
-    $this->actingAs($admin)->post(route('jne-monitoring.profile-store'), ['source' => 'hybrid', 'report_type' => 'combined', 'enabled' => false, 'interval_minutes' => 9])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->post(route('jne-monitoring.profile-store'), ['source' => 'hybrid', 'report_type' => 'combined', 'customer_account' => 'HYBRID_PM', 'enabled' => false, 'interval_minutes' => 9])->assertSessionHasNoErrors();
     $profile = JneReportProfile::sole();
-    expect($profile->customer_account)->toBe('HYBRID_GABUNGAN');
+    expect($profile->customer_account)->toBe('HYBRID_PM');
     $this->post(route('report-runs.store'), ['profile_id' => $profile->id, 'for_date' => '2026-10-22'])->assertSessionHasNoErrors();
     expect(ReportJob::get()->every(fn (ReportJob $job): bool => $job->date_from->toDateString() === '2026-10-22'))->toBeTrue();
     expect($profile->fresh()->enabled)->toBeFalse()->and($profile->fresh()->next_run_at)->toBeNull();
@@ -178,6 +178,40 @@ test('four empty sources complete without submitting an empty APEX request', fun
     $this->postJson(route('internal.report-jobs.claim'), ['claim_key' => (string) Str::uuid()], combinedHeaders('apex'))->assertNoContent();
 });
 
+test('missing or changed saved Hybrid files block APEX and recover from identical source uploads without recollection', function (bool $missing) {
+    Storage::fake('jne_reports');
+    $batch = combinedBatch();
+    $sources = ReportJob::where('hybrid_batch_id', $batch->id)->orderBy('id')->get();
+    $first = $sources->first();
+    [$claim, $original] = saveCombinedSource($first, ['0001']);
+    $first->refresh();
+    if ($missing) {
+        Storage::disk('jne_reports')->delete($first->source_file_path);
+    } else {
+        Storage::disk('jne_reports')->put($first->source_file_path, 'changed source bytes');
+    }
+    foreach ($sources->skip(1) as $index => $source) {
+        saveCombinedSource($source, ['000'.($index + 1)]);
+    }
+
+    expect($batch->fresh()->status)->toBe('NEEDS_ATTENTION');
+    expect($batch->fresh()->error_message)->toStartWith('HYBRID_SOURCE_INVALID:');
+    $this->assertDatabaseCount('report_jobs', 5);
+    expect(ReportJob::where('hybrid_batch_id', $batch->id)->pluck('status')->unique()->all())->toBe(['SOURCE_SAVED']);
+    $this->postJson(route('internal.report-jobs.claim'), ['claim_key' => (string) Str::uuid()], combinedHeaders('apex'))->assertNoContent();
+    $this->actingAs(User::findOrFail($batch->created_by))->post(route('report-runs.retry-sources', $batch))->assertRedirect();
+    expect($batch->fresh()->status)->toBe('NEEDS_ATTENTION');
+
+    $this->postJson(route('internal.report-jobs.source-upload', $first), ['file' => UploadedFile::fake()->createWithContent('report.csv', $original)], combinedHeaders($first->source, $claim))->assertOk();
+    $this->post(route('report-runs.retry-sources', $batch))->assertRedirectToRoute('report-runs.index');
+
+    expect($batch->fresh()->status)->toBe('WAITING_APEX');
+    expect($batch->fresh()->error_message)->toBeNull();
+    expect(ReportJob::where('hybrid_batch_id', $batch->id)->pluck('attempt_count')->all())->toBe([1, 1, 1, 1]);
+    expect(Storage::disk('jne_reports')->get($first->source_file_path))->toBe($original);
+    $this->assertDatabaseCount('report_jobs', 5);
+})->with(['missing file' => true, 'changed checksum' => false]);
+
 test('the scheduled combined cycle runs four Chromium source downloads through one APEX upload and imports its result', function () {
     $root = sys_get_temp_dir().DIRECTORY_SEPARATOR.'combined_hybrid_e2e_'.bin2hex(random_bytes(8));
     File::makeDirectory($root, 0700);
@@ -215,7 +249,7 @@ test('the scheduled combined cycle runs four Chromium source downloads through o
         $server = new Process([PHP_BINARY, '-d', 'extension=pdo_sqlite', '-d', 'extension=sqlite3', '-S', $address, base_path('vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php')], public_path(), [
             'APP_ENV' => 'testing', 'APP_URL' => $url, 'DB_CONNECTION' => 'sqlite', 'DB_DATABASE' => $database, 'DB_URL' => '',
             'SESSION_DRIVER' => 'database', 'SESSION_COOKIE' => 'combined-e2e-session', 'SESSION_DOMAIN' => '', 'SESSION_SECURE_COOKIE' => 'false',
-            'JNE_REPORT_WORKER_TOKEN' => $token, 'JNE_REPORT_WORKER_ID' => 'jne-report-1', 'JNE_REPORT_STORAGE_PATH' => $root.DIRECTORY_SEPARATOR.'reports', 'QUEUE_CONNECTION' => 'sync',
+            'JNE_REPORT_WORKER_TOKEN' => $token, 'JNE_REPORT_WORKER_ID' => 'jne-report-1', 'JNE_REPORT_STORAGE_PATH' => $root.DIRECTORY_SEPARATOR.'reports', 'QUEUE_CONNECTION' => 'sync', 'JNE_APEX_BATCH_CHECKPOINTS_ENABLED' => 'true',
         ]);
         $server->start();
         $deadline = microtime(true) + 10;
@@ -234,6 +268,7 @@ test('the scheduled combined cycle runs four Chromium source downloads through o
         $this->assertDatabaseCount('jne_report_awbs', 2);
         $this->assertDatabaseCount('jne_shipments', 2);
         $this->assertDatabaseCount('report_jobs', 5);
+        $this->assertDatabaseHas('report_job_batches', ['report_job_id' => $batch->id, 'batch_number' => 1, 'status' => 'SAVED', 'row_count' => 2]);
     } finally {
         $server?->stop();
         config(['database.default' => $original]);

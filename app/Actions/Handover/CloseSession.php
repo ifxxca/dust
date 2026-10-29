@@ -24,7 +24,7 @@ class CloseSession
                 $values = $item->effectiveValues();
                 abort_if($values['status'] === 'DISCREPANCY' && blank($values['discrepancy_notes']), 409, 'Semua discrepancy harus memiliki catatan.');
             }
-            $session->update(['status' => 'CLOSED', 'closed_by' => $actor->id, 'closed_at' => now(), 'version' => $session->version + 1]);
+            $session->update(['status' => 'CLOSED', 'closed_by' => $actor->id, 'closed_at' => now(), 'sertim_closed_at' => $session->sertim_closed_at ?? now(), 'version' => $session->version + 1]);
             $session->events()->create(['actor_id' => $actor->id, 'action' => 'closed', 'session_version' => $session->version, 'occurred_at' => now()]);
 
             return $session;

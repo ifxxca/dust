@@ -129,7 +129,10 @@ export default function ExecutionPanel({
             setChecked(false);
             setMessage(
                 {
-                    takeover: 'Tugas berhasil diambil alih.',
+                    takeover:
+                        operation.body.expected_assigned_staff_id === null
+                            ? 'Tugas berhasil diambil.'
+                            : 'Tugas berhasil diambil alih.',
                     start: 'Kunjungan dimulai. Pilih hasil pickup.',
                     visit: 'Hasil kunjungan tersimpan.',
                     retry: 'Kunjungan ulang diizinkan.',
@@ -232,7 +235,8 @@ export default function ExecutionPanel({
                 expected_version: task.version,
                 ...(kind === 'takeover'
                     ? {
-                          expected_assigned_staff_id: task.assigned_staff?.id,
+                          expected_assigned_staff_id:
+                              task.assigned_staff?.id ?? null,
                           reason: reason.trim() || null,
                       }
                     : {}),

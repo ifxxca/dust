@@ -24,6 +24,7 @@ import {
     Settings2,
 } from 'lucide-react';
 import InputError from '@/components/input-error';
+import { focusFormError } from '@/lib/utils';
 import JneWorkspaceMetrics from '@/components/jne-workspace-metrics';
 import {
     reportDate,
@@ -113,10 +114,6 @@ export default function JneReports({
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Penarikan Report JNE
                     </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Pilih account dan tanggal, lalu pantau hasilnya sampai
-                        siap dimonitor.
-                    </p>
                 </div>
                 <Button variant="outline" className="min-h-11" asChild>
                     <Link href={runs.index.url()}>
@@ -125,37 +122,9 @@ export default function JneReports({
                     </Link>
                 </Button>
             </header>
-            <JneWorkspaceMetrics
-                scope="Rencana permintaan saat ini. Setiap account menghasilkan report terpisah di antrean APEX."
-                items={[
-                    {
-                        label: 'Account dipilih',
-                        value: selectedAccounts.length,
-                        icon: Layers3,
-                    },
-                    {
-                        label: 'National YES',
-                        value: selectedAccounts.filter(
-                            (account) => account.national_account === 'Y',
-                        ).length,
-                        icon: CheckCheck,
-                    },
-                    {
-                        label: 'National NO',
-                        value: selectedAccounts.filter(
-                            (account) => account.national_account === 'N',
-                        ).length,
-                        icon: Clock3,
-                    },
-                    {
-                        label: 'Bagian report',
-                        value: selectedAccounts.length * periods.length,
-                        icon: FileDown,
-                    },
-                ]}
-            />
+
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
-                <Card className="gap-5 shadow-none">
+                <Card className="min-w-0 gap-5 shadow-none">
                     <CardHeader className="flex-row items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                             <FileDown aria-hidden="true" className="size-5" />
@@ -172,6 +141,7 @@ export default function JneReports({
                             className="space-y-5"
                             onSubmit={(event) => {
                                 event.preventDefault();
+                                const element = event.currentTarget;
                                 form.transform((data) =>
                                     bulk
                                         ? {
@@ -183,6 +153,7 @@ export default function JneReports({
                                 );
                                 form.post(reports.store.url(), {
                                     preserveScroll: true,
+                                    onError: () => focusFormError(element),
                                     onSuccess: () =>
                                         router.visit(runs.index.url()),
                                 });
@@ -225,8 +196,7 @@ export default function JneReports({
                                                 );
                                             }}
                                         >
-                                            Gunakan semua account tersimpan (
-                                            {sources.length})
+                                            Pilih semua akun ({sources.length})
                                         </Button>
                                     )}
                                 </div>
@@ -244,6 +214,15 @@ export default function JneReports({
                                             <Input
                                                 className="min-h-11"
                                                 id="customer_account"
+                                                aria-invalid={
+                                                    !!form.errors
+                                                        .customer_account
+                                                }
+                                                aria-describedby={
+                                                    form.errors.customer_account
+                                                        ? 'report-customer_account-error'
+                                                        : undefined
+                                                }
                                                 value={
                                                     form.data.customer_account
                                                 }
@@ -289,6 +268,7 @@ export default function JneReports({
                                                 ))}
                                             </datalist>
                                             <InputError
+                                                id="report-customer_account-error"
                                                 message={
                                                     form.errors.customer_account
                                                 }
@@ -311,6 +291,16 @@ export default function JneReports({
                                             >
                                                 <SelectTrigger
                                                     id="request-national"
+                                                    aria-invalid={
+                                                        !!form.errors
+                                                            .national_account
+                                                    }
+                                                    aria-describedby={
+                                                        form.errors
+                                                            .national_account
+                                                            ? 'report-national_account-error'
+                                                            : undefined
+                                                    }
                                                     className="min-h-11 w-full"
                                                 >
                                                     <SelectValue />
@@ -334,7 +324,11 @@ export default function JneReports({
                                             key === 'national_account',
                                     )
                                     .map(([key, error]) => (
-                                        <InputError key={key} message={error} />
+                                        <InputError
+                                            id={`report-${key}-error`}
+                                            key={key}
+                                            message={error}
+                                        />
                                     ))}
                             </div>
                             <div className="space-y-3">
@@ -375,6 +369,14 @@ export default function JneReports({
                                         <Input
                                             className="min-h-11 dark:scheme-dark"
                                             id="date_from"
+                                            aria-invalid={
+                                                !!form.errors.date_from
+                                            }
+                                            aria-describedby={
+                                                form.errors.date_from
+                                                    ? 'report-date_from-error'
+                                                    : undefined
+                                            }
                                             type="date"
                                             required
                                             value={form.data.date_from}
@@ -386,6 +388,7 @@ export default function JneReports({
                                             }
                                         />
                                         <InputError
+                                            id="report-date_from-error"
                                             message={form.errors.date_from}
                                         />
                                     </div>
@@ -396,6 +399,14 @@ export default function JneReports({
                                         <Input
                                             className="min-h-11 dark:scheme-dark"
                                             id="date_thru"
+                                            aria-invalid={
+                                                !!form.errors.date_thru
+                                            }
+                                            aria-describedby={
+                                                form.errors.date_thru
+                                                    ? 'report-date_thru-error'
+                                                    : undefined
+                                            }
                                             type="date"
                                             min={form.data.date_from}
                                             max={reportPeriodEnd(
@@ -412,6 +423,7 @@ export default function JneReports({
                                             }
                                         />
                                         <InputError
+                                            id="report-date_thru-error"
                                             message={form.errors.date_thru}
                                         />
                                     </div>
@@ -453,6 +465,41 @@ export default function JneReports({
                                     </CollapsibleContent>
                                 </Collapsible>
                             )}
+                            <JneWorkspaceMetrics
+                                scope="Rencana permintaan saat ini. Setiap account menghasilkan report terpisah di antrean APEX."
+                                items={[
+                                    {
+                                        label: 'Account dipilih',
+                                        value: selectedAccounts.length,
+                                        icon: Layers3,
+                                    },
+                                    {
+                                        label: 'National YES',
+                                        value: selectedAccounts.filter(
+                                            (account) =>
+                                                account.national_account ===
+                                                'Y',
+                                        ).length,
+                                        icon: CheckCheck,
+                                    },
+                                    {
+                                        label: 'National NO',
+                                        value: selectedAccounts.filter(
+                                            (account) =>
+                                                account.national_account ===
+                                                'N',
+                                        ).length,
+                                        icon: Clock3,
+                                    },
+                                    {
+                                        label: 'Bagian report',
+                                        value:
+                                            selectedAccounts.length *
+                                            periods.length,
+                                        icon: FileDown,
+                                    },
+                                ]}
+                            />
                             <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                                 <p className="text-xs text-muted-foreground">
                                     Tanggal mengikuti {timezone}.
