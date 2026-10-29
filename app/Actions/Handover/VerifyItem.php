@@ -18,10 +18,11 @@ class VerifyItem
             abort_unless($actor->canVerifyHandover(), 403);
             $session = HandoverSession::whereKey($sessionId)->lockForUpdate()->firstOrFail();
             abort_if($session->status === 'CLOSED', 409, 'Session sudah ditutup. Koreksi/reopen belum diotorisasi.');
+            $member = $session->items()->whereKey($itemId)->firstOrFail(['id', 'pickup_task_id']);
+            PickupTask::whereKey($member->pickup_task_id)->lockForUpdate()->firstOrFail();
             $item = $session->items()->whereKey($itemId)->lockForUpdate()->firstOrFail();
             abort_unless($item->status === 'PENDING', 409, 'Item telah diperiksa. Koreksi tidak boleh menimpa hasil awal.');
             abort_if($session->version !== (int) $data['expected_version'], 409, 'SESSION_STALE: Muat ulang session.');
-            PickupTask::whereKey($item->pickup_task_id)->lockForUpdate()->firstOrFail();
             $proof = $item->proof;
             abort_if(isset($data['expected_pickup_revision']) && $proof->revisionNumber() !== (int) $data['expected_pickup_revision'], 409, 'POP berubah. Muat ulang session dan periksa jumlah POP sebelum menyimpan.');
             $values = $proof->effectiveValues();

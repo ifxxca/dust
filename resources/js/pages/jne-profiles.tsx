@@ -101,10 +101,15 @@ export default function JneProfiles({
         });
         setOpen(true);
     };
-    const createProfile = (source: string, reportType: string) => {
+    const createProfile = (
+        source: string,
+        reportType: string,
+        hybridAccount = 'HYBRID_PM',
+    ) => {
         const existing = profiles.find((profile) =>
             source === 'hybrid'
-                ? profile.source === 'hybrid'
+                ? profile.source === 'hybrid' &&
+                  profile.customer_account === hybridAccount
                 : reportType === 'unresolved' &&
                   profile.report_type === 'unresolved',
         );
@@ -119,13 +124,15 @@ export default function JneProfiles({
             report_type: reportType,
             customer_account:
                 source === 'hybrid'
-                    ? 'HYBRID_GABUNGAN'
+                    ? hybridAccount
                     : reportType === 'unresolved'
                       ? 'AWB_AKTIF'
                       : '',
             label:
                 source === 'hybrid'
-                    ? 'Hybrid gabungan → APEX'
+                    ? hybridAccount === 'HYBRID_PM'
+                        ? 'Hybrid Server PM'
+                        : 'Hybrid Server Puman'
                     : reportType === 'unresolved'
                       ? 'Pembaruan resi aktif'
                       : '',
@@ -334,7 +341,7 @@ export default function JneProfiles({
                                                 source === 'apex'
                                                     ? ''
                                                     : source === 'hybrid'
-                                                      ? 'HYBRID_GABUNGAN'
+                                                      ? 'HYBRID_PM'
                                                       : source.toUpperCase(),
                                             lookback_days:
                                                 source === 'apex' ? 30 : 1,
@@ -427,6 +434,54 @@ export default function JneProfiles({
                             </div>
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
+                            {form.data.source === 'hybrid' && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="hybrid-server">
+                                        Server Hybrid
+                                    </Label>
+                                    <Select
+                                        disabled={editing !== null}
+                                        value={form.data.customer_account}
+                                        onValueChange={(value) =>
+                                            form.setData({
+                                                ...form.data,
+                                                customer_account: value,
+                                                label:
+                                                    value === 'HYBRID_PM'
+                                                        ? 'Hybrid Server PM'
+                                                        : 'Hybrid Server Puman',
+                                            })
+                                        }
+                                    >
+                                        <SelectTrigger
+                                            id="hybrid-server"
+                                            className="w-full"
+                                            aria-invalid={
+                                                !!form.errors.customer_account
+                                            }
+                                            aria-describedby={
+                                                form.errors.customer_account
+                                                    ? 'hybrid-server-error'
+                                                    : undefined
+                                            }
+                                        >
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="HYBRID_PM">
+                                                Server PM · ROBERTO
+                                            </SelectItem>
+                                            <SelectItem value="HYBRID_PUMAN">
+                                                Server Puman · NURALAMT
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError
+                                        id="hybrid-server-error"
+                                        message={form.errors.customer_account}
+                                    />
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label htmlFor="source-name">Nama sumber</Label>
                                 <Input
@@ -590,11 +645,9 @@ export default function JneProfiles({
                             </div>
                             {form.data.source === 'hybrid' ? (
                                 <p className="text-sm text-muted-foreground">
-                                    Satu siklus mengambil cashless dan manual
-                                    dari ROBERTO serta NURALAMT. Setelah keempat
-                                    report lengkap, AWB unik digabung, diunggah
-                                    ke APEX, lalu hasil APEX diproses ke
-                                    monitoring.
+                                    Cashless dan manual dari server ini digabung
+                                    ke satu upload APEX. Server lain memiliki
+                                    jadwal dan hasil tersendiri.
                                 </p>
                             ) : form.data.source !== 'apex' ? (
                                 <p className="text-sm text-muted-foreground">

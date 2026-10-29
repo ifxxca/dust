@@ -47,6 +47,7 @@ class PickupTaskResource extends JsonResource
             $data['handover_session_id'] = $this->whenLoaded('handoverItem', fn () => $this->handoverItem?->handover_session_id);
             $data['visits'] = PickupVisitResource::collection($this->whenLoaded('visits'));
             $data['proof'] = new PickupRecordResource($this->whenLoaded('proof'));
+            $data['cashless_awbs'] = $this->whenLoaded('cashlessAwbs', fn (): array => $this->cashlessAwbs->pluck('awb')->filter()->values()->all());
             $data['events'] = $this->whenLoaded('events', fn () => $this->events->map(fn ($event) => [
                 'action' => $event->action, 'actor_id' => $event->actor_id,
                 'actor_name' => $event->relationLoaded('actor') ? $event->actor?->name : null,

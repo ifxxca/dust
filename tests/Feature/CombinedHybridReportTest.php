@@ -78,9 +78,9 @@ test('a combined configuration queues exactly four source reports once per sched
 
 test('admin saves the combined source and can request yesterday without enabling the schedule', function () {
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
-    $this->actingAs($admin)->post(route('jne-monitoring.profile-store'), ['source' => 'hybrid', 'report_type' => 'combined', 'enabled' => false, 'interval_minutes' => 9])->assertSessionHasNoErrors();
+    $this->actingAs($admin)->post(route('jne-monitoring.profile-store'), ['source' => 'hybrid', 'report_type' => 'combined', 'customer_account' => 'HYBRID_PM', 'enabled' => false, 'interval_minutes' => 9])->assertSessionHasNoErrors();
     $profile = JneReportProfile::sole();
-    expect($profile->customer_account)->toBe('HYBRID_GABUNGAN');
+    expect($profile->customer_account)->toBe('HYBRID_PM');
     $this->post(route('report-runs.store'), ['profile_id' => $profile->id, 'for_date' => '2026-10-22'])->assertSessionHasNoErrors();
     expect(ReportJob::get()->every(fn (ReportJob $job): bool => $job->date_from->toDateString() === '2026-10-22'))->toBeTrue();
     expect($profile->fresh()->enabled)->toBeFalse()->and($profile->fresh()->next_run_at)->toBeNull();

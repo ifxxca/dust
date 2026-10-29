@@ -28,6 +28,12 @@
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="PICKUP_AUTOMATION_ENABLED" value="false"/>
+        <env name="PICKUP_AWB_SEND_ENABLED" value="false"/>
+        <env name="JNE_EVIDENCE_POLICIES_ENABLED" value="false"/>
+        <env name="JNE_APEX_POOL_ENABLED" value="false" force="true"/>
+        <env name="JNE_CATEGORY_RECONCILIATION_ENABLED" value="false"/>
+        <env name="JNE_CATEGORY_MARKERS_ENABLED" value="false" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

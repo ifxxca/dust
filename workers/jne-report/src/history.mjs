@@ -257,6 +257,25 @@ export function correlateHistory(
             config.username.trim() !== '' &&
             (row.columns.CREATEDUSER || '').trim().toLowerCase() ===
                 config.username.trim().toLowerCase();
+        const tokens = (row.filename || '').split(/[^A-Za-z0-9]+/);
+        const accountIndex = tokens.indexOf(job.customer_account);
+        const filenamePeriodMatches =
+            accountIndex >= 0 &&
+            tokens[accountIndex + 1] ===
+                job.date_from.replaceAll('-', '').slice(2) &&
+            tokens[accountIndex + 2] ===
+                job.date_thru.replaceAll('-', '').slice(2);
+        if (
+            config.strictHistoryIdentity &&
+            !(
+                echoedParametersMatch ||
+                (filenameAccountMatches &&
+                    filenamePeriodMatches &&
+                    creatorMatches)
+            )
+        ) {
+            continue;
+        }
         if (
             !accepted &&
             !echoedParametersMatch &&

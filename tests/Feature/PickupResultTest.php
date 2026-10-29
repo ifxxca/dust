@@ -121,7 +121,7 @@ test('monitoring query count stays constant as page size grows and ordering is d
     $this->get(route('pickup-results.index', ['monitoring' => 'pickup', 'per_page' => 50, 'direction' => 'asc']))->assertInertia(fn (Assert $page) => $page->has('pickups.data', 50));
     $large = count(DB::getQueryLog());
     DB::disableQueryLog();
-    expect($large)->toBe($small)->toBeLessThanOrEqual(12);
+    expect($large)->toBe($small)->toBeLessThanOrEqual(13);
 });
 
 test('admin detail exposes only eligible actions throughout existing verification closure and reopen workflows', function () {

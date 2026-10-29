@@ -14,6 +14,7 @@ export type CustomerDashboardFilters = {
 export type CustomerDashboardDay = {
     date: string;
     shipments: number;
+    delivered: number;
     amount: number | null;
     amount_known: number;
 };

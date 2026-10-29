@@ -112,20 +112,24 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
         const safe = safeError(
             controller.signal.aborted ? controller.signal.reason : error,
         );
-        if (apex.captureFailure)
+        if (safe.status !== 'NO_DATA' && apex.captureFailure)
             await apex.captureFailure(job.id, safe.code).catch(() => {});
         clearInterval(heartbeat);
         await pending;
         try {
-            await api.fail(job, safe);
-            log('job_failed', {
-                job_id: job.id,
-                status: safe.status,
-                code: safe.code,
-                phase: apex.phase,
-                control: apex.activeControl,
-                error_type: error?.name,
-            });
+            const result = await api.fail(job, safe);
+            if (safe.status === 'NO_DATA' && result?.status === 'NO_DATA') {
+                completed = true;
+                log('job_no_data', { job_id: job.id });
+            } else
+                log('job_failed', {
+                    job_id: job.id,
+                    status: safe.status,
+                    code: safe.code,
+                    phase: apex.phase,
+                    control: apex.activeControl,
+                    error_type: error?.name,
+                });
         } catch {
             log('job_failure_unconfirmed', {
                 job_id: job.id,

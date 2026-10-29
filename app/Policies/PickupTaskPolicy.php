@@ -7,6 +7,21 @@ use App\Models\User;
 
 class PickupTaskPolicy
 {
+    public function handoverCashlessAwb(User $user, PickupTask $pickupTask): bool
+    {
+        if (! $user->canExecutePickup() || $pickupTask->assigned_staff_id !== $user->id) {
+            return false;
+        }
+        $pickupTask->loadMissing('proof', 'handoverItem.session', 'processingReconciliation');
+        $session = $pickupTask->handoverItem?->session;
+        $reconciliation = $pickupTask->processingReconciliation;
+
+        return (($pickupTask->status === 'ASSIGNED' && $pickupTask->execution_started_at !== null)
+                || ($pickupTask->status === 'PICKED_UP' && $pickupTask->proof?->finalized_at !== null))
+            && $session?->sertim_closed_at === null && $session?->status !== 'CLOSED'
+            && $reconciliation?->locked_at === null && $reconciliation?->status !== 'DONE';
+    }
+
     public function viewCashlessAwb(User $user, PickupTask $pickupTask): bool
     {
         return $user->canManagePickup() || ($user->canExecutePickup()

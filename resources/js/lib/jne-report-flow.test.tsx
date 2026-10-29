@@ -7,6 +7,20 @@ import { JneRunState } from '@/components/jne-run-state';
 import { reportStage } from './jne-report-flow';
 
 test.each([
+    ['unresolved', 'Tidak ada AWB jatuh tempo'],
+    ['combined', 'Tidak ada AWB'],
+    ['apex', 'Tidak ada AWB'],
+])(
+    'empty %s runs describe their own selection outcome',
+    (report_type, label) => {
+        const html = renderToStaticMarkup(
+            <JneRunState run={{ status: 'NO_DATA', report_type }} />,
+        );
+        expect(html).toContain(label);
+    },
+);
+
+test.each([
     ['ATTENTION', 'Perlu diperiksa'],
     ['PROCESSING', 'Memproses CSV APEX'],
     ['READY', 'Siap dimonitor'],

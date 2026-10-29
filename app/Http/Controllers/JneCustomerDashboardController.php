@@ -38,9 +38,18 @@ class JneCustomerDashboardController extends Controller
         $filters = ['customer_id' => $data['customer_id'] ?? null, 'date_from' => $from->toDateString(), 'date_thru' => $thru->toDateString(),
             'mapping' => $data['mapping'] ?? 'all', 'server' => $data['server'] ?? 'all', 'age' => $data['age'] ?? 'all', 'service' => $data['service'] ?? '', 'destination' => $data['destination'] ?? '', 'status' => $data['status'] ?? ''];
 
+        $statistics = null;
+        $resolveStatistics = function () use (&$statistics, $dashboard, $filters, $from, $thru): array {
+            return $statistics ??= $dashboard->handle($filters, $from, $thru);
+        };
+        $props = [];
+        foreach (['summary', 'daily', 'destinations', 'servers', 'ages', 'comparison', 'services', 'statuses', 'selectedDestination'] as $key) {
+            $props[$key] = fn () => $resolveStatistics()[$key];
+        }
+
         return Inertia::render('jne-customer-dashboard', [
-            ...$dashboard->handle($filters, $from, $thru), 'filters' => $filters, 'timezone' => $timezone,
-            'selectedCustomer' => $filters['customer_id'] ? Customer::findOrFail($filters['customer_id'])->only(['id', 'name', 'customer_code']) : null,
+            ...$props, 'shipments' => fn () => $dashboard->shipments($filters, $from, $thru), 'filters' => $filters, 'timezone' => $timezone,
+            'selectedCustomer' => fn () => $filters['customer_id'] ? Customer::findOrFail($filters['customer_id'])->only(['id', 'name', 'customer_code']) : null,
         ]);
     }
 }

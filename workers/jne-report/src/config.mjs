@@ -71,9 +71,19 @@ export function loadConfig(env = process.env) {
             'FAILED',
         );
     }
-    const dataDir = path.resolve(
+    const instance = number('JNE_APEX_INSTANCE', 0, 0);
+    if (instance > 20)
+        throw new ReportError(
+            'CONFIG_INVALID',
+            'Instance APEX maksimal 20.',
+            'FAILED',
+        );
+    const baseDataDir = path.resolve(
         env.JNE_WORKER_DATA_DIR || '../../storage/app/private/jne-worker',
     );
+    const dataDir = instance
+        ? path.join(baseDataDir, 'instances', 'apex-' + instance)
+        : baseDataDir;
     const publicDir = path.resolve('../../public');
     if (dataDir === publicDir || dataDir.startsWith(publicDir + path.sep))
         throw new ReportError(
@@ -84,7 +94,11 @@ export function loadConfig(env = process.env) {
     return {
         apiUrl: apiUrl.toString().replace(/\/$/, ''),
         token,
-        workerId: env.JNE_REPORT_WORKER_ID || 'jne-report-1',
+        workerId:
+            (env.JNE_REPORT_WORKER_ID || 'jne-report-1') +
+            (instance ? '-instance-' + instance : ''),
+        instance,
+        strictHistoryIdentity: instance > 0,
         loginUrl: loginUrl.toString(),
         username: required('APEX_USERNAME'),
         password: required('APEX_PASSWORD', false),

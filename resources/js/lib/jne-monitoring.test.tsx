@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
 import Monitoring from '../pages/jne-monitoring';
@@ -8,13 +8,18 @@ import Reconciliation from '../pages/jne-reconciliation';
 import ShipperAliases from '../pages/jne-shipper-aliases';
 import { jneTimestamp } from './jne-monitoring';
 
+vi.mock('react', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('react')>();
+    return { ...actual, useState: vi.fn(actual.useState) };
+});
+
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
     Link: ({ href, children }: { href: string; children: ReactNode }) => (
         <a href={href}>{children}</a>
     ),
     router: { post: vi.fn(), get: vi.fn() },
-    usePoll: vi.fn(),
+    usePoll: vi.fn(() => ({ start: vi.fn(), stop: vi.fn() })),
     usePage: () => ({ version: 'test-version' }),
     useHttp: () => ({ get: vi.fn(), cancel: vi.fn(), processing: false }),
     useForm: (data: Record<string, string | number | boolean>) => ({
@@ -41,6 +46,7 @@ test('monitoring emphasizes normalized status and preserves the AWB detail link 
                         customer_account: 'TESTACCOUNT',
                         tracking_status: 'UNKNOWN',
                         match_status: 'UNMATCHED',
+                        entry_at: '2026-10-13T01:00:00Z',
                         observed_at: '2026-10-21T00:00:00Z',
                         status_web: '<script>private()</script>',
                         status_pod: 'Error On Push',
@@ -122,47 +128,64 @@ test.each([
     },
 );
 
-test('shipment detail retains all raw source fields and explains audited manual matching', () => {
-    const html = renderToStaticMarkup(
-        <Shipment
-            shipment={{
-                id: 1,
-                awb: '001234',
-                customer_account: 'TESTACCOUNT',
-                version: 1,
-                tracking_status: 'UNKNOWN',
-                match_status: 'UNMATCHED',
-                match_method: null,
-                match_note: null,
-                observed_at: '2026-10-21T00:00:00Z',
-                pickup_reference: null,
-                pickup_task_id: null,
-                pickup_customer: null,
-                source: {
-                    report_job_id: 2,
-                    source_row: 2,
-                    reference: 'REF001',
-                    shipper_name: 'Sender',
-                    consignee_name: 'Recipient',
-                    status_web: 'Unknown',
-                    status_pod: null,
-                    awb_cancel: null,
-                    raw_data: { AWB: "'001234", EXTRA_COLUMN: '="Pure Text"' },
-                },
-            }}
-            history={{ data: [], current_page: 1, last_page: 1 }}
-            matchHistory={[]}
-            timezone="Asia/Jakarta"
-        />,
-    );
-    expect(html).toContain('EXTRA_COLUMN');
-    expect(html).toContain('=&quot;Pure Text&quot;');
-    expect(html).toContain('tidak ditimpa pencocokan otomatis');
-    expect(html).toContain(
-        'Cashless dicatat melalui Sertim; CSS / Orion tidak wajib dipindai satu per satu.',
-    );
-    expect(html).toContain('/admin/jne-reports/2/download');
-});
+test.each([false, true])(
+    'shipment detail retains source fields with pickup editor open=%s',
+    (editingPickup) => {
+        vi.mocked(useState).mockReturnValueOnce([editingPickup, vi.fn()]);
+        const html = renderToStaticMarkup(
+            <Shipment
+                shipment={{
+                    id: 1,
+                    awb: '001234',
+                    customer_account: 'TESTACCOUNT',
+                    version: 1,
+                    tracking_status: 'UNKNOWN',
+                    match_status: 'UNMATCHED',
+                    match_method: null,
+                    match_note: null,
+                    entry_at: '2026-10-13T01:00:00Z',
+                    observed_at: '2026-10-21T00:00:00Z',
+                    pickup_reference: null,
+                    pickup_task_id: null,
+                    pickup_customer: null,
+                    source: {
+                        report_job_id: 2,
+                        source_row: 2,
+                        reference: 'REF001',
+                        shipper_name: 'Sender',
+                        consignee_name: 'Recipient',
+                        status_web: 'Unknown',
+                        status_pod: null,
+                        awb_cancel: null,
+                        raw_data: {
+                            AWB: "'001234",
+                            EXTRA_COLUMN: '="Pure Text"',
+                        },
+                    },
+                }}
+                history={{ data: [], current_page: 1, last_page: 1 }}
+                matchHistory={[]}
+                timezone="Asia/Jakarta"
+            />,
+        );
+        expect(html).toContain('EXTRA_COLUMN');
+        expect(html).toContain('=&quot;Pure Text&quot;');
+        expect(html).toContain(
+            `aria-expanded="${editingPickup}" aria-controls="pickup-editor"`,
+        );
+        if (editingPickup) {
+            expect(html).toContain('id="pickup-editor"');
+            expect(html).toContain('tidak ditimpa pencocokan otomatis');
+            expect(html).toContain(
+                'Cashless dicatat melalui Sertim; CSS / Orion tidak wajib dipindai satu per satu.',
+            );
+        } else {
+            expect(html).not.toContain('id="pickup-editor"');
+            expect(html).not.toContain('tidak ditimpa pencocokan otomatis');
+        }
+        expect(html).toContain('/admin/jne-reports/2/download');
+    },
+);
 
 test('empty profiles clearly leave automatic retrieval disabled', () => {
     const html = renderToStaticMarkup(
@@ -189,7 +212,9 @@ test('active refresh settings explain eligible AWBs stop rules and separate retr
     expect(html).toContain('Aturan pembaruan status');
     expect(html).toContain('aria-expanded="false"');
     expect(html).not.toContain('Terus dipantau');
-    expect(html).toContain('Hybrid gabungan');
+    expect(html).toContain('Atur Server PM');
+    expect(html).toContain('Atur Server Puman');
+    expect(html).not.toContain('4 report');
 });
 
 test('monitoring exposes the active AWB schedule and its next run without confusing display refresh', () => {

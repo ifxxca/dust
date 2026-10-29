@@ -2,10 +2,12 @@
 
 namespace App\Actions\Reports;
 
+use App\Actions\Pickup\PickupAwbEligibility;
 use App\Models\Customer;
 use App\Models\JneShipment;
 use App\Models\JneShipmentMatchEvent;
 use App\Models\PickupCashlessAwb;
+use App\Models\PickupProcessingReconciliation;
 use App\Models\PickupProcessingRecord;
 use App\Models\PickupTask;
 use App\Models\User;
@@ -42,6 +44,13 @@ class ReviewJneExceptions
             $candidates = $matcher->candidates($rows->map->latestSource->filter()->values());
             $claims = PickupCashlessAwb::whereIn('awb', $rows->pluck('awb'))->get()->keyBy('awb');
             foreach ($rows as $row) {
+                if ($row->pickup_task_id !== null) {
+                    abort_if(PickupProcessingReconciliation::where('pickup_task_id', $row->pickup_task_id)->where(fn ($query) => $query->whereNotNull('locked_at')->orWhere('status', 'DONE'))->exists(), 409, 'Pickup terkunci. Buka koreksi pickup asal terlebih dahulu.');
+                    abort_if($data['action'] === 'CONFIRM' && $customer && $row->pickup_task_id !== $task?->id, 409, 'Resi sudah terikat. Keluarkan melalui pickup asal terlebih dahulu.');
+                }
+                if ($task) {
+                    abort_unless(app(PickupAwbEligibility::class)->allowed($task, $row), 422, 'Lintas hari wajib menggunakan barang pending yang tercatat.');
+                }
                 $before = $row->only(['customer_id', 'customer_match_status', 'pickup_task_id', 'match_status', 'category', 'category_status', 'version']);
                 if ($data['action'] === 'RELEASE') {
                     $row->fill(['match_method' => 'REFERENCE', 'customer_match_method' => 'NONE', 'identity_review_hash' => null, 'category_method' => null, 'category_review_hash' => null])->save();

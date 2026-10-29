@@ -23,7 +23,7 @@ export type OperationalOverviewData = {
         previous: Record<
             'tasks' | 'customers' | 'packages' | 'attention',
             number
-        >;
+        > & { picked_up?: number };
         changes: Record<
             'tasks' | 'customers' | 'packages' | 'attention',
             number | null

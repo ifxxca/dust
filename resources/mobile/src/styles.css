@@ -2,6 +2,31 @@
 @source './';
 @source '../../js/components/ui';
 @source '../../js/components/operational-ui.tsx';
+@source '../../js/components/signature-pad.tsx';
+@source '../../js/components/cashless-proof-input.tsx';
+@source '../../js/components/cashless-result-view.tsx';
+
+html.cashless-camera-mode,
+body.cashless-camera-mode {
+    background: transparent !important;
+}
+body.cashless-camera-mode #root {
+    visibility: hidden;
+}
+.cashless-camera-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: max(1rem, env(safe-area-inset-top))
+        max(1rem, env(safe-area-inset-right))
+        max(1rem, env(safe-area-inset-bottom))
+        max(1rem, env(safe-area-inset-left));
+    overflow: hidden;
+    background: transparent;
+}
 
 :root {
     --mobile-viewport-height: 100vh;
@@ -82,6 +107,7 @@
     max-height: calc(var(--mobile-viewport-height) - 2rem);
     transform: translate(-50%, -50%);
     animation: none;
+    transition: none;
     overflow-y: auto;
     overflow-wrap: anywhere;
     padding-top: 2rem;
@@ -99,6 +125,89 @@
     width: 100%;
     min-height: 48px;
     white-space: normal;
+}
+
+.notification-card {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--card);
+    color: var(--card-foreground);
+}
+.notification-open {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem;
+    text-align: left;
+    background: transparent;
+    color: inherit;
+}
+.notification-icon {
+    flex: 0 0 20px;
+    color: var(--destructive);
+    margin-top: 2px;
+}
+.notification-content {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.notification-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+.notification-dot {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--primary);
+}
+.notification-customer {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+.notification-message {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted-foreground);
+    overflow-wrap: anywhere;
+}
+.notification-time {
+    font-size: 12px;
+    color: var(--muted-foreground);
+}
+.notification-link {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary);
+}
+.notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border);
+    padding: 0.25rem 0.5rem;
+}
+.notification-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1rem;
+    color: var(--muted-foreground);
+    font-size: 14px;
+    text-align: center;
 }
 
 body {

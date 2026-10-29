@@ -50,7 +50,8 @@ test('manual success is shown independently while external confirmation is expli
 });
 test('processing provenance explicitly explains overlapping unknown and manual quantities', () => {
     const html = renderToStaticMarkup(<ProcessingSource />);
-    expect(html).toContain('Konfirmasi JNE Hybrid / MyORION belum tersedia');
+    expect(html).toContain('Hasil pencocokan resi tersedia di');
+    expect(html).toContain('Rekonsiliasi Paket');
     expect(html).toContain('Berhasil manual bukan konfirmasi sistem');
     expect(html).toContain('dapat tumpang tindih');
 });

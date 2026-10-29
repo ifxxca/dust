@@ -113,6 +113,7 @@ export function loadHybridConfig(env = process.env, selected = 'all') {
         downloadTimeout: 120000,
         maxFileBytes: 20971520,
         keepAliveInterval: 300000,
+        cashlessEntryEnabled: env.CASHLESS_ENTRY_ENABLED === 'true',
         api: hybridApiConfig(env),
     };
 }
@@ -380,6 +381,17 @@ export class HybridClient {
                     this.session = null;
                     continue;
                 }
+                if (
+                    error.code === 'HYBRID_FILTER' &&
+                    this.phase === 'view_report' &&
+                    attempt < 2
+                ) {
+                    log('hybrid_filter_retry', {
+                        source: this.profile.name,
+                        attempt: attempt + 2,
+                    });
+                    continue;
+                }
                 const transient =
                     error.name === 'TimeoutError' ||
                     error.code === 'HYBRID_DOWNLOAD_TRANSIENT' ||
@@ -476,7 +488,9 @@ export class HybridClient {
             }
         }
         await from.fill(displayDate);
+        await from.press('Tab');
         await thru.fill(displayDate);
+        await thru.press('Tab');
         this.phase = 'view_report';
         await Promise.all([
             this.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
@@ -509,6 +523,23 @@ export class HybridClient {
             dialog.getByRole('button', { name: 'Apply', exact: true }).click(),
         ]);
         await dialog.waitFor({ state: 'hidden' });
+        const emptyEvidence = await this.page
+            .locator('.t-IRR-region')
+            .evaluateAll((regions) => {
+                if (regions.length !== 1) return null;
+                const region = regions[0];
+                const marker = region.querySelector('.a-IRR-noDataMsg');
+                if (
+                    !marker?.getClientRects().length ||
+                    region.querySelector('.a-IRR-table td') ||
+                    region.querySelector('.a-IRR-controls-item--filter') ||
+                    region.querySelector('.a-IRR-search-field')?.value ||
+                    document.querySelector('.a-Form-error,.t-Alert--danger')
+                ) {
+                    return null;
+                }
+                return region.outerHTML;
+            });
         this.phase = 'download_csv';
         await actions.click();
         await this.page
@@ -558,7 +589,36 @@ export class HybridClient {
                     'Server tidak mengembalikan CSV.',
                 );
             }
-            const bytes = await response.body();
+            const downloadedBytes = await response.body();
+            const oracleCode = downloadedBytes
+                .toString('utf8')
+                .match(/^\s*<div class="a-Form-error">(ORA-\d{5}):/i)?.[1];
+            let bytes = downloadedBytes;
+            if (oracleCode) {
+                if (oracleCode !== 'ORA-22275' || !emptyEvidence) {
+                    throw new ReportError(
+                        'HYBRID_SOURCE_ORACLE',
+                        `Server Hybrid gagal mengekspor CSV (${oracleCode}). Hasil tidak disimpan; periksa report pada server sumber.`,
+                    );
+                }
+                const dates = [
+                    await from.inputValue(),
+                    await thru.inputValue(),
+                ];
+                if (
+                    dates.some(
+                        (value) => value.trim().toUpperCase() !== displayDate,
+                    )
+                ) {
+                    throw new ReportError(
+                        'HYBRID_FILTER',
+                        'Tanggal berubah setelah reset report. Hasil kosong belum dapat dikonfirmasi.',
+                    );
+                }
+                bytes = Buffer.from(
+                    `${report.awbColumn},${report.dateColumn}\r\n`,
+                );
+            }
             const summary = validateHybridCsv(
                 bytes,
                 kind,
@@ -574,6 +634,27 @@ export class HybridClient {
             await mkdir(directory, { recursive: true, mode: 0o700 });
             const file = path.join(directory, `${kind}-${date}.csv`);
             await writeFile(file, bytes, { mode: 0o600, flag: 'wx' });
+            if (oracleCode) {
+                await writeFile(
+                    path.join(directory, 'empty-report-evidence.json'),
+                    JSON.stringify({
+                        source: this.profile.name,
+                        report: kind,
+                        date,
+                        observedAt: this.clock().toISOString(),
+                        reason: oracleCode,
+                        reportHtml: emptyEvidence,
+                        exportResponse: downloadedBytes.toString('utf8'),
+                    }),
+                    { mode: 0o600, flag: 'wx' },
+                );
+                log('hybrid_empty_report_verified', {
+                    source: this.profile.name,
+                    report: kind,
+                    date,
+                    reason: oracleCode,
+                });
+            }
             return {
                 source: this.profile.name,
                 report: kind,

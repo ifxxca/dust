@@ -76,7 +76,7 @@ test('scheduler delays Hybrid jobs until 00:30 WIB after the midnight reset', fu
 
 test('each worker claims only its source while three sources may run concurrently', function () {
     foreach (['nuralamt', 'roberto', 'apex'] as $source) {
-        ReportJob::factory()->count(2)->create(['source' => $source, 'report_type' => $source === 'apex' ? 'apex' : 'cashless']);
+        ReportJob::factory()->count(2)->create(['source' => $source, 'report_type' => $source === 'apex' ? 'apex' : 'cashless', 'customer_account' => strtoupper($source)]);
     }
     foreach (['apex', 'roberto', 'nuralamt'] as $source) {
         $this->postJson(route('internal.report-jobs.claim'), ['claim_key' => (string) Str::uuid()], scrapingHeaders($source))->assertOk()->assertJsonPath('data.source', $source);

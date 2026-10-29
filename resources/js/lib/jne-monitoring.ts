@@ -6,6 +6,12 @@ export const trackingLabels: Record<string, string> = {
     EXCEPTION: 'Kendala pengiriman',
     UNKNOWN: 'Status belum dikenali',
 };
+export const categoryLabels: Record<string, string> = {
+    manual_hybrid: 'Manual',
+    cashless_hybrid: 'Cashless',
+    css_orion: 'CSS / Orion',
+    review: 'Perlu diperiksa',
+};
 export const collectionLabels: Record<string, string> = {
     UNCONFIGURED: 'Belum diatur',
     OPEN: 'Terbuka',
@@ -39,8 +45,12 @@ export const emptyJneFilters = {
     account: '',
     status: '',
     match: '',
+    category: '',
     customer_id: '',
     customer_match: '',
+    date_from: '',
+    date_thru: '',
+    per_page: '20',
 };
 
 export function normalizeJneFilters(
@@ -51,7 +61,10 @@ export function normalizeJneFilters(
     return Object.fromEntries(
         Object.keys(emptyJneFilters).map((key) => [
             key,
-            String(filters[key as keyof typeof emptyJneFilters] ?? ''),
+            String(
+                filters[key as keyof typeof emptyJneFilters] ??
+                    emptyJneFilters[key as keyof typeof emptyJneFilters],
+            ),
         ]),
     ) as typeof emptyJneFilters;
 }

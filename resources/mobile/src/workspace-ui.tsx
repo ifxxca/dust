@@ -1,6 +1,5 @@
 import {
     Bell,
-    ClipboardList,
     House,
     LayoutGrid,
     UserRound,
@@ -31,6 +30,7 @@ export type AppScreen =
     | 'notifications'
     | 'pickup'
     | 'handover'
+    | 'cashless'
     | 'account';
 
 export function BottomNavigation({
@@ -55,7 +55,9 @@ export function BottomNavigation({
                 const selected =
                     tab === destination ||
                     (destination === 'menu' &&
-                        (tab === 'pickup' || tab === 'handover'));
+                        (tab === 'pickup' ||
+                            tab === 'handover' ||
+                            tab === 'cashless'));
                 return (
                     <button
                         key={destination}
@@ -244,12 +246,6 @@ const modules = [
         icon: Package,
     },
     {
-        id: 'cashless',
-        name: 'Handover Cashless',
-        description: 'Operasional cashless',
-        icon: ClipboardList,
-    },
-    {
         id: 'fleet',
         name: 'Fleet',
         description: 'Penggunaan kendaraan',
@@ -281,6 +277,7 @@ export function ModuleMenu({
 }: {
     onPickup: () => void;
     onHandover: () => void;
+    onCashless?: () => void;
     compact?: boolean;
 }) {
     return (

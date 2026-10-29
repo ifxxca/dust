@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('pickups:generate')->everyMinute()->withoutOverlapping()->when(fn () => in_array(config('pickup.generation_policy'), ['today', 'catchup_7_days'], true));
 Schedule::command('jne-reports:queue-due')->everyMinute()->withoutOverlapping(10);
+Schedule::command('pickups:queue-automation')->everyMinute()->withoutOverlapping(2);
+Schedule::command('pickups:queue-automation --recover')->everyFiveMinutes()->withoutOverlapping(2);
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

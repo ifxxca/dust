@@ -32,6 +32,7 @@ test.each([
 
 test.each([
     '/dashboard',
+    '/rekonsiliasi-resi',
     '/operations/customers',
     '/admin/jne-shipper-aliases',
     '/admin/jne-monitoring-not-a-page',

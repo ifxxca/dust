@@ -27,7 +27,7 @@ class ImportReportAwbs
             $stream = $this->openCsv($job);
             $evidence = app(ReadJneSourceEvidence::class);
             $context = $evidence->context($job);
-            $captureEvidence = config('jne-reports.source_provenance_enabled') || config('jne-reports.evidence_policies_enabled');
+            $captureEvidence = config('jne-reports.source_provenance_enabled') || config('jne-reports.evidence_policies_enabled') || config('jne-reports.category_markers_enabled');
             try {
                 [$headers, $delimiter] = $this->headers($stream);
                 $rows = [];

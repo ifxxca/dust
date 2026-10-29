@@ -42,12 +42,18 @@ export function MonitoringWorkspaceHeader({
     return (
         <>
             <Head
-                title={`Hasil Pickup · ${current === 'pickup' ? 'Monitoring Pickup' : 'Pemrosesan Paket'}`}
+                title={
+                    current === 'pickup'
+                        ? 'Hasil Pickup'
+                        : 'Catatan Pemrosesan Manual'
+                }
             />
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-semibold tracking-tight">
-                        Hasil Pickup
+                        {current === 'pickup'
+                            ? 'Hasil Pickup'
+                            : 'Catatan Pemrosesan Manual'}
                     </h1>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -135,7 +141,23 @@ export function MonitoringWorkspaceHeader({
                             <summary className="cursor-pointer rounded-md px-2 py-2 font-medium focus-visible:outline-2 focus-visible:outline-ring">
                                 Rincian monitoring
                             </summary>
-                            <div className="mt-2">{insights}</div>
+                            <div className="mt-2 flex flex-col gap-3">
+                                {insights}
+                                {current === 'pickup' && (
+                                    <Link
+                                        className="text-primary underline underline-offset-4"
+                                        href={routes.index({
+                                            query: {
+                                                ...filters,
+                                                monitoring: 'processing',
+                                                page: 1,
+                                            },
+                                        })}
+                                    >
+                                        Catatan pemrosesan manual
+                                    </Link>
+                                )}
+                            </div>
                         </details>
                     )}
                     <span className="text-xs text-muted-foreground">

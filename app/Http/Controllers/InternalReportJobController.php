@@ -83,7 +83,7 @@ class InternalReportJobController extends Controller
     public function fail(Request $request, int $reportJob, ManageReportJobs $jobs): JsonResponse
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['FAILED', 'NEEDS_ATTENTION'])],
+            'status' => ['required', Rule::in(['FAILED', 'NEEDS_ATTENTION', 'NO_DATA'])],
             'error_message' => ['required', 'string', 'max:1000'],
         ]);
         $job = $jobs->fail($reportJob, $request->header('X-Worker-ID'), $request->header('X-Report-Claim', ''), $data['status'], $data['error_message']);

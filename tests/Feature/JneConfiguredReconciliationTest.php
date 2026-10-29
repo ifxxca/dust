@@ -38,7 +38,7 @@ function categoryFixture(): array
     $job = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'projection_status' => 'PROJECTED']);
     foreach (range(1, 103) as $index) {
         JneReportAwb::factory()->create(['report_job_id' => $job->id, 'awb' => $index <= 3 ? 'CASH'.$index : 'CSS'.$index, 'shipper_name' => 'Tokopedia',
-            'reference' => $index <= 3 ? null : $task->reference, 'customer_account' => 'SHARED', 'raw_data' => $index <= 3 ? [] : ['RETAIL_CODE_FIXTURE' => '4000', 'POP_KIND_FIXTURE' => 'CSS']]);
+            'reference' => $index <= 3 ? null : $task->reference, 'entry_at' => now(), 'customer_account' => 'SHARED', 'raw_data' => $index <= 3 ? [] : ['RETAIL_CODE_FIXTURE' => '4000', 'POP_KIND_FIXTURE' => 'CSS']]);
     }
     app(ProjectJneShipments::class)->handle($job->id);
 

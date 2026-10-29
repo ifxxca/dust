@@ -2,7 +2,9 @@
 
 namespace App\Actions\Handover;
 
+use App\Models\HandoverItem;
 use App\Models\HandoverSession;
+use App\Models\PickupRecord;
 use App\Models\PickupTask;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -24,13 +26,14 @@ class CreateSession
             }
             $tasks = PickupTask::whereIn('id', $taskIds)->orderBy('id')->lockForUpdate()->get();
             abort_unless($tasks->count() === count($taskIds), 409, 'Task tidak tersedia.');
+            $proofIds = PickupRecord::whereIn('pickup_task_id', $taskIds)->pluck('id', 'pickup_task_id');
+            $memberships = HandoverItem::whereIn('pickup_task_id', $taskIds)->orderBy('pickup_task_id')->lockForUpdate()->pluck('handover_session_id', 'pickup_task_id');
             foreach ($tasks as $task) {
-                $membership = $task->handoverItem()->lockForUpdate()->first();
-                abort_unless($task->status === 'PICKED_UP' && $task->proof()->exists() && $membership === null, 409, 'Task belum final atau sudah masuk session. Muat ulang kandidat.');
+                abort_unless($task->status === 'PICKED_UP' && $proofIds->has($task->id) && ! $memberships->has($task->id), 409, 'Task belum final atau sudah masuk session. Muat ulang kandidat.');
             }
             $session = HandoverSession::create(['reference' => (string) Str::ulid(), 'submission_key' => $submissionKey, 'created_by' => $actor->id]);
             foreach ($tasks as $task) {
-                $session->items()->create(['pickup_task_id' => $task->id, 'pickup_record_id' => $task->proof->id]);
+                $session->items()->create(['pickup_task_id' => $task->id, 'pickup_record_id' => $proofIds->get($task->id)]);
             }
             $session->events()->create(['actor_id' => $actor->id, 'action' => 'created', 'session_version' => 1, 'occurred_at' => now()]);
 

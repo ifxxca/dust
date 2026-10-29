@@ -86,6 +86,103 @@ function check(name, run) {
         }
     });
 }
+
+check(
+    'Hybrid server settings remain independent on desktop and mobile',
+    async (page) => {
+        await page
+            .getByRole('link', { name: 'Pengaturan penarikan', exact: true })
+            .click();
+        await page.waitForURL('**/admin/jne-monitoring/profiles');
+        await page.waitForLoadState('networkidle');
+        for (const width of [1440, 375]) {
+            await page.setViewportSize({ width, height: 900 });
+            for (const [name, account] of [
+                ['PM', 'HYBRID_PM'],
+                ['Puman', 'HYBRID_PUMAN'],
+            ]) {
+                const card = page.getByRole('article', {
+                    name: `Hybrid Server ${name}`,
+                    exact: true,
+                });
+                await card
+                    .getByRole('button', { name: 'Atur', exact: true })
+                    .click();
+                const dialog = page.getByRole('dialog');
+                const server = dialog.getByRole('combobox', {
+                    name: 'Server Hybrid',
+                });
+                assert.equal(await server.isDisabled(), true);
+                assert.match(
+                    await server.innerText(),
+                    new RegExp(`Server ${name}`),
+                );
+                assert.equal(
+                    await dialog.locator('#source-name').inputValue(),
+                    `Hybrid Server ${name}`,
+                );
+                assert(
+                    await dialog
+                        .innerText()
+                        .then((text) =>
+                            text.includes(
+                                'Server lain memiliki jadwal dan hasil tersendiri.',
+                            ),
+                        ),
+                );
+                await page.keyboard.press('Escape');
+                await dialog.waitFor({ state: 'hidden' });
+                assert(
+                    await card
+                        .innerText()
+                        .then((text) => text.includes(account)),
+                );
+            }
+            await page
+                .getByRole('button', {
+                    name: 'Tambah konfigurasi',
+                    exact: true,
+                })
+                .click();
+            let dialog = page.getByRole('dialog');
+            await dialog
+                .getByRole('combobox', { name: 'Sumber', exact: true })
+                .click();
+            await page
+                .getByRole('option', { name: 'Hybrid → APEX', exact: true })
+                .click();
+            await dialog
+                .getByRole('combobox', { name: 'Server Hybrid' })
+                .click();
+            await page
+                .getByRole('option', {
+                    name: 'Server Puman · NURALAMT',
+                    exact: true,
+                })
+                .click();
+            assert.equal(
+                await dialog.locator('#source-name').inputValue(),
+                'Hybrid Server Puman',
+            );
+            await page.keyboard.press('Escape');
+            await page.getByRole('dialog').waitFor({ state: 'hidden' });
+            assert(
+                await page.evaluate(
+                    () => document.documentElement.scrollWidth <= innerWidth,
+                ),
+            );
+            await page.screenshot({
+                path: path.join(evidence, `hybrid-servers-${width}.png`),
+                fullPage: true,
+            });
+        }
+        return {
+            viewports: [1440, 375],
+            servers: ['PM', 'Puman'],
+            submitted: false,
+        };
+    },
+);
 async function textContrast(locator) {
     return locator.evaluate((element) => {
         const canvas = document.createElement('canvas');

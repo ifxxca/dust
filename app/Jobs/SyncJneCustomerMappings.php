@@ -35,9 +35,13 @@ class SyncJneCustomerMappings implements ShouldQueue
             $shipments = JneShipment::where('id', '>', $run->last_id)->where('id', '<=', $run->upper_id)
                 ->orderBy('id')->limit(200)->lockForUpdate()->get();
             $shipments->load('latestSource', 'pickup', 'sources:id,awb,shipper_name');
+            $suffixCodes = config('jne-reports.evidence_policies_enabled') ? collect($run->normalized_names)
+                ->map(fn (string $name): string => explode(' ', JneShipperAlias::normalize($name), 2)[0])
+                ->filter(fn (string $code): bool => preg_match('/^[0-9]+[A-Z]+$/D', $code) === 1)->unique()->all() : [];
             $affected = $shipments->filter(fn (JneShipment $shipment): bool => $shipment->latestSource !== null
                 && $shipment->match_method !== 'MANUAL'
-                && ($run->reapply_all || $shipment->sources->contains(fn ($source): bool => in_array(JneShipperAlias::normalize($source->shipper_name ?? ''), $run->normalized_names, true))));
+                && ($run->reapply_all || $shipment->sources->contains(fn ($source): bool => in_array(JneShipperAlias::normalize($source->shipper_name ?? ''), $run->normalized_names, true)
+                    || in_array(explode(' ', JneShipperAlias::normalize($source->shipper_name ?? ''), 2)[0], $suffixCodes, true))));
             $candidates = $matcher->candidates($affected->map->latestSource->unique('id')->values());
             foreach ($affected as $shipment) {
                 $matcher->automatic($shipment, $shipment->latestSource, $candidates);

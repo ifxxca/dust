@@ -52,6 +52,9 @@ import {
     type ProofDraft,
 } from './proof-draft';
 import type { Session, Task, Proof } from './types';
+import CashlessProofInput from '@/components/cashless-proof-input';
+import { prepareCashlessAwb } from '@/lib/cashless-handover';
+import CashlessCameraScanner from './cashless-camera-scanner';
 
 export default function ProofPanel({
     task,
@@ -98,12 +101,36 @@ export default function ProofPanel({
     const [saved, setSaved] = useState(false);
     const savedRef = useRef(false);
     const [busy, setBusy] = useState(false);
+    const [cashlessCamera, setCashlessCamera] = useState(false);
+    async function addCashless(raw: string) {
+        const value = current.current;
+        if (!value || value.state !== 'EDITING' || active.current)
+            return { error: 'Draft belum dapat diubah.' };
+        const result = prepareCashlessAwb(raw, value.cashlessAwbs ?? [], []);
+        if (result.error || !result.awb) return result;
+        setFieldErrors({});
+        setMessage('');
+        const awbs = [...(value.cashlessAwbs ?? []), result.awb];
+        await persist({
+            ...value,
+            cashlessAwbs: awbs,
+            quantities: {
+                ...value.quantities,
+                cashless_hybrid: String(awbs.length),
+            },
+            updatedAt: new Date().toISOString(),
+        });
+        return result;
+    }
     const active = useRef(false);
     const [message, setMessage] = useState('');
     const [signature, setSignature] = useState<string | null>(null);
     const [signatureValid, setSignatureValid] = useState(false);
     const [signatureUnsaved, setSignatureUnsaved] = useState(false);
     const signaturePending = useRef(false);
+    const editTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+        undefined,
+    );
     const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>(
         {},
     );
@@ -120,9 +147,9 @@ export default function ProofPanel({
     const controller = useRef(new AbortController());
     const name = `pop-${taskId}`;
     useEffect(() => {
-        onBusyChange(busy);
+        onBusyChange(busy || cashlessCamera);
         return () => onBusyChange(false);
-    }, [busy, onBusyChange]);
+    }, [busy, cashlessCamera, onBusyChange]);
     useEffect(() => {
         onPendingChange(
             loading || localBlocked || (!!draft && draft.state !== 'CONFIRMED'),
@@ -148,6 +175,8 @@ export default function ProofPanel({
         void persist(newProofDraft(task)).catch(() => undefined);
     }, [loading, localBlocked, draft, task, enabled, name, session.user.id]);
     async function persist(next: ProofDraft) {
+        clearTimeout(editTimer.current);
+        editTimer.current = undefined;
         current.current = next;
         setDraft(next);
         setSaved(false);
@@ -174,11 +203,23 @@ export default function ProofPanel({
         const value = current.current;
         if (!value || value.state !== 'EDITING' || active.current) return;
         setMessage('');
-        void persist({
+        const next = {
             ...value,
             ...patch,
             updatedAt: new Date().toISOString(),
-        }).catch(() => undefined);
+        };
+        if (patch.quantities || patch.notes !== undefined) {
+            current.current = next;
+            setDraft(next);
+            savedRef.current = false;
+            setSaved(false);
+            clearTimeout(editTimer.current);
+            editTimer.current = setTimeout(() => {
+                void persist(current.current!).catch(() => undefined);
+            }, 250);
+        } else {
+            void persist(next).catch(() => undefined);
+        }
     }
     useEffect(() => {
         onReviewChange(draft?.step === 3);
@@ -318,6 +359,8 @@ export default function ProofPanel({
         setDraft(null);
         setSignature(null);
         setSignatureValid(false);
+        signaturePending.current = false;
+        setSignatureUnsaved(false);
     }
     async function completeCapture(uri: string, value: ProofDraft) {
         if (!value.pendingCapture || value.state !== 'EDITING')
@@ -513,40 +556,76 @@ export default function ProofPanel({
             setBusy(false);
         }
     }
-    async function changeSignature(value: string | null) {
-        const before = current.current;
-        if (!before || before.state !== 'EDITING' || active.current) return;
-        active.current = true;
-        setBusy(true);
-        setSignature(value);
-        setSignatureValid(false);
+    function beginSignature() {
         signaturePending.current = true;
         setSignatureUnsaved(true);
+        setSignatureValid(false);
+    }
+    function changeSignature(value: string | null) {
+        const before = current.current;
+        if (!before || before.state !== 'EDITING' || active.current) return;
+        setSignature(value);
+        setSignatureValid(!!value);
+        signaturePending.current = true;
+        setSignatureUnsaved(true);
+        setMessage('');
+    }
+    async function reviewProof() {
+        const before = current.current;
+        if (
+            !before ||
+            before.state !== 'EDITING' ||
+            active.current ||
+            !signature
+        )
+            return;
+        active.current = true;
+        setBusy(true);
+        setMessage('');
+        clearTimeout(editTimer.current);
+        editTimer.current = undefined;
+        let stored: LocalEvidence | null = null;
         try {
-            if (value && !(await signatureHasInk(value)))
+            await queue.current;
+            if (!(await signatureHasInk(signature)))
                 throw new Error(
                     'Tanda tangan kosong. Gambar ulang sebelum mengirim POP.',
                 );
-            const stored = value
-                ? await persistSignature(
-                      session,
-                      `evidence-${before.id}-${crypto.randomUUID()}`,
-                      value,
-                  )
-                : null;
-            await persist({
+            stored =
+                signatureUnsaved || !before.signature
+                    ? await persistSignature(
+                          session,
+                          `evidence-${before.id}-${crypto.randomUUID()}`,
+                          signature,
+                      )
+                    : before.signature;
+            const next: ProofDraft = {
                 ...before,
                 signature: stored,
+                step: 3,
                 updatedAt: new Date().toISOString(),
-            });
+            };
+            draftPayload(next);
+            const job = writeLocal(session, name, next);
+            queue.current = job.catch(() => undefined);
+            await job;
+            current.current = next;
+            setDraft(next);
+            savedRef.current = true;
+            setSaved(true);
             signaturePending.current = false;
-            setSignatureValid(!!value);
+            setSignatureValid(true);
             setSignatureUnsaved(false);
-            if (before.signature)
-                await removeLocal(session, before.signature.name);
+            if (before.signature && stored.name !== before.signature.name)
+                await removeLocal(session, before.signature.name).catch(
+                    () => undefined,
+                );
         } catch {
+            if (stored && stored.name !== before.signature?.name) {
+                await removeLocal(session, stored.name).catch(() => undefined);
+            }
             setMessage(
-                'Tanda tangan belum tersimpan atau belum berisi goresan. Gambar ulang atau simpan ulang sebelum mengirim.',
+                'Tanda tangan belum dapat disimpan. Goresan tetap tersedia; tekan Review POP untuk mencoba lagi.',
             );
             savedRef.current = false;
             setSaved(false);
@@ -555,6 +634,23 @@ export default function ProofPanel({
             setBusy(false);
         }
     }
+    useEffect(() => {
+        const flush = () => {
+            if (editTimer.current !== undefined && current.current) {
+                void persist(current.current).catch(() => undefined);
+            }
+        };
+        const background = () => {
+            if (document.visibilityState === 'hidden') flush();
+        };
+        window.addEventListener('pagehide', flush);
+        document.addEventListener('visibilitychange', background);
+        return () => {
+            window.removeEventListener('pagehide', flush);
+            document.removeEventListener('visibilitychange', background);
+            flush();
+        };
+    }, [name, session.environment, session.user.id]);
     async function reconcile(value: ProofDraft): Promise<boolean> {
         const committed = await request<{
             data: { resource_id: number; task_id: number };
@@ -645,8 +741,13 @@ export default function ProofPanel({
             sending = { ...value, attempt, state: 'SENDING' };
             await persist(sending);
             const form = new FormData();
-            for (const [key, item] of Object.entries(attempt))
-                form.append(key, String(item));
+            for (const [key, item] of Object.entries(attempt)) {
+                if (Array.isArray(item))
+                    item.forEach((awb, index) =>
+                        form.append(`${key}[${index}]`, awb),
+                    );
+                else form.append(key, String(item));
+            }
             for (const [index, image] of value.photos.entries()) {
                 const blob = await evidenceBlob(session, image);
                 form.append(
@@ -734,7 +835,9 @@ export default function ProofPanel({
         !!draft &&
         Object.values(draft.quantities).every(
             (value) => !packageQuantityError(value),
-        );
+        ) &&
+        Number(draft.quantities.cashless_hybrid) ===
+            (draft.cashlessAwbs?.length ?? 0);
     const totalPackages = draft
         ? Object.values(draft.quantities).reduce(
               (sum, value) => sum + Number(value),
@@ -761,6 +864,14 @@ export default function ProofPanel({
         return null;
     return (
         <section ref={panel} className="space-y-4 pb-3" aria-label="Draft POP">
+            {cashlessCamera && (
+                <CashlessCameraScanner
+                    title={draft?.taskReference ?? 'Pickup'}
+                    count={draft?.cashlessAwbs?.length ?? 0}
+                    onScan={addCashless}
+                    onClose={() => setCashlessCamera(false)}
+                />
+            )}
             <h3 className="text-lg font-semibold">
                 {draft?.step === 3 ? 'Review POP' : 'Bukti Pickup (POP)'}
             </h3>
@@ -805,30 +916,46 @@ export default function ProofPanel({
                 )
             ) : (
                 <>
-                    <OperationalFeedback
-                        {...proofDraftStatus(draft, saved && !signatureUnsaved)}
-                        tone={
-                            message
-                                ? draft.state === 'UNCERTAIN'
-                                    ? 'warning'
-                                    : 'error'
-                                : proofDraftStatus(
-                                      draft,
-                                      saved && !signatureUnsaved,
-                                  ).tone
-                        }
-                    >
-                        {message ||
-                            (draft.state === 'UNCERTAIN'
-                                ? 'Data dan bukti tetap tersimpan. Periksa hasil POP sebelum mengirim ulang.'
-                                : draft.state === 'SENDING'
-                                  ? 'Tunggu sebentar. Jangan tutup aplikasi saat mengirim.'
-                                  : draft.state === 'BLOCKED'
-                                    ? 'Tugas sudah berubah atau akses tidak tersedia. Periksa detail tugas; draft tetap disimpan.'
-                                    : !saved || signatureUnsaved
-                                      ? 'Simpan ulang sebelum melanjutkan.'
-                                      : undefined)}
-                    </OperationalFeedback>
+                    {draft.state === 'EDITING' && !message ? (
+                        <p
+                            className="min-h-6 text-sm text-muted-foreground"
+                            aria-live="polite"
+                        >
+                            {signatureUnsaved
+                                ? 'Tanda tangan belum disimpan · tekan Review POP'
+                                : saved
+                                  ? 'Tersimpan di perangkat'
+                                  : 'Menyimpan draft…'}
+                        </p>
+                    ) : (
+                        <OperationalFeedback
+                            {...proofDraftStatus(
+                                draft,
+                                saved && !signatureUnsaved,
+                            )}
+                            tone={
+                                message
+                                    ? draft.state === 'UNCERTAIN'
+                                        ? 'warning'
+                                        : 'error'
+                                    : proofDraftStatus(
+                                          draft,
+                                          saved && !signatureUnsaved,
+                                      ).tone
+                            }
+                        >
+                            {message ||
+                                (draft.state === 'UNCERTAIN'
+                                    ? 'Data dan bukti tetap tersimpan. Periksa hasil POP sebelum mengirim ulang.'
+                                    : draft.state === 'SENDING'
+                                      ? 'Tunggu sebentar. Jangan tutup aplikasi saat mengirim.'
+                                      : draft.state === 'BLOCKED'
+                                        ? 'Tugas sudah berubah atau akses tidak tersedia. Periksa detail tugas; draft tetap disimpan.'
+                                        : !saved || signatureUnsaved
+                                          ? 'Simpan ulang sebelum melanjutkan.'
+                                          : undefined)}
+                        </OperationalFeedback>
+                    )}
                     {Date.now() - Date.parse(draft.updatedAt) >
                         7 * 86400000 && (
                         <p>
@@ -866,18 +993,23 @@ export default function ProofPanel({
                                             type="button"
                                             disabled={
                                                 locked ||
-                                                signatureUnsaved ||
+                                                (signatureUnsaved &&
+                                                    index !== 3) ||
                                                 (index > 0 &&
                                                     !(
                                                         quantitiesValid &&
                                                         totalPackages > 0
                                                     )) ||
                                                 (index === 3 &&
-                                                    (!validPayload ||
-                                                        !saved)) ||
+                                                    (!signature ||
+                                                        !signatureValid)) ||
                                                 !!draft.pendingCapture
                                             }
-                                            onClick={() =>
+                                            onClick={() => {
+                                                if (index === 3) {
+                                                    void reviewProof();
+                                                    return;
+                                                }
                                                 edit(
                                                     index === 0
                                                         ? { step: 1 }
@@ -890,8 +1022,8 @@ export default function ProofPanel({
                                                                         ? 'photos'
                                                                         : 'signature',
                                                             },
-                                                )
-                                            }
+                                                );
+                                            }}
                                         >
                                             <span>{label}</span>
                                             <small>
@@ -924,52 +1056,99 @@ export default function ProofPanel({
                                             ],
                                             ['css_orion', 'CSS / Orion'],
                                         ] as const
-                                    ).map(([key, label]) => (
-                                        <QuantityControl
-                                            key={key}
-                                            name={key}
-                                            label={label}
-                                            value={draft.quantities[key]}
-                                            disabled={locked}
-                                            error={
-                                                packageQuantityError(
-                                                    draft.quantities[key],
-                                                ) || fieldErrors[key]?.join(' ')
-                                            }
-                                            onChange={(value) =>
-                                                edit({
-                                                    quantities: {
-                                                        ...current.current!
-                                                            .quantities,
-                                                        [key]: value,
-                                                    },
-                                                })
-                                            }
-                                            onAdjust={(delta) => {
-                                                const quantities =
-                                                    current.current!.quantities;
-                                                const value = Number(
-                                                    quantities[key],
-                                                );
-                                                if (
-                                                    packageQuantityError(
-                                                        quantities[key],
+                                    ).map(([key, label]) =>
+                                        key === 'cashless_hybrid' ? (
+                                            <CashlessProofInput
+                                                key={key}
+                                                awbs={draft.cashlessAwbs ?? []}
+                                                savedAwbs={task?.cashless_awbs}
+                                                disabled={locked}
+                                                error={
+                                                    fieldErrors.cashless_awbs?.join(
+                                                        ' ',
                                                     ) ||
-                                                    value + delta < 0 ||
-                                                    value + delta > 1000000
-                                                )
-                                                    return;
-                                                edit({
-                                                    quantities: {
-                                                        ...quantities,
-                                                        [key]: String(
-                                                            value + delta,
-                                                        ),
-                                                    },
-                                                });
-                                            }}
-                                        />
-                                    ))}
+                                                    (Number(
+                                                        draft.quantities
+                                                            .cashless_hybrid,
+                                                    ) !==
+                                                    (draft.cashlessAwbs
+                                                        ?.length ?? 0)
+                                                        ? 'Draft lama: catat setiap resi Cashless sebelum melanjutkan.'
+                                                        : undefined)
+                                                }
+                                                onAdd={addCashless}
+                                                onCamera={() =>
+                                                    setCashlessCamera(true)
+                                                }
+                                                onRemove={(awb) => {
+                                                    const value =
+                                                        current.current!;
+                                                    const awbs = (
+                                                        value.cashlessAwbs ?? []
+                                                    ).filter(
+                                                        (item) => item !== awb,
+                                                    );
+                                                    edit({
+                                                        cashlessAwbs: awbs,
+                                                        quantities: {
+                                                            ...value.quantities,
+                                                            cashless_hybrid:
+                                                                String(
+                                                                    awbs.length,
+                                                                ),
+                                                        },
+                                                    });
+                                                }}
+                                            />
+                                        ) : (
+                                            <QuantityControl
+                                                key={key}
+                                                name={key}
+                                                label={label}
+                                                value={draft.quantities[key]}
+                                                disabled={locked}
+                                                error={
+                                                    packageQuantityError(
+                                                        draft.quantities[key],
+                                                    ) ||
+                                                    fieldErrors[key]?.join(' ')
+                                                }
+                                                onChange={(value) =>
+                                                    edit({
+                                                        quantities: {
+                                                            ...current.current!
+                                                                .quantities,
+                                                            [key]: value,
+                                                        },
+                                                    })
+                                                }
+                                                onAdjust={(delta) => {
+                                                    const quantities =
+                                                        current.current!
+                                                            .quantities;
+                                                    const value = Number(
+                                                        quantities[key],
+                                                    );
+                                                    if (
+                                                        packageQuantityError(
+                                                            quantities[key],
+                                                        ) ||
+                                                        value + delta < 0 ||
+                                                        value + delta > 1000000
+                                                    )
+                                                        return;
+                                                    edit({
+                                                        quantities: {
+                                                            ...quantities,
+                                                            [key]: String(
+                                                                value + delta,
+                                                            ),
+                                                        },
+                                                    });
+                                                }}
+                                            />
+                                        ),
+                                    )}
                                     <div className="quantity-total">
                                         <span>Total paket</span>
                                         <strong>
@@ -1132,8 +1311,9 @@ export default function ProofPanel({
                                         </p>
                                         <SignaturePad
                                             value={signature}
+                                            onDrawingStart={beginSignature}
                                             onChange={(value) =>
-                                                void changeSignature(value)
+                                                changeSignature(value)
                                             }
                                             disabled={locked}
                                         />
@@ -1171,14 +1351,16 @@ export default function ProofPanel({
                                             className="h-12 w-full"
                                             disabled={
                                                 locked ||
-                                                !draft.signature ||
+                                                !signature ||
                                                 !signatureValid ||
-                                                !saved ||
-                                                signatureUnsaved
+                                                !quantitiesValid ||
+                                                totalPackages <= 0
                                             }
-                                            onClick={() => edit({ step: 3 })}
+                                            onClick={() => void reviewProof()}
                                         >
-                                            Review POP
+                                            {busy
+                                                ? 'Menyimpan POP…'
+                                                : 'Review POP'}
                                         </Button>
                                     </>
                                 )}
@@ -1289,16 +1471,15 @@ export default function ProofPanel({
                                     </Button>
                                 </>
                             )}
-                            {(!saved || signatureUnsaved) && (
+                            {message && !saved && !signatureUnsaved && (
                                 <Button
                                     disabled={busy}
-                                    onClick={() =>
-                                        void (
-                                            signaturePending.current
-                                                ? changeSignature(signature)
-                                                : persist(current.current!)
-                                        ).catch(() => undefined)
-                                    }
+                                    onClick={() => {
+                                        setMessage('');
+                                        void persist(current.current!).catch(
+                                            () => undefined,
+                                        );
+                                    }}
                                 >
                                     Simpan Ulang Draft
                                 </Button>
@@ -1410,6 +1591,8 @@ export default function ProofPanel({
                                         active.current = true;
                                         setBusy(true);
                                         initialized.current = name;
+                                        clearTimeout(editTimer.current);
+                                        editTimer.current = undefined;
                                         void queue.current
                                             .then(() => cleanup(draft))
                                             .then(() => {

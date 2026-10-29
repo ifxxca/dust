@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { RecordedValues } from '@/components/operational-change';
+import CashlessProofInput from '@/components/cashless-proof-input';
+import { prepareCashlessAwb } from '@/lib/cashless-handover';
 
 export type Proof = {
     id: number;
@@ -57,6 +59,7 @@ export default function PickupProof({
     onSaved,
     timezone,
     customerName,
+    initialCashlessAwbs = [],
 }: {
     taskId: number;
     version: number;
@@ -65,6 +68,7 @@ export default function PickupProof({
     onSaved: () => void;
     timezone: string;
     customerName: string;
+    initialCashlessAwbs?: string[];
 }) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const drawing = useRef(false);
@@ -76,7 +80,9 @@ export default function PickupProof({
         expected_version: version,
         submission_key: submissionKey(),
         manual_hybrid: 0,
-        cashless_hybrid: 0,
+        cashless_hybrid: initialCashlessAwbs.length,
+        cashless_capture: 1,
+        cashless_awbs: [...initialCashlessAwbs],
         css_orion: 0,
         notes: '',
         photos: [] as File[],
@@ -277,30 +283,69 @@ export default function PickupProof({
                         }, 'image/png');
                     }}
                 >
-                    {categories.map(([key, label]) => (
-                        <div key={key} className="space-y-2">
-                            <Label htmlFor={key}>{label}</Label>
-                            <Input
-                                id={key}
-                                type="number"
-                                min="0"
-                                max="1000000"
-                                required
-                                value={form.data[key]}
-                                onChange={(event) =>
-                                    form.setData(
-                                        key,
-                                        Number(event.target.value),
-                                    )
-                                }
+                    {categories.map(([key, label]) =>
+                        key === 'cashless_hybrid' ? (
+                            <CashlessProofInput
+                                key={key}
+                                awbs={form.data.cashless_awbs}
+                                savedAwbs={initialCashlessAwbs}
+                                disabled={form.processing}
+                                error={form.errors.cashless_awbs}
+                                onAdd={async (raw) => {
+                                    const result = prepareCashlessAwb(
+                                        raw,
+                                        form.data.cashless_awbs,
+                                        [],
+                                    );
+                                    if (result.awb) {
+                                        const awbs = [
+                                            ...form.data.cashless_awbs,
+                                            result.awb,
+                                        ];
+                                        form.setData({
+                                            ...form.data,
+                                            cashless_awbs: awbs,
+                                            cashless_hybrid: awbs.length,
+                                        });
+                                    }
+                                    return result;
+                                }}
+                                onRemove={(awb) => {
+                                    const awbs = form.data.cashless_awbs.filter(
+                                        (item) => item !== awb,
+                                    );
+                                    form.setData({
+                                        ...form.data,
+                                        cashless_awbs: awbs,
+                                        cashless_hybrid: awbs.length,
+                                    });
+                                }}
                             />
-                            {form.errors[key] && (
-                                <p className="text-sm text-destructive">
-                                    {form.errors[key]}
-                                </p>
-                            )}
-                        </div>
-                    ))}
+                        ) : (
+                            <div key={key} className="space-y-2">
+                                <Label htmlFor={key}>{label}</Label>
+                                <Input
+                                    id={key}
+                                    type="number"
+                                    min="0"
+                                    max="1000000"
+                                    required
+                                    value={form.data[key]}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            key,
+                                            Number(event.target.value),
+                                        )
+                                    }
+                                />
+                                {form.errors[key] && (
+                                    <p className="text-sm text-destructive">
+                                        {form.errors[key]}
+                                    </p>
+                                )}
+                            </div>
+                        ),
+                    )}
                     <p>
                         Total paket:{' '}
                         <strong>

@@ -172,6 +172,25 @@ test('tap accepts only validated assignment identifiers', () => {
     ).toBeNull();
 });
 
+test('cashless taps validate all identifiers and retain the batch destination', () => {
+    const data = {
+        type: 'cashless_entry_attention',
+        task_id: '12',
+        recipient_id: '7',
+        event_id: '13',
+        batch_id: '14',
+    };
+    expect(assignmentLink(data)).toEqual({
+        taskId: 12,
+        recipientId: 7,
+        eventId: 13,
+        batchId: 14,
+    });
+    for (const batch_id of ['0', '../task', '9007199254740993', undefined]) {
+        expect(assignmentLink({ ...data, batch_id })).toBeNull();
+    }
+});
+
 test('registration and refresh send FCM token with current session and installation only', async () => {
     const signal = new AbortController().signal;
     const dispose = await listenPush(

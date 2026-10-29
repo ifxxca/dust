@@ -12,8 +12,17 @@ class ReadJneSourceEvidence
     {
         $contract = config('jne-reports.evidence_policies_enabled') ? JneSourceContract::where('active_key', JneSourceContract::key($job->source, $job->report_type))->whereNotNull('verified_at')->first() : null;
         $origins = [];
-        foreach (ReportJob::where('hybrid_batch_id', $job->id)->where('status', 'SOURCE_SAVED')->get() as $child) {
+        $children = ReportJob::where('status', 'SOURCE_SAVED')->whereIn('source', ['roberto', 'nuralamt']);
+        $bulkAwbs = config('jne-reports.category_markers_enabled') && $job->source === 'apex' && $job->report_mode === 'A'
+            ? array_fill_keys(array_map(fn (string $awb): string => 'awb:'.$awb, $job->parameters['awbs'] ?? []), true) : null;
+        if ($bulkAwbs === null) {
+            $children->where('hybrid_batch_id', $job->id);
+        }
+        foreach ($children->orderBy('id')->lazyById(100) as $child) {
             foreach ($child->parameters['awbs'] ?? [] as $awb) {
+                if ($bulkAwbs !== null && ! isset($bulkAwbs['awb:'.$awb])) {
+                    continue;
+                }
                 $origins['awb:'.$awb][] = ['report_job_id' => $child->id, 'source' => $child->source, 'report_type' => $child->report_type, 'checksum' => $child->source_file_checksum];
             }
         }

@@ -3,11 +3,13 @@
 use App\Actions\Reports\ExtractJneAwbMetrics;
 use App\Actions\Reports\ImportReportAwbs;
 use App\Actions\Reports\ResolveJneDestinationNames;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Customer;
 use App\Models\JneReportAwb;
 use App\Models\JneShipment;
 use App\Models\ReportJob;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -41,7 +43,7 @@ test('customer dashboard counts latest shipments once and uses local entry dates
         ->assertInertia(fn (Assert $page) => $page->component('jne-customer-dashboard')
             ->where('summary.shipments', 2)->where('summary.amount', 30000.75)->where('summary.average_amount', 15000.38)
             ->where('summary.weight_kg', 3.5)->where('summary.delivered', 1)->where('summary.active', 1)->where('summary.undated', 1)
-            ->where('daily.0.date', '2026-10-22')->where('daily.0.shipments', 2)->where('daily.0.amount', 30000.75)
+            ->where('daily.0.date', '2026-10-22')->where('daily.0.shipments', 2)->where('daily.0.delivered', 1)->where('daily.0.amount', 30000.75)
             ->where('destinations.0.shipments', 2)->has('services', 2)->has('shipments.data', 2)
             ->where('selectedCustomer.id', $customer->id)->missing('shipments.data.0.raw_data'));
 });
@@ -66,6 +68,26 @@ test('empty dashboard has a complete zero filled calendar and honest unavailable
         ->get(route('jne-monitoring.customer-dashboard', ['date_from' => '2026-10-22', 'date_thru' => '2026-10-23']))
         ->assertInertia(fn (Assert $page) => $page->where('summary.shipments', 0)->where('summary.amount', null)
             ->has('daily', 2)->where('daily.0.shipments', 0)->where('daily.1.shipments', 0)->has('shipments.data', 0));
+});
+
+test('dashboard pagination returns only filtered shipment rows without recalculating charts and summary', function () {
+    $customer = Customer::factory()->create();
+    for ($index = 0; $index < 26; $index++) {
+        dashboardShipment($customer);
+    }
+    dashboardShipment(Customer::factory()->create());
+    $this->actingAs(User::factory()->create(['role' => 'admin_supervisor']));
+    $queries = [];
+    DB::listen(function ($query) use (&$queries): void {
+        $queries[] = strtolower($query->sql);
+    });
+
+    $this->get(route('jne-monitoring.customer-dashboard', ['customer_id' => $customer->id, 'date_from' => '2026-10-22', 'date_thru' => '2026-10-22', 'page' => 2]), [
+        'X-Inertia' => 'true', 'X-Inertia-Version' => app(HandleInertiaRequests::class)->version(request()), 'X-Inertia-Partial-Component' => 'jne-customer-dashboard', 'X-Inertia-Partial-Data' => 'shipments',
+    ])->assertOk()->assertJsonPath('props.shipments.current_page', 2)->assertJsonPath('props.shipments.total', 26)
+        ->assertJsonCount(1, 'props.shipments.data')->assertJsonMissingPath('props.summary')->assertJsonMissingPath('props.daily')->assertJsonMissingPath('props.services');
+
+    expect(array_filter($queries, fn (string $sql): bool => str_contains($sql, 'group by')))->toBe([]);
 });
 
 test('dashboard requires an active admin and validates its customer and bounded date range', function () {

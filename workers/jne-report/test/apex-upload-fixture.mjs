@@ -28,6 +28,11 @@ export async function apexUploadFixture(options = {}) {
                 headers: { 'Content-Type': request.headers['content-type'] },
             }).formData();
             const file = form.get('file');
+            if (options.rejectForm) {
+                return send(
+                    hidden + '<div class="a-Form-error">Upload rejected</div>',
+                );
+            }
             const awbs = (await file.text()).trim().split(/\r?\n/);
             state.uploads.push({
                 name: file.name,
@@ -64,7 +69,11 @@ export async function apexUploadFixture(options = {}) {
         if ((url.searchParams.get('p') || '').split(':')[1] === '45')
             return send(
                 hidden +
-                    '<form action="/process" method="post" enctype="multipart/form-data"><label>Type<select id="P45_PARAM_TYPE" name="mode"><option value="A">Upload Connote</option><option value="P">Input Parameter</option></select></label><label>File<input type="file" id="P45_BLOB_CONTENT" name="file" required></label><button>Process</button></form>',
+                    '<form action="/process" method="post" enctype="multipart/form-data"><label>Type<select id="P45_PARAM_TYPE" name="mode"><option value="A">Upload Connote</option><option value="P">Input Parameter</option></select></label><label>File<input type="file" id="P45_BLOB_CONTENT" name="file" required></label>' +
+                    (options.delayedSubmission
+                        ? '<button type="button" onclick="setTimeout(()=>this.form.requestSubmit(),300)">Process</button>'
+                        : '<button>Process</button>') +
+                    '</form>',
             );
         const columns = [
             'FILENAME',

@@ -10,6 +10,7 @@ import { ReportError } from './errors.mjs';
 import { WorkerApi } from './api.mjs';
 import { randomUUID } from 'node:crypto';
 import { runHybridReportJob } from './hybrid-jobs.mjs';
+import { runCashlessEntry } from './cashless-entry.mjs';
 
 function servicePaths(config) {
     const directory = path.resolve(
@@ -173,6 +174,7 @@ export async function startHybridService(config, emit = () => {}) {
                 service: 'hybrid',
                 sources: [...slots.keys()],
                 browsers: slots.size,
+                cashless_entry: Boolean(config.cashlessEntryEnabled),
             };
         }
         if (
@@ -302,6 +304,9 @@ export async function startHybridService(config, emit = () => {}) {
                 }
                 slot.polling = (async () => {
                     try {
+                        if (config.cashlessEntryEnabled) {
+                            await runCashlessEntry(slot.client, config, source, emit);
+                        }
                         const job = await slot.api.claim(randomUUID());
                         if (job) {
                             await runHybridReportJob(
@@ -424,6 +429,7 @@ export async function startHybridService(config, emit = () => {}) {
             keep_alive_seconds: (config.keepAliveInterval || 300000) / 1000,
             daily_login: '00:30 WIB',
             laravel_queue: Boolean(config.api),
+            cashless_entry: Boolean(config.cashlessEntryEnabled),
         });
         return { close, maintain, execute };
     } catch (error) {

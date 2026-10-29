@@ -1023,12 +1023,7 @@ export default function Operations({
                             </>
                         )}
                     </div>
-                    {operationalWorkspace && (
-                        <PickupSummaryCards
-                            summary={loader.response?.summary}
-                            loading={loader.processing}
-                        />
-                    )}
+
                     {operationalWorkspace && assignmentSelection.length > 0 && (
                         <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-card p-4">
                             <div className="mr-auto text-sm">
@@ -1163,6 +1158,12 @@ export default function Operations({
                                 setSelectedTask(row);
                                 setModal('takeover');
                             }}
+                        />
+                    )}
+                    {operationalWorkspace && (
+                        <PickupSummaryCards
+                            summary={loader.response?.summary}
+                            loading={loader.processing}
                         />
                     )}
                     {!operationalWorkspace && (
@@ -1741,13 +1742,21 @@ export default function Operations({
                     )}
                     {modal === 'takeover' && task && (
                         <Editor
-                            title="Ambil Alih Task"
-                            description={`Ambil alih pickup ${task.customer.name} dari ${task.assigned_staff?.name ?? 'petugas sebelumnya'}? Setelah berhasil, task menjadi tanggung jawab Anda dan petugas lama kehilangan kepemilikan. Tidak diperlukan approval CS.`}
+                            title={
+                                task.assigned_staff
+                                    ? 'Ambil Alih Task'
+                                    : 'Ambil Tugas'
+                            }
+                            description={
+                                task.assigned_staff
+                                    ? `Ambil alih pickup ${task.customer.name} dari ${task.assigned_staff.name}? Setelah berhasil, task menjadi tanggung jawab Anda dan petugas lama kehilangan kepemilikan. Tidak diperlukan approval CS.`
+                                    : `Ambil pickup ${task.customer.name}? Tugas ini akan menjadi tanggung jawab Anda.`
+                            }
                             url={taskApi.takeover.url(task.id)}
                             initial={{
                                 expected_version: task.version,
                                 expected_assigned_staff_id:
-                                    task.assigned_staff?.id ?? 0,
+                                    task.assigned_staff?.id ?? '',
                                 reason: '',
                             }}
                             fields={[

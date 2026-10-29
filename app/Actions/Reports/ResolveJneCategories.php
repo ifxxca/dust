@@ -19,27 +19,42 @@ class ResolveJneCategories
         return config('jne-reports.evidence_policies_enabled') && config('jne-reports.category_reconciliation_enabled');
     }
 
+    public static function markersEnabled(): bool
+    {
+        return self::enabled() || config('jne-reports.category_markers_enabled');
+    }
+
     /** @param Collection<int, JneShipment> $shipments */
     public function handle(Collection $shipments): void
     {
-        if (! self::enabled() || $shipments->isEmpty()) {
+        if (! self::markersEnabled() || $shipments->isEmpty()) {
             return;
         }
         $sources = JneReportAwb::whereIn('awb', $shipments->pluck('awb'))->orderBy('id')->get();
         $jobs = ReportJob::whereIn('id', $sources->pluck('report_job_id'))->get()->keyBy('id');
-        $children = ReportJob::whereIn('hybrid_batch_id', $jobs->modelKeys())->where('status', 'SOURCE_SAVED')->get()->groupBy('hybrid_batch_id');
+        $children = ReportJob::whereIn('hybrid_batch_id', $jobs->modelKeys())->where('status', 'SOURCE_SAVED')->orderBy('id')->get();
+        $originsByJob = [];
+        foreach ($children as $child) {
+            foreach ($child->parameters['awbs'] ?? [] as $awb) {
+                $originsByJob[$child->hybrid_batch_id]['awb:'.$awb][] = ['report_job_id' => $child->id, 'source' => $child->source, 'report_type' => $child->report_type, 'checksum' => $child->source_file_checksum];
+            }
+        }
         $contracts = JneSourceContract::whereNotNull('active_key')->whereNotNull('verified_at')->get()->keyBy('active_key');
         $claims = PickupCashlessAwb::whereIn('awb', $shipments->pluck('awb'))->get()->keyBy('awb');
         $byAwb = $sources->groupBy('awb');
         foreach ($shipments as $shipment) {
             $evidence = [];
+            if (config('jne-reports.category_markers_enabled')) {
+                if (preg_match('/^(0101|0166)[0-9]+$/D', $shipment->awb, $prefix)) {
+                    $evidence[] = ['rule' => 'awb_prefix', 'prefix' => $prefix[1], 'category' => 'manual_hybrid'];
+                } elseif (preg_match('/^(CM|TG)[A-Z0-9_-]+$/D', mb_strtoupper($shipment->awb), $prefix)) {
+                    $evidence[] = ['rule' => 'awb_prefix', 'prefix' => $prefix[1], 'category' => 'cashless_hybrid'];
+                }
+            }
             foreach ($byAwb->get($shipment->awb, collect()) as $source) {
                 $job = $jobs->get($source->report_job_id);
                 $contract = $job ? $contracts->get(JneSourceContract::key($job->source, $job->report_type)) : null;
-                if (! $contract) {
-                    continue;
-                }
-                $column = $contract->definition['category_column'] ?? null;
+                $column = $contract?->definition['category_column'] ?? null;
                 $raw = is_string($column) ? ($source->raw_data[$column] ?? null) : null;
                 if (is_string($raw) && trim($raw) !== '') {
                     $category = null;
@@ -51,18 +66,25 @@ class ResolveJneCategories
                     $evidence[] = ['source_id' => $source->id, 'contract_id' => $contract->id, 'contract_revision' => $contract->revision, 'column' => $column, 'original_value' => $raw, 'category' => $category];
                 }
                 $origins = $source->source_evidence['hybrid_origins'] ?? [];
-                if ($origins === []) {
-                    foreach ($children->get($job->id, collect()) as $child) {
-                        if (in_array($source->awb, $child->parameters['awbs'] ?? [], true)) {
-                            $origins[] = ['report_job_id' => $child->id, 'source' => $child->source, 'report_type' => $child->report_type, 'checksum' => $child->source_file_checksum];
+                $origins = $origins !== [] ? $origins : ($originsByJob[$job?->id]['awb:'.$source->awb] ?? []);
+                foreach ($origins as $origin) {
+                    $key = $origin['source'].':'.$origin['report_type'];
+                    if ($category = $contract?->definition['hybrid_categories'][$key] ?? null) {
+                        $evidence[] = ['source_id' => $source->id, 'contract_id' => $contract->id, 'contract_revision' => $contract->revision, 'hybrid_origin' => $origin, 'category' => $category];
+                    }
+                    if (config('jne-reports.category_markers_enabled') && in_array($origin['source'], ['roberto', 'nuralamt'], true)) {
+                        $category = match ($origin['report_type']) {
+                            'manual' => 'manual_hybrid',
+                            'cashless' => 'cashless_hybrid',
+                            default => null,
+                        };
+                        if ($category !== null) {
+                            $evidence[] = ['rule' => 'hybrid_report_type', 'source_id' => $source->id, 'hybrid_origin' => $origin, 'category' => $category];
                         }
                     }
                 }
-                foreach ($origins as $origin) {
-                    $key = $origin['source'].':'.$origin['report_type'];
-                    if ($category = $contract->definition['hybrid_categories'][$key] ?? null) {
-                        $evidence[] = ['source_id' => $source->id, 'contract_id' => $contract->id, 'contract_revision' => $contract->revision, 'hybrid_origin' => $origin, 'category' => $category];
-                    }
+                if (config('jne-reports.category_markers_enabled') && $job?->source === 'apex' && $job->report_type === 'apex' && $job->report_mode === 'P') {
+                    $evidence[] = ['rule' => 'apex_customer_report', 'source_id' => $source->id, 'report_job_id' => $job->id, 'category' => 'css_orion'];
                 }
             }
             if ($claim = $claims->get($shipment->awb)) {
@@ -78,7 +100,7 @@ class ResolveJneCategories
                 $category = $shipment->category;
                 $status = 'CONFLICT';
             }
-            if ($shipment->category === $category && $shipment->category_status === $status && ($shipment->category_evidence ?? []) === $evidence) {
+            if ($shipment->category === $category && $shipment->category_status === $status && self::orderedObjectKeys($shipment->category_evidence ?? []) === self::orderedObjectKeys($evidence)) {
                 continue;
             }
             $before = ['category' => $shipment->category, 'status' => $shipment->category_status];
@@ -94,5 +116,25 @@ class ResolveJneCategories
     public static function fingerprint(array $evidence): string
     {
         return hash('sha256', json_encode($evidence, JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * JSON object key order may change in MySQL; list order and scalar types remain evidence.
+     *
+     * @param  array<array-key, mixed>  $value
+     * @return array<array-key, mixed>
+     */
+    private static function orderedObjectKeys(array $value): array
+    {
+        foreach ($value as $key => $item) {
+            if (is_array($item)) {
+                $value[$key] = self::orderedObjectKeys($item);
+            }
+        }
+        if (! array_is_list($value)) {
+            ksort($value);
+        }
+
+        return $value;
     }
 }

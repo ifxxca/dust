@@ -23,7 +23,7 @@ class EnsureMobileToken
         if ($request->routeIs('mobile.tasks.store', 'mobile.tasks.takeover', 'mobile.tasks.start', 'mobile.tasks.visit', 'mobile.tasks.retry', 'mobile.tasks.proof')) {
             abort_unless($user->role === 'pickup_staff' && $token->can('mobile:execute'), 403, 'Sesi belum memiliki akses execution. Logout online dan login ulang setelah pembaruan aplikasi.');
         }
-        if ($request->routeIs('mobile.handovers.store', 'mobile.handovers.amend', 'mobile.handovers.verify', 'mobile.handovers.close')) {
+        if ($request->routeIs('mobile.handovers.store', 'mobile.handovers.amend', 'mobile.handovers.verify', 'mobile.handovers.close', 'mobile.cashless-handover.store')) {
             abort_unless($token->can('mobile:handover'), 403, 'Sesi belum memiliki akses handover. Logout online dan login ulang setelah pembaruan aplikasi.');
         }
         if (! $request->routeIs('mobile.auth.destroy')) {

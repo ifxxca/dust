@@ -54,6 +54,7 @@ import { jneTimestamp } from '@/lib/jne-monitoring';
 import {
     reportLabel,
     runStatuses,
+    runStatusLabel,
     scrapingSources,
     sourceLabel,
 } from '@/lib/scraping';
@@ -442,6 +443,7 @@ export default function ReportRuns({
                                                 {profile.label ||
                                                     sourceLabel(
                                                         profile.source,
+                                                        profile.customer_account,
                                                     )}{' '}
                                                 ·{' '}
                                                 {reportLabel(
@@ -478,8 +480,8 @@ export default function ReportRuns({
                                 />
                                 <InputError message={manual.errors.for_date} />
                                 <p className="text-xs text-muted-foreground">
-                                    Keempat report pada tanggal ini digabung
-                                    sebelum dikirim ke APEX.
+                                    Cashless dan manual dari server yang dipilih
+                                    digabung sebelum dikirim ke APEX.
                                 </p>
                             </div>
                         )}
@@ -519,7 +521,7 @@ export default function ReportRuns({
                         <DialogTitle>Run #{selected?.id}</DialogTitle>
                         <DialogDescription>
                             {selected &&
-                                `${sourceLabel(selected.source)} · ${reportLabel(selected.report_type)} · ${selected.customer_account}`}
+                                `${sourceLabel(selected.source, selected.customer_account)} · ${reportLabel(selected.report_type)} · ${selected.customer_account}`}
                         </DialogDescription>
                     </DialogHeader>
                     {selected && (
@@ -647,8 +649,10 @@ export default function ReportRuns({
                                         className="flex flex-col gap-1"
                                     >
                                         <p className="text-sm font-medium">
-                                            {runStatuses[event.status] ||
-                                                event.status}
+                                            {runStatusLabel(
+                                                event.status,
+                                                selected.report_type,
+                                            )}
                                         </p>
                                         <time className="text-xs text-muted-foreground">
                                             {jneTimestamp(

@@ -2,12 +2,17 @@
 
 namespace App\Actions\Reports;
 
+use App\Actions\Pickup\AllocatePickupAwbBuckets;
+use App\Actions\Pickup\PickupAwbEligibility;
+use App\Actions\Pickup\PickupResultPeriod;
 use App\Models\Customer;
 use App\Models\JneReportAwb;
 use App\Models\JneShipment;
 use App\Models\JneShipmentMatchEvent;
 use App\Models\JneShipperAlias;
 use App\Models\PickupCashlessAwb;
+use App\Models\PickupPendingItem;
+use App\Models\PickupProcessingReconciliation;
 use App\Models\PickupProcessingRecord;
 use App\Models\PickupTask;
 use App\Models\User;
@@ -18,7 +23,16 @@ use Illuminate\Validation\ValidationException;
 
 class MatchJneShipments
 {
-    public function __construct(private ResolveJneCustomers $resolver, private SuggestJneCustomers $suggestions) {}
+    /** @var array<int, PickupTask> */
+    private array $allocationTasks = [];
+
+    /** @var array<int, bool> */
+    private array $allocationBlocks = [];
+
+    /** @var array<string, bool> */
+    private array $allocationExclusions = [];
+
+    public function __construct(private ResolveJneCustomers $resolver, private SuggestJneCustomers $suggestions, private MatchJnePickupDates $dates) {}
 
     /**
      * @param  Collection<int, JneReportAwb>  $sources
@@ -68,6 +82,7 @@ class MatchJneShipments
             }
             $resolved[$source->id] = $customer;
         }
+        $dateMatches = $this->dates->handle($history, $exact);
         $claims = PickupCashlessAwb::whereIn('awb', $sources->pluck('awb'))->get()->keyBy('awb');
         $customerIds = collect(array_column($resolved, 'customer_id'))->merge($claims->pluck('customer_id'))->filter()->unique()->values()->all();
         $references = $history->pluck('reference')->filter()->map(fn (string $reference): string => mb_strtoupper(trim($reference)))->unique()->values()->all();
@@ -126,7 +141,40 @@ class MatchJneShipments
                     }
                 }
             }
+            if ($pickupIds === [] && $customer['status'] === 'MATCHED' && isset($dateMatches[$source->id])) {
+                $date = $dateMatches[$source->id];
+                $pickupIds = $date['pickups'];
+                $customer['method'] = 'CUSTOMER_CODE_DATE';
+                $customer['evidence'] = [...$customer['evidence'], ...$date['evidence']];
+                if ($date['conflict']) {
+                    $customer['status'] = 'CONFLICT';
+                    $customer['note'] = 'Tanggal bisnis dari beberapa sumber bertentangan; periksa pickup asal.';
+                }
+            }
             $matches[$source->id] = [...$customer, 'pickups' => array_values(array_unique($pickupIds))];
+        }
+
+        $taskIds = collect($matches)->pluck('pickups')->flatten()->unique()->values()->all();
+        $taskQuery = PickupTask::whereIn('id', $taskIds)->with('proof')->orderBy('id');
+        if (DB::transactionLevel() > 0) {
+            $taskQuery->lockForUpdate();
+        }
+        $this->allocationTasks = $taskQuery->get()->keyBy('id')->all();
+        $this->allocationBlocks = array_fill_keys(PickupProcessingReconciliation::whereIn('pickup_task_id', $taskIds)->where(fn ($query) => $query->whereNotNull('locked_at')->orWhere('status', 'DONE')->orWhere('review_open', true))->pluck('pickup_task_id')->all(), true);
+        $pending = PickupPendingItem::whereIn('status', ['PENDING', 'READY'])->whereHas('pickup', fn ($query) => $query->whereIn('customer_id', collect($this->allocationTasks)->pluck('customer_id')))->with('pickup.proof')->get();
+        foreach ($this->allocationTasks as $task) {
+            foreach ($pending as $item) {
+                $origin = $item->pickup?->proof?->picked_up_at;
+                $pickupAt = $task->proof->picked_up_at ?? $task->execution_started_at;
+                if ($item->pickup?->customer_id === $task->customer_id && $origin && $pickupAt && PickupResultPeriod::date($origin)->lessThan(PickupResultPeriod::date($pickupAt))) {
+                    $this->allocationBlocks[$task->id] = true;
+                    break;
+                }
+            }
+        }
+        $this->allocationExclusions = [];
+        foreach (DB::table('pickup_awb_exclusions')->join('jne_shipments', 'jne_shipments.id', '=', 'jne_shipment_id')->whereIn('pickup_awb_exclusions.pickup_task_id', $taskIds)->whereIn('awb', $sources->pluck('awb'))->get(['pickup_awb_exclusions.pickup_task_id', 'awb']) as $exclusion) {
+            $this->allocationExclusions[$exclusion->pickup_task_id.':'.$exclusion->awb] = true;
         }
 
         return $matches;
@@ -161,18 +209,42 @@ class MatchJneShipments
             return;
         }
         $ids = $customer['pickups'];
+        $bucketAllocation = ($shipment->match_method === AllocatePickupAwbBuckets::METHOD || ($shipment->match_method === 'CUSTOMER_CODE_DATE' && count($ids) > 1)) && $customer['status'] === 'MATCHED'
+            && $customer['method'] === 'CUSTOMER_CODE_DATE' && $customer['customer_id'] === $shipment->customer_id
+            && in_array($shipment->pickup_task_id, $ids, true);
+        if ($bucketAllocation) {
+            $ids = [$shipment->pickup_task_id];
+        }
         $status = in_array($customer['status'], ['AMBIGUOUS', 'CONFLICT'], true) ? $customer['status'] : (count($ids) === 1 ? 'MATCHED' : (count($ids) > 1 ? 'AMBIGUOUS' : 'UNMATCHED'));
         $taskId = count($ids) === 1 ? $ids[0] : null;
         if ($customer['method'] === 'SERTIM' && count($ids) > 1) {
             $status = 'CONFLICT';
         }
-        $note = $status === 'MATCHED' ? ($customer['method'] === 'SERTIM' ? 'AWB sesuai bukti Sertim Cashless untuk customer dan pickup ini.' : 'Referensi sama persis dan customer sesuai nama pengirim.')
+        $note = $status === 'MATCHED' ? ($customer['method'] === 'SERTIM' ? 'AWB sesuai bukti Sertim Cashless untuk customer dan pickup ini.' : ($customer['method'] === 'CUSTOMER_CODE_DATE' ? 'Kode customer terverifikasi dan tanggal paket sesuai satu pickup yang sudah diverifikasi gudang.' : 'Referensi sama persis dan customer sesuai nama pengirim.'))
             : ($status === 'CONFLICT' ? 'Bukti Sertim dan referensi report menunjuk pickup berbeda; perlu pemeriksaan Admin.'
                 : ($status === 'AMBIGUOUS' ? 'Referensi cocok dengan lebih dari satu pickup; perlu pemeriksaan Admin.' : 'Customer dikenali, tetapi belum ada referensi pickup yang cocok.'));
-        if ($shipment->pickup_task_id && $shipment->pickup_task_id !== $taskId && $shipment->match_method !== 'SERTIM') {
+        if ($bucketAllocation) {
+            $note = AllocatePickupAwbBuckets::NOTE;
+        }
+        $releasedSertim = $shipment->match_method === 'SERTIM' && $taskId === null
+            && ! PickupProcessingReconciliation::where('pickup_task_id', $shipment->pickup_task_id)->where(fn ($query) => $query->whereNotNull('locked_at')->orWhere('status', 'DONE'))->exists();
+        if ($shipment->pickup_task_id && $shipment->pickup_task_id !== $taskId && ! $releasedSertim) {
             $status = $status === 'CONFLICT' ? 'CONFLICT' : 'AMBIGUOUS';
             $taskId = $shipment->pickup_task_id;
             $note = 'Referensi atau pemetaan terbaru berbeda dari hubungan pickup sebelumnya. Perlu keputusan Admin.';
+        }
+        if ($taskId && $shipment->pickup_task_id !== $taskId) {
+            $task = $this->allocationTasks[$taskId] ?? null;
+            $excluded = isset($this->allocationExclusions[$taskId.':'.$shipment->awb]);
+            $locked = isset($this->allocationBlocks[$taskId]);
+            $entry = $source->entry_at ?? $shipment->latestSource?->entry_at;
+            $pickupAt = $task->proof->picked_up_at ?? ($customer['method'] === 'SERTIM' ? $task?->execution_started_at : null);
+            $sameDay = $pickupAt && $entry && PickupResultPeriod::date($pickupAt)->equalTo(PickupResultPeriod::date($entry));
+            if ($excluded || $locked || (! $sameDay && config('jne-reports.evidence_policies_enabled'))) {
+                $taskId = null;
+                $status = 'UNMATCHED';
+                $note = $excluded ? 'Resi telah dikeluarkan dari pickup ini oleh Admin.' : ($locked ? 'Pickup terkunci, sedang dikoreksi, atau customer memiliki pending lintas hari; periksa penetapan resi.' : 'Tanggal sumber berbeda dari bucket pickup; lintas hari wajib melalui barang pending.');
+            }
         }
         $linkedCustomerId = $taskId === $shipment->pickup_task_id ? $shipment->pickup?->customer_id : null;
         if ($linkedCustomerId && $linkedCustomerId !== $customer['customer_id']) {
@@ -197,7 +269,7 @@ class MatchJneShipments
 
             return;
         }
-        $this->record($shipment, $taskId, $status, $customer['method'] === 'SERTIM' ? 'SERTIM' : 'REFERENCE', null, $note, $oldCustomerId, $customer['evidence']);
+        $this->record($shipment, $taskId, $status, $bucketAllocation ? AllocatePickupAwbBuckets::METHOD : (in_array($customer['method'], ['SERTIM', 'CUSTOMER_CODE_DATE'], true) ? $customer['method'] : 'REFERENCE'), null, $note, $oldCustomerId, $customer['evidence']);
     }
 
     public function manual(User $actor, int $id, ?string $reference, int $version, string $reason): void
@@ -207,6 +279,11 @@ class MatchJneShipments
             $shipment = JneShipment::whereKey($id)->lockForUpdate()->firstOrFail();
             abort_if($shipment->version !== $version, 409, 'Data AWB berubah. Muat ulang sebelum mengubah pencocokan.');
             $task = $reference ? PickupTask::where('reference', $reference)->whereHas('proof', fn ($query) => $query->whereNotNull('finalized_at'))->first() : null;
+            abort_if($shipment->pickup_task_id && $task && $shipment->pickup_task_id !== $task->id, 409, 'Resi sudah terikat ke pickup lain. Lepaskan melalui koreksi pickup asal.');
+            abort_if($shipment->pickup_task_id && PickupProcessingReconciliation::where('pickup_task_id', $shipment->pickup_task_id)->where(fn ($query) => $query->whereNotNull('locked_at')->orWhere('status', 'DONE'))->exists(), 409, 'Pickup terkunci. Buka koreksi pickup asal terlebih dahulu.');
+            if ($task && config('jne-reports.evidence_policies_enabled')) {
+                abort_unless(app(PickupAwbEligibility::class)->allowed($task, $shipment), 422, 'Resi berbeda hari operasional; gunakan jalur pending yang tercatat.');
+            }
             if ($reference && ! $task) {
                 throw ValidationException::withMessages(['pickup_reference' => 'Referensi pickup tidak ditemukan atau POP belum final.']);
             }

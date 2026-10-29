@@ -171,98 +171,40 @@ export default function JneShipperAliases({
                     {stats.conflicts} nama ganda di daftar
                 </Link>
             </div>
-            <details
-                open={mappingRuns.some((run) => run.status !== 'COMPLETED')}
-                className="rounded-lg border bg-muted/20 p-3"
-            >
-                <summary className="cursor-pointer text-sm font-medium">
-                    Penerapan nama pengirim & riwayat
-                </summary>
-                <div className="mt-3 flex flex-col gap-3">
-                    <p className="text-sm font-medium">
-                        Perubahan diterapkan otomatis ke AWB yang sudah
-                        tersimpan
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                        Hanya nama pengirim yang berubah yang diterapkan.
-                        Hubungan manual dipertahankan. Tidak menarik report baru
-                        dari JNE.
-                    </p>
-                    {mappingRuns.map((run) => (
-                        <div
-                            key={run.id}
-                            className="flex flex-wrap items-center justify-between gap-2 text-sm"
-                            role="status"
-                        >
-                            <p>
-                                #{run.id} ·{' '}
-                                {run.status === 'COMPLETED'
-                                    ? `${run.affected_count} AWB terkait telah diperiksa`
-                                    : run.status === 'FAILED'
-                                      ? run.error_message
-                                      : 'Penerapan nama pengirim menunggu / sedang diproses worker'}
-                            </p>
-                            {run.status === 'FAILED' && (
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={retry.processing}
-                                    onClick={() =>
-                                        retry.post(
-                                            aliasesRoutes.retrySync.url(run.id),
-                                            { preserveScroll: true },
-                                        )
-                                    }
-                                >
-                                    Ulangi penerapan
-                                </Button>
-                            )}
-                        </div>
-                    ))}
-                    {mappingPagination && mappingPagination.last_page > 1 && (
-                        <div className="flex flex-wrap items-center gap-3">
-                            <p className="text-xs text-muted-foreground">
-                                Riwayat penerapan: halaman{' '}
-                                {mappingPagination.current_page} dari{' '}
-                                {mappingPagination.last_page}
-                            </p>
-                            {mappingPagination.current_page > 1 && (
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        href={aliasesRoutes.index.url({
-                                            query: {
-                                                ...filters,
-                                                mapping_page:
-                                                    mappingPagination.current_page -
-                                                    1,
-                                            },
-                                        })}
-                                    >
-                                        Penerapan sebelumnya
-                                    </Link>
-                                </Button>
-                            )}
-                            {mappingPagination.current_page <
-                                mappingPagination.last_page && (
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        href={aliasesRoutes.index.url({
-                                            query: {
-                                                ...filters,
-                                                mapping_page:
-                                                    mappingPagination.current_page +
-                                                    1,
-                                            },
-                                        })}
-                                    >
-                                        Penerapan berikutnya
-                                    </Link>
-                                </Button>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </details>
+            {mappingRuns
+                .filter((run) => run.status !== 'COMPLETED')
+                .map((run) => (
+                    <div
+                        key={run.id}
+                        className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                        role="status"
+                    >
+                        <p>
+                            #{run.id} ·{' '}
+                            {run.status === 'COMPLETED'
+                                ? `${run.affected_count} AWB terkait telah diperiksa`
+                                : run.status === 'FAILED'
+                                  ? run.error_message
+                                  : 'Penerapan nama pengirim menunggu / sedang diproses worker'}
+                        </p>
+                        {run.status === 'FAILED' && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={retry.processing}
+                                onClick={() =>
+                                    retry.post(
+                                        aliasesRoutes.retrySync.url(run.id),
+                                        { preserveScroll: true },
+                                    )
+                                }
+                            >
+                                Ulangi penerapan
+                            </Button>
+                        )}
+                    </div>
+                ))}
+
             {ownership && (
                 <div
                     className={
@@ -658,10 +600,7 @@ export default function JneShipperAliases({
                                 Mulai dari kode customer
                             </h2>
                             <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                                Pilih customer di sebelah kiri untuk melihat dan
-                                menambah nama pengirimnya. Customer tetap dapat
-                                digunakan meski tidak memiliki nomor penarikan
-                                JNE sendiri.
+                                Pilih customer untuk mengelola nama pengirim.
                             </p>
                         </div>
                     )}
@@ -705,6 +644,99 @@ export default function JneShipperAliases({
                     )}
                 </div>
             </div>
+            <details className="rounded-lg border bg-muted/20 p-3">
+                <summary className="cursor-pointer text-sm font-medium">
+                    Penerapan nama pengirim & riwayat
+                </summary>
+                <div className="mt-3 flex flex-col gap-3">
+                    <p className="text-sm font-medium">
+                        Perubahan diterapkan otomatis ke AWB yang sudah
+                        tersimpan
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        Hanya nama pengirim yang berubah yang diterapkan.
+                        Hubungan manual dipertahankan. Tidak menarik report baru
+                        dari JNE.
+                    </p>
+                    {mappingRuns
+                        .filter((run) => run.status === 'COMPLETED')
+                        .map((run) => (
+                            <div
+                                key={run.id}
+                                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                                role="status"
+                            >
+                                <p>
+                                    #{run.id} ·{' '}
+                                    {run.status === 'COMPLETED'
+                                        ? `${run.affected_count} AWB terkait telah diperiksa`
+                                        : run.status === 'FAILED'
+                                          ? run.error_message
+                                          : 'Penerapan nama pengirim menunggu / sedang diproses worker'}
+                                </p>
+                                {run.status === 'FAILED' && (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={retry.processing}
+                                        onClick={() =>
+                                            retry.post(
+                                                aliasesRoutes.retrySync.url(
+                                                    run.id,
+                                                ),
+                                                { preserveScroll: true },
+                                            )
+                                        }
+                                    >
+                                        Ulangi penerapan
+                                    </Button>
+                                )}
+                            </div>
+                        ))}
+                    {mappingPagination && mappingPagination.last_page > 1 && (
+                        <div className="flex flex-wrap items-center gap-3">
+                            <p className="text-xs text-muted-foreground">
+                                Riwayat penerapan: halaman{' '}
+                                {mappingPagination.current_page} dari{' '}
+                                {mappingPagination.last_page}
+                            </p>
+                            {mappingPagination.current_page > 1 && (
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link
+                                        href={aliasesRoutes.index.url({
+                                            query: {
+                                                ...filters,
+                                                mapping_page:
+                                                    mappingPagination.current_page -
+                                                    1,
+                                            },
+                                        })}
+                                    >
+                                        Penerapan sebelumnya
+                                    </Link>
+                                </Button>
+                            )}
+                            {mappingPagination.current_page <
+                                mappingPagination.last_page && (
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link
+                                        href={aliasesRoutes.index.url({
+                                            query: {
+                                                ...filters,
+                                                mapping_page:
+                                                    mappingPagination.current_page +
+                                                    1,
+                                            },
+                                        })}
+                                    >
+                                        Penerapan berikutnya
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </details>
             <Dialog open={importOpen} onOpenChange={setImportOpen}>
                 <DialogContent>
                     <DialogHeader>

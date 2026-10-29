@@ -1,12 +1,24 @@
 import { Link } from '@inertiajs/react';
-import { Clock3, Copy, MoreHorizontal, PanelRightOpen } from 'lucide-react';
-import { useMemo, useRef } from 'react';
+import {
+    ChevronDown,
+    ChevronRight,
+    Clock3,
+    Copy,
+    Download,
+    MoreHorizontal,
+    PanelRightOpen,
+} from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import ShipmentInlineDetail from '@/components/jne-shipment-inline-detail';
+import { useJneShipmentDetail } from '@/hooks/use-jne-shipment-detail';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import DataTable, {
     DataTablePagination,
     type DataTableColumn,
 } from '@/components/data-table';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
+import JneCategoryBadge from '@/components/jne-category-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -116,6 +128,8 @@ export default function ShipmentDataTable({
     onReset,
     filtered,
     bordered = true,
+    onPerPage,
+    exportUrl,
 }: {
     shipments: JnePage<JneShipment>;
     timezone: string;
@@ -126,14 +140,115 @@ export default function ShipmentDataTable({
     onReset: () => void;
     filtered: boolean;
     bordered?: boolean;
+    onPerPage?: (size: number) => void;
+    exportUrl?: (ids: number[]) => string;
 }) {
+    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [selection, setSelection] = useState<{ key: string; ids: number[] }>({
+        key: '',
+        ids: [],
+    });
+    const pageKey = shipments.data.map((row) => row.id).join(',');
+    const selected = selection.key === pageKey ? selection.ids : [];
+    const expanded = shipments.data.find((row) => row.id === expandedId);
+    const detail = useJneShipmentDetail(
+        expanded?.id ?? null,
+        expanded?.observed_at ?? null,
+    );
+    const toggleDetail = (id: number) =>
+        setExpandedId((current) => (current === id ? null : id));
+    const toolbar = exportUrl ? (
+        loading || !!error || !shipments.total ? (
+            <Button variant="outline" size="sm" disabled>
+                <Download data-icon="inline-start" />
+                Ekspor CSV
+            </Button>
+        ) : (
+            <Button variant="outline" size="sm" asChild>
+                <a href={exportUrl(selected)}>
+                    <Download data-icon="inline-start" />
+                    {selected.length
+                        ? `Ekspor ${selected.length} AWB`
+                        : 'Ekspor CSV'}
+                </a>
+            </Button>
+        )
+    ) : undefined;
     const columns = useMemo<DataTableColumn<JneShipment>[]>(
         () => [
+            {
+                id: 'select',
+                hideable: false,
+                className: 'w-10',
+                header: (
+                    <label className="flex min-h-9 min-w-9 items-center justify-center">
+                        <Checkbox
+                            aria-label="Pilih semua AWB di halaman ini"
+                            disabled={loading || !shipments.data.length}
+                            checked={
+                                !!selected.length &&
+                                (selected.length === shipments.data.length ||
+                                    'indeterminate')
+                            }
+                            onCheckedChange={(checked) =>
+                                setSelection({
+                                    key: pageKey,
+                                    ids: checked
+                                        ? shipments.data.map((row) => row.id)
+                                        : [],
+                                })
+                            }
+                        />
+                    </label>
+                ),
+                cell: (row) => (
+                    <label className="flex min-h-9 min-w-9 items-center justify-center">
+                        <Checkbox
+                            aria-label={`Pilih AWB ${row.awb}`}
+                            checked={selected.includes(row.id)}
+                            disabled={loading}
+                            onCheckedChange={(checked) =>
+                                setSelection({
+                                    key: pageKey,
+                                    ids: checked
+                                        ? [...selected, row.id]
+                                        : selected.filter(
+                                              (id) => id !== row.id,
+                                          ),
+                                })
+                            }
+                        />
+                    </label>
+                ),
+            },
+            {
+                id: 'expand',
+                header: <span className="sr-only">Detail</span>,
+                hideable: false,
+                className: 'w-10',
+                cell: (row) => (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="min-h-11 min-w-11"
+                        aria-label={`${expandedId === row.id ? 'Tutup' : 'Buka'} detail AWB ${row.awb}`}
+                        aria-expanded={expandedId === row.id}
+                        aria-controls={`jne-inline-${row.id}`}
+                        onClick={() => toggleDetail(row.id)}
+                    >
+                        {expandedId === row.id ? (
+                            <ChevronDown aria-hidden="true" />
+                        ) : (
+                            <ChevronRight aria-hidden="true" />
+                        )}
+                    </Button>
+                ),
+            },
             {
                 id: 'awb',
                 header: 'AWB',
                 hideable: false,
-                className: 'min-w-48',
+                className: 'min-w-40',
                 cell: (row) => (
                     <div className="flex items-center gap-1">
                         <Link
@@ -162,10 +277,15 @@ export default function ShipmentDataTable({
             {
                 id: 'customer',
                 header: 'Customer / Pengirim',
-                className: 'min-w-52 max-w-80',
+                className: 'min-w-48 max-w-64',
                 cell: (row) => (
                     <div className="flex flex-col gap-0.5 break-words">
-                        <p className="text-sm font-medium">
+                        <p
+                            className="line-clamp-2 text-sm font-medium"
+                            title={
+                                row.customer_name || 'Customer belum dipetakan'
+                            }
+                        >
                             {row.customer_name
                                 ? `${row.customer_code || '—'} · ${row.customer_name}`
                                 : 'Customer belum dipetakan'}
@@ -186,9 +306,19 @@ export default function ShipmentDataTable({
                 ),
             },
             {
+                id: 'category',
+                header: 'Kategori',
+                cell: (row) => (
+                    <JneCategoryBadge
+                        category={row.category}
+                        status={row.category_status}
+                    />
+                ),
+            },
+            {
                 id: 'status',
                 header: 'Status Pengiriman',
-                className: 'min-w-40',
+                className: 'min-w-32',
                 cell: (row) => (
                     <ShipmentStatusBadge status={row.tracking_status} />
                 ),
@@ -196,8 +326,16 @@ export default function ShipmentDataTable({
             {
                 id: 'recipient',
                 header: 'Penerima',
-                className: 'min-w-40 max-w-60 break-words',
+                className: 'min-w-36 max-w-60 break-words',
                 cell: (row) => row.consignee_name || '—',
+            },
+            {
+                id: 'entry',
+                header: 'Tanggal AWB (JNE)',
+                className: 'min-w-44 whitespace-nowrap text-sm tabular-nums',
+                cell: (row) => (
+                    <span>{jneTimestamp(row.entry_at, timezone)}</span>
+                ),
             },
             {
                 id: 'observed',
@@ -217,12 +355,27 @@ export default function ShipmentDataTable({
                 ),
             },
         ],
-        [timezone, onDetail],
+        [
+            timezone,
+            onDetail,
+            expandedId,
+            selected,
+            pageKey,
+            shipments.data,
+            loading,
+        ],
     );
     return (
         <TooltipProvider>
             {!loading && !error && shipments.data.length > 0 && (
                 <div className="space-y-3 p-4 md:hidden">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="font-semibold">
+                            Daftar AWB (
+                            {shipments.total.toLocaleString('id-ID')})
+                        </h2>
+                        {toolbar}
+                    </div>
                     <ul
                         aria-label="Daftar pengiriman mobile"
                         className="space-y-3"
@@ -242,10 +395,16 @@ export default function ShipmentDataTable({
                                         >
                                             {shipment.awb}
                                         </Link>
-                                        <div>
+                                        <div className="flex flex-wrap gap-2">
                                             <ShipmentStatusBadge
                                                 status={
                                                     shipment.tracking_status
+                                                }
+                                            />
+                                            <JneCategoryBadge
+                                                category={shipment.category}
+                                                status={
+                                                    shipment.category_status
                                                 }
                                             />
                                         </div>
@@ -284,12 +443,23 @@ export default function ShipmentDataTable({
                                     )}
                                 </div>
                                 <dl className="grid grid-cols-2 gap-3 border-t pt-3 text-xs">
-                                    <div>
+                                    <div className="col-span-2">
                                         <dt className="text-muted-foreground">
                                             Penerima
                                         </dt>
                                         <dd className="mt-1 text-sm break-words">
                                             {shipment.consignee_name || '—'}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-muted-foreground">
+                                            Tanggal AWB (JNE)
+                                        </dt>
+                                        <dd className="mt-1 leading-5">
+                                            {jneTimestamp(
+                                                shipment.entry_at,
+                                                timezone,
+                                            )}
                                         </dd>
                                     </div>
                                     <div>
@@ -312,11 +482,12 @@ export default function ShipmentDataTable({
                                     <Button
                                         variant="outline"
                                         className="min-h-11 flex-1"
-                                        onClick={(event) =>
-                                            onDetail(
-                                                shipment.id,
-                                                event.currentTarget,
-                                            )
+                                        aria-expanded={
+                                            expandedId === shipment.id
+                                        }
+                                        aria-controls={`jne-inline-mobile-${shipment.id}`}
+                                        onClick={() =>
+                                            toggleDetail(shipment.id)
                                         }
                                     >
                                         <PanelRightOpen
@@ -339,13 +510,25 @@ export default function ShipmentDataTable({
                                         />
                                     </Button>
                                 </div>
+                                {expandedId === shipment.id && (
+                                    <div
+                                        id={`jne-inline-mobile-${shipment.id}`}
+                                    >
+                                        <ShipmentInlineDetail
+                                            detail={detail.detail}
+                                            error={detail.error}
+                                            onRetry={detail.retry}
+                                        />
+                                    </div>
+                                )}
                             </li>
                         ))}
                     </ul>
                     <DataTablePagination
                         meta={shipments}
                         page={shipments.current_page}
-                        perPage={50}
+                        perPage={shipments.per_page ?? 20}
+                        onPerPage={onPerPage}
                         onPage={onPage}
                         loading={loading}
                         error={error}
@@ -363,11 +546,17 @@ export default function ShipmentDataTable({
                 <DataTable
                     data={shipments.data}
                     columns={columns}
+                    initialHiddenColumns={['observed']}
                     getRowId={(row) => String(row.id)}
                     title={
-                        <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <span>Daftar AWB</span>
+                        <span className="flex flex-col gap-1">
+                            <span className="text-lg">Daftar AWB</span>
                             <span className="text-xs font-normal text-muted-foreground">
+                                {shipments.total
+                                    ? `Menampilkan ${shipments.from ?? (shipments.current_page - 1) * (shipments.per_page ?? 20) + 1}–${shipments.to ?? Math.min(shipments.current_page * (shipments.per_page ?? 20), shipments.total)} dari ${shipments.total.toLocaleString('id-ID')} AWB`
+                                    : '0 AWB'}
+                            </span>
+                            <span className="sr-only">
                                 Urutan: observasi terbaru
                             </span>
                         </span>
@@ -376,6 +565,17 @@ export default function ShipmentDataTable({
                     error={error}
                     className="min-w-0"
                     bordered={bordered}
+                    toolbar={toolbar}
+                    expandedRow={expanded ? String(expanded.id) : null}
+                    renderExpandedRow={(row) => (
+                        <div id={`jne-inline-${row.id}`}>
+                            <ShipmentInlineDetail
+                                detail={detail.detail}
+                                error={detail.error}
+                                onRetry={detail.retry}
+                            />
+                        </div>
+                    )}
                     tableClassName="min-w-full [&_tbody_td]:py-2.5 [&_tbody_td]:align-middle"
                     emptyTitle={
                         filtered
@@ -401,7 +601,8 @@ export default function ShipmentDataTable({
                     pagination={{
                         meta: shipments,
                         page: shipments.current_page,
-                        perPage: 50,
+                        perPage: shipments.per_page ?? 20,
+                        onPerPage,
                         onPage,
                         loading,
                         error,

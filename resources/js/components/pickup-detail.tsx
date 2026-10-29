@@ -232,7 +232,7 @@ export default function PickupDetail({
                     )}
                     {task.can.take_over && (
                         <Button className="h-11" onClick={onTakeover}>
-                            Ambil Alih
+                            {task.assigned_staff ? 'Ambil Alih' : 'Ambil Tugas'}
                         </Button>
                     )}
                 </div>

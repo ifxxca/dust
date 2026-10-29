@@ -4,6 +4,8 @@ namespace App\Actions\Pickup;
 
 use App\Actions\Reports\QueryCashlessReconciliation;
 use App\Actions\Reports\ReevaluateJneAwbs;
+use App\Models\CashlessEntryBatch;
+use App\Models\CashlessEntryItem;
 use App\Models\HandoverSession;
 use App\Models\JneShipment;
 use App\Models\PickupCashlessAwb;
@@ -54,6 +56,10 @@ class RecordCashlessAwb
                 $record = isset($data['evidence_id']) ? PickupCashlessAwb::where('pickup_task_id', $task->id)->whereKey($data['evidence_id'])->lockForUpdate()->firstOrFail() : null;
                 if ($record) {
                     abort_if($record->version !== (int) $data['expected_version'], 409, 'Sertim berubah. Muat ulang sebelum mengoreksi.');
+                    abort_if(CashlessEntryItem::where('pickup_cashless_awb_id', $record->id)
+                        ->join('cashless_entry_batches', 'cashless_entry_batches.id', '=', 'cashless_entry_items.batch_id')
+                        ->whereNotIn('cashless_entry_batches.status', CashlessEntryBatch::Terminal)->exists(),
+                        409, 'Resi terikat batch input Hybrid yang belum selesai. Batalkan batch yang belum diklaim atau periksa HO sebelum mengoreksi.');
                 }
                 if ($awb === null && $record === null) {
                     throw ValidationException::withMessages(['awb' => 'AWB wajib diisi untuk bukti baru.']);

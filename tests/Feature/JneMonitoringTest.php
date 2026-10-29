@@ -191,11 +191,23 @@ test('admin can browse monitoring source history raw fields and reconciliation',
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
     $shipment = JneShipment::sole();
 
-    $this->actingAs($admin)->get(route('jne-monitoring.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-monitoring')->where('shipments.total', 1)->where('summary.IN_TRANSIT', 1));
-    $this->get(route('jne-monitoring.show', $shipment->id))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-shipment')->where('shipment.source.raw_data.EXTRA_COLUMN', '="Pure Text"')->has('history.data', 1)->missing('shipment.source.file_path'));
+    $this->actingAs($admin)->get(route('jne-monitoring.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-monitoring')->where('shipments.total', 1)->where('summary.IN_TRANSIT', 1)->where('shipments.data.0.entry_at', '2026-10-13T01:00:00+00:00')->where('shipments.data.0.observed_at', '2026-10-20T01:00:00+00:00'));
+    $this->get(route('jne-monitoring.show', $shipment->id))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-shipment')->where('shipment.entry_at', '2026-10-13T01:00:00+00:00')->where('shipment.source.raw_data.EXTRA_COLUMN', '="Pure Text"')->has('history.data', 1)->missing('shipment.source.file_path'));
     $this->get(route('jne-monitoring.index', ['q' => '%']))->assertOk()->assertInertia(fn (Assert $page) => $page->where('shipments.total', 0));
     $this->get(route('jne-monitoring.profiles'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-profiles'));
     $this->get(route('jne-monitoring.reconciliation'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('jne-reconciliation')->where('linkage.linked', 0));
+});
+
+test('missing JNE entry date is not replaced with observation or import time', function () {
+    Storage::fake('jne_reports');
+    monitoringReport(['TGL_ENTRY' => '']);
+    $shipment = JneShipment::sole();
+
+    $this->actingAs(User::factory()->create(['role' => 'admin_supervisor']))
+        ->get(route('jne-monitoring.index'))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('shipments.data.0.entry_at', null));
+    $this->get(route('jne-monitoring.show', $shipment->id))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('shipment.entry_at', null));
 });
 
 test('monitoring endpoints reject ordinary users even for missing resource IDs', function (string $role) {

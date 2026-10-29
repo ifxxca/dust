@@ -115,6 +115,47 @@ try {
     await admin.page.screenshot({
         path: path.join(artifacts, 'sertim-admin-390.png'),
     });
+    const reportDetailPath =
+        '/admin/jne-reports/' + process.env.SERTIM_UI_REPORT + '/awbs';
+    await admin.page.goto(base + reportDetailPath);
+    const polls = [];
+    const collectPoll = (response) => {
+        const request = response.request();
+        if (
+            new URL(response.url()).pathname === reportDetailPath &&
+            request.headers()['x-inertia-partial-data']
+        ) {
+            polls.push({
+                status: response.status(),
+                props: request.headers()['x-inertia-partial-data'],
+            });
+        }
+    };
+    admin.page.on('response', collectPoll);
+    const pollStarted = performance.now();
+    await admin.page.waitForTimeout(15500);
+    admin.page.off('response', collectPoll);
+    assert.ok(polls.length >= 2 && polls.length <= 4, JSON.stringify(polls));
+    assert.ok(
+        polls.every(
+            (poll) => poll.status === 200 && poll.props === 'report,awbs',
+        ),
+    );
+    await writeFile(
+        path.join(artifacts, 'terminal-report-polling.json'),
+        JSON.stringify(
+            {
+                status: 'COMPLETED',
+                import_status: 'IMPORTED',
+                projection_status: 'PROJECTED',
+                interval_ms: 5000,
+                measured_window_ms: performance.now() - pollStarted,
+                responses: polls,
+            },
+            null,
+            2,
+        ),
+    );
     assert.deepEqual(errors, []);
     await admin.page.goto(base + '/admin/jne-monitoring/reconciliation');
     await admin.page
@@ -140,11 +181,13 @@ try {
     await confidence.getByText(/1 AWB customer terkonfirmasi/).waitFor();
     await confidence.getByText(/1 AWB pickup terkonfirmasi/).waitFor();
     const searchPosition = await admin.page
-        .getByLabel('Cari AWB', { exact: true })
+        .getByLabel('Cari AWB, customer, pengirim, atau penerima', {
+            exact: true,
+        })
         .boundingBox();
     assert.ok(
         searchPosition && searchPosition.y < 400,
-        'Search must be reachable before operational summaries',
+        `Search must be reachable before operational summaries (y=${searchPosition?.y})`,
     );
     await admin.page
         .locator('summary')
@@ -177,29 +220,59 @@ try {
         .filter({ hasText: 'SERTIM001' })
         .getByRole('button', { name: 'Detail pengiriman', exact: true })
         .click();
-    await admin.page
-        .getByRole('dialog')
-        .getByText('Report terakhir diterima', { exact: true })
+    const mobileShipment = admin.page
+        .getByRole('listitem')
+        .filter({ hasText: 'SERTIM001' });
+    await mobileShipment
+        .getByRole('region', { name: 'Detail AWB', exact: true })
+        .getByText('SERTIM001', { exact: true })
         .waitFor();
-    await admin.page.getByRole('dialog').evaluate(async (element) => {
-        await Promise.all(
-            element
-                .getAnimations({ subtree: true })
-                .map((animation) => animation.finished),
-        );
-    });
+    assert.equal(
+        await mobileShipment
+            .getByRole('button', { name: 'Detail pengiriman', exact: true })
+            .getAttribute('aria-expanded'),
+        'true',
+    );
+    await mobileShipment.getByText(/Report #\d+ · baris/).waitFor();
+    await mobileShipment
+        .getByText('ON PROCESS', { exact: true })
+        .first()
+        .waitFor();
     await admin.page.evaluate(() => window.scrollTo(0, 0));
     await admin.page.screenshot({
         path: path.join(artifacts, 'shipment-evidence-390.png'),
     });
-    await admin.page
-        .getByRole('link', { name: /Lihat riwayat & detail lengkap/ })
+    await mobileShipment
+        .getByRole('link', { name: 'Buka halaman AWB', exact: true })
         .click();
     await admin.page
         .getByRole('heading', { name: 'AWB SERTIM001', exact: true })
         .waitFor();
     await admin.page
-        .getByText('Riwayat keputusan pencocokan', { exact: true })
+        .locator('summary')
+        .filter({ hasText: 'Detail teknis & audit' })
+        .click();
+    await admin.page
+        .locator('summary')
+        .filter({ hasText: 'Bukti asal dan kontrak sumber' })
+        .click();
+    const receivedLabel = admin.page.getByText('Report terakhir diterima', {
+        exact: true,
+    });
+    await receivedLabel.waitFor();
+    assert.notEqual(
+        (await receivedLabel.locator('..').locator('dd').innerText()).trim(),
+        '—',
+    );
+    await admin.page
+        .locator('summary')
+        .filter({ hasText: /^Riwayat keputusan pencocokan/ })
+        .click();
+    await admin.page
+        .locator('details')
+        .filter({ hasText: /Sertim #/ })
+        .last()
+        .locator(':scope > summary')
         .click();
     await admin.page.getByText(/Sertim #/).waitFor();
     await admin.page.goto(base + '/admin/jne-monitoring/customer-dashboard');
@@ -647,11 +720,13 @@ try {
         await admin.page.setViewportSize({ width, height: 844 });
         await admin.page.evaluate(() => window.scrollTo(0, 0));
         const taskSearch = await admin.page
-            .getByLabel('Cari AWB', { exact: true })
+            .getByLabel('Cari AWB, customer, pengirim, atau penerima', {
+                exact: true,
+            })
             .boundingBox();
         assert.ok(taskSearch && taskSearch.y < 400);
         const records = admin.page.getByRole('region', {
-            name: 'Monitoring AWB',
+            name: 'Daftar AWB',
             exact: true,
         });
         const firstAwb = await (
@@ -661,7 +736,7 @@ try {
         ).boundingBox();
         assert.ok(
             firstAwb && firstAwb.y < 844,
-            'First AWB must be visible without scrolling',
+            `First AWB must be visible without scrolling (y=${firstAwb?.y})`,
         );
         positions.push({ width, searchY: taskSearch.y, firstAwbY: firstAwb.y });
         await admin.page.evaluate(() => window.scrollTo(0, 0));

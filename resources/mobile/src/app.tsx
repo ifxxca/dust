@@ -47,6 +47,9 @@ import ProofPanel from './proof-panel';
 import PrivateProof from './private-proof';
 import DraftList from './draft-list';
 import HandoverPanel from './handover-panel';
+import CashlessHandoverPanel from './cashless-handover-panel';
+import CashlessAlertsPanel from './cashless-alerts-panel';
+import CashlessResultPanel from './cashless-result-panel';
 import ManualPickup from './manual-pickup';
 import { readLocal, captureResult, captureFailure } from './local-store';
 import type { RestoredListenerEvent } from '@capacitor/app';
@@ -100,11 +103,12 @@ export default function MobileApp() {
         execution: false,
         proof: false,
         handover: false,
+        cashless: false,
         manual: false,
     });
     const changeWorkBusy = useCallback(
         (
-            kind: 'execution' | 'proof' | 'handover' | 'manual',
+            kind: 'execution' | 'proof' | 'handover' | 'cashless' | 'manual',
             value: boolean,
         ) => {
             if (value) setError('');
@@ -123,6 +127,10 @@ export default function MobileApp() {
     );
     const handoverBusy = useCallback(
         (value: boolean) => changeWorkBusy('handover', value),
+        [changeWorkBusy],
+    );
+    const cashlessBusy = useCallback(
+        (value: boolean) => changeWorkBusy('cashless', value),
         [changeWorkBusy],
     );
     const [error, setError] = useState('');
@@ -181,6 +189,8 @@ export default function MobileApp() {
     }, [taskId]);
     const [reviewingProof, setReviewingProof] = useState(false);
     const [notifications, setNotifications] = useState<AssignmentLink[]>([]);
+    const [cashlessTarget, setCashlessTarget] = useState<number | undefined>();
+    const [cashlessResult, setCashlessResult] = useState<number | null>(null);
     const [totalTasks, setTotalTasks] = useState<number | null>(null);
     const [tab, setTab] = useState<Tab>('mine');
     useEffect(() => {
@@ -278,7 +288,9 @@ export default function MobileApp() {
                     [
                         link,
                         ...previous.filter(
-                            (item) => item.eventId !== link.eventId,
+                            (item) =>
+                                item.eventId !== link.eventId ||
+                                Boolean(item.batchId) !== Boolean(link.batchId),
                         ),
                     ].slice(0, 30),
                 ),
@@ -346,10 +358,18 @@ export default function MobileApp() {
             [
                 pendingLink,
                 ...previous.filter(
-                    (item) => item.eventId !== pendingLink.eventId,
+                    (item) =>
+                        item.eventId !== pendingLink.eventId ||
+                        Boolean(item.batchId) !== Boolean(pendingLink.batchId),
                 ),
             ].slice(0, 30),
         );
+        if (pendingLink.batchId) {
+            setCashlessResult(pendingLink.batchId);
+            setScreen('notifications');
+            setError('');
+            return;
+        }
         setScreen('pickup');
         setTab('mine');
         setTask(null);
@@ -365,6 +385,8 @@ export default function MobileApp() {
         sessionRef.current = value;
         setSession(value);
         setNotifications([]);
+        setCashlessTarget(undefined);
+        setCashlessResult(null);
         setPushNotice('');
         setTestPushVisible(false);
         setTotalTasks(null);
@@ -553,7 +575,10 @@ export default function MobileApp() {
                 return;
             }
             if (
-                (manualOpen || tab === 'handover' || taskId !== null) &&
+                (manualOpen ||
+                    tab === 'handover' ||
+                    screen === 'cashless' ||
+                    taskId !== null) &&
                 !window.dispatchEvent(
                     new Event('mobile-back', { cancelable: true }),
                 )
@@ -562,6 +587,8 @@ export default function MobileApp() {
             if (taskId !== null) {
                 if (taskMode === 'execution') setTaskMode('detail');
                 else setTaskId(null);
+            } else if (screen === 'cashless') {
+                navigateScreen('menu');
             } else if (screen === 'handover') {
                 navigate('mine');
             } else if (screen !== 'home') {
@@ -829,7 +856,14 @@ export default function MobileApp() {
 
     function navigate(next: Tab) {
         setFiltersOpen(false);
-        if (Object.values(featureLocks.current).some(Boolean)) return;
+        if (Object.values(featureLocks.current).some(Boolean)) return false;
+        if (
+            screen === 'cashless' &&
+            !window.dispatchEvent(
+                new Event('mobile-cashless-leave', { cancelable: true }),
+            )
+        )
+            return false;
         setManualOpen(false);
         setManualSource(null);
         setScreen(next === 'handover' ? 'handover' : 'pickup');
@@ -843,10 +877,11 @@ export default function MobileApp() {
         setPage(1);
         setError('');
         setLoading(false);
+        return true;
     }
     function navigateScreen(next: AppScreen) {
         if (Object.values(featureLocks.current).some(Boolean)) return;
-        navigate(next === 'account' ? 'account' : 'mine');
+        if (!navigate(next === 'account' ? 'account' : 'mine')) return;
         setScreen(next);
         setFilters(initialFilters);
         setSearch('');
@@ -884,7 +919,8 @@ export default function MobileApp() {
                         !session.locked &&
                         (taskId !== null ||
                             screen === 'pickup' ||
-                            screen === 'handover') && (
+                            screen === 'handover' ||
+                            screen === 'cashless') && (
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -913,7 +949,9 @@ export default function MobileApp() {
                                             })()
                                           : (() => {
                                                 if (
-                                                    screen === 'handover' &&
+                                                    (screen === 'handover' ||
+                                                        screen ===
+                                                            'cashless') &&
                                                     !window.dispatchEvent(
                                                         new Event(
                                                             'mobile-back',
@@ -924,7 +962,9 @@ export default function MobileApp() {
                                                     )
                                                 )
                                                     return;
-                                                if (screen === 'handover')
+                                                if (screen === 'cashless')
+                                                    navigateScreen('menu');
+                                                else if (screen === 'handover')
                                                     navigate('mine');
                                                 else navigateScreen('home');
                                             })()
@@ -940,7 +980,9 @@ export default function MobileApp() {
                         </p>
                         <h1
                             className={
-                                (screen === 'handover' && moduleFocused) ||
+                                ((screen === 'handover' ||
+                                    screen === 'cashless') &&
+                                    moduleFocused) ||
                                 screen === 'home'
                                     ? 'sr-only'
                                     : 'text-lg font-semibold'
@@ -958,13 +1000,15 @@ export default function MobileApp() {
                                       ? 'Menu'
                                       : screen === 'notifications'
                                         ? 'Notifikasi'
-                                        : tab === 'handover'
-                                          ? 'Handover'
-                                          : tab === 'history'
-                                            ? 'Riwayat'
-                                            : tab === 'account'
-                                              ? 'Akun'
-                                              : 'Pickup'}
+                                        : screen === 'cashless'
+                                          ? 'Handover Cashless'
+                                          : tab === 'handover'
+                                            ? 'Handover'
+                                            : tab === 'history'
+                                              ? 'Riwayat'
+                                              : tab === 'account'
+                                                ? 'Akun'
+                                                : 'Pickup'}
                         </h1>
                     </div>
                 </div>
@@ -1270,29 +1314,44 @@ export default function MobileApp() {
                         <ModuleMenu
                             onPickup={() => navigate('mine')}
                             onHandover={() => navigate('handover')}
+                            onCashless={() => navigateScreen('cashless')}
+                        />
+                    ) : screen === 'notifications' && cashlessResult ? (
+                        <CashlessResultPanel
+                            key={cashlessResult}
+                            session={session}
+                            batchId={cashlessResult}
+                            onBack={() => setCashlessResult(null)}
                         />
                     ) : screen === 'notifications' ? (
                         <section className="space-y-3">
-                            <p className="text-sm text-muted-foreground">
-                                Assignment yang diterima selama sesi aplikasi
-                                ini. Daftar dikosongkan saat keluar dari akun
-                                atau aplikasi dimulai ulang.
-                            </p>
-                            {pushNotice && (
-                                <p
-                                    role="status"
-                                    className="rounded-xl border p-3 text-sm"
-                                >
-                                    {pushNotice}
-                                </p>
+                            <CashlessAlertsPanel
+                                session={session}
+                                online={online}
+                                onOpen={(link) => {
+                                    if (link.batchId) {
+                                        setCashlessResult(link.batchId);
+                                        setError('');
+                                    }
+                                }}
+                            />
+                            {pushNotice &&
+                                !pushNotice.startsWith('Cashless') && (
+                                    <p
+                                        role="status"
+                                        className="rounded-xl border p-3 text-sm"
+                                    >
+                                        {pushNotice}
+                                    </p>
+                                )}
+                            {notifications.some((link) => !link.batchId) && (
+                                <h3 className="text-sm font-medium">
+                                    Penugasan pickup
+                                </h3>
                             )}
-                            {notifications.length === 0 ? (
-                                <EmptyState
-                                    title="Belum ada notifikasi sesi ini"
-                                    description="Tugas tetap dapat diperiksa di Pickup. Izinkan notifikasi perangkat agar pemberitahuan tugas baru dapat diterima."
-                                />
-                            ) : (
-                                notifications.map((link) => (
+                            {notifications
+                                .filter((link) => !link.batchId)
+                                .map((link) => (
                                     <button
                                         key={link.eventId}
                                         className="w-full rounded-xl border bg-card p-4 text-left"
@@ -1304,8 +1363,7 @@ export default function MobileApp() {
                                             Ketuk untuk melihat detail tugas.
                                         </p>
                                     </button>
-                                ))
-                            )}
+                                ))}
                         </section>
                     ) : screen === 'home' ? (
                         <section className="space-y-4">
@@ -1347,6 +1405,7 @@ export default function MobileApp() {
                                 compact
                                 onPickup={() => navigate('mine')}
                                 onHandover={() => navigate('handover')}
+                                onCashless={() => navigateScreen('cashless')}
                             />
                             <div className="flex items-center justify-between">
                                 <h3 className="font-semibold">Tugas Saya</h3>
@@ -1545,6 +1604,22 @@ export default function MobileApp() {
                                 {appVersion && ` · ${appVersion}`}
                             </p>
                         </section>
+                    ) : screen === 'cashless' ? (
+                        <CashlessHandoverPanel
+                            key={`${session.user.id}-${session.environment}-${cashlessTarget ?? ''}`}
+                            initialPickupId={cashlessTarget}
+                            session={session}
+                            online={online}
+                            onBusyChange={cashlessBusy}
+                            onFocusChange={setModuleFocused}
+                            onFailure={(failure) =>
+                                sessionRef.current?.token === session.token &&
+                                failure instanceof ApiError &&
+                                [401, 403].includes(failure.status)
+                                    ? fail(failure)
+                                    : Promise.resolve()
+                            }
+                        />
                     ) : tab === 'handover' ? (
                         <HandoverPanel
                             session={session}
@@ -1684,6 +1759,14 @@ export default function MobileApp() {
                                                     session.token
                                                 ) {
                                                     setTask(updated);
+                                                    if (
+                                                        tab === 'available' &&
+                                                        updated.assigned_staff
+                                                            ?.id ===
+                                                            session.user.id
+                                                    ) {
+                                                        setTab('mine');
+                                                    }
                                                     if (
                                                         updated.proof ||
                                                         updated.status ===
@@ -2033,7 +2116,7 @@ export default function MobileApp() {
                                         )
                                             ? 'Tidak ada tugas yang sesuai. Ubah pencarian atau reset filter.'
                                             : tab === 'available'
-                                              ? 'Belum ada tugas yang dapat diambil alih. Periksa kembali nanti.'
+                                              ? 'Belum ada tugas yang tersedia untuk diambil. Periksa kembali nanti.'
                                               : tab === 'history'
                                                 ? 'Pickup yang sudah selesai akan muncul di sini.'
                                                 : 'Semua tugas sudah ditangani atau belum ada penugasan. Refresh untuk memeriksa tugas terbaru.'

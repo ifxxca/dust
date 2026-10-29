@@ -63,6 +63,12 @@ class HandoverItem extends Model
         return $this->belongsTo(PickupTask::class, 'pickup_task_id');
     }
 
+    /** @return BelongsTo<HandoverSession, $this> */
+    public function session(): BelongsTo
+    {
+        return $this->belongsTo(HandoverSession::class, 'handover_session_id');
+    }
+
     protected function casts(): array
     {
         return ['manual_hybrid' => 'integer', 'cashless_hybrid' => 'integer', 'css_orion' => 'integer', 'verified_at' => 'immutable_datetime'];

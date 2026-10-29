@@ -168,6 +168,82 @@ test('Hybrid compares rendered dates without case or surrounding whitespace diff
     assert.equal(report.date, '2026-10-22');
 });
 
+test('Hybrid commits the calendar value before submitting View', async (t) => {
+    const { client } = await fixture(t, { datepickerClearsFocusedThru: true });
+
+    const report = await client.retrieve('manual', '2026-10-22');
+
+    assert.equal(report.rows, 2);
+});
+
+test('Hybrid refills both dates when the source drops Date Thru once', async (t) => {
+    const { client, state } = await fixture(t, { dropDateThruOnce: true });
+
+    const report = await client.retrieve('manual', '2026-10-22');
+
+    assert.equal(report.rows, 2);
+    assert.equal(state.views, 2);
+    assert.deepEqual(state.downloads, ['40']);
+});
+
+test('Hybrid stops after three rejected date filters without downloading', async (t) => {
+    const { client, state, outputDir } = await fixture(t, {
+        dropDateThruAlways: true,
+    });
+
+    await assert.rejects(client.retrieve('manual', '2026-10-22'), {
+        code: 'HYBRID_FILTER',
+    });
+
+    assert.equal(state.views, 3);
+    assert.deepEqual(state.downloads, []);
+    assert.deepEqual(await readdir(outputDir), []);
+});
+
+test('Hybrid records an empty report with source evidence when Oracle cannot export zero rows', async (t) => {
+    const { client } = await fixture(t, {
+        oracleExportError: true,
+        emptyReport: true,
+    });
+
+    const report = await client.retrieve('manual', '2026-10-22');
+
+    assert.equal(report.rows, 0);
+    assert.equal(await readFile(report.file, 'utf8'), 'Cnote no,Date\r\n');
+    const evidence = JSON.parse(
+        await readFile(
+            path.join(path.dirname(report.file), 'empty-report-evidence.json'),
+            'utf8',
+        ),
+    );
+    assert.equal(evidence.date, '2026-10-22');
+    assert.equal(evidence.reason, 'ORA-22275');
+    assert.match(evidence.reportHtml, /No data found/);
+    assert.match(evidence.exportResponse, /invalid LOB locator/);
+});
+
+for (const options of [
+    {},
+    { emptyReport: true, reportRows: true },
+    { emptyReport: true, reportFilter: true },
+    { emptyReport: true, hiddenEmptyMarker: true },
+    { emptyReport: true, reportError: true },
+    { emptyReport: true, oracleCode: 'ORA-01013' },
+]) {
+    test(`Hybrid never turns an Oracle export failure into empty data without an unfiltered empty report ${JSON.stringify(options)}`, async (t) => {
+        const { client, outputDir } = await fixture(t, {
+            ...options,
+            oracleExportError: true,
+        });
+
+        await assert.rejects(client.retrieve('cashless', '2026-10-22'), {
+            code: 'HYBRID_SOURCE_ORACLE',
+        });
+
+        assert.deepEqual(await readdir(outputDir), []);
+    });
+}
+
 test('Hybrid retries a temporary download failure in the same session', async (t) => {
     const { client, state } = await fixture(t, { download503Once: true });
     const report = await client.retrieve('cashless', '2026-10-22');

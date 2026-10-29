@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
  * @property CarbonImmutable|null $lease_expires_at
  * @property CarbonImmutable|null $imported_at
  * @property CarbonImmutable|null $reviewed_at
- * @property array{awbs?: list<string>}|null $parameters
+ * @property array{awbs?: list<string>, no_data_evidence?: string}|null $parameters
  * @property 'Y'|'N' $national_account
  */
 class ReportJob extends Model
@@ -30,9 +30,39 @@ class ReportJob extends Model
 
     public const SOURCE_SLOTS = ['apex' => 1, 'roberto' => 2, 'nuralamt' => 3, 'hybrid' => 1];
 
+    /** @return array<string, int> */
+    public static function apexWorkerSlots(): array
+    {
+        $base = config('jne-reports.worker_id');
+        if (! config('jne-reports.apex_pool_enabled')) {
+            return [$base => 1];
+        }
+        $slots = [];
+        for ($instance = 1; $instance <= config('jne-reports.apex_concurrency'); $instance++) {
+            $slots[$base.'-instance-'.$instance] = $instance + 3;
+        }
+
+        return $slots;
+    }
+
     public const REPORT_TYPES = ['apex' => ['apex', 'unresolved'], 'roberto' => ['cashless', 'manual'], 'nuralamt' => ['cashless', 'manual'], 'hybrid' => ['combined']];
 
     public const HYBRID_PARTS = [['roberto', 'cashless'], ['roberto', 'manual'], ['nuralamt', 'cashless'], ['nuralamt', 'manual']];
+
+    public const HYBRID_SERVERS = ['HYBRID_PM' => 'roberto', 'HYBRID_PUMAN' => 'nuralamt'];
+
+    /** @return list<array{string, string}> */
+    public static function hybridParts(string $account): array
+    {
+        if ($account === 'HYBRID_GABUNGAN') {
+            return self::HYBRID_PARTS;
+        }
+
+        $source = self::HYBRID_SERVERS[$account] ?? null;
+        abort_unless($source !== null, 422, 'Pilih Server PM atau Server Puman.');
+
+        return array_values(array_filter(self::HYBRID_PARTS, fn (array $part): bool => $part[0] === $source));
+    }
 
     protected $guarded = ['id'];
 

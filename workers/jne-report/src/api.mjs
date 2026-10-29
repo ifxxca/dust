@@ -17,12 +17,12 @@ export class WorkerApi {
                     'X-Worker-ID': this.config.workerId,
                     Accept: 'application/json',
                 };
-                if (claimToken) headers['X-Report-Claim'] = claimToken;
+                if (claimToken) headers[this.config.claimHeader || 'X-Report-Claim'] = claimToken;
                 if (!(body instanceof FormData))
                     headers['Content-Type'] = 'application/json';
                 const response = await fetch(
                     this.config.apiUrl +
-                        '/api/internal/report-jobs/' +
+                        (this.config.apiBasePath || '/api/internal/report-jobs/') +
                         endpoint,
                     {
                         method: 'POST',

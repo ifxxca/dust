@@ -69,6 +69,10 @@ for ($i = 0; $i < 34; $i++) {
 }
 PickupSchedule::factory()->create(['customer_id' => $customers[1]->id, 'created_by' => $admin->id, 'starts_on' => $today->copy()->startOfMonth()->toDateString()]);
 $profile = JneReportProfile::factory()->create(['label' => 'Account fixture audit', 'customer_account' => 'AUDIT001', 'enabled' => false, 'created_by' => $admin->id, 'updated_by' => $admin->id]);
+foreach (['HYBRID_PM' => 'Hybrid Server PM', 'HYBRID_PUMAN' => 'Hybrid Server Puman'] as $account => $label) {
+    JneReportProfile::factory()->create(['source' => 'hybrid', 'report_type' => 'combined', 'customer_account' => $account, 'label' => $label,
+        'enabled' => false, 'lookback_days' => 1, 'interval_minutes' => 30, 'next_run_at' => null, 'created_by' => $admin->id, 'updated_by' => $admin->id]);
+}
 $report = ReportJob::factory()->create(['customer_account' => 'AUDIT001', 'status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'projection_status' => 'PROJECTED', 'created_by' => $admin->id, 'date_from' => $yesterday, 'date_thru' => $today->toDateString(), 'row_count' => 30, 'awb_count' => 30, 'completed_at' => now(), 'imported_at' => now()]);
 $ids['report'] = $report->id;
 ReportJob::factory()->create(['customer_account' => 'AUDIT002', 'status' => 'NEEDS_ATTENTION', 'created_by' => $admin->id, 'error_message' => 'Fixture audit: laporan belum tersedia; periksa lalu coba kembali.']);

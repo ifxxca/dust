@@ -11,12 +11,12 @@ beforeEach(function () {
     $this->travelTo(CarbonImmutable::parse('2026-10-19 05:00:00', 'UTC'));
 });
 
-test('processing is the default daily view while explicit Pickup and report bookmarks remain available', function () {
+test('pickup is the default daily view while manual processing and report bookmarks remain available', function () {
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
     $task = PickupTask::factory()->create(['scheduled_at' => now(), 'status' => 'PICKED_UP']);
     PickupRecord::factory()->create(['pickup_task_id' => $task->id]);
-    $this->actingAs($admin)->get(route('pickup-results.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->where('filters.monitoring', 'processing')->where('filters.date_from', '2026-10-19')->has('processing')->where('pickups', null));
-    $this->get(route('pickup-results.index', ['monitoring' => 'pickup']))->assertInertia(fn (Assert $page) => $page->where('pickups.total', 1)->missing('processing'));
+    $this->actingAs($admin)->get(route('pickup-results.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->where('filters.monitoring', 'pickup')->where('filters.date_from', '2026-10-19')->where('pickups.total', 1)->missing('processing'));
+    $this->get(route('pickup-results.index', ['monitoring' => 'processing']))->assertInertia(fn (Assert $page) => $page->has('processing')->where('pickups', null));
     $this->get(route('pickup-results.index', ['group_by' => 'staff']))->assertInertia(fn (Assert $page) => $page->has('report.data', 1)->where('filters.monitoring', 'pickup'));
 });
 
@@ -57,7 +57,7 @@ test('drawer bookmarks preserve normalized date filters without spreading drawer
     foreach ($tasks as $task) {
         PickupRecord::factory()->create(['pickup_task_id' => $task->id]);
     }
-    $this->actingAs($admin)->get(route('pickup-results.index', ['quick_pickup' => $tasks[0]->id, 'per_page' => 10]))->assertInertia(fn (Assert $page) => $page->missing('filters.quick_pickup')->where('processing.rows.next_page_url', fn ($url) => ! str_contains($url, 'quick_pickup=') && str_contains($url, 'date_from=2026-10-19')));
+    $this->actingAs($admin)->get(route('pickup-results.index', ['monitoring' => 'processing', 'quick_pickup' => $tasks[0]->id, 'per_page' => 10]))->assertInertia(fn (Assert $page) => $page->missing('filters.quick_pickup')->where('processing.rows.next_page_url', fn ($url) => ! str_contains($url, 'quick_pickup=') && str_contains($url, 'date_from=2026-10-19')));
     $this->getJson(route('pickup-results.index', ['quick_pickup' => -1]))->assertUnprocessable();
     $this->get(route('pickup-results.export'))->assertOk();
 });

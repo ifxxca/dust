@@ -71,3 +71,27 @@ test('takeover recovery requires exact actor audit at baseline plus one', () => 
         ),
     ).toBe('changed');
 });
+
+test('an unassigned task claim recovers only from its own assignment audit', () => {
+    const op: Operation = {
+        ...operation,
+        kind: 'takeover',
+        body: { expected_assigned_staff_id: null },
+    };
+    const claimed = {
+        ...task,
+        events: [{ action: 'assigned', actor_id: 2, task_version: 3 }],
+    };
+    expect(reconcileExecution(claimed, op, 2)).toBe('confirmed');
+    expect(reconcileExecution(claimed, op, 3)).toBe('changed');
+    expect(
+        reconcileExecution(
+            {
+                ...claimed,
+                events: [{ action: 'assigned', actor_id: 99, task_version: 3 }],
+            },
+            op,
+            2,
+        ),
+    ).toBe('changed');
+});

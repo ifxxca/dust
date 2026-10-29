@@ -2,20 +2,17 @@ import DataTable, { DataTablePagination } from '@/components/data-table';
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 import {
-    AlertTriangle,
-    CheckCircle2,
     Clock3,
-    FileText,
     LayoutGrid,
     List,
     MapPin,
     MoreVertical,
-    Truck,
     UserRound,
 } from 'lucide-react';
 import { operations } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Select,
     SelectContent,
@@ -68,77 +65,50 @@ export function PickupSummaryCards({
     summary?: PickupSummary;
     loading: boolean;
 }) {
-    const cards = [
-        {
-            label: 'Total Pickup',
-            key: 'total',
-            icon: FileText,
-            color: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-300',
-        },
-        {
-            label: 'Menunggu Assignment',
-            key: 'waiting',
-            icon: Clock3,
-            color: 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-300',
-        },
-        {
-            label: 'Sedang Ditangani',
-            key: 'handling',
-            icon: Truck,
-            color: 'bg-sky-50 text-sky-600 dark:bg-sky-950 dark:text-sky-300',
-        },
-        {
-            label: 'Pickup Berhasil',
-            key: 'successful',
-            icon: CheckCircle2,
-            color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300',
-        },
-        {
-            label: 'Kunjungan Tanpa Paket',
-            key: 'no_packages',
-            icon: AlertTriangle,
-            color: 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-300',
-        },
+    const metrics = [
+        ['total', 'Total pickup'],
+        ['waiting', 'Menunggu assignment'],
+        ['handling', 'Sedang ditangani'],
+        ['successful', 'Pickup berhasil'],
+        ['no_packages', 'Kunjungan tanpa paket'],
     ] as const;
     return (
-        <section aria-label="Ringkasan pickup hari ini" className="space-y-2">
-            <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
-                {cards.map(({ label, key, icon: Icon, color }) => (
-                    <div
-                        key={key}
-                        className="flex min-w-0 items-center gap-2 rounded-lg border bg-card p-2 last:col-span-2 xl:last:col-span-1"
-                    >
-                        <div
-                            className={`hidden size-8 shrink-0 items-center justify-center rounded-lg xl:flex ${color}`}
-                        >
-                            <Icon className="size-4" aria-hidden="true" />
-                        </div>
-                        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                            <p className="text-xs leading-4 text-muted-foreground">
+        <details className="rounded-lg border px-4">
+            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
+                Ringkasan jadwal hari ini{summary ? ' · ' + summary.date : ''}
+            </summary>
+            <section
+                aria-label="Ringkasan pickup hari ini"
+                className="flex flex-col gap-3 pb-4"
+                aria-busy={loading}
+            >
+                <p className="text-xs text-muted-foreground">
+                    Seluruh jadwal hari ini, terlepas dari filter daftar. Tanpa
+                    paket dihitung terpisah dari pickup berhasil.
+                </p>
+                <dl className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+                    {metrics.map(([key, label]) => (
+                        <div key={key}>
+                            <dt className="text-xs text-muted-foreground">
                                 {label}
-                            </p>
-                            <div className="flex shrink-0 items-baseline gap-2">
+                            </dt>
+                            <dd className="text-xl font-semibold tabular-nums">
                                 {loading ? (
-                                    <span
+                                    <Skeleton
+                                        className="h-7 w-10"
                                         aria-label="Memuat ringkasan"
-                                        className="h-7 w-10 animate-pulse rounded bg-muted"
                                     />
+                                ) : summary ? (
+                                    summary[key]
                                 ) : (
-                                    <span className="text-xl font-semibold tracking-tight tabular-nums">
-                                        {summary ? summary[key] : '—'}
-                                    </span>
+                                    '—'
                                 )}
-                            </div>
+                            </dd>
                         </div>
-                    </div>
-                ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-                Berdasarkan jadwal hari ini{summary ? ` (${summary.date})` : ''}
-                , terlepas dari filter daftar. Tanpa paket adalah hasil akhir
-                tersendiri, terpisah dari pickup berhasil.
-            </p>
-        </section>
+                    ))}
+                </dl>
+            </section>
+        </details>
     );
 }
 
@@ -246,7 +216,9 @@ export default function PickupOperationalList<T extends ListTask>({
                         )}
                         {task.can.take_over && (
                             <DropdownMenuItem onSelect={() => onTakeover(task)}>
-                                Ambil Alih Pickup
+                                {task.assigned_staff
+                                    ? 'Ambil Alih Pickup'
+                                    : 'Ambil Tugas'}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuContent>

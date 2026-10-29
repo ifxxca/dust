@@ -24,10 +24,11 @@ class CombineHybridReports
 
                 return;
             }
-            if ($sources->count() !== 4 || $sources->contains(fn (ReportJob $source): bool => $source->status !== 'SOURCE_SAVED')) {
+            $parts = ReportJob::hybridParts($batch->customer_account);
+            if ($sources->count() !== count($parts) || $sources->contains(fn (ReportJob $source): bool => $source->status !== 'SOURCE_SAVED')) {
                 return;
             }
-            $expected = collect(ReportJob::HYBRID_PARTS)->map(fn (array $part): string => implode(':', $part))->sort()->values()->all();
+            $expected = collect($parts)->map(fn (array $part): string => implode(':', $part))->sort()->values()->all();
             $actual = $sources->map(fn (ReportJob $source): string => $source->source.':'.$source->report_type)->sort()->values()->all();
             abort_unless($actual === $expected && $sources->every(fn (ReportJob $source): bool => $source->date_from->equalTo($batch->date_from) && $source->date_thru->equalTo($batch->date_thru)), 409, 'Sumber gabungan tidak sesuai siklus atau tanggal.');
             foreach ($sources as $source) {
@@ -57,7 +58,7 @@ class CombineHybridReports
                 'error_message' => null,
                 'completed_at' => $awbs === [] ? now() : null,
             ]);
-            $batch->recordEvent('Keempat report lengkap: '.$rowCount.' baris menjadi '.count($awbs).' AWB unik dalam satu file gabungan.'.($awbs === [] ? ' Tidak ada AWB untuk dikirim ke APEX.' : ' Menunggu Upload Connote APEX.'));
+            $batch->recordEvent(count($parts).' report lengkap: '.$rowCount.' baris menjadi '.count($awbs).' AWB unik dalam satu file gabungan.'.($awbs === [] ? ' Tidak ada AWB untuk dikirim ke APEX.' : ' Menunggu Upload Connote APEX.'));
         }, 5);
     }
 

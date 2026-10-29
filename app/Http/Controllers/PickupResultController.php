@@ -14,23 +14,31 @@ use App\Http\Resources\HandoverResource;
 use App\Http\Resources\PickupRecordResource;
 use App\Http\Resources\PickupTaskResource;
 use App\Models\HandoverSession;
+use App\Models\PickupCashlessAwb;
 use App\Models\PickupProcessingRecord;
 use App\Models\PickupTask;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PickupResultController extends Controller
 {
-    public function index(PickupResultRequest $request, QueryPickupResults $results, ReportPickupResults $reports, QueryPackageProcessing $processing, QueryPickupOperations $operations): Response
+    public function index(PickupResultRequest $request, QueryPickupResults $results, ReportPickupResults $reports, QueryPackageProcessing $processing, QueryPickupOperations $operations): Response|RedirectResponse
     {
         $filters = array_filter($request->validated(), fn ($value) => $value !== null && $value !== '');
-        $filters['monitoring'] ??= isset($filters['group_by']) ? 'pickup' : 'processing';
+        $filters['monitoring'] ??= 'pickup';
         unset($filters['quick_pickup']);
+        if ($filters['monitoring'] === 'automation') {
+            unset($filters['monitoring']);
+
+            return to_route('pickup-automation.index', $filters);
+        }
         $operational = $operations->handle($filters);
         if ($filters['monitoring'] === 'processing') {
             $processingQuery = $processing->handle($filters);
@@ -58,6 +66,8 @@ class PickupResultController extends Controller
             'summary' => $summary,
             'overview' => $overview,
             'queues' => $results->queues($filters),
+            'staffOptions' => User::query()->whereIn('id', PickupTask::query()->select('assigned_staff_id')->whereNotNull('assigned_staff_id'))
+                ->orderBy('name')->get(['id', 'name']),
             'report' => ! empty($filters['group_by']) ? $reports->handle($query, $results, $filters['group_by'], (int) ($filters['page'] ?? 1), (int) ($filters['per_page'] ?? 20))->appends($filters) : null,
             'pickups' => ! empty($filters['group_by']) ? null : $query->orderBy($filters['sort'] ?? 'scheduled_at', $filters['direction'] ?? 'desc')
                 ->orderBy('id', $filters['direction'] ?? 'desc')->paginate($filters['per_page'] ?? 20)
@@ -71,7 +81,11 @@ class PickupResultController extends Controller
         $filters = array_filter($request->validated(), fn ($value) => $value !== null && $value !== '');
         $timezone = PickupResultPeriod::TIMEZONE;
         $isProcessing = ($filters['monitoring'] ?? null) === 'processing';
-        $query = $isProcessing ? $processing->handle($filters) : $processing->pickupExport($results->handle($filters), $filters);
+        $pickupQuery = $results->handle($filters);
+        if (! empty($filters['selected_ids'])) {
+            $pickupQuery->whereIn('id', $filters['selected_ids']);
+        }
+        $query = $isProcessing ? $processing->handle($filters) : $processing->pickupExport($pickupQuery, $filters);
         $query->orderBy($isProcessing ? ($filters['processing_sort'] ?? 'scheduled_at') : ($filters['sort'] ?? 'scheduled_at'), $filters['direction'] ?? 'desc')->orderBy('id', $filters['direction'] ?? 'desc');
         if ($isProcessing) {
             $query->orderBy('category');
@@ -116,7 +130,31 @@ class PickupResultController extends Controller
     {
         abort_unless($request->user()->is_active && $request->user()->role === 'admin_supervisor', 403);
         abort_unless($request->user()->can('view', $task), 404);
-        $request->validate(['processing_page' => ['sometimes', 'integer', 'min:1'], 'view' => ['sometimes', 'in:pickup,processing']]);
+        $request->validate(['processing_page' => ['sometimes', 'integer', 'min:1'], 'awb_page' => ['sometimes', 'integer', 'min:1'], 'view' => ['sometimes', 'in:pickup,processing,cashless']]);
+        if ($request->input('view') === 'cashless') {
+            $awbs = $task->cashlessAwbs()->whereNotNull('awb')->orderBy('id')
+                ->paginate(50, ['id', 'awb', 'created_at'], 'awb_page');
+            $latest = DB::table('cashless_entry_items as history')
+                ->join('pickup_cashless_awbs as scans', 'scans.id', '=', 'history.pickup_cashless_awb_id')
+                ->join('cashless_entry_batches as batches', 'batches.id', '=', 'history.batch_id')
+                ->whereIn('scans.id', $awbs->getCollection()->modelKeys())->where('batches.pickup_task_id', $task->id)
+                ->whereColumn('history.awb', 'scans.awb')->groupBy('history.pickup_cashless_awb_id')->selectRaw('MAX(history.id)');
+            $entries = DB::table('cashless_entry_items as entries')
+                ->join('cashless_entry_batches as batches', 'batches.id', '=', 'entries.batch_id')
+                ->whereIn('entries.id', $latest)
+                ->get(['entries.pickup_cashless_awb_id', 'entries.status', 'entries.message', 'entries.updated_at',
+                    'entries.batch_id', 'batches.status as batch_status', 'batches.ho_number', 'batches.approved_at', 'batches.error_message as batch_message'])
+                ->keyBy('pickup_cashless_awb_id');
+
+            return response()->json([
+                'task' => $task->only(['id', 'reference', 'customer_name_snapshot']),
+                'awbs' => $awbs->through(fn (PickupCashlessAwb $awb): array => [
+                    'id' => $awb->id, 'awb' => $awb->awb, 'created_at' => $awb->created_at,
+                    'entry' => $entries->get($awb->id),
+                ]),
+                'timezone' => PickupResultPeriod::TIMEZONE,
+            ])->header('Cache-Control', 'private, no-store');
+        }
         if ($request->input('view') === 'pickup') {
             return response()->json($pickupDetails->handle($task, $request->user()))->header('Cache-Control', 'private, no-store');
         }

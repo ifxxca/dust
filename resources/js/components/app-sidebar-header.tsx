@@ -34,9 +34,12 @@ export function AppSidebarHeader({
             </div>
             <div className="flex shrink-0 items-center gap-3">
                 {user.is_active &&
-                    ['cs', 'admin_supervisor'].includes(role) && (
-                        <PickupNotifications key={user.id} />
-                    )}
+                    [
+                        'cs',
+                        'admin_supervisor',
+                        'pickup_staff',
+                        'retail_staff',
+                    ].includes(role) && <PickupNotifications key={user.id} />}
                 <span className="hidden text-xs text-muted-foreground sm:block">
                     {
                         {

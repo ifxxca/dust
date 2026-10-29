@@ -103,6 +103,9 @@ export function ShipmentDetailContent({ detail }: { detail: JneDetail }) {
                     <DetailField label="Pembatalan (CSV)">
                         {source?.awb_cancel}
                     </DetailField>
+                    <DetailField label="Tanggal AWB (JNE)">
+                        {jneTimestamp(shipment.entry_at, timezone)}
+                    </DetailField>
                     <DetailField label="Terakhir diamati">
                         {jneTimestamp(shipment.observed_at, timezone)} ·{' '}
                         {timezone}

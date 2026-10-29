@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { parseCsvBytes } from './csv.mjs';
 import { ReportError } from './errors.mjs';
 import { MAX_AWBS } from './limits.mjs';
@@ -74,8 +74,8 @@ export async function retrieveHybridApex(
                     awbs: awbs.slice(offset, offset + MAX_AWBS),
                     upload_filename:
                         job.report_type === 'unresolved'
-                            ? `active-awbs-${job.id}-${batch}.csv`
-                            : `hybrid-${job.source}-${job.id}-${batch}.csv`,
+                            ? `active-awbs-${job.id}-${batch}-${randomUUID()}.csv`
+                            : `hybrid-${job.source}-${job.id}-${batch}-${randomUUID()}.csv`,
                 },
                 directory,
                 async () => {},

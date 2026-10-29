@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\PickupRecordFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/** @property CarbonImmutable $picked_up_at */
 class PickupRecord extends Model
 {
     /** @use HasFactory<PickupRecordFactory> */

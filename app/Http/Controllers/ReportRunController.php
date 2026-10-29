@@ -53,7 +53,7 @@ class ReportRunController extends Controller
                 'sources' => $sources->get($job->id, collect())->values(),
                 'apex_batches' => $batches->get($job->id, collect())->values(),
             ]),
-            'profiles' => JneReportProfile::orderBy('source')->orderBy('id')->get(['id', 'source', 'report_type', 'customer_account', 'label']),
+            'profiles' => JneReportProfile::where(fn ($query) => $query->where('source', '<>', 'hybrid')->orWhere('customer_account', '<>', 'HYBRID_GABUNGAN'))->orderBy('source')->orderBy('id')->get(['id', 'source', 'report_type', 'customer_account', 'label']),
             'filters' => ['source' => $data['source'] ?? '', 'status' => $data['status'] ?? '', 'q' => $data['q'] ?? ''],
             'timezone' => config('pickup.timezone'),
             'checkpointsEnabled' => (bool) config('jne-reports.batch_checkpoints_enabled'),
@@ -65,6 +65,10 @@ class ReportRunController extends Controller
     {
         $this->authorizeAdmin($request);
         $data = $request->validate(['profile_id' => ['required', 'integer', 'exists:jne_report_profiles,id'], 'for_date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:'.CarbonImmutable::now('Asia/Jakarta')->toDateString()]]);
+        $profile = JneReportProfile::findOrFail((int) $data['profile_id']);
+        if ($profile->source === 'hybrid' && $profile->customer_account === 'HYBRID_GABUNGAN') {
+            throw ValidationException::withMessages(['profile_id' => 'Gunakan konfigurasi Hybrid Server PM atau Server Puman.']);
+        }
         if ($scheduler->queueProfile((int) $data['profile_id'], true, $data['for_date'] ?? null) === 0) {
             $profile = JneReportProfile::findOrFail((int) $data['profile_id']);
             throw ValidationException::withMessages(['run' => $profile->last_error ?: 'Report belum dapat dimasukkan ke antrean.']);

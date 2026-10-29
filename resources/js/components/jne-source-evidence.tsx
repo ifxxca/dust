@@ -3,17 +3,17 @@ import type { JneSourceProvenance } from '@/types/jne';
 export default function JneSourceEvidence({
     code,
     evidence,
+    title = 'Bukti asal dan kontrak sumber',
 }: {
     code?: string | null;
     evidence?: JneSourceProvenance | null;
+    title?: string;
 }) {
     if (!code && !evidence?.contract && !evidence?.hybrid_origins?.length)
         return null;
     return (
         <details className="rounded-lg border p-3 text-sm">
-            <summary className="cursor-pointer font-medium">
-                Bukti asal dan kontrak sumber
-            </summary>
+            <summary className="cursor-pointer font-medium">{title}</summary>
             <div className="mt-3 space-y-2 break-words">
                 {code != null && (
                     <p>

@@ -226,6 +226,66 @@ export default function JneSourceContractFields({
                     </div>
                     <details className="rounded-lg border p-3">
                         <summary className="cursor-pointer text-sm font-medium">
+                            Otomatisasi pickup
+                        </summary>
+                        <div className="mt-3 flex flex-col gap-3">
+                            <label className="flex min-h-11 items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={
+                                        definition.automatic_reconciliation ===
+                                        true
+                                    }
+                                    onChange={(event) =>
+                                        onChange(
+                                            JSON.stringify(
+                                                {
+                                                    ...definition,
+                                                    automatic_reconciliation:
+                                                        event.target.checked,
+                                                    pickup_date_column: event
+                                                        .target.checked
+                                                        ? 'TGL_ENTRY'
+                                                        : null,
+                                                },
+                                                null,
+                                                2,
+                                            ),
+                                        )
+                                    }
+                                />
+                                Cocokkan kode customer dan tanggal entry dengan
+                                tanggal pickup
+                            </label>
+                            <label className="flex min-h-11 items-center gap-2 text-sm">
+                                <input
+                                    type="checkbox"
+                                    checked={
+                                        definition.collection_mode ===
+                                        'complete_date_report'
+                                    }
+                                    onChange={(event) =>
+                                        update(
+                                            'collection_mode',
+                                            event.target.checked
+                                                ? 'complete_date_report'
+                                                : null,
+                                        )
+                                    }
+                                />
+                                Report harian mencakup seluruh resi sesuai
+                                persyaratan sumber
+                            </label>
+                            <p className="text-sm text-muted-foreground">
+                                Aktifkan setelah kolom kode, tanggal, kategori
+                                dan cakupan report diverifikasi. Dua pickup
+                                customer pada hari yang sama tetap memerlukan
+                                pemeriksaan.
+                            </p>
+                        </div>
+                    </details>
+                    <details className="rounded-lg border p-3">
+                        <summary className="cursor-pointer text-sm font-medium">
                             Pemetaan kategori
                         </summary>
                         <div className="mt-3 flex flex-col gap-4">

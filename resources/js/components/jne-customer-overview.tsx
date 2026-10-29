@@ -3,10 +3,11 @@ import {
     ArrowUpRight,
     CircleMinus,
     Clock3,
-    Server,
     TriangleAlert,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { OperationalPanel } from '@/components/operational-dashboard-charts';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     Card,
     CardContent,
@@ -43,56 +44,57 @@ export function CustomerServerSummary({
     onSelect: (key: string) => void;
 }) {
     return (
-        <section className="flex flex-col gap-3" aria-label="Server resi">
-            <div className="flex items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-sm font-semibold">Server resi</h2>
-                    <p className="text-xs text-muted-foreground">
-                        Kelompok berdasarkan awalan AWB. Pilih server untuk
-                        merinci.
-                    </p>
-                </div>
+        <section className="flex flex-col gap-2" aria-label="Server resi">
+            <div className="flex flex-wrap gap-2">
                 <Button
-                    size="sm"
-                    variant={selected === 'all' ? 'secondary' : 'outline'}
+                    variant={selected === 'all' ? 'secondary' : 'ghost'}
                     className="min-h-11"
                     aria-pressed={selected === 'all'}
                     onClick={() => onSelect('all')}
                 >
                     Semua server
                 </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {servers.map((server) => (
-                    <button
+                    <Button
                         key={server.key}
-                        type="button"
+                        variant={
+                            selected === server.key ? 'secondary' : 'ghost'
+                        }
+                        className="min-h-11"
                         aria-pressed={selected === server.key}
                         onClick={() => onSelect(server.key)}
-                        className={`flex min-w-0 cursor-pointer flex-col gap-2 rounded-xl border bg-card p-4 text-left transition-colors outline-none hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring ${selected === server.key ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/10' : ''}`}
                     >
-                        <span className="flex items-center justify-between gap-2 text-sm font-medium">
-                            <span>{server.label}</span>
-                            <Server
-                                aria-hidden="true"
-                                className="size-4 shrink-0 text-muted-foreground"
-                            />
+                        {server.label}
+                        <span className="tabular-nums">
+                            {number(server.shipments)}
                         </span>
-                        <span className="text-2xl font-semibold tabular-nums">
-                            {number(server.shipments)}{' '}
-                            <span className="text-xs font-normal text-muted-foreground">
-                                resi
-                            </span>
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                            {prefixes[server.key]}
-                        </span>
-                        <span className="text-xs font-medium break-words tabular-nums">
-                            {money(server.amount)}
-                        </span>
-                    </button>
+                    </Button>
                 ))}
             </div>
+        </section>
+    );
+}
+
+export function CustomerServerDetails({
+    servers,
+}: {
+    servers: CustomerDashboardProps['servers'];
+}) {
+    return (
+        <section aria-label="Amount & awalan server">
+            <h3 className="mb-3 text-sm font-medium">Amount & awalan server</h3>
+            <dl className="grid gap-3 pb-3 sm:grid-cols-2 lg:grid-cols-4">
+                {servers.map((server) => (
+                    <div key={server.key}>
+                        <dt>
+                            {server.label} · {prefixes[server.key]}
+                        </dt>
+                        <dd className="mt-1 font-medium tabular-nums">
+                            {money(server.amount)}
+                        </dd>
+                    </div>
+                ))}
+            </dl>
         </section>
     );
 }
@@ -182,106 +184,96 @@ export function CustomerPendingAges({
     selected: string;
     onSelect: (age: string) => void;
 }) {
-    const max = Math.max(1, ...ages.map((item) => item.shipments));
+    const total = ages.reduce((sum, item) => sum + item.shipments, 0);
+    const oldest =
+        ages.find((item) => item.label === '14+ hari')?.shipments ?? 0;
     return (
-        <Card className="min-w-0">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Clock3
-                        aria-hidden="true"
-                        className="size-4 text-primary"
-                    />
-                    Umur resi belum selesai
-                </CardTitle>
-                <CardDescription>
-                    Dihitung dari tanggal kirim sampai hari ini, untuk status
-                    selain terkirim, batal, dan retur.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <p className="text-2xl font-semibold tabular-nums">
-                            {number(summary.active_7_plus)}{' '}
-                            <span className="text-sm font-normal text-muted-foreground">
-                                resi berumur 7+ hari
-                            </span>
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Tertua:{' '}
-                            {summary.oldest_active_days === null
-                                ? 'Tidak ada'
-                                : `${summary.oldest_active_days} hari`}{' '}
-                            · {number(summary.exceptions)} resi berstatus
-                            kendala.
-                        </p>
-                    </div>
-                    <TriangleAlert
-                        aria-hidden="true"
-                        className="size-5 text-muted-foreground"
-                    />
-                </div>
-                <div className="flex flex-col gap-3">
-                    {ages.map((item) => (
+        <OperationalPanel
+            title="Umur resi belum selesai"
+            icon={Clock3}
+            className="h-full"
+            contentClassName="flex flex-col gap-5 pt-3"
+        >
+            <p className="text-xs text-muted-foreground">
+                Total {number(summary.active)} resi belum selesai
+            </p>
+            <div className="flex flex-col gap-5">
+                {ages.map((item, index) => {
+                    const percent = total ? (item.shipments / total) * 100 : 0;
+                    return (
                         <div
                             key={item.label}
-                            className="grid grid-cols-[5rem_1fr_3rem] items-center gap-3 text-xs"
+                            className="grid grid-cols-[4.5rem_1fr_2.5rem_2rem] items-center gap-3 text-xs"
                         >
-                            <span>{item.label}</span>
+                            <span className="text-muted-foreground">
+                                {item.label}
+                            </span>
                             <span
                                 className="h-2 overflow-hidden rounded-full bg-muted"
                                 aria-hidden="true"
                             >
                                 <span
-                                    className="block h-full rounded-full bg-primary/70"
+                                    className="block h-full rounded-full bg-primary"
                                     style={{
-                                        width: `${(item.shipments / max) * 100}%`,
+                                        width: percent + '%',
+                                        opacity: 1 - index * 0.18,
                                     }}
                                 />
                             </span>
-                            <span className="text-right tabular-nums">
+                            <span className="text-right font-medium tabular-nums">
                                 {number(item.shipments)}
                             </span>
+                            <span className="text-right text-muted-foreground tabular-nums">
+                                {Math.round(percent)}%
+                            </span>
                         </div>
-                    ))}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                        size="sm"
-                        variant={
-                            selected === '7_plus' ? 'secondary' : 'outline'
-                        }
-                        className="min-h-11"
-                        onClick={() => onSelect('7_plus')}
-                    >
-                        Periksa 7+ hari
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant={
-                            selected === '14_plus' ? 'secondary' : 'outline'
-                        }
-                        className="min-h-11"
-                        onClick={() => onSelect('14_plus')}
-                    >
-                        Periksa 14+ hari
-                    </Button>
-                    {selected !== 'all' && (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="min-h-11"
-                            onClick={() => onSelect('all')}
-                        >
-                            Semua umur
-                        </Button>
-                    )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                    Umur resi tidak menyatakan keterlambatan terhadap SLA.
-                    Status mengikuti snapshot terakhir.
-                </p>
-            </CardContent>
-        </Card>
+                    );
+                })}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <Button
+                    size="sm"
+                    variant={selected === '7_plus' ? 'default' : 'secondary'}
+                    className="min-h-11 px-2"
+                    aria-pressed={selected === '7_plus'}
+                    onClick={() => onSelect('7_plus')}
+                >
+                    Periksa 7+ hari ({number(summary.active_7_plus)})
+                </Button>
+                <Button
+                    size="sm"
+                    variant={selected === '14_plus' ? 'default' : 'secondary'}
+                    className="min-h-11 px-2"
+                    aria-pressed={selected === '14_plus'}
+                    onClick={() => onSelect('14_plus')}
+                >
+                    Periksa 14+ hari ({number(oldest)})
+                </Button>
+            </div>
+            {selected !== 'all' && (
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    className="min-h-11"
+                    onClick={() => onSelect('all')}
+                >
+                    Semua umur
+                </Button>
+            )}
+            <Alert className="border-warning/15 bg-warning/5">
+                <TriangleAlert className="text-warning" aria-hidden="true" />
+                <AlertDescription>
+                    Umur resi tidak menyatakan keterlambatan SLA. Status
+                    mengikuti snapshot terakhir JNE.
+                </AlertDescription>
+            </Alert>
+            <p className="text-xs text-muted-foreground">
+                Tertua:{' '}
+                {summary.oldest_active_days === null
+                    ? 'Tidak ada'
+                    : number(summary.oldest_active_days) + ' hari'}{' '}
+                · {number(summary.exceptions)} resi berkendala.
+            </p>
+        </OperationalPanel>
     );
 }

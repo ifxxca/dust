@@ -9,7 +9,7 @@ test('operational summary uses local scheduled day and latest visit without chan
     $this->travelTo(CarbonImmutable::parse('2026-10-13T03:00:00Z'));
     $cs = User::factory()->create(['role' => 'cs']);
     $staff = User::factory()->create(['role' => 'pickup_staff']);
-    PickupTask::factory()->create(['scheduled_at' => '2026-10-12 17:00:00']);
+    $available = PickupTask::factory()->create(['scheduled_at' => '2026-10-12 17:00:00']);
     PickupTask::factory()->create(['scheduled_at' => '2026-10-13 16:59:59', 'status' => 'PICKED_UP']);
     PickupTask::factory()->create(['scheduled_at' => '2026-10-13 05:00:00', 'status' => 'CANCELLED']);
     $waiting = PickupTask::factory()->create(['scheduled_at' => '2026-10-13 05:00:00', 'status' => 'ASSIGNED', 'assigned_staff_id' => $staff->id]);
@@ -18,14 +18,15 @@ test('operational summary uses local scheduled day and latest visit without chan
     $retried = PickupTask::factory()->create(['scheduled_at' => '2026-10-13 05:00:00', 'status' => 'ASSIGNED', 'assigned_staff_id' => $staff->id, 'execution_started_at' => now()]);
     $retried->visits()->create(['staff_id' => $staff->id, 'started_at' => now()->subHour(), 'outcome' => 'NO_PACKAGES', 'reason' => 'Belum siap', 'recorded_at' => now()->subHour()]);
     $retried->visits()->create(['staff_id' => $staff->id, 'started_at' => now(), 'outcome' => 'COLLECTED', 'recorded_at' => now()]);
-    PickupTask::factory()->create(['scheduled_at' => '2026-10-12 16:59:59']);
-    PickupTask::factory()->create(['scheduled_at' => '2026-10-13 17:00:00']);
+    $previousDay = PickupTask::factory()->create(['scheduled_at' => '2026-10-12 16:59:59']);
+    $nextDay = PickupTask::factory()->create(['scheduled_at' => '2026-10-13 17:00:00']);
     $this->actingAs($cs)->getJson(route('api.tasks.index', ['summary' => 1, 'q' => 'customer-does-not-exist']))->assertOk()
         ->assertJsonCount(0, 'data')->assertJsonPath('meta.total', 0)
         ->assertJsonPath('summary', ['date' => '2026-10-13', 'total' => 6, 'waiting' => 1, 'handling' => 2, 'successful' => 1, 'no_packages' => 1]);
     $this->actingAs($staff)->getJson(route('api.tasks.index', ['summary' => 1]))->assertOk()
         ->assertJsonPath('summary.total', 3)->assertJsonPath('summary.waiting', 0)->assertJsonPath('summary.successful', 0);
-    $this->getJson(route('api.tasks.candidates', ['summary' => 1]))->assertOk()->assertJsonPath('summary.total', 0);
+    $this->getJson(route('api.tasks.candidates', ['summary' => 1]))->assertOk()->assertJsonPath('summary.total', 1)
+        ->assertJsonCount(3, 'data')->assertJsonPath('data.*.id', [$previousDay->id, $available->id, $nextDay->id]);
     expect($waiting->fresh()->status)->toBe('ASSIGNED');
 });
 

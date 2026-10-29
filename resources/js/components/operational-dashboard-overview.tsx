@@ -1,40 +1,46 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
-    ArrowDownRight,
+    ArrowDown,
     ArrowRight,
-    ArrowUpRight,
+    ArrowUp,
     CalendarDays,
-    CheckCheck,
+    CheckCircle2,
+    ChevronDown,
     ClipboardList,
-    Clock3,
-    MapPin,
+    Info,
     Package,
     Plus,
     RefreshCw,
     TriangleAlert,
     Truck,
     Users,
+    type LucideIcon,
 } from 'lucide-react';
 import PageContainer from '@/components/page-container';
 import CreatePickupDialog from '@/components/create-pickup-dialog';
 import {
     OperationalActivityChart,
     OperationalDonut,
+    OperationalPanel,
     opDate,
     opNumber as n,
 } from '@/components/operational-dashboard-charts';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     Table,
     TableBody,
@@ -44,10 +50,11 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { StatusBadge } from '@/components/operational-ui';
+import { cn } from '@/lib/utils';
+import { trackingLabels } from '@/lib/jne-monitoring';
 import { dashboard } from '@/routes';
 import * as results from '@/routes/pickup-results';
 import * as tracking from '@/routes/jne-monitoring';
-import { trackingLabels } from '@/lib/jne-monitoring';
 import type { OperationalOverviewData } from '@/types/operational-dashboard';
 
 const pickupLabels: Record<string, string> = {
@@ -61,19 +68,123 @@ const typeLabels: Record<string, string> = {
     on_demand: 'On-demand',
     scheduled: 'Terjadwal',
     regular: 'Regular',
+    member_direct: 'Member Direct',
+    walk_in: 'Walk-In',
 };
-const statusColors: Record<string, string> = {
+const trackingColors: Record<string, string> = {
     DELIVERED: 'var(--chart-2)',
-    PICKED_UP: 'var(--chart-2)',
+    UNKNOWN: 'var(--chart-4)',
     IN_TRANSIT: 'var(--primary)',
-    ASSIGNED: 'var(--primary)',
-    SCHEDULED: 'var(--chart-4)',
     EXCEPTION: 'var(--chart-5)',
-    RETURNED: 'var(--chart-4)',
-    CANCELLED: 'var(--destructive-foreground)',
-    UNKNOWN: 'var(--muted-foreground)',
-    NO_PACKAGES: 'var(--muted-foreground)',
+    CANCELLED: 'var(--destructive)',
+    RETURNED: 'var(--chart-3)',
 };
+
+function DetailLink({
+    href,
+    children = 'Lihat semua',
+}: {
+    href: string;
+    children?: ReactNode;
+}) {
+    return (
+        <Link
+            href={href}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 text-xs font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring sm:min-h-8"
+        >
+            {children}
+            <ArrowRight aria-hidden="true" className="size-3.5" />
+        </Link>
+    );
+}
+
+function MetricCard({
+    label,
+    value,
+    icon: Icon,
+    tone,
+    description,
+    change,
+    lowerIsBetter = false,
+    suffix = '%',
+}: {
+    label: string;
+    value: string;
+    icon: LucideIcon;
+    tone: 'primary' | 'warning' | 'success' | 'package';
+    description: string;
+    change?: number | null;
+    lowerIsBetter?: boolean;
+    suffix?: string;
+}) {
+    const positive =
+        change != null && (lowerIsBetter ? change < 0 : change > 0);
+    return (
+        <Card className="gap-0 py-0 shadow-none">
+            <CardContent className="flex gap-3 p-3">
+                <span
+                    className={cn(
+                        'flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-12',
+                        tone === 'primary' && 'bg-primary/10 text-primary',
+                        tone === 'warning' && 'bg-warning/10 text-warning',
+                        tone === 'success' && 'bg-success/10 text-success',
+                        tone === 'package' && 'bg-chart-1/10 text-chart-1',
+                    )}
+                >
+                    <Icon aria-hidden="true" className="size-6" />
+                </span>
+                <dl className="flex min-w-0 flex-1 flex-col gap-1">
+                    <dt className="text-xs">{label}</dt>
+                    <dd className="flex flex-wrap items-center gap-2">
+                        <span className="text-2xl leading-none font-semibold tracking-tight tabular-nums sm:text-3xl">
+                            {value}
+                        </span>
+                        {change != null && (
+                            <Badge
+                                variant="secondary"
+                                className={cn(
+                                    'gap-1 border-0 px-2 py-1 text-[11px] tabular-nums',
+                                    change === 0
+                                        ? 'bg-muted text-muted-foreground'
+                                        : positive
+                                          ? 'bg-success/10 text-success'
+                                          : 'bg-warning/10 text-warning',
+                                )}
+                                title="Perubahan dibanding periode sebelumnya"
+                            >
+                                {change !== 0 &&
+                                    (change > 0 ? (
+                                        <ArrowUp
+                                            aria-hidden="true"
+                                            className="size-3"
+                                        />
+                                    ) : (
+                                        <ArrowDown
+                                            aria-hidden="true"
+                                            className="size-3"
+                                        />
+                                    ))}
+                                {n(Math.abs(change))}
+                                {suffix}
+                            </Badge>
+                        )}
+                    </dd>
+                    <dd className="sr-only text-xs leading-normal text-muted-foreground sm:not-sr-only">
+                        {description}
+                    </dd>
+                </dl>
+            </CardContent>
+        </Card>
+    );
+}
+
+function NoData({ children }: { children: ReactNode }) {
+    return (
+        <p className="flex min-h-24 items-center justify-center px-2 text-center text-sm text-muted-foreground">
+            {children}
+        </p>
+    );
+}
 
 export default function OperationalDashboardOverview({
     data,
@@ -84,18 +195,26 @@ export default function OperationalDashboardOverview({
 }) {
     const form = useForm(data.filters);
     const [creating, setCreating] = useState(false);
+    const [periodOpen, setPeriodOpen] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
     const { summary } = data;
-    const today = data.operational_date;
     const date = (value: string) =>
         new Intl.DateTimeFormat('id-ID', {
             day: 'numeric',
             month: 'short',
+            year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
             timeZone: timezone,
         }).format(new Date(value));
+    const shortDate = (value: string) =>
+        new Intl.DateTimeFormat('id-ID', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            timeZone: 'UTC',
+        }).format(new Date(`${value}T00:00:00Z`));
     const monitor = (query: Record<string, string | number> = {}) =>
         results.index.url({
             query: {
@@ -105,13 +224,29 @@ export default function OperationalDashboardOverview({
                 ...query,
             },
         });
-    const preset = (days: number) => {
-        const from = new Date(`${today}T12:00:00Z`);
+    const presetFrom = (days: number) => {
+        const from = new Date(`${data.operational_date}T12:00:00Z`);
         from.setUTCDate(from.getUTCDate() - days + 1);
-        router.get(dashboard.url(), {
-            date_from: from.toISOString().slice(0, 10),
-            date_thru: today,
-        });
+        return from.toISOString().slice(0, 10);
+    };
+    const activePreset =
+        data.filters.date_thru === data.operational_date
+            ? ([1, 7, 30]
+                  .find((days) => presetFrom(days) === data.filters.date_from)
+                  ?.toString() ?? '')
+            : '';
+    const preset = (value: string) => {
+        if (!value) {
+            return;
+        }
+        router.get(
+            dashboard.url(),
+            {
+                date_from: presetFrom(Number(value)),
+                date_thru: data.operational_date,
+            },
+            { preserveScroll: true },
+        );
     };
     const reload = () =>
         router.reload({
@@ -128,638 +263,659 @@ export default function OperationalDashboardOverview({
                 return false;
             },
         });
-    const cards = [
-        {
-            key: 'customers',
-            title: 'Customer aktif',
-            value: summary.customers,
-            icon: Users,
-            tone: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300',
-            detail: 'Customer unik dengan aktivitas pickup',
-        },
-        {
-            key: 'tasks',
-            title: 'Aktivitas pickup',
-            value: summary.tasks,
-            icon: Truck,
-            tone: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300',
-            detail: 'Satu task dihitung satu kali',
-        },
-        {
-            key: 'packages',
-            title: 'Paket tercatat',
-            value: summary.packages,
-            icon: Package,
-            tone: 'bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300',
-            detail: 'Bukti final dengan koreksi terakhir',
-        },
-        {
-            key: 'attention',
-            title: 'Perlu tindak lanjut',
-            value: summary.attention,
-            icon: TriangleAlert,
-            tone: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300',
-            detail: 'Task belum tuntas atau perlu diperiksa',
-        },
+    const previousCompletion =
+        summary.previous.tasks > 0 && summary.previous.picked_up != null
+            ? (summary.previous.picked_up / summary.previous.tasks) * 100
+            : null;
+    const completionChange =
+        summary.completion_rate != null && previousCompletion != null
+            ? Math.round((summary.completion_rate - previousCompletion) * 10) /
+              10
+            : null;
+    const shipmentRows =
+        data.tracking?.statuses.map((row) => ({
+            ...row,
+            label: row.label ?? trackingLabels[row.key] ?? row.key,
+            color: trackingColors[row.key],
+        })) ?? [];
+    const categoryRows = data.categories.map((row, index) => ({
+        ...row,
+        color: ['var(--primary)', 'var(--chart-2)', 'var(--chart-4)'][index],
+    }));
+    const comparisonRows = [
+        ['tasks', 'Aktivitas pickup'],
+        ['packages', 'Paket tercatat'],
+        ['customers', 'Customer aktif'],
+        ['attention', 'Perlu tindak lanjut'],
     ] as const;
     return (
-        <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
+        <PageContainer className="flex flex-col gap-3 space-y-0 py-4">
             <Head title="Dashboard operasional" />
-            <header className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex flex-col gap-2">
+            <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+                <div className="flex min-w-0 flex-col gap-1">
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Dashboard operasional
                     </h1>
-
-                    <p className="text-xs text-muted-foreground">
-                        Data dimuat {date(data.observed_at)} · WIB
+                    <p className="text-xs text-foreground/65">
+                        Ringkasan aktivitas pickup, paket, dan pengiriman JNE.
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex w-full flex-wrap items-center gap-2 xl:w-auto">
+                    <Dialog open={periodOpen} onOpenChange={setPeriodOpen}>
+                        <DialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="order-1 min-h-11 gap-2"
+                            >
+                                <CalendarDays
+                                    aria-hidden="true"
+                                    data-icon="inline-start"
+                                />
+                                <span className="text-xs">
+                                    {shortDate(data.filters.date_from)} –{' '}
+                                    {shortDate(data.filters.date_thru)}
+                                </span>
+                                <ChevronDown
+                                    aria-hidden="true"
+                                    data-icon="inline-end"
+                                />
+                                <span className="sr-only">
+                                    Pilih periode dashboard
+                                </span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Periode dashboard</DialogTitle>
+                                <DialogDescription>
+                                    Pilih rentang maksimal 31 hari.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form
+                                className="flex flex-col gap-4"
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    form.get(dashboard.url(), {
+                                        preserveState: true,
+                                        preserveScroll: true,
+                                        onSuccess: () => setPeriodOpen(false),
+                                        onError: (errors) => {
+                                            document
+                                                .getElementById(
+                                                    errors.date_from
+                                                        ? 'overview-from'
+                                                        : 'overview-thru',
+                                                )
+                                                ?.focus();
+                                        },
+                                    });
+                                }}
+                            >
+                                <div className="flex flex-col gap-2">
+                                    <Label htmlFor="overview-from">
+                                        Dari tanggal
+                                    </Label>
+                                    <Input
+                                        id="overview-from"
+                                        name="date_from"
+                                        type="date"
+                                        required
+                                        className="min-h-11"
+                                        value={form.data.date_from}
+                                        aria-invalid={!!form.errors.date_from}
+                                        aria-describedby={
+                                            form.errors.date_from
+                                                ? 'overview-from-error'
+                                                : undefined
+                                        }
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'date_from',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    {form.errors.date_from && (
+                                        <p
+                                            id="overview-from-error"
+                                            role="alert"
+                                            className="text-sm text-destructive"
+                                        >
+                                            {form.errors.date_from}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Label htmlFor="overview-thru">
+                                        Sampai tanggal
+                                    </Label>
+                                    <Input
+                                        id="overview-thru"
+                                        name="date_thru"
+                                        type="date"
+                                        required
+                                        className="min-h-11"
+                                        min={form.data.date_from}
+                                        value={form.data.date_thru}
+                                        aria-invalid={!!form.errors.date_thru}
+                                        aria-describedby={
+                                            form.errors.date_thru
+                                                ? 'overview-thru-error'
+                                                : undefined
+                                        }
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'date_thru',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                    {form.errors.date_thru && (
+                                        <p
+                                            id="overview-thru-error"
+                                            role="alert"
+                                            className="text-sm text-destructive"
+                                        >
+                                            {form.errors.date_thru}
+                                        </p>
+                                    )}
+                                </div>
+                                <Button
+                                    disabled={form.processing}
+                                    className="min-h-11"
+                                >
+                                    {form.processing
+                                        ? 'Memuat…'
+                                        : 'Terapkan periode'}
+                                </Button>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                    <ToggleGroup
+                        type="single"
+                        value={activePreset}
+                        onValueChange={preset}
+                        aria-label="Periode cepat"
+                        className="order-3 rounded-lg border bg-muted/50 p-0.5 xl:order-2"
+                    >
+                        {[
+                            [1, 'Hari ini'],
+                            [7, '7 hari'],
+                            [30, '30 hari'],
+                        ].map(([days, label]) => (
+                            <ToggleGroupItem
+                                key={days}
+                                value={String(days)}
+                                className="min-h-10 px-3 text-xs data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+                            >
+                                {label}
+                            </ToggleGroupItem>
+                        ))}
+                    </ToggleGroup>
                     <Button
                         variant="outline"
-                        className="min-h-11"
+                        className="order-4 min-h-11 xl:order-3"
                         disabled={refreshing}
                         onClick={reload}
                     >
                         <RefreshCw
                             aria-hidden="true"
-                            className={
-                                refreshing
-                                    ? 'animate-spin motion-reduce:animate-none'
-                                    : ''
-                            }
+                            data-icon="inline-start"
+                            className={cn(
+                                refreshing &&
+                                    'animate-spin motion-reduce:animate-none',
+                            )}
                         />
-                        {refreshing ? 'Memuat…' : 'Segarkan data'}
+                        <span>{refreshing ? 'Memuat…' : 'Segarkan data'}</span>
                     </Button>
                     <Button
-                        className="min-h-11"
+                        className="order-2 min-h-11 xl:order-4"
                         onClick={() => setCreating(true)}
                     >
-                        <Plus aria-hidden="true" />
+                        <Plus aria-hidden="true" data-icon="inline-start" />
                         Buat pickup
                     </Button>
                 </div>
             </header>
-            <Card className="gap-0 py-4 shadow-none">
-                <CardContent className="flex flex-col gap-3 px-4">
-                    <form
-                        className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:flex xl:flex-wrap"
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            form.get(dashboard.url(), {
-                                preserveState: false,
-                                preserveScroll: true,
-                            });
-                        }}
-                    >
-                        <div
-                            className="flex flex-wrap gap-1 self-end sm:col-span-2"
-                            aria-label="Periode cepat"
-                        >
-                            {[
-                                [1, 'Hari ini'],
-                                [7, '7 hari'],
-                                [30, '30 hari'],
-                            ].map(([days, label]) => (
-                                <Button
-                                    key={days}
-                                    variant="ghost"
-                                    className="min-h-11"
-                                    type="button"
-                                    onClick={() => preset(Number(days))}
-                                >
-                                    {label}
-                                </Button>
-                            ))}
-                        </div>
-                        <div className="flex min-w-0 flex-1 flex-col gap-1 xl:min-w-36">
-                            <Label htmlFor="overview-from">Dari tanggal</Label>
-                            <Input
-                                id="overview-from"
-                                type="date"
-                                className="min-h-11"
-                                required
-                                value={form.data.date_from}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'date_from',
-                                        event.target.value,
-                                    )
-                                }
-                                aria-invalid={!!form.errors.date_from}
-                            />
-                        </div>
-                        <div className="flex min-w-0 flex-1 flex-col gap-1 xl:min-w-36">
-                            <Label htmlFor="overview-thru">
-                                Sampai tanggal
-                            </Label>
-                            <Input
-                                id="overview-thru"
-                                type="date"
-                                className="min-h-11"
-                                required
-                                min={form.data.date_from}
-                                value={form.data.date_thru}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'date_thru',
-                                        event.target.value,
-                                    )
-                                }
-                                aria-invalid={!!form.errors.date_thru}
-                            />
-                        </div>
-                        <Button
-                            type="submit"
-                            className="min-h-11 sm:col-span-2 xl:w-auto"
-                            disabled={form.processing}
-                        >
-                            <CalendarDays aria-hidden="true" />
-                            Terapkan
-                        </Button>
-                    </form>
-                    {(form.errors.date_from || form.errors.date_thru) && (
-                        <p role="alert" className="text-sm text-destructive">
-                            {form.errors.date_from || form.errors.date_thru}
-                        </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                        Hari pickup: 05.00–04.59 WIB, mengikuti aktivitas;
-                        pickup yang belum dimulai mengikuti jadwal. Pembanding:{' '}
-                        {opDate(data.previousPeriod.date_from)}–
-                        {opDate(data.previousPeriod.date_thru)}.
-                    </p>
-                </CardContent>
-            </Card>
             {error && (
-                <p role="alert" className="text-sm text-destructive">
-                    {error}
-                </p>
+                <Alert variant="destructive">
+                    <TriangleAlert aria-hidden="true" />
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
             )}
             <section
-                aria-label="Ringkasan periode"
+                aria-label="Ringkasan operasional"
                 className="grid grid-cols-2 gap-3 xl:grid-cols-4"
             >
-                {cards.map(
-                    ({ key, title, value, icon: Icon, tone, detail }) => {
-                        const change = summary.changes[key];
-                        const Delta =
-                            change !== null && change < 0
-                                ? ArrowDownRight
-                                : ArrowUpRight;
-                        return (
-                            <Card
-                                key={key}
-                                className="min-w-0 gap-0 py-4 shadow-none"
-                            >
-                                <CardContent className="flex flex-col gap-3 px-4">
-                                    <div className="flex items-center gap-3">
-                                        <span
-                                            className={`hidden rounded-lg p-2 sm:inline-flex ${tone}`}
-                                        >
-                                            <Icon
-                                                aria-hidden="true"
-                                                className="size-5"
-                                            />
-                                        </span>
-                                        <p className="text-xs font-medium text-muted-foreground sm:text-sm">
-                                            {title}
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-wrap items-end justify-between gap-2">
-                                        <p className="text-3xl font-semibold tracking-tight tabular-nums">
-                                            {n(value)}
-                                        </p>
-                                        {change !== null && (
-                                            <Badge
-                                                variant="outline"
-                                                className="gap-1"
-                                            >
-                                                <Delta aria-hidden="true" />
-                                                {change > 0 ? '+' : ''}
-                                                {n(change)}%
-                                            </Badge>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {detail}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {change === null
-                                            ? 'Belum ada pembanding'
-                                            : `${n(summary.previous[key])} pada periode sebelumnya`}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        );
-                    },
-                )}
+                <MetricCard
+                    label="Aktivitas pickup"
+                    value={n(summary.tasks)}
+                    icon={Truck}
+                    tone="primary"
+                    description="Dibanding periode sebelumnya"
+                    change={summary.changes.tasks}
+                />
+                <MetricCard
+                    label="Paket tercatat"
+                    value={n(summary.packages)}
+                    icon={Package}
+                    tone="package"
+                    description="Dari seluruh pickup final"
+                    change={summary.changes.packages}
+                />
+                <MetricCard
+                    label="Pickup berhasil"
+                    value={
+                        summary.completion_rate == null
+                            ? '—'
+                            : `${n(summary.completion_rate)}%`
+                    }
+                    icon={CheckCircle2}
+                    tone="success"
+                    description={`${n(summary.picked_up)} dari ${n(summary.tasks)} aktivitas`}
+                    change={completionChange}
+                    suffix=" poin"
+                />
+                <MetricCard
+                    label="Perlu tindak lanjut"
+                    value={n(summary.attention)}
+                    icon={TriangleAlert}
+                    tone="warning"
+                    description="Menunggu handover / selisih"
+                    change={summary.changes.attention}
+                    lowerIsBetter
+                />
             </section>
-            <div className="grid grid-cols-2 gap-3 rounded-xl border bg-card p-4 text-sm lg:grid-cols-4">
-                {[
-                    ['Pickup berhasil', n(summary.picked_up), CheckCheck],
-                    ['Tanpa paket', n(summary.no_packages), ClipboardList],
-                    [
-                        'Rasio pickup berhasil',
-                        summary.completion_rate === null
-                            ? 'Tidak tersedia'
-                            : `${n(summary.completion_rate)}%`,
-                        Truck,
-                    ],
-                    ['Menunggu handover', n(summary.waiting_handover), Clock3],
-                ].map(([label, value, Icon]) => {
-                    const StatIcon = Icon as typeof Truck;
-                    return (
-                        <div
-                            key={String(label)}
-                            className="flex items-start gap-2"
-                        >
-                            <StatIcon
-                                aria-hidden="true"
-                                className="mt-0.5 size-4 shrink-0 text-primary"
-                            />
-                            <div>
-                                <p className="text-xs text-muted-foreground">
-                                    {String(label)}
-                                </p>
-                                <p className="mt-1 font-semibold tabular-nums">
-                                    {String(value)}
-                                </p>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-            <div className="grid items-start gap-4 xl:grid-cols-3">
-                <div className="min-w-0 xl:col-span-2">
-                    <OperationalActivityChart
-                        key={JSON.stringify(data.filters)}
-                        daily={data.daily}
-                    />
-                </div>
-                {data.tracking ? (
+            <div
+                className={cn(
+                    'grid min-w-0 gap-3',
+                    data.tracking &&
+                        'xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]',
+                )}
+            >
+                <OperationalActivityChart daily={data.daily} />
+                {data.tracking && (
                     <OperationalDonut
                         title="Status pengiriman JNE"
-                        description="Snapshot terbaru resi berdasarkan tanggal kirim kalender (00.00–23.59 WIB)."
-                        data={data.tracking.statuses.map((row) => ({
-                            ...row,
-                            label: trackingLabels[row.key] ?? row.key,
-                            color: statusColors[row.key],
-                        }))}
+                        icon={ClipboardList}
                         totalLabel="Resi APEX"
-                        footer={
-                            <div className="flex flex-col gap-2">
-                                <p className="text-xs text-muted-foreground">
-                                    Diamati:{' '}
-                                    {data.tracking.observed_at
-                                        ? date(data.tracking.observed_at)
-                                        : 'Belum ada snapshot'}
-                                    . Status mengikuti report terakhir.
-                                </p>
-                                <Button
-                                    variant="outline"
-                                    className="min-h-11"
-                                    asChild
-                                >
-                                    <Link
-                                        href={tracking.customerDashboard.url({
-                                            query: data.filters,
-                                        })}
-                                    >
-                                        Analisis pengiriman
-                                        <ArrowRight aria-hidden="true" />
-                                    </Link>
-                                </Button>
-                            </div>
+                        data={shipmentRows}
+                        action={
+                            <DetailLink
+                                href={tracking.customerDashboard.url({
+                                    query: data.filters,
+                                })}
+                            >
+                                Lihat detail
+                            </DetailLink>
                         }
                     />
-                ) : (
-                    <OperationalDonut
-                        title="Status aktivitas pickup"
-                        description="Status terbaru task pada periode terpilih."
-                        data={data.statuses.map((row) => ({
-                            ...row,
-                            label: pickupLabels[row.key] ?? row.key,
-                            color: statusColors[row.key],
-                        }))}
-                        totalLabel="Pickup"
-                    />
                 )}
             </div>
-            <div className="grid items-start gap-4 lg:grid-cols-3">
-                <Card className="min-w-0 gap-4 shadow-none">
-                    <CardHeader>
-                        <CardTitle className="text-base">
-                            Performa petugas
-                        </CardTitle>
-                        <CardDescription>
-                            Pickup berhasil dibanding aktivitas tercatat,
-                            berdasarkan penanggung jawab task.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-4">
-                        {data.team.length === 0 && (
-                            <p className="text-sm text-muted-foreground">
-                                Belum ada penugasan pada periode ini.
-                            </p>
-                        )}
-                        {data.team.map((staff) => (
-                            <Link
-                                key={staff.id}
-                                href={monitor({ staff_id: staff.id })}
-                                className="flex min-h-11 flex-col gap-2 rounded-md py-1 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                                <span className="flex justify-between gap-2 text-sm">
-                                    <span className="truncate">
-                                        {staff.name ?? 'Petugas'}
-                                    </span>
-                                    <span className="shrink-0 font-medium tabular-nums">
-                                        {staff.picked_up}/{staff.tasks} ·{' '}
-                                        {n(staff.rate)}%
-                                    </span>
-                                </span>
-                                <span
-                                    className="h-2 overflow-hidden rounded-full bg-muted"
-                                    aria-hidden="true"
-                                >
-                                    <span
-                                        className="block h-full rounded-full bg-primary"
-                                        style={{ width: `${staff.rate}%` }}
-                                    />
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                    {n(staff.packages)} paket dari bukti final
-                                </span>
-                            </Link>
-                        ))}
-                    </CardContent>
-                </Card>
+            <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3">
                 <OperationalDonut
                     title="Tipe pickup"
-                    description="Distribusi jenis task pada periode terpilih."
-                    data={data.types.map((row) => ({
+                    icon={Truck}
+                    totalLabel="Pickup"
+                    compact
+                    data={data.types.map((row, index) => ({
                         ...row,
                         label: typeLabels[row.key] ?? row.key,
-                        color:
-                            row.key === 'regular'
-                                ? 'var(--chart-2)'
-                                : row.key === 'scheduled'
-                                  ? 'var(--chart-4)'
-                                  : 'var(--primary)',
+                        color: [
+                            'var(--primary)',
+                            'var(--chart-2)',
+                            'var(--chart-4)',
+                        ][index],
                     }))}
-                    totalLabel="Pickup"
                 />
                 <OperationalDonut
-                    title="Kategori paket"
-                    description="Jumlah paket pada bukti final, memakai koreksi terbaru."
-                    data={data.categories}
+                    title="Kategori paket final"
                     totalLabel="Paket"
+                    compact
+                    data={categoryRows}
                 />
-            </div>
-            <div className="grid items-start gap-4 lg:grid-cols-2">
-                <Card className="min-w-0 gap-4 shadow-none">
-                    <CardHeader>
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <TriangleAlert
-                                    aria-hidden="true"
-                                    className="size-4 text-amber-600 dark:text-amber-400"
-                                />
-                                Perlu tindak lanjut
-                                <Badge variant="secondary">
-                                    {n(summary.attention)}
-                                </Badge>
-                            </CardTitle>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="min-h-11"
-                                asChild
-                            >
-                                <Link href={monitor()}>
-                                    Monitoring
-                                    <ArrowRight aria-hidden="true" />
-                                </Link>
-                            </Button>
-                        </div>
-                        <CardDescription>
-                            Task dihitung sekali, meskipun memiliki beberapa hal
-                            yang perlu diperiksa.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-2">
-                        {data.attention.length === 0 && (
-                            <p className="py-4 text-sm text-muted-foreground">
-                                Tidak ada tindak lanjut pada periode ini.
-                            </p>
-                        )}
-                        {data.attention.map((row) => (
+                <OperationalPanel
+                    title="Performa petugas"
+                    icon={Users}
+                    className="md:col-span-2 xl:col-span-1"
+                    action={
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="min-h-11 px-0 text-xs text-primary sm:h-8 sm:min-h-8"
+                                >
+                                    Lihat semua
+                                    <ArrowRight
+                                        aria-hidden="true"
+                                        data-icon="inline-end"
+                                    />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Performa petugas</DialogTitle>
+                                    <DialogDescription>
+                                        Petugas dengan aktivitas terbanyak pada
+                                        periode terpilih.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                {data.team.length > 0 && (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Petugas</TableHead>
+                                                <TableHead>
+                                                    Berhasil / aktivitas
+                                                </TableHead>
+                                                <TableHead>Rasio</TableHead>
+                                                <TableHead>
+                                                    Paket final
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {data.team.map((row) => (
+                                                <TableRow key={row.id}>
+                                                    <TableCell>
+                                                        <Link
+                                                            href={monitor({
+                                                                staff_id:
+                                                                    row.id,
+                                                            })}
+                                                            className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline"
+                                                        >
+                                                            {row.name}
+                                                        </Link>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {n(row.picked_up)} /{' '}
+                                                        {n(row.tasks)}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {n(row.rate)}%
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {n(row.packages)}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                                {data.team.length === 0 && (
+                                    <NoData>
+                                        Belum ada penugasan pada periode ini.
+                                    </NoData>
+                                )}
+                            </DialogContent>
+                        </Dialog>
+                    }
+                >
+                    {data.team.length === 0 && (
+                        <NoData>Belum ada penugasan pada periode ini.</NoData>
+                    )}
+                    <div className="flex flex-col gap-3 py-1">
+                        {data.team.slice(0, 3).map((row) => (
                             <Link
                                 key={row.id}
-                                href={results.show.url(row.id)}
-                                className="flex min-h-14 items-center justify-between gap-3 rounded-lg border p-3 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                                href={monitor({ staff_id: row.id })}
+                                className="flex min-h-11 flex-col justify-center gap-2 rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                                <span className="flex min-w-0 flex-col gap-1">
-                                    <span className="text-sm font-medium">
-                                        {row.reason}
+                                <span className="flex items-center gap-3 text-xs">
+                                    <span className="min-w-0 flex-1 truncate">
+                                        {row.name ?? 'Petugas'}
                                     </span>
-                                    <span className="truncate text-xs text-muted-foreground">
-                                        {row.customer_name}
+                                    <span className="shrink-0 font-medium tabular-nums">
+                                        {n(row.picked_up)} / {n(row.tasks)}
+                                    </span>
+                                    <span className="w-12 text-right tabular-nums">
+                                        {n(row.rate)}%
                                     </span>
                                 </span>
-                                <ArrowRight
-                                    aria-hidden="true"
-                                    className="size-4 shrink-0 text-muted-foreground"
-                                />
-                            </Link>
-                        ))}
-                        {summary.attention > 6 && (
-                            <p className="text-xs text-muted-foreground">
-                                Menampilkan 6 dari {n(summary.attention)} task.
-                            </p>
-                        )}
-                    </CardContent>
-                </Card>
-                <Card className="min-w-0 gap-4 shadow-none">
-                    <CardHeader>
-                        <CardTitle className="text-base">
-                            Customer dengan paket terbanyak
-                        </CardTitle>
-                        <CardDescription>
-                            Diurutkan dari paket final, kemudian jumlah
-                            aktivitas pickup.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col gap-3">
-                        {data.customers.length === 0 && (
-                            <p className="py-4 text-sm text-muted-foreground">
-                                Belum ada customer aktif.
-                            </p>
-                        )}
-                        {data.customers.map((customer, index) => (
-                            <Link
-                                key={customer.id}
-                                href={monitor({ customer_id: customer.id })}
-                                className="flex min-h-12 items-center gap-3 rounded-md py-2 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-medium">
-                                    {index + 1}
-                                </span>
-                                <span className="min-w-0 flex-1 truncate text-sm">
-                                    {customer.name}
-                                </span>
-                                <span className="text-right">
-                                    <span className="block text-sm font-semibold tabular-nums">
-                                        {n(customer.packages)} paket
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {n(customer.tasks)} pickup
-                                    </span>
+                                <span className="h-1.5 overflow-hidden rounded-full bg-muted">
+                                    <span
+                                        className="block h-full rounded-full bg-primary"
+                                        style={{
+                                            width: `${Math.min(100, Math.max(0, row.rate))}%`,
+                                        }}
+                                    />
                                 </span>
                             </Link>
                         ))}
-                    </CardContent>
-                </Card>
+                    </div>
+                </OperationalPanel>
             </div>
             <div
-                className={`grid items-start gap-4 ${data.tracking ? 'lg:grid-cols-2' : ''}`}
+                className={cn(
+                    'grid min-w-0 gap-3 md:grid-cols-2',
+                    data.tracking && 'xl:grid-cols-3',
+                )}
             >
-                <OperationalDonut
-                    title="Customer baru dan repeat"
-                    description="Baru: customer aktif yang belum punya jadwal pickup sebelum awal periode. Repeat: sudah pernah punya jadwal sebelumnya."
-                    data={[
-                        {
-                            key: 'new',
-                            label: 'Baru pada periode ini',
-                            value: data.customerCohorts.new,
-                        },
-                        {
-                            key: 'returning',
-                            label: 'Repeat',
-                            value: data.customerCohorts.returning,
-                        },
-                    ]}
-                    totalLabel="Customer unik"
-                />
-                {data.tracking && (
-                    <Card className="min-w-0 gap-4 shadow-none">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <MapPin
-                                    aria-hidden="true"
-                                    className="size-4 text-primary"
-                                />
-                                Tujuan pengiriman terbanyak
-                            </CardTitle>
-                            <CardDescription>
-                                5 tujuan dari resi APEX pada periode ini. Nama
-                                mengikuti lokasi JNE yang tersedia.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-4">
-                            {data.tracking.destinations.length === 0 && (
-                                <p className="text-sm text-muted-foreground">
-                                    Belum ada data tujuan pengiriman.
-                                </p>
-                            )}
-                            {data.tracking.destinations.map((row) => (
+                <OperationalPanel
+                    title="Perlu tindak lanjut"
+                    icon={TriangleAlert}
+                    action={<DetailLink href={monitor()} />}
+                >
+                    {data.attention.length === 0 ? (
+                        <Alert className="my-2 border-0 bg-success/5 text-success">
+                            <CheckCircle2 aria-hidden="true" />
+                            <AlertDescription className="text-foreground">
+                                Tidak ada pickup yang memerlukan tindak lanjut
+                                pada periode ini.
+                            </AlertDescription>
+                        </Alert>
+                    ) : (
+                        <div className="flex max-h-36 flex-col overflow-y-auto">
+                            {data.attention.map((row) => (
                                 <Link
-                                    key={row.code ?? 'unknown'}
-                                    href={tracking.customerDashboard.url({
-                                        query: {
-                                            ...data.filters,
-                                            destination: row.code ?? '',
-                                        },
-                                    })}
-                                    className="flex min-h-12 flex-col gap-2 rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+                                    key={row.id}
+                                    href={results.show.url(row.id)}
+                                    className="flex min-h-14 items-center justify-between gap-3 border-b py-2 outline-none last:border-0 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
                                 >
-                                    <span className="flex justify-between gap-3 text-sm">
-                                        <span className="min-w-0 break-words">
-                                            {row.name}
+                                    <span className="flex min-w-0 flex-col gap-1">
+                                        <span className="truncate text-xs font-medium">
+                                            {row.customer_name}
                                         </span>
-                                        <span className="shrink-0 font-medium tabular-nums">
-                                            {n(row.value)} resi
+                                        <span className="text-xs text-muted-foreground">
+                                            {row.reason}
                                         </span>
                                     </span>
-                                    <span
-                                        className="h-2 overflow-hidden rounded-full bg-muted"
+                                    <ArrowRight
                                         aria-hidden="true"
-                                    >
-                                        <span
-                                            className="block h-full rounded-full bg-primary/70"
-                                            style={{
-                                                width: `${(row.value / Math.max(1, data.tracking!.destinations[0]?.value ?? 0)) * 100}%`,
-                                            }}
-                                        />
-                                    </span>
+                                        className="size-4 shrink-0"
+                                    />
                                 </Link>
                             ))}
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-            <Card className="min-w-0 gap-4 shadow-none">
-                <CardHeader>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-col gap-2">
-                            <CardTitle className="text-base">
-                                Aktivitas terbaru
-                            </CardTitle>
-                            <CardDescription>
-                                Maksimal 8 aktivitas dalam periode terpilih.
-                            </CardDescription>
                         </div>
-                        <Button variant="outline" className="min-h-11" asChild>
-                            <Link href={monitor()}>
-                                Lihat semua
-                                <ArrowRight aria-hidden="true" />
-                            </Link>
-                        </Button>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Table>
+                    )}
+                </OperationalPanel>
+                <OperationalPanel title="5 customer dengan paket terbanyak">
+                    <Table className="table-fixed text-xs">
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Waktu</TableHead>
-                                <TableHead>Customer</TableHead>
-                                <TableHead>Petugas</TableHead>
-                                <TableHead>Paket</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>
-                                    <span className="sr-only">Detail</span>
+                                <TableHead className="h-8 w-7 px-1">
+                                    #
+                                </TableHead>
+                                <TableHead className="h-8 px-1">
+                                    Customer
+                                </TableHead>
+                                <TableHead className="h-8 w-16 px-1 text-right">
+                                    Paket
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {data.recent.map((row) => (
+                            {data.customers.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={3}>
+                                        <NoData>
+                                            Belum ada paket pada periode ini.
+                                        </NoData>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            {data.customers.map((row, index) => (
                                 <TableRow key={row.id}>
-                                    <TableCell>{date(row.at)}</TableCell>
-                                    <TableCell className="max-w-64 truncate">
+                                    <TableCell className="px-1 py-1.5 text-muted-foreground">
+                                        {index + 1}
+                                    </TableCell>
+                                    <TableCell className="px-1 py-0">
+                                        <Link
+                                            href={monitor({
+                                                customer_id: row.id,
+                                            })}
+                                            className="flex min-h-11 items-center outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:min-h-6"
+                                        >
+                                            <span
+                                                className="truncate"
+                                                title={row.name}
+                                            >
+                                                {row.name}
+                                            </span>
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell className="px-1 py-1.5 text-right font-medium tabular-nums">
+                                        {n(row.packages)}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </OperationalPanel>
+                {data.tracking && (
+                    <OperationalPanel
+                        title="5 tujuan pengiriman terbanyak"
+                        className="md:col-span-2 xl:col-span-1"
+                    >
+                        <Table className="table-fixed text-xs">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="h-8 w-7 px-1">
+                                        #
+                                    </TableHead>
+                                    <TableHead className="h-8 px-1">
+                                        Lokasi
+                                    </TableHead>
+                                    <TableHead className="h-8 w-14 px-1 text-right">
+                                        Resi
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {data.tracking.destinations.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={3}>
+                                            <NoData>
+                                                Belum ada data tujuan
+                                                pengiriman.
+                                            </NoData>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {data.tracking.destinations.map(
+                                    (row, index) => (
+                                        <TableRow key={row.code ?? 'unknown'}>
+                                            <TableCell className="px-1 py-1.5 text-muted-foreground">
+                                                {index + 1}
+                                            </TableCell>
+                                            <TableCell className="px-1 py-0">
+                                                <Link
+                                                    href={tracking.customerDashboard.url(
+                                                        {
+                                                            query: {
+                                                                ...data.filters,
+                                                                destination:
+                                                                    row.code ??
+                                                                    '',
+                                                            },
+                                                        },
+                                                    )}
+                                                    className="flex min-h-11 items-center outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring sm:min-h-6"
+                                                >
+                                                    <span
+                                                        className="truncate"
+                                                        title={row.name}
+                                                    >
+                                                        {row.name}
+                                                    </span>
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell className="px-1 py-1.5 text-right font-medium tabular-nums">
+                                                {n(row.value)}
+                                            </TableCell>
+                                        </TableRow>
+                                    ),
+                                )}
+                            </TableBody>
+                        </Table>
+                    </OperationalPanel>
+                )}
+            </div>
+            <OperationalPanel
+                title="Aktivitas terbaru"
+                action={<DetailLink href={monitor()} />}
+            >
+                <div className="hidden md:block">
+                    <Table className="text-xs sm:[&_[data-slot=badge]]:py-0.5 sm:[&_td]:py-0.5 sm:[&_td:last-child]:py-0">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="h-8">Waktu</TableHead>
+                                <TableHead className="h-8">Customer</TableHead>
+                                <TableHead className="h-8">Petugas</TableHead>
+                                <TableHead className="h-8 text-right">
+                                    Paket
+                                </TableHead>
+                                <TableHead className="h-8">Status</TableHead>
+                                <TableHead className="h-8 text-right">
+                                    Aksi
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {data.recent.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={6}>
+                                        <NoData>
+                                            Belum ada aktivitas pada periode
+                                            ini.
+                                        </NoData>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            {data.recent.slice(0, 5).map((row) => (
+                                <TableRow key={row.id}>
+                                    <TableCell className="whitespace-nowrap">
+                                        {date(row.at)}
+                                    </TableCell>
+                                    <TableCell
+                                        className="max-w-56 truncate"
+                                        title={row.customer_name}
+                                    >
                                         {row.customer_name}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="max-w-40 truncate">
                                         {row.staff_name ?? 'Belum ditugaskan'}
                                     </TableCell>
-                                    <TableCell className="tabular-nums">
-                                        {row.packages === null
-                                            ? 'Bukti belum final'
+                                    <TableCell className="text-right tabular-nums">
+                                        {row.packages == null
+                                            ? '—'
                                             : n(row.packages)}
                                     </TableCell>
                                     <TableCell>
                                         <StatusBadge status={row.status} />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="py-0 text-right">
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="size-11"
-                                            aria-label={`Detail ${row.reference}`}
+                                            className="size-11 sm:size-6"
                                             asChild
                                         >
                                             <Link
                                                 href={results.show.url(row.id)}
+                                                aria-label={`Lihat pickup ${row.reference}`}
                                             >
                                                 <ArrowRight aria-hidden="true" />
                                             </Link>
@@ -767,30 +923,159 @@ export default function OperationalDashboardOverview({
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {data.recent.length === 0 && (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={6}
-                                        className="h-24 text-center text-muted-foreground"
-                                    >
-                                        Belum ada aktivitas pada periode ini.
-                                        Ubah rentang tanggal untuk melihat
-                                        aktivitas sebelumnya.
-                                    </TableCell>
-                                </TableRow>
-                            )}
                         </TableBody>
                     </Table>
-                </CardContent>
-            </Card>
+                </div>
+                <div className="flex flex-col md:hidden">
+                    {data.recent.slice(0, 5).map((row) => (
+                        <Link
+                            key={row.id}
+                            href={results.show.url(row.id)}
+                            className="flex min-w-0 flex-col gap-2 border-b py-3 outline-none last:border-0 focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            <span className="flex items-center justify-between gap-2">
+                                <span className="min-w-0 truncate text-sm font-medium">
+                                    {row.customer_name}
+                                </span>
+                                <ArrowRight
+                                    aria-hidden="true"
+                                    className="size-4 shrink-0"
+                                />
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                                {date(row.at)} ·{' '}
+                                {row.staff_name ?? 'Belum ditugaskan'}
+                            </span>
+                            <span className="flex flex-wrap items-center justify-between gap-2">
+                                <StatusBadge status={row.status} />
+                                <span className="text-xs tabular-nums">
+                                    {row.packages == null
+                                        ? 'POP belum final'
+                                        : `${n(row.packages)} paket`}
+                                </span>
+                            </span>
+                        </Link>
+                    ))}
+                </div>
+                {data.recent.length === 0 && (
+                    <div className="md:hidden">
+                        <NoData>Belum ada aktivitas pada periode ini.</NoData>
+                    </div>
+                )}
+            </OperationalPanel>
+            <footer className="flex flex-wrap items-center justify-between gap-2 text-xs text-foreground/65">
+                <span>Data dimuat {date(data.observed_at)}</span>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="min-h-10 text-xs text-foreground/65"
+                        >
+                            <Info aria-hidden="true" data-icon="inline-start" />
+                            Dasar data &amp; periode
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>Dasar data &amp; periode</DialogTitle>
+                            <DialogDescription>
+                                Pickup 05.00–04.59 WIB. Pembanding{' '}
+                                {opDate(data.previousPeriod.date_from)}–
+                                {opDate(data.previousPeriod.date_thru)}.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                            Periode mengikuti aktivitas pickup; pickup yang
+                            belum dimulai mengikuti jadwal. Satu task dihitung
+                            sekali. Jumlah paket berasal dari POP final dengan
+                            koreksi terakhir. Tindak lanjut dihitung sekali per
+                            task meskipun memiliki beberapa masalah.
+                        </p>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Metrik</TableHead>
+                                    <TableHead>Sebelumnya</TableHead>
+                                    <TableHead>Periode ini</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {comparisonRows.map(([key, label]) => (
+                                    <TableRow key={key}>
+                                        <TableCell>{label}</TableCell>
+                                        <TableCell className="tabular-nums">
+                                            {n(summary.previous[key])}
+                                        </TableCell>
+                                        <TableCell className="tabular-nums">
+                                            {n(summary[key])}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <section>
+                                <h3 className="mb-3 text-sm font-medium">
+                                    Status pickup
+                                </h3>
+                                <dl className="flex flex-col gap-2 text-sm">
+                                    {data.statuses.map((row) => (
+                                        <div
+                                            key={row.key}
+                                            className="flex justify-between gap-3"
+                                        >
+                                            <dt>
+                                                {pickupLabels[row.key] ??
+                                                    row.key}
+                                            </dt>
+                                            <dd className="tabular-nums">
+                                                {n(row.value)}
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                            </section>
+                            <section>
+                                <h3 className="mb-3 text-sm font-medium">
+                                    Customer aktif
+                                </h3>
+                                <p className="text-sm">
+                                    {n(summary.customers)} customer unik
+                                </p>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                    Baru {n(data.customerCohorts.new)} · Repeat{' '}
+                                    {n(data.customerCohorts.returning)}.
+                                    Customer repeat memiliki jadwal pickup
+                                    sebelum awal periode.
+                                </p>
+                            </section>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Menunggu handover {n(summary.waiting_handover)} ·
+                            Selisih penerimaan {n(summary.discrepancies)}.
+                            Perubahan rasio pickup berhasil ditampilkan dalam
+                            poin persentase.
+                        </p>
+                        {data.tracking && (
+                            <p className="text-xs text-muted-foreground">
+                                Snapshot pengiriman JNE menggunakan resi APEX
+                                dan tanggal kirim kalender 00.00–23.59 WIB.
+                                Status mengikuti report terakhir, diamati{' '}
+                                {data.tracking.observed_at
+                                    ? date(data.tracking.observed_at)
+                                    : 'belum tersedia'}
+                                .
+                            </p>
+                        )}
+                    </DialogContent>
+                </Dialog>
+            </footer>
             <CreatePickupDialog
                 open={creating}
                 onOpenChange={setCreating}
                 timezone={timezone}
-                onCreated={() => {
-                    setCreating(false);
-                    reload();
-                }}
+                onCreated={reload}
             />
         </PageContainer>
     );

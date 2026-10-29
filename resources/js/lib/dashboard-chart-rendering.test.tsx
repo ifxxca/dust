@@ -47,6 +47,7 @@ test('customer trend exposes its title and dated values during server rendering'
                 {
                     date: '2026-10-26',
                     shipments: 3,
+                    delivered: 2,
                     amount: 15000,
                     amount_known: 3,
                 },
@@ -54,8 +55,8 @@ test('customer trend exposes its title and dated values during server rendering'
         />,
     );
 
-    expect(html).toContain('Jumlah resi per hari</title>');
-    expect(html).toContain('<title>26 Okt · 3 resi</title>');
+    expect(html).toContain('Resi terkirim dan total resi harian</title>');
+    expect(html).toContain('<title>26 Okt: 2 terkirim / 3 resi</title>');
     expect(html).not.toContain('<title></title>');
 });
 

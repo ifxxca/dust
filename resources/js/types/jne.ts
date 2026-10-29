@@ -3,8 +3,12 @@ export type JneFilters = {
     account: string;
     status: string;
     match: string;
+    category: string;
     customer_id: string;
     customer_match: string;
+    date_from: string;
+    date_thru: string;
+    per_page: string;
 };
 
 export type JneSourceProvenance = {
@@ -51,6 +55,9 @@ export type JneShipment = {
     customer_account: string;
     tracking_status: string;
     match_status: string;
+    category?: string | null;
+    category_status?: string;
+    entry_at: string | null;
     observed_at: string | null;
     status_web: string | null;
     status_pod: string | null;
@@ -87,7 +94,10 @@ export type JneDetail = {
         | 'awb'
         | 'customer_account'
         | 'tracking_status'
+        | 'category'
+        | 'category_status'
         | 'match_status'
+        | 'entry_at'
         | 'observed_at'
         | 'pickup_reference'
         | 'pickup_task_id'

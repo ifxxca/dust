@@ -379,6 +379,12 @@ export class ApexClient {
             await locator.fill(value);
             await locator.blur();
         }
+        if (
+            selector === '#P45_NA' &&
+            (await this.page.locator('#P45_PARAM_TYPE').inputValue()) !== 'P'
+        ) {
+            await this.setControl('#P45_PARAM_TYPE', 'P');
+        }
         if ((await locator.inputValue()) !== value)
             throw new ReportError(
                 'FORM_VALUE',
@@ -425,6 +431,13 @@ export class ApexClient {
                 );
             if (upload && !(await this.page.locator(selector).isVisible()))
                 continue;
+            if (
+                selector === '#P45_BRANCH' &&
+                job.national_account === 'Y' &&
+                !(await this.page.locator(selector).isVisible())
+            ) {
+                continue;
+            }
             await this.setControl(selector, value);
         }
         if (upload) {
@@ -437,7 +450,7 @@ export class ApexClient {
                         typeof awb !== 'string' ||
                         !/^[A-Z0-9_-]{1,100}$/.test(awb),
                 ) ||
-                !/^(?:hybrid-[a-z]+|active-awbs)-\d+-\d+\.csv$/.test(
+                !/^(?:hybrid-[a-z]+|active-awbs)-\d+-\d+-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.csv$/.test(
                     job.upload_filename || '',
                 )
             ) {
@@ -586,12 +599,17 @@ export class ApexClient {
         try {
             this.phase = 'SUBMITTING_REPORT';
             // This is the only Process click. Never retry it, including after a timeout.
-            await button.click();
-            await this.page.waitForLoadState('domcontentloaded');
+            await Promise.all([
+                this.page.waitForNavigation({
+                    waitUntil: 'domcontentloaded',
+                    timeout: this.config.navigationTimeout,
+                }),
+                button.click(),
+            ]);
             if (
                 await this.page
                     .locator(
-                        '.a-Notification--error:visible, .t-Alert--danger:visible, .apex-page-error:visible',
+                        '.a-Notification--error:visible, .a-Form-error:visible, .t-Alert--danger:visible, .apex-page-error:visible',
                     )
                     .count()
             )
@@ -613,6 +631,8 @@ export class ApexClient {
         this.phase = 'POLLING_HISTORY';
         const deadline = Date.now() + this.config.reportTimeout;
         let pinnedId = null;
+        let upstreamErrorSince = null;
+        let upstreamErrorReads = 0;
         while (Date.now() < deadline) {
             signal.throwIfAborted();
             this.phase = 'POLLING_HISTORY';
@@ -657,6 +677,48 @@ export class ApexClient {
                                 this.config.maxFileBytes,
                                 job.max_file_kb * 1024,
                             ),
+                        );
+                    }
+                    if (
+                        row.status.trim().toUpperCase() === 'ERROR' &&
+                        /^Error API 500\.$/.test(row.error.trim()) &&
+                        !row.download
+                    ) {
+                        upstreamErrorSince ??= Date.now();
+                        upstreamErrorReads++;
+                        if (
+                            upstreamErrorReads >= 3 &&
+                            Date.now() - upstreamErrorSince >=
+                                (this.config.upstreamErrorGrace ?? 60000)
+                        ) {
+                            throw new ReportError(
+                                'APEX_SOURCE_API',
+                                `History ${row.filename} tetap Error API 500 setelah konfirmasi berulang; CSV belum tersedia. Process tidak diulang.`,
+                            );
+                        }
+                    } else {
+                        upstreamErrorSince = null;
+                        upstreamErrorReads = 0;
+                    }
+                    const noDataMessage = [
+                        job.customer_account,
+                        formatDate(job.date_from, 'DD-MON-YYYY'),
+                        formatDate(job.date_thru, 'DD-MON-YYYY'),
+                        'No Data Found',
+                    ]
+                        .join(' ')
+                        .toUpperCase();
+                    if (
+                        this.config.strictHistoryIdentity &&
+                        job.report_mode === 'P' &&
+                        row.status.trim().toUpperCase() === 'ERROR' &&
+                        row.error.replace(/\s+/g, ' ').trim().toUpperCase() ===
+                            noDataMessage
+                    ) {
+                        throw new ReportError(
+                            'APEX_NO_DATA',
+                            `History ${row.id} (${row.filename}) mengonfirmasi ${row.error.trim()}.`,
+                            'NO_DATA',
                         );
                     }
                 }

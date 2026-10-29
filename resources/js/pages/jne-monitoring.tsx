@@ -1,7 +1,9 @@
 import * as reports from '@/routes/jne-reports';
 import { Head, Link, router, usePoll, useForm } from '@inertiajs/react';
-import { RefreshCw } from 'lucide-react';
-import JneShipmentSummary from '@/components/jne-shipment-summary';
+import { Download, RefreshCw } from 'lucide-react';
+import JneShipmentSummary, {
+    JneShipmentMetrics,
+} from '@/components/jne-shipment-summary';
 import JneOperationsSummary, {
     type JneOperations,
 } from '@/components/jne-operations-summary';
@@ -59,7 +61,7 @@ export default function JneMonitoring({
     const refresh = useForm({ profile_id: trackingRefresh?.profile?.id ?? 0 });
     const applied = normalizeJneFilters(filters);
     const filterKey = JSON.stringify(applied);
-    const [draft, setDraft] = useState(applied);
+    const [editingFilters, setEditingFilters] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [errors, setErrors] = useState<
@@ -68,7 +70,6 @@ export default function JneMonitoring({
     const [detailId, setDetailId] = useState<number | null>(null);
     const detailOrigin = useRef<HTMLElement | null>(null);
     useEffect(() => {
-        setDraft(JSON.parse(filterKey));
         setErrors({});
     }, [filterKey]);
 
@@ -76,33 +77,51 @@ export default function JneMonitoring({
         setError('Koneksi terputus. Periksa koneksi lalu muat ulang daftar.');
         return false;
     };
-    usePoll(15000, {
-        only: [
-            'shipments',
-            'summary',
-            'trackingRefresh',
-            'identitySummary',
-            'operationsSummary',
-        ],
-        onSuccess: () => setError(''),
-        onNetworkError: networkError,
-        onHttpException: (response) => {
-            if (response.status >= 500) {
-                setError(
-                    'Daftar belum dapat dimuat dari server. Silakan coba lagi.',
-                );
-                return false;
-            }
+    const { start, stop } = usePoll(
+        30000,
+        {
+            only: [
+                'shipments',
+                'summary',
+                'trackingRefresh',
+                'identitySummary',
+                'operationsSummary',
+            ],
+            onSuccess: () => setError(''),
+            onNetworkError: networkError,
+            onHttpException: (response) => {
+                if (response.status >= 500) {
+                    setError(
+                        'Daftar belum dapat dimuat dari server. Silakan coba lagi.',
+                    );
+                    return false;
+                }
+            },
         },
-    });
+        { autoStart: false, background: 'pause' },
+    );
+    useEffect(() => {
+        if (editingFilters || loading) stop();
+        else start();
+    }, [editingFilters, loading, start, stop]);
 
-    const visit = (next: JneFilters, page = 1) => {
+    const visit = (next: JneFilters, page = 1, shipmentsOnly = false) => {
         router.get(
             monitoring.index.url(),
             { ...next, ...(page > 1 ? { page } : {}) },
             {
                 preserveState: true,
                 preserveScroll: true,
+                only: shipmentsOnly
+                    ? ['shipments', 'filters']
+                    : [
+                          'shipments',
+                          'summary',
+                          'filters',
+                          'identitySummary',
+                          'operationsSummary',
+                          'trackingRefresh',
+                      ],
                 onStart: () => {
                     setLoading(true);
                     setError('');
@@ -110,12 +129,16 @@ export default function JneMonitoring({
                 },
                 onFinish: () => setLoading(false),
                 onSuccess: () => {
-                    setDraft(next);
                     setError('');
                 },
                 onError: (validation) => {
                     setErrors(validation);
                     setError('Periksa nilai filter yang dipilih.');
+                    requestAnimationFrame(() =>
+                        document
+                            .querySelector<HTMLElement>('[aria-invalid="true"]')
+                            ?.focus(),
+                    );
                 },
                 onNetworkError: networkError,
                 onHttpException: (response) => {
@@ -130,7 +153,6 @@ export default function JneMonitoring({
         );
     };
     const reset = () => {
-        setDraft(emptyJneFilters);
         visit(emptyJneFilters);
     };
     const openDetail = useCallback((id: number, origin: HTMLElement | null) => {
@@ -138,24 +160,33 @@ export default function JneMonitoring({
         setDetailId(id);
     }, []);
     const latest = latestJneObservation(shipments.data);
-    const filtered = Object.values(applied).some(Boolean);
+    const filtered = Object.entries(applied).some(
+        ([key, value]) => key !== 'per_page' && Boolean(value),
+    );
 
     return (
-        <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
+        <PageContainer className="flex flex-col gap-4 space-y-0 py-5">
             <Head title="Pengiriman JNE" />
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-col gap-1">
                     <h1 className="text-2xl font-semibold tracking-tight">
                         Pengiriman JNE
                     </h1>
+                    <p className="text-sm text-foreground/70">
+                        Kelola dan pantau data pengiriman AWB customer.
+                    </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                    <p className="text-xs text-muted-foreground">
-                        {latest
-                            ? `Diamati di halaman ini: ${jneTimestamp(latest, timezone)} · `
-                            : ''}
-                        {timezone}
-                        {' · Snapshot report'}
+                    <p className="text-xs text-foreground/70">
+                        <span className="block">Snapshot report · WIB</span>
+                        {latest && (
+                            <span className="block">
+                                <span className="sr-only">
+                                    Diamati di halaman ini:{' '}
+                                </span>
+                                {jneTimestamp(latest, timezone)}
+                            </span>
+                        )}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                         {!!operationsSummary?.global_collection_failures && (
@@ -168,17 +199,16 @@ export default function JneMonitoring({
                                 </Link>
                             </Badge>
                         )}
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="min-h-11"
-                            asChild
-                        >
-                            <Link href={reports.index.url()}>Tarik report</Link>
+                        <Button size="sm" className="order-2 min-h-11" asChild>
+                            <Link href={reports.index.url()}>
+                                <Download data-icon="inline-start" />
+                                Tarik report
+                            </Link>
                         </Button>
                         <Button
                             variant="outline"
                             size="sm"
+                            className="min-h-11"
                             disabled={loading}
                             onClick={() =>
                                 visit(applied, shipments.current_page)
@@ -198,86 +228,16 @@ export default function JneMonitoring({
             >
                 <div className="flex flex-col gap-3 p-4">
                     <ShipmentFilters
-                        draft={draft}
                         applied={applied}
                         accounts={accounts}
                         customers={customers}
                         loading={loading}
                         errors={errors}
-                        onChange={(key, value) =>
-                            setDraft((current) => ({
-                                ...current,
-                                [key]: value,
-                            }))
-                        }
-                        onApply={() => visit(draft)}
+                        onEditingChange={setEditingFilters}
+                        onApply={(next) => visit(next)}
                         onReset={reset}
                         onRemove={(key) => visit({ ...applied, [key]: '' })}
-                    />
-                </div>
-                <div className="flex flex-col gap-3 px-4 pb-4">
-                    {identitySummary && (
-                        <section
-                            aria-label="Kepastian identitas AWB"
-                            className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"
-                        >
-                            <p>
-                                {identitySummary.collected.toLocaleString(
-                                    'id-ID',
-                                )}{' '}
-                                AWB tersimpan ·{' '}
-                                {identitySummary.customer_matched.toLocaleString(
-                                    'id-ID',
-                                )}{' '}
-                                AWB customer terkonfirmasi ·{' '}
-                                {identitySummary.pickup_matched.toLocaleString(
-                                    'id-ID',
-                                )}{' '}
-                                AWB pickup terkonfirmasi
-                            </p>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                                {[
-                                    ['CONFLICT', 'conflicts', 'Konflik'],
-                                    ['AMBIGUOUS', 'ambiguous', 'Ambigu'],
-                                    ['CANDIDATE', 'candidates', 'Kandidat'],
-                                    [
-                                        'UNMATCHED',
-                                        'unmatched',
-                                        'Belum dikenali',
-                                    ],
-                                ]
-                                    .filter(
-                                        ([, key]) =>
-                                            (identitySummary[key] ?? 0) > 0,
-                                    )
-                                    .map(([status, key, label]) => (
-                                        <Link
-                                            key={status}
-                                            className="underline underline-offset-4"
-                                            href={monitoring.index.url({
-                                                query: {
-                                                    ...applied,
-                                                    customer_match: status,
-                                                },
-                                            })}
-                                        >
-                                            {label}: {identitySummary[key] ?? 0}
-                                        </Link>
-                                    ))}
-                                <Link
-                                    className="underline underline-offset-4"
-                                    href={monitoring.reconciliation.url()}
-                                >
-                                    Periksa kategori POP
-                                </Link>
-                            </div>
-                        </section>
-                    )}
-                    <JneShipmentSummary
-                        summary={summary}
-                        status={applied.status}
-                        loading={loading}
-                        onChange={(status) => visit({ ...applied, status })}
+                        onRestore={(saved) => visit(saved)}
                     />
                 </div>
                 {error && (
@@ -298,6 +258,11 @@ export default function JneMonitoring({
                         </AlertDescription>
                     </Alert>
                 )}
+            </section>
+            <section
+                className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm"
+                aria-label="Daftar AWB"
+            >
                 <ShipmentDataTable
                     bordered={false}
                     shipments={shipments}
@@ -305,11 +270,82 @@ export default function JneMonitoring({
                     loading={loading}
                     error={error}
                     filtered={filtered}
-                    onPage={(page) => visit(applied, page)}
+                    onPage={(page) => visit(applied, page, true)}
                     onDetail={openDetail}
                     onReset={reset}
+                    onPerPage={(size) =>
+                        visit({ ...applied, per_page: String(size) }, 1, true)
+                    }
+                    exportUrl={(ids) =>
+                        monitoring.exportMethod.url({
+                            query: {
+                                ...applied,
+                                ...(ids.length ? { ids } : {}),
+                            },
+                        })
+                    }
                 />
             </section>
+            <JneShipmentSummary
+                summary={summary}
+                status={applied.status}
+                loading={loading}
+                onChange={(status) => visit({ ...applied, status })}
+            />
+            <div className="flex flex-col gap-3 px-4 pb-4">
+                {identitySummary && (
+                    <section
+                        aria-label="Kepastian identitas AWB"
+                        className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"
+                    >
+                        <p>
+                            {identitySummary.collected.toLocaleString('id-ID')}{' '}
+                            AWB tersimpan ·{' '}
+                            {identitySummary.customer_matched.toLocaleString(
+                                'id-ID',
+                            )}{' '}
+                            AWB customer terkonfirmasi ·{' '}
+                            {identitySummary.pickup_matched.toLocaleString(
+                                'id-ID',
+                            )}{' '}
+                            AWB pickup terkonfirmasi
+                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                            {[
+                                ['CONFLICT', 'conflicts', 'Konflik'],
+                                ['AMBIGUOUS', 'ambiguous', 'Ambigu'],
+                                ['CANDIDATE', 'candidates', 'Kandidat'],
+                                ['UNMATCHED', 'unmatched', 'Belum dikenali'],
+                            ]
+                                .filter(
+                                    ([, key]) =>
+                                        (identitySummary[key] ?? 0) > 0,
+                                )
+                                .map(([status, key, label]) => (
+                                    <Link
+                                        key={status}
+                                        className="underline underline-offset-4"
+                                        href={monitoring.index.url({
+                                            query: {
+                                                ...applied,
+                                                customer_match: status,
+                                            },
+                                        })}
+                                    >
+                                        {label}: {identitySummary[key] ?? 0}
+                                    </Link>
+                                ))}
+                            <Link
+                                className="underline underline-offset-4"
+                                href={monitoring.reconciliation.url()}
+                            >
+                                Periksa kategori POP
+                            </Link>
+                        </div>
+                    </section>
+                )}
+            </div>
+            <JneShipmentMetrics summary={summary} />
             <details className="rounded-lg border text-sm">
                 <summary className="cursor-pointer px-4 py-3 font-medium">
                     Koleksi & tracking

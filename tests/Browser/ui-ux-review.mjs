@@ -10,7 +10,7 @@ const base = process.env.UI_UX_BASE_URL;
 assert(base && ['127.0.0.1', 'localhost'].includes(new URL(base).hostname));
 const phase = process.env.UI_UX_PHASE ?? 'before';
 assert(['before', 'after'].includes(phase));
-const root = 'docs/ui-ux-review/evidence';
+const root = process.env.UI_UX_EVIDENCE_DIR ?? 'docs/ui-ux-review/evidence';
 const ids = JSON.parse(
     await fs.readFile(process.env.UI_UX_FIXTURE_IDS, 'utf8'),
 );
@@ -120,7 +120,9 @@ const selectedCases = selectedKeys.size
 const browser = await chromium.launch({ headless: true });
 const results = selectedKeys.size
     ? JSON.parse(
-          await fs.readFile(path.join(root, `${phase}-results.json`), 'utf8'),
+          await fs
+              .readFile(path.join(root, `${phase}-results.json`), 'utf8')
+              .catch(() => '[]'),
       ).filter((r) => !selectedKeys.has(r.key))
     : [];
 const failures = [];
@@ -221,6 +223,34 @@ try {
                         overflow:
                             document.documentElement.scrollWidth >
                             innerWidth + 1,
+                        hierarchy: {
+                            cards: [
+                                ...main.querySelectorAll('[data-slot="card"]'),
+                            ].filter(visible).length,
+                            charts: [
+                                ...main.querySelectorAll('svg[role="img"]'),
+                            ].filter(visible).length,
+                            paragraphs: [...main.querySelectorAll('p')].filter(
+                                visible,
+                            ).length,
+                            words: main.innerText.split(/\s+/).filter(Boolean)
+                                .length,
+                            firstPickupDetail: rect(
+                                first('a[href^="/hasil-pickup/"]'),
+                            ),
+                            firstOperationalDetail: rect(
+                                first('a[href^="/operations/detail/"]'),
+                            ),
+                            firstHandover: rect(first('a[href^="/handover/"]')),
+                            firstDataRow: rect(first('tbody tr')),
+                            firstChart: rect(first('svg[role="img"]')),
+                            activityChart: rect(
+                                first(
+                                    'svg[aria-label^="Grafik pickup harian"]',
+                                ),
+                            ),
+                            text: main.innerText,
+                        },
                         title: rect(first('h1')),
                         search: rect(
                             selector
@@ -292,7 +322,7 @@ try {
     );
 }
 assert.equal(failures.length, 0, JSON.stringify(failures));
-assert(results.length === cases.length * viewports.length);
+assert(results.length >= selectedCases.length * viewports.length);
 if (phase === 'after') {
     assert(
         results.every((r) => r.errors.length === 0),

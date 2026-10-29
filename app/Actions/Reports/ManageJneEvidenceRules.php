@@ -26,7 +26,10 @@ class ManageJneEvidenceRules
             $base = ['reason' => ['required', 'string', 'max:500'], 'verified' => ['sometimes', 'boolean']];
             if ($kind === 'contract') {
                 $data = Validator::make($input, [...$base, 'source' => ['required', Rule::in(array_keys(ReportJob::REPORT_TYPES))], 'report_type' => ['required', 'string'],
-                    'definition' => ['required', 'array:customer_code_column,category_column,category_values,hybrid_categories,collection_requirements'],
+                    'definition' => ['required', 'array:customer_code_column,category_column,category_values,hybrid_categories,collection_requirements,automatic_reconciliation,pickup_date_column,collection_mode'],
+                    'definition.automatic_reconciliation' => ['sometimes', 'boolean'],
+                    'definition.pickup_date_column' => ['nullable', Rule::in(['TGL_ENTRY'])],
+                    'definition.collection_mode' => ['nullable', Rule::in(['complete_date_report'])],
                     'definition.customer_code_column' => ['nullable', 'string', 'max:120'], 'definition.category_column' => ['nullable', 'string', 'max:120'],
                     'definition.category_values' => ['sometimes', 'array', 'max:100'], 'definition.category_values.*' => [Rule::in(PickupProcessingRecord::CATEGORIES)],
                     'definition.hybrid_categories' => ['sometimes', 'array', 'max:4'], 'definition.hybrid_categories.*' => [Rule::in(PickupProcessingRecord::CATEGORIES)],

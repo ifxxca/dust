@@ -21,7 +21,8 @@ class QueueScheduledJneReports
         foreach ($ids as $id) {
             try {
                 $created += $this->queueProfile($id);
-            } catch (Throwable) {
+            } catch (Throwable $exception) {
+                app(ReportPipelineFailure::class)->handle($exception, 'queue_profile', profileId: $id);
                 JneReportProfile::whereKey($id)->update(['last_error' => 'Gagal membuat antrean report. Periksa konfigurasi dan database.', 'next_run_at' => now()->addMinutes(15)]);
             }
         }
@@ -99,7 +100,7 @@ class QueueScheduledJneReports
                     'date_from' => $from, 'date_thru' => $thru, 'report_mode' => config('jne-reports.report_mode'), 'status' => $profile->source === 'hybrid' ? 'COLLECTING_SOURCES' : 'QUEUED', 'created_by' => $profile->updated_by,
                 ]);
                 if ($profile->source === 'hybrid') {
-                    foreach (ReportJob::HYBRID_PARTS as [$source, $kind]) {
+                    foreach (ReportJob::hybridParts($profile->customer_account) as [$source, $kind]) {
                         ReportJob::firstOrCreate(['schedule_key' => hash('sha256', $job->id.'|'.$source.'|'.$kind)], [
                             'hybrid_batch_id' => $job->id, 'request_key' => $requestKey, 'source' => $source,
                             'report_type' => $kind, 'customer_account' => strtoupper($source),

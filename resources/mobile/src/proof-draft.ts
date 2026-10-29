@@ -16,6 +16,7 @@ export type ProofDraft = {
         css_orion: string;
     };
     notes: string;
+    cashlessAwbs?: string[];
     photos: LocalEvidence[];
     signature: LocalEvidence | null;
     updatedAt: string;
@@ -27,6 +28,8 @@ export type ProofDraft = {
         cashless_hybrid: number;
         css_orion: number;
         notes: string;
+        cashless_capture?: number;
+        cashless_awbs?: string[];
     };
     pendingCapture?: {
         operationId: string;
@@ -46,10 +49,11 @@ export function newProofDraft(task: Task): ProofDraft {
         step: 1,
         quantities: {
             manual_hybrid: '0',
-            cashless_hybrid: '0',
+            cashless_hybrid: String(task.cashless_awbs?.length ?? 0),
             css_orion: '0',
         },
         notes: '',
+        cashlessAwbs: [...(task.cashless_awbs ?? [])],
         photos: [],
         signature: null,
         updatedAt: new Date().toISOString(),
@@ -78,6 +82,17 @@ export function readableProofDraft(value: unknown): value is ProofDraft {
                 ] === 'string',
         ) &&
         Array.isArray(draft.photos) &&
+        (draft.cashlessAwbs === undefined ||
+            (Array.isArray(draft.cashlessAwbs) &&
+                draft.cashlessAwbs.length <= 500 &&
+                draft.cashlessAwbs.every(
+                    (awb) =>
+                        typeof awb === 'string' &&
+                        /^[A-Z0-9_-]{1,100}$/.test(awb) &&
+                        !/^(0101|0166)[0-9]+$/.test(awb),
+                ) &&
+                new Set(draft.cashlessAwbs).size ===
+                    draft.cashlessAwbs.length)) &&
         [1, 2, 3].includes(draft.step ?? 0) &&
         (draft.evidenceStep === undefined ||
             ['photos', 'signature'].includes(draft.evidenceStep)) &&
@@ -106,6 +121,14 @@ export function draftPayload(draft: ProofDraft) {
         cashless_hybrid: Number(draft.quantities.cashless_hybrid),
         css_orion: Number(draft.quantities.css_orion),
     };
+    const awbs = draft.cashlessAwbs ?? [];
+    if (
+        awbs.length !== values.cashless_hybrid ||
+        new Set(awbs).size !== awbs.length
+    )
+        throw new Error(
+            'Catat setiap resi Cashless agar jumlah sesuai hasil scan.',
+        );
     if (Object.values(values).reduce((total, value) => total + value, 0) <= 0)
         throw new Error('Total paket harus lebih dari nol.');
     if (!draft.signature) throw new Error('Tanda tangan wajib.');
@@ -118,6 +141,8 @@ export function draftPayload(draft: ProofDraft) {
         expected_version: draft.version,
         submission_key: draft.submissionKey,
         ...values,
+        cashless_capture: 1,
+        cashless_awbs: [...awbs],
         notes: draft.notes.trim(),
     };
 }

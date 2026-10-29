@@ -2,11 +2,18 @@ import type { ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, expect, test, vi } from 'vitest';
 import { ShipmentDetailContent } from '@/components/jne-shipment-detail-sheet';
+import ShipmentInlineDetail from '@/components/jne-shipment-inline-detail';
+import DataTable from '@/components/data-table';
 import ShipmentFilters from '@/components/jne-shipment-filters';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
+import JneCategoryBadge from '@/components/jne-category-badge';
 import ShipmentDataTable, { copyJneAwb } from '@/components/jne-shipment-table';
 import Monitoring from '@/pages/jne-monitoring';
 import type { JneDetail } from '@/types/jne';
+import ShipmentOverview, {
+    ShipmentSourceDetails,
+} from '@/components/jne-shipment-overview';
+import JneShipment from '@/pages/jne-shipment';
 import {
     emptyJneFilters,
     latestJneObservation,
@@ -30,7 +37,7 @@ vi.mock('@inertiajs/react', () => ({
         </a>
     ),
     router: { get: vi.fn(), post: vi.fn() },
-    usePoll: vi.fn(),
+    usePoll: vi.fn(() => ({ start: vi.fn(), stop: vi.fn() })),
     usePage: () => ({ version: 'test-version' }),
     useHttp: () => ({ get: vi.fn(), cancel: vi.fn(), processing: false }),
     useForm: (data: Record<string, number>) => ({
@@ -47,6 +54,24 @@ afterEach(() => {
     vi.clearAllMocks();
 });
 
+test.each([
+    ['manual_hybrid', 'MATCHED', 'Manual'],
+    ['cashless_hybrid', 'MATCHED', 'Cashless'],
+    ['css_orion', 'MATCHED', 'CSS / Orion'],
+    [null, 'UNMATCHED', 'Belum ditandai'],
+    [null, 'CONFLICT', 'Kategori perlu diperiksa'],
+    ['manual_hybrid', 'CONFLICT', 'Manual · Perlu diperiksa'],
+])('category markers label %s with status %s', (category, status, label) => {
+    expect(
+        renderToStaticMarkup(
+            <JneCategoryBadge
+                category={category}
+                status={status || undefined}
+            />,
+        ),
+    ).toContain(label);
+});
+
 function detailFixture(): JneDetail {
     return {
         shipment: {
@@ -60,6 +85,7 @@ function detailFixture(): JneDetail {
             match_status: 'UNMATCHED',
             match_method: null,
             match_note: null,
+            entry_at: '2026-10-13T01:00:00Z',
             observed_at: '2026-10-21T00:00:00Z',
             pickup_task_id: null,
             pickup_reference: null,
@@ -97,12 +123,192 @@ function detailFixture(): JneDetail {
     };
 }
 
+test('full detail overview shows only recorded timeline observations in chronological order', () => {
+    const detail = detailFixture();
+    const observation = {
+        id: 1,
+        observed_at: '2026-10-20T01:00:00Z',
+        tracking_status: 'UNKNOWN',
+        changes_current: true,
+        status_web: 'OLDER_SOURCE_STATUS',
+        status_pod: null,
+        awb_cancel: null,
+        report_job_id: 3,
+        source_row: 22,
+    };
+    const html = renderToStaticMarkup(
+        <ShipmentOverview
+            shipment={detail.shipment}
+            history={{
+                data: [
+                    {
+                        ...observation,
+                        id: 2,
+                        observed_at: '2026-10-21T01:00:00Z',
+                        status_web: 'NEWER_SOURCE_STATUS',
+                    },
+                    observation,
+                ],
+                current_page: 1,
+                last_page: 1,
+            }}
+            timezone={detail.timezone}
+        />,
+    );
+    const timeline = html.slice(
+        html.indexOf('aria-label="Timeline observasi report"'),
+    );
+    expect(timeline.indexOf('OLDER_SOURCE_STATUS')).toBeLessThan(
+        timeline.indexOf('NEWER_SOURCE_STATUS'),
+    );
+    expect(timeline).not.toContain('Data diterima');
+    expect(html).toContain('bukan waktu kejadian pengiriman');
+    expect(html).toContain('Salin nomor resi');
+    expect(html).not.toContain('Unduh CSV sumber');
+});
+
+test('full detail overview leaves missing source and timeline explicitly unavailable', () => {
+    const detail = detailFixture();
+    const html = renderToStaticMarkup(
+        <ShipmentOverview
+            shipment={{ ...detail.shipment, source: null }}
+            history={{ data: [], current_page: 1, last_page: 1 }}
+            timezone={detail.timezone}
+        />,
+    );
+    expect(html).toContain('Informasi pengiriman');
+    expect(html).toContain('Belum ada riwayat observasi.');
+    expect(html).not.toContain('Unduh CSV sumber');
+});
+
+test('operational shipment page starts with closed corrections and technical details while preserving all evidence', () => {
+    const detail = detailFixture();
+    const html = renderToStaticMarkup(
+        <JneShipment
+            shipment={{ ...detail.shipment, version: 1 }}
+            history={detail.history}
+            timezone={detail.timezone}
+            matchHistory={Array.from({ length: 50 }, (_, index) => ({
+                id: 50 - index,
+                method: 'AUTO',
+                match_status: 'UNMATCHED',
+                reason: `Stored decision ${index}`,
+                created_at: '2026-10-27T01:00:00Z',
+                actor_name: null,
+                pickup_reference: null,
+                previous_pickup_reference: null,
+            }))}
+            decisionPages={{
+                data: [],
+                total: 120,
+                prev_page_url: null,
+                next_page_url: null,
+            }}
+        />,
+    );
+    expect(html).toContain('Hubungkan pickup');
+    expect(html).toContain('aria-expanded="false"');
+    expect(html).not.toContain('<form');
+    expect(html).toContain('120 catatan pencocokan');
+    expect(html).toContain('Detail teknis &amp; audit');
+    expect(html).not.toMatch(/<details[^>]* open/);
+    expect(html).toContain('Stored decision 49');
+    expect(html).toContain('EXTRA_COLUMN');
+    expect(html).toContain('untouched');
+    expect(html).toContain('original-checksum');
+    expect(html).toContain('/admin/jne-reports/3/download');
+});
+
+test('linked shipment keeps pickup accessible and offers correction without an unnecessary warning', () => {
+    const detail = detailFixture();
+    const html = renderToStaticMarkup(
+        <JneShipment
+            shipment={{
+                ...detail.shipment,
+                version: 1,
+                match_status: 'MATCHED',
+                pickup_task_id: 4,
+                pickup_reference: 'POP-004',
+                pickup_customer: 'PT A',
+                match_note: 'Old diagnostic note',
+            }}
+            history={detail.history}
+            timezone={detail.timezone}
+            matchHistory={[]}
+        />,
+    );
+    expect(html).toContain('POP-004');
+    expect(html).toContain('Ubah pickup');
+    expect(html).not.toContain('Old diagnostic note');
+    expect(html).not.toContain('<form');
+});
+
+test('technical source disclosure preserves timestamps and missing-source state', () => {
+    const detail = detailFixture();
+    const html = renderToStaticMarkup(
+        <ShipmentSourceDetails
+            shipment={{ ...detail.shipment, source: null }}
+            timezone={detail.timezone}
+        />,
+    );
+    expect(html).toContain('Belum ada sumber report.');
+    expect(html).toContain('Report terakhir diterima');
+    expect(html).not.toMatch(/<details[^>]* open/);
+});
+
+test('expanded AWB content preserves entry time source evidence and observed history without inventing tracking events', () => {
+    const detail = detailFixture();
+    const html = renderToStaticMarkup(
+        <ShipmentInlineDetail detail={detail} onRetry={vi.fn()} />,
+    );
+    expect(html).toContain('13 Okt 2026, 08.00');
+    expect(html).toContain('Riwayat observasi');
+    expect(html).toContain('Belum ada riwayat observasi.');
+    expect(html).toContain('Report #3');
+    expect(html).toContain('Recipient');
+    expect(html).toContain('&lt;script&gt;private()&lt;/script&gt;');
+    expect(html).not.toContain('<script>private()');
+    expect(html).not.toContain('Data diterima dari pengirim');
+});
+
+test('expanded AWB has recoverable loading and request failure states', () => {
+    expect(
+        renderToStaticMarkup(<ShipmentInlineDetail onRetry={vi.fn()} />),
+    ).toContain('Memuat detail AWB');
+    const error = renderToStaticMarkup(
+        <ShipmentInlineDetail error="Koneksi terputus" onRetry={vi.fn()} />,
+    );
+    expect(error).toContain('Koneksi terputus');
+    expect(error).toContain('Coba lagi');
+});
+
+test('table expansion stays beneath its own row and respects visible column count', () => {
+    const html = renderToStaticMarkup(
+        <DataTable
+            data={[{ id: 7 }, { id: 8 }]}
+            getRowId={(row) => String(row.id)}
+            columns={[
+                { id: 'awb', header: 'AWB', cell: (row) => `AWB-${row.id}` },
+                { id: 'hidden', header: 'Sumber', cell: () => 'Privat' },
+            ]}
+            initialHiddenColumns={['hidden']}
+            expandedRow="7"
+            renderExpandedRow={(row) => <div>Detail-{row.id}</div>}
+        />,
+    );
+    expect(html).toMatch(/AWB-7[\s\S]*colSpan="1"[\s\S]*Detail-7[\s\S]*AWB-8/i);
+    expect(html).not.toContain('Detail-8');
+    expect(html).not.toContain('Privat');
+});
+
 test('quick detail retains raw statuses separately from customer, shipper, source and pickup identities', () => {
     const html = renderToStaticMarkup(
         <ShipmentDetailContent detail={detailFixture()} />,
     );
 
     expect(html).toContain('Status belum dikenali');
+    expect(html).toContain('Tanggal AWB (JNE)');
+    expect(html).toContain('13 Okt 2026, 08.00');
     expect(html).toContain('&lt;script&gt;private()&lt;/script&gt;');
     expect(html).not.toContain('<script>private()');
     expect(html).toContain('Error On Push');
@@ -188,7 +394,7 @@ test.each(['UNKNOWN', 'NEW_UNRECOGNIZED_STATUS'])(
     },
 );
 
-test('URL filter normalization preserves literal AWB prefixes and all six server filters', () => {
+test('URL filter normalization preserves literal AWB prefixes and shipment filters', () => {
     expect(
         normalizeJneFilters({
             q: '0001%_!',
@@ -197,14 +403,17 @@ test('URL filter normalization preserves literal AWB prefixes and all six server
             match: 'UNMATCHED',
             customer_id: 19,
             customer_match: 'AMBIGUOUS',
+            category: 'cashless_hybrid',
         }),
     ).toEqual({
+        ...emptyJneFilters,
         q: '0001%_!',
         account: 'SHARED',
         status: 'UNKNOWN',
         match: 'UNMATCHED',
         customer_id: '19',
         customer_match: 'AMBIGUOUS',
+        category: 'cashless_hybrid',
     });
     expect(normalizeJneFilters({ q: null })).toEqual(emptyJneFilters);
 });
@@ -240,7 +449,8 @@ test('selected status and its count remain visible and empty results do not clai
         /<button\b[^>]*id="jne-status-filter"[\s\S]*?<\/button>/g,
     );
     expect(selected).toHaveLength(1);
-    expect(selected?.[0]).toContain('Terkirim · 9');
+    expect(selected?.[0]).toContain('Terkirim');
+    expect(html).toContain('aria-label="Terkirim: 9"');
     expect(html).not.toContain('Diamati di halaman ini:');
     expect(html).toContain('Tidak ada AWB yang sesuai');
     expect(html).toContain('Urutan: observasi terbaru');
@@ -257,13 +467,11 @@ test('applied advanced filters are visible as removable controls outside the she
     };
     const html = renderToStaticMarkup(
         <ShipmentFilters
-            draft={filters}
             applied={filters}
             accounts={['SHARED']}
             customers={[]}
             loading={false}
             errors={{}}
-            onChange={vi.fn()}
             onApply={vi.fn()}
             onReset={vi.fn()}
             onRemove={vi.fn()}
@@ -280,13 +488,11 @@ test('customer filter reuses a searchable picker and keeps customer code distinc
     const filters = { ...emptyJneFilters, customer_id: '17' };
     const html = renderToStaticMarkup(
         <ShipmentFilters
-            draft={filters}
             applied={filters}
             accounts={[]}
             customers={[{ id: 17, name: 'PT A', customer_code: '00100' }]}
             loading={false}
             errors={{}}
-            onChange={vi.fn()}
             onApply={vi.fn()}
             onReset={vi.fn()}
             onRemove={vi.fn()}
