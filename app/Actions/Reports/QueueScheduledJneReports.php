@@ -64,20 +64,27 @@ class QueueScheduledJneReports
             }
             $blocked = ReportJob::where('source', $profile->source)->where('report_type', $profile->report_type)->where('customer_account', $profile->customer_account)->where(function ($query): void {
                 $query->whereIn('status', ['QUEUED', 'COLLECTING_SOURCES', 'WAITING_APEX', ...ReportJob::ACTIVE_STATUSES])
-                    ->orWhere(fn ($query) => $query->whereIn('status', ['FAILED', 'NEEDS_ATTENTION'])->whereNull('reviewed_at'))
-                    ->orWhere(fn ($query) => $query->where('status', 'COMPLETED')->where(fn ($query) => $query->where('import_status', 'QUEUED')->orWhere('projection_status', 'QUEUED')))
-                    ->orWhere(fn ($query) => $query->where('status', 'COMPLETED')->whereNull('reviewed_at')->where(fn ($query) => $query->where('import_status', 'FAILED')->orWhere('projection_status', 'FAILED')));
+                    ->orWhere(fn ($query) => $query->where('status', 'COMPLETED')->where('import_status', '!=', 'FAILED')->where('projection_status', '!=', 'FAILED')
+                        ->where(fn ($query) => $query->where('import_status', 'QUEUED')->orWhere('projection_status', 'QUEUED')));
             })->exists();
             if ($blocked) {
-                $minutes = 15;
-                if ($policy !== null) {
-                    $recent = ReportJob::where('source', $profile->source)->where('report_type', $profile->report_type)->where('customer_account', $profile->customer_account)->orderByDesc('id')->limit(10)->get();
-                    $failures = $recent->takeUntil(fn (ReportJob $job): bool => ! in_array($job->status, ['FAILED', 'NEEDS_ATTENTION'], true) && $job->import_status !== 'FAILED' && $job->projection_status !== 'FAILED')->count();
-                    $minutes = min($policy['max_failure_backoff_minutes'], $policy['failure_backoff_minutes'] * (2 ** max(0, $failures - 1)));
-                }
-                $profile->update(['last_error' => 'Masih ada report diproses atau kegagalan yang belum diperiksa Admin. Tinjau daftar report sebelum siklus baru.', 'next_run_at' => $profile->enabled ? now()->addMinutes($minutes) : null]);
+                $profile->update(['last_error' => 'Penarikan atau pengolahan report sebelumnya masih berjalan. Siklus berikutnya akan dicoba otomatis.', 'next_run_at' => $profile->enabled ? now()->addMinutes(15) : null]);
 
                 return 0;
+            }
+            if ($policy !== null && ! $force) {
+                $recent = ReportJob::where('source', $profile->source)->where('report_type', $profile->report_type)->where('customer_account', $profile->customer_account)->orderByDesc('id')->limit(10)->get();
+                $failures = $recent->takeUntil(fn (ReportJob $job): bool => ! in_array($job->status, ['FAILED', 'NEEDS_ATTENTION'], true) && $job->import_status !== 'FAILED' && $job->projection_status !== 'FAILED')->count();
+                if ($failures > 0) {
+                    $minutes = min($policy['max_failure_backoff_minutes'], $policy['failure_backoff_minutes'] * (2 ** ($failures - 1)));
+                    $latest = $recent->first();
+                    $retryAt = CarbonImmutable::instance($latest->completed_at ?? $latest->updated_at)->addMinutes($minutes);
+                    if ($retryAt->isFuture()) {
+                        $profile->update(['last_error' => 'Siklus berikutnya menunggu jeda kegagalan dan akan dilanjutkan otomatis. Report lama tetap tersedia untuk ditinjau.', 'next_run_at' => $profile->enabled ? $retryAt : null]);
+
+                        return 0;
+                    }
+                }
             }
             if ($profile->report_type === 'unresolved') {
                 return $this->queueActiveAwbs($profile, $force, $local);

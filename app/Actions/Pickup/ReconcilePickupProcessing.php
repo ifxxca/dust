@@ -75,11 +75,28 @@ class ReconcilePickupProcessing
                 }
                 $this->buckets->handle($task);
             }
-            $scope = JneShipment::where(fn ($query) => $query->where('pickup_task_id', $taskId)
-                ->when($from !== null, fn (Builder $eligible) => $eligible->orWhere(fn (Builder $owner) => $owner->where('customer_id', $task->customer_id)->whereHas('sources', fn ($row) => $row->where('entry_at', '>=', $from)->where('entry_at', '<', $thru))))
-                ->orWhereIn('awb', $sources->filter(fn (JneReportAwb $row): bool => $from !== null && $row->entry_at !== null && $row->entry_at->greaterThanOrEqualTo($from) && $row->entry_at->lessThan($thru))->pluck('awb')))
-                ->where(fn ($owner) => $owner->whereNull('pickup_task_id')->orWhere('pickup_task_id', $taskId))
+            $scopeIds = JneShipment::where('pickup_task_id', $taskId)
                 ->whereNotExists(fn ($excluded) => $excluded->selectRaw('1')->from('pickup_awb_exclusions')->whereColumn('jne_shipment_id', 'jne_shipments.id')->where('pickup_task_id', $taskId))
+                ->lockForUpdate()->pluck('id');
+            if ($from !== null) {
+                $related = JneShipment::where('customer_id', $task->customer_id)->whereNull('pickup_task_id')
+                    ->when(DB::connection()->getDriverName() === 'mysql', fn (Builder $query) => $query->forceIndex('jne_shipments_customer_id_foreign'))
+                    ->whereHas('sources', fn ($row) => $row->where('entry_at', '>=', $from)->where('entry_at', '<', $thru))
+                    ->whereNotExists(fn ($excluded) => $excluded->selectRaw('1')->from('pickup_awb_exclusions')->whereColumn('jne_shipment_id', 'jne_shipments.id')->where('pickup_task_id', $taskId))
+                    ->lockForUpdate()->pluck('id');
+                $scopeIds = $scopeIds->merge($related);
+            }
+            $sourceAwbs = $sources->filter(fn (JneReportAwb $row): bool => $from !== null && $row->entry_at !== null && $row->entry_at->greaterThanOrEqualTo($from) && $row->entry_at->lessThan($thru))->pluck('awb');
+            if ($sourceAwbs->isNotEmpty()) {
+                $sourceIds = JneShipment::whereIn('awb', $sourceAwbs)->whereNull('pickup_task_id')
+                    ->when(DB::connection()->getDriverName() === 'mysql', fn (Builder $query) => $query->forceIndex('jne_shipments_awb_unique'))
+                    ->whereNotExists(fn ($excluded) => $excluded->selectRaw('1')->from('pickup_awb_exclusions')->whereColumn('jne_shipment_id', 'jne_shipments.id')->where('pickup_task_id', $taskId))
+                    ->lockForUpdate()->pluck('id');
+                $scopeIds = $scopeIds->merge($sourceIds);
+            }
+            /** Current locking reads protect discovery; the final read preserves database AWB ordering. */
+            $scope = JneShipment::whereIn('id', $scopeIds->unique()->all())
+                ->when(DB::connection()->getDriverName() === 'mysql', fn (Builder $query) => $query->forceIndex('PRIMARY'))
                 ->with('latestSource.reportJob')->orderBy('awb')->lockForUpdate()->get();
             $proof = $task->proof;
             $handover = $task->handoverItem;

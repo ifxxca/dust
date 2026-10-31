@@ -93,11 +93,15 @@ class ReconcileCustomerPickupDay
             $from = PickupResultPeriod::start($date)->utc();
             $olderPending = PickupPendingItem::whereIn('status', ['PENDING', 'READY'])
                 ->whereHas('pickup', fn ($pickup) => $pickup->where('customer_id', $customer->id)->whereHas('proof', fn ($proof) => $proof->where('picked_up_at', '<', $from)))->exists();
-            $scope = JneShipment::where(function (Builder $query) use ($ids, $customer, $from): void {
-                $query->whereIn('pickup_task_id', $ids)->orWhere(fn (Builder $pool) => $pool->whereNull('pickup_task_id')->where('customer_id', $customer->id)
-                    ->whereHas('latestSource', fn ($source) => $source->where('entry_at', '>=', $from)->where('entry_at', '<', $from->addDay()))
-                    ->whereNotExists(fn ($excluded) => $excluded->selectRaw('1')->from('pickup_awb_exclusions')->whereColumn('jne_shipment_id', 'jne_shipments.id')->whereIn('pickup_task_id', $ids)));
-            })->with(['latestSource.reportJob', 'cashlessClaim'])->orderBy('id')->lockForUpdate()->get();
+            /** Separate current reads avoid locking the global NULL-owner range through the OR predicate. */
+            $owned = JneShipment::whereIn('pickup_task_id', $ids)->orderBy('id')->lockForUpdate()->get();
+            $pool = JneShipment::where('customer_id', $customer->id)->whereNull('pickup_task_id')
+                ->when(DB::connection()->getDriverName() === 'mysql', fn (Builder $query) => $query->forceIndex('jne_shipments_customer_id_foreign'))
+                ->whereHas('latestSource', fn ($source) => $source->where('entry_at', '>=', $from)->where('entry_at', '<', $from->addDay()))
+                ->whereNotExists(fn ($excluded) => $excluded->selectRaw('1')->from('pickup_awb_exclusions')->whereColumn('jne_shipment_id', 'jne_shipments.id')->whereIn('pickup_task_id', $ids))
+                ->orderBy('id')->lockForUpdate()->get();
+            $scope = $owned->merge($pool)->sortBy('id')->values();
+            $scope->load(['latestSource.reportJob', 'cashlessClaim']);
             $processedKeys = $this->eligibility->processedKeys($tasks, $scope);
             $confirmed = $scope->filter(function (JneShipment $shipment) use ($tasks, $customer, $olderPending, $processedKeys): bool {
                 $task = $tasks->get($shipment->pickup_task_id);

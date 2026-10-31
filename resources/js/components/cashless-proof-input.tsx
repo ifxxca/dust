@@ -3,7 +3,11 @@ import { Barcode, Camera, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { playScanError, primeScanAudio } from '@/lib/scan-feedback';
+import {
+    playScanError,
+    playScanSuccess,
+    primeScanAudio,
+} from '@/lib/scan-feedback';
 import {
     Dialog,
     DialogContent,
@@ -57,6 +61,7 @@ export default function CashlessProofInput({
         try {
             const result = await onAdd(value);
             if (result.error) playScanError();
+            else if (result.awb) playScanSuccess();
             setNotice(result.error ?? `${result.awb} ditambahkan.`);
             if (!result.error) setValue('');
         } catch {

@@ -17,7 +17,7 @@ return [
 
     'paths' => ['api/mobile/v1/*'],
 
-    'allowed_methods' => ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    'allowed_methods' => ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 
     'allowed_origins' => ['https://localhost'],
 

@@ -13,7 +13,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { CameraPermissionError, CameraScanSession } from './camera-scanner';
-import { playScanError, primeScanAudio } from '@/lib/scan-feedback';
+import {
+    playScanError,
+    playScanSuccess,
+    primeScanAudio,
+} from '@/lib/scan-feedback';
 
 export default function CashlessCameraScanner({
     title,
@@ -64,6 +68,7 @@ export default function CashlessCameraScanner({
                 if (!mounted || closing.current) return;
                 setWarning(!!result.error);
                 if (result.error) playScanError();
+                else if (result.awb) playScanSuccess();
                 setNotice(
                     result.error ?? `${result.awb} ditambahkan ke draft.`,
                 );

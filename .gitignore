@@ -2,7 +2,9 @@
 /bootstrap/ssr
 node_modules/
 /public/build
+/public/retail-pickup-*.apk
 /resources/mobile/dist
+/output/
 /android/.gradle
 /android/local.properties
 /public/fonts-manifest.dev.json

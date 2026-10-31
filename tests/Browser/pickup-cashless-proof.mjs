@@ -13,6 +13,8 @@ try {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     await context.addInitScript(({ api }) => {
         window.scanBeeps = 0;
+        window.scanVibrations = [];
+        Object.defineProperty(navigator, 'vibrate', { value: (duration) => { window.scanVibrations.push(duration); return true; } });
         const NativeAudio = window.AudioContext;
         window.AudioContext = class extends NativeAudio {
             createOscillator() { window.scanBeeps++; return super.createOscillator(); }
@@ -42,19 +44,28 @@ try {
     await page.setViewportSize({ width: 390, height: 844 });
     await input.fill(' tgpop1 '); await input.press('Enter');
     await page.getByText('TGPOP1 ditambahkan.', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.scanBeeps), 1, 'A successful scanner Enter produces one confirmation beep');
+    assert.deepEqual(await page.evaluate(() => window.scanVibrations), [40]);
     await input.fill('TGPOP1'); await input.press('Enter');
     await page.getByText(/TGPOP1 sudah ada/).waitFor();
-    assert.equal(await page.evaluate(() => window.scanBeeps), 2, 'Duplicate input produces the two-tone error sound');
+    assert.equal(await page.evaluate(() => window.scanBeeps), 3, 'Duplicate input adds the distinct two-tone error sound');
+    assert.deepEqual(await page.evaluate(() => window.scanVibrations), [40], 'Duplicate does not report success');
     await input.fill('016660047446626'); await input.press('Enter');
     await page.getByText('Resi ini termasuk Manual. Gunakan resi Cashless.').waitFor();
+    assert.equal(await page.evaluate(() => window.scanVibrations.length), 1, 'Rejected category does not report success');
     await input.fill('CMPOP2'); await page.getByRole('button', { name: 'Tambah', exact: true }).click();
     await page.getByText('CMPOP2 ditambahkan.', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.scanVibrations.length), 2, 'Manual add confirms success too');
     await page.getByRole('button', { name: 'Hapus TGPOP1' }).click();
     await page.getByRole('button', { name: 'Scan dengan kamera' }).click();
     const camera = page.getByRole('dialog', { name: 'Scan resi Cashless' });
     await camera.getByRole('button', { name: 'Selesai scan', exact: true }).waitFor();
     await page.evaluate(() => window.cashlessCamera.emit(['TGPOP3', 'TGPOP3', 'CMPOP4']));
     await camera.getByText('3 resi dalam draft', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.scanVibrations.length), 4, 'Camera confirms each unique saved resi once');
+    await page.evaluate(() => { window.cashlessCamera.emit([]); window.cashlessCamera.emit(['TGPOP3']); });
+    await camera.getByText(/TGPOP3 sudah dipindai/).waitFor();
+    assert.equal(await page.evaluate(() => window.scanVibrations.length), 4, 'Rescanning a camera barcode does not report success');
     await camera.getByRole('button', { name: 'Selesai scan', exact: true }).click();
     await page.getByLabel('3 resi cashless', { exact: true }).waitFor();
     assert.equal(await page.getByRole('radio', { name: 'PM', exact: true }).count(), 0);
@@ -63,6 +74,7 @@ try {
     await page.getByRole('button', { name: 'Scan / catat resi' }).click();
     await input.fill('TGPOP5'); await input.press('Enter');
     await page.getByText('TGPOP5 ditambahkan.', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.scanVibrations.length), 5, 'Offline local scans still confirm success');
     await page.getByRole('button', { name: 'Selesai mencatat' }).click();
     await context.setOffline(false);
     await page.reload();
@@ -172,6 +184,12 @@ try {
     assert.equal(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.endsWith(':pop-71') || key.includes(':evidence-')).length), 0, 'Discard drains pending writes without resurrecting the draft');
     await page.getByRole('button', { name: 'Buat Draft POP', exact: true }).click();
     await page.getByLabel('0 resi cashless', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Scan / catat resi' }).click();
+    const feedbackBeforeFailure = await page.evaluate(() => ({ beeps: window.scanBeeps, vibrations: window.scanVibrations.length }));
+    await page.evaluate(() => { window.cashlessStorageQa.failWrites = true; });
+    await input.fill('CMFAILED'); await input.press('Enter');
+    await page.getByText('Resi belum tersimpan di draft. Periksa penyimpanan dan coba lagi.', { exact: true }).waitFor();
+    assert.deepEqual(await page.evaluate(() => ({ beeps: window.scanBeeps, vibrations: window.scanVibrations.length })), feedbackBeforeFailure, 'A failed durable write must not sound or vibrate as successful');
     assert.equal(externalWork, 0);
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ result: 'passed', scope: 'Held continuous touch, no signature writes until Review, failed Review recovery, signature reload, responsive dialog, coalesced quantity writes, offline scan and discard; no API work before final POP', output }));

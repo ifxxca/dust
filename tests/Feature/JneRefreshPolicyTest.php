@@ -44,17 +44,14 @@ test('status minimum intervals never poll faster than the profile and recently r
     expect(app(QueryActiveJneAwbs::class)->due(60, 30)->where('awb', 'TRANSIT')->exists())->toBeTrue();
 });
 
-test('failed refresh remains blocked with backoff and an empty due cycle never queues external work', function () {
+test('an old failed refresh does not block an empty due cycle or silently acknowledge its failure', function () {
     $profile = JneReportProfile::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'enabled' => true, 'interval_minutes' => 30]);
     $shipment = JneShipment::factory()->create(['awb' => 'FRESH']);
     JneShipmentObservation::factory()->create(['jne_shipment_id' => $shipment->id]);
     $failed = ReportJob::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'status' => 'NEEDS_ATTENTION', 'reviewed_at' => null]);
 
-    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id, true))->toBe(0);
-    expect($profile->fresh()->next_run_at->equalTo(now()->addMinutes(15)))->toBeTrue();
-    $failed->update(['reviewed_at' => now()]);
-    $profile->refresh()->update(['next_run_at' => now()]);
-    app(QueueScheduledJneReports::class)->queueProfile($profile->id);
+    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id))->toBe(1);
+    expect($failed->fresh()->reviewed_at)->toBeNull();
     $cycle = ReportJob::where('report_type', 'unresolved')->latest('id')->first();
     expect($cycle->status)->toBe('NO_DATA')->and($cycle->awb_count)->toBe(0)->and($cycle->parameters['awbs'])->toBe([]);
     expect(ReportJob::where('report_type', 'unresolved')->where('status', 'QUEUED')->count())->toBe(0);

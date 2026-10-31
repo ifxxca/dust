@@ -133,6 +133,19 @@ test('web login and logout still enforce csrf with mobile installed', function (
     $this->assertDatabaseCount('personal_access_tokens', 0);
 });
 
+test('mobile notification read requests pass the webview cors preflight', function () {
+    $response = $this->withHeaders([
+        'Origin' => 'https://localhost',
+        'Access-Control-Request-Method' => 'PATCH',
+        'Access-Control-Request-Headers' => 'authorization,content-type',
+    ])->options(route('mobile.notifications.update'));
+
+    $response->assertNoContent()
+        ->assertHeader('Access-Control-Allow-Origin', 'https://localhost')
+        ->assertHeaderMissing('Access-Control-Allow-Credentials');
+    expect($response->headers->get('Access-Control-Allow-Methods'))->toContain('PATCH');
+});
+
 test('mobile cors allows only the configured webview origin without cookies', function () {
     $this->withHeaders(['Origin' => 'https://localhost', 'Access-Control-Request-Method' => 'GET', 'Access-Control-Request-Headers' => 'authorization'])->options(route('mobile.me'))
         ->assertNoContent()->assertHeader('Access-Control-Allow-Origin', 'https://localhost')->assertHeaderMissing('Access-Control-Allow-Credentials');

@@ -54,11 +54,14 @@ class ManageCashlessEntryBatches
                 return null;
             }
             abort_if($records->count() > $proof->cashless_hybrid, 409, 'Jumlah resi tercatat melebihi jumlah Cashless pada POP. Periksa bukti sebelum memproses.');
+            $awbs = [];
             foreach ($unbatched as $record) {
-                abort_unless(preg_match('/^[A-Z0-9_-]{1,16}$/D', $record->awb) === 1 && preg_match('/^(0101|0166)[0-9]+$/D', $record->awb) !== 1,
+                $awb = $record->awb;
+                abort_unless(is_string($awb) && preg_match('/^[A-Z0-9_-]{1,16}$/D', $awb) === 1 && preg_match('/^(0101|0166)[0-9]+$/D', $awb) !== 1,
                     409, 'Periksa format resi cashless '.$record->awb.' sebelum memproses.');
+                $awbs[] = $awb;
             }
-            $batch = $this->enqueue((string) Str::uuid(), $taskId, $proof->staff_id, $unbatched->pluck('awb')->values()->all(), 'nuralamt');
+            $batch = $this->enqueue((string) Str::uuid(), $taskId, $proof->staff_id, $awbs, 'nuralamt');
             $evidence = json_encode(['reason' => $reason, 'pickup_record_id' => $proof->id, 'source' => 'nuralamt'], JSON_THROW_ON_ERROR);
             DB::table('cashless_entry_events')->insert(['batch_id' => $batch->id, 'event_key' => (string) Str::uuid(),
                 'payload_hash' => hash('sha256', $evidence), 'type' => 'recorded-awbs-queued', 'evidence' => $evidence, 'created_at' => now()]);

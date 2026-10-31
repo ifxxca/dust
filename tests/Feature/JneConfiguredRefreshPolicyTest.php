@@ -51,7 +51,7 @@ test('configured SLA and priority scheduling keeps report receipt floors and nev
     expect(ReportJob::where('report_type', 'unresolved')->sole()->parameters['awbs'])->toBe(['NEW', 'RISK']);
 });
 
-test('configured source hours and bounded failure backoff avoid repeating uncertain external work', function () {
+test('configured source hours and failure cooldown defer a new cycle without requiring review or extending the deadline', function () {
     $policy = configuredRefreshPolicy();
     $policy['availability_hours'] = [13];
     $profile = JneReportProfile::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'enabled' => true,
@@ -59,11 +59,32 @@ test('configured source hours and bounded failure backoff avoid repeating uncert
     expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id, true))->toBe(0);
     expect($profile->fresh()->next_run_at->hour)->toBe(6);
     $policy['availability_hours'] = [];
-    $profile->update(['refresh_policy' => ['definition' => $policy, 'verified_at' => now()->toIso8601String()]]);
+    $profile->refresh()->update(['next_run_at' => now(), 'refresh_policy' => ['definition' => $policy, 'verified_at' => now()->toIso8601String()]]);
     ReportJob::factory()->count(3)->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'status' => 'NEEDS_ATTENTION', 'reviewed_at' => null]);
-    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id, true))->toBe(0);
-    expect($profile->fresh()->next_run_at->equalTo(now()->addMinutes(80)))->toBeTrue();
+    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id))->toBe(0);
+    $deadline = now()->addMinutes(80)->toImmutable();
+    expect($profile->fresh()->next_run_at->equalTo($deadline))->toBeTrue();
     expect(ReportJob::where('status', 'QUEUED')->count())->toBe(0);
+    $this->travel(79)->minutes();
+    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id))->toBe(0);
+    expect($profile->fresh()->next_run_at->equalTo($deadline))->toBeTrue();
+    $this->travel(1)->minutes();
+    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id))->toBe(1);
+    expect(ReportJob::where('status', 'NEEDS_ATTENTION')->whereNull('reviewed_at')->count())->toBe(3);
+    expect($profile->fresh()->last_error)->toBeNull();
+});
+
+test('an explicit manual cycle can bypass failure cooldown while active work still prevents overlap', function () {
+    $profile = JneReportProfile::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'enabled' => true,
+        'refresh_policy' => ['definition' => configuredRefreshPolicy(), 'verified_at' => now()->toIso8601String()]]);
+    $old = ReportJob::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'status' => 'NEEDS_ATTENTION']);
+    JneShipment::factory()->create(['awb' => 'TGFRESH']);
+
+    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id, true))->toBe(1);
+    expect(app(QueueScheduledJneReports::class)->queueProfile($profile->id, true))->toBe(0);
+
+    expect($old->fresh()->reviewed_at)->toBeNull();
+    expect(ReportJob::where('status', 'QUEUED')->sole()->parameters['awbs'])->toBe(['TGFRESH']);
 });
 
 test('tracking policy activation rejects unverified semantics and non Admin writes', function () {

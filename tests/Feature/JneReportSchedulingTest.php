@@ -49,17 +49,17 @@ test('rolling profile includes older open shipment entry dates and excludes old 
     ]);
 });
 
-test('active or unreviewed failed account reports block automatic resubmission', function (string $status) {
+test('active account reports still prevent overlapping scheduled cycles', function (string $status) {
     $profile = JneReportProfile::factory()->create(['enabled' => true, 'customer_account' => 'TESTACCOUNT']);
     ReportJob::factory()->create(['status' => $status]);
 
     expect(app(QueueScheduledJneReports::class)->handle())->toBe(0);
 
     $this->assertDatabaseCount('report_jobs', 1);
-    expect($profile->fresh()->last_error)->toContain('belum diperiksa');
-})->with(['QUEUED', 'RUNNING', 'WAITING_REPORT', 'DOWNLOADING', 'FAILED', 'NEEDS_ATTENTION']);
+    expect($profile->fresh()->last_error)->toContain('masih berjalan');
+})->with(['QUEUED', 'RUNNING', 'WAITING_REPORT', 'DOWNLOADING', 'COLLECTING_SOURCES', 'WAITING_APEX']);
 
-test('completed report with failed import or projection blocks refresh until reviewed', function (string $import, string $projection) {
+test('completed report with pending import or projection prevents overlapping refreshes', function (string $import, string $projection) {
     $profile = JneReportProfile::factory()->create(['enabled' => true, 'customer_account' => 'TESTACCOUNT']);
     ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => $import, 'projection_status' => $projection]);
 
@@ -67,7 +67,44 @@ test('completed report with failed import or projection blocks refresh until rev
 
     expect($profile->fresh()->last_error)->not->toBeNull();
     $this->assertDatabaseCount('report_jobs', 1);
-})->with([['FAILED', 'NOT_PROJECTED'], ['IMPORTED', 'FAILED'], ['QUEUED', 'NOT_PROJECTED'], ['IMPORTED', 'QUEUED']]);
+})->with([['QUEUED', 'NOT_PROJECTED'], ['IMPORTED', 'QUEUED']]);
+
+test('unreviewed report failures leave their history intact while the next due cycle proceeds', function (string $source, string $type, string $account, string $status) {
+    $this->travelTo('2026-10-30 07:00:00 UTC');
+    $profile = JneReportProfile::factory()->create(['enabled' => true, 'source' => $source, 'report_type' => $type,
+        'customer_account' => $account, 'lookback_days' => 1, 'interval_minutes' => 30, 'last_error' => 'Masih ada kegagalan yang belum diperiksa Admin.']);
+    $old = ReportJob::factory()->create(['jne_report_profile_id' => $profile->id, 'source' => $source, 'report_type' => $type,
+        'customer_account' => $account, 'status' => $status, 'error_message' => 'Kegagalan lama', 'reviewed_at' => null]);
+    if ($type === 'unresolved') {
+        JneShipment::factory()->create(['awb' => 'TGDUE']);
+    }
+
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(1);
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(0);
+
+    expect(ReportJob::where('jne_report_profile_id', $profile->id)->count())->toBe(2);
+    expect($old->fresh()->status)->toBe($status)->and($old->fresh()->reviewed_at)->toBeNull()->and($old->fresh()->error_message)->toBe('Kegagalan lama');
+    expect($profile->fresh()->last_error)->toBeNull()->and($profile->fresh()->next_run_at->equalTo(now()->addMinutes(30)))->toBeTrue();
+    if ($type === 'unresolved') {
+        expect(ReportJob::where('jne_report_profile_id', $profile->id)->latest('id')->first()->parameters['awbs'])->toBe(['TGDUE']);
+    }
+})->with([
+    ['apex', 'apex', 'TESTACCOUNT', 'FAILED'], ['apex', 'apex', 'TESTACCOUNT', 'NEEDS_ATTENTION'],
+    ['apex', 'unresolved', 'AWB_AKTIF', 'FAILED'], ['apex', 'unresolved', 'AWB_AKTIF', 'NEEDS_ATTENTION'],
+    ['hybrid', 'combined', 'HYBRID_PM', 'FAILED'], ['hybrid', 'combined', 'HYBRID_PM', 'NEEDS_ATTENTION'],
+    ['hybrid', 'combined', 'HYBRID_PUMAN', 'FAILED'], ['hybrid', 'combined', 'HYBRID_PUMAN', 'NEEDS_ATTENTION'],
+]);
+
+test('failed import or projection remains reviewable without blocking the next cycle', function (string $import, string $projection) {
+    $profile = JneReportProfile::factory()->create(['enabled' => true, 'customer_account' => 'TESTACCOUNT', 'lookback_days' => 1]);
+    $old = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => $import, 'projection_status' => $projection]);
+
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(1);
+
+    $this->assertDatabaseCount('report_jobs', 2);
+    expect($old->fresh()->import_status)->toBe($import)->and($old->fresh()->projection_status)->toBe($projection)->and($old->fresh()->reviewed_at)->toBeNull();
+    expect($profile->fresh()->last_error)->toBeNull();
+})->with([['FAILED', 'NOT_PROJECTED'], ['IMPORTED', 'FAILED'], ['FAILED', 'QUEUED'], ['QUEUED', 'FAILED']]);
 
 test('review records active admin decision without retrying old job and permits next due cycle', function () {
     $profile = JneReportProfile::factory()->create(['enabled' => true, 'customer_account' => 'TESTACCOUNT', 'lookback_days' => 1]);
@@ -81,6 +118,29 @@ test('review records active admin decision without retrying old job and permits 
     expect(app(QueueScheduledJneReports::class)->handle())->toBe(1);
     $this->assertDatabaseCount('report_jobs', 2);
 });
+
+test('operators can start a new cycle for one explicit profile without touching other schedules or repeating active work', function () {
+    $this->travelTo('2026-10-30 07:00:00 UTC');
+    $profile = JneReportProfile::factory()->create(['enabled' => true, 'lookback_days' => 1, 'next_run_at' => now()->addHour()]);
+    $other = JneReportProfile::factory()->create(['enabled' => true, 'next_run_at' => now()->addHour()]);
+
+    $this->artisan('jne-reports:queue-due', ['--profile' => $profile->id])->assertSuccessful();
+    $this->assertDatabaseCount('report_jobs', 0);
+    $this->artisan('jne-reports:queue-due', ['--profile' => $profile->id, '--force' => true])->assertSuccessful();
+    $this->artisan('jne-reports:queue-due', ['--profile' => $profile->id, '--force' => true])->assertSuccessful();
+
+    $this->assertDatabaseCount('report_jobs', 1);
+    expect(ReportJob::sole()->jne_report_profile_id)->toBe($profile->id);
+    expect($other->fresh()->next_run_at->equalTo(now()->addHour()))->toBeTrue();
+});
+
+test('forced cycle CLI requires a valid explicit profile', function (array $options) {
+    JneReportProfile::factory()->create(['enabled' => true]);
+
+    $this->artisan('jne-reports:queue-due', $options)->assertFailed();
+
+    $this->assertDatabaseCount('report_jobs', 0);
+})->with([[['--force' => true]], [['--profile' => 'bad']], [['--profile' => '999999']]]);
 
 test('disabled profiles and inactive administrators do not schedule JNE jobs', function () {
     JneReportProfile::factory()->create(['enabled' => false]);

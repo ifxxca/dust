@@ -4,13 +4,15 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
-    const env = loadEnv(mode, process.cwd(), 'MOBILE_');
+    const env = loadEnv(mode, process.cwd(), ['MOBILE_', 'APP_URL']);
     const development = mode === 'development';
     const origin =
-        env.MOBILE_API_URL || (development ? 'http://10.20.10.13:8000' : '');
+        env.MOBILE_API_URL ||
+        env.APP_URL ||
+        (development ? 'http://10.20.10.13:8000' : '');
     if (!origin)
         throw new Error(
-            'MOBILE_API_URL HTTPS harus ditetapkan sebelum build staging/pilot/release.',
+            'APP_URL atau MOBILE_API_URL HTTPS harus ditetapkan sebelum build staging/pilot/release.',
         );
     const url = new URL(origin);
     if (
@@ -18,7 +20,7 @@ export default defineConfig(({ mode }) => {
         !(
             development &&
             url.protocol === 'http:' &&
-            ['127.0.0.1', '10.20.10.13'].includes(url.hostname)
+            ['localhost', '127.0.0.1', '10.20.10.13'].includes(url.hostname)
         )
     ) {
         throw new Error(

@@ -75,7 +75,7 @@ test('each server completes its own APEX result and schedules again while the ot
         ->has('runs.data', 2)->has('runs.data.0.sources', 2)->has('runs.data.1.sources', 2)
         ->where('runs.data.0.customer_account', $healthyAccount)->where('runs.data.0.workflow_stage', 'READY')
         ->where('runs.data.1.customer_account', $failedAccount)->where('runs.data.1.workflow_stage', 'ATTENTION'));
-    expect($scheduler->queueProfile($failed->jne_report_profile_id, true))->toBe(0);
+    expect($scheduler->queueProfile($failed->jne_report_profile_id, true))->toBe(1);
     expect($scheduler->queueProfile($healthy->jne_report_profile_id, true))->toBe(1);
     $checksums = $healthySources->fresh()->pluck('source_file_checksum', 'id')->all();
     $this->actingAs($admin)->post(route('report-runs.retry-sources', $failed))->assertRedirect();
