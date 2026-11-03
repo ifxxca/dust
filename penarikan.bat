@@ -8,27 +8,32 @@ if /i "%~2"=="--check" set "PENARIKAN_CHECK=1"
 if not "%~2"=="" if not defined PENARIKAN_CHECK goto invalid
 if not "%~3"=="" goto invalid
 if /i "%~1"=="start" goto start
-if /i "%~1"=="apex" goto apex
-if /i "%~1"=="hybrid" goto hybrid
-if /i "%~1"=="queue" goto queue
-if /i "%~1"=="notifications" goto notifications
-if /i "%~1"=="scheduler" goto scheduler
+if /i "%~1"=="stop" goto stop
 if /i "%~1"=="status" goto status
+set "PENARIKAN_SERVICE="
+if /i "%~1"=="apex" set "PENARIKAN_SERVICE=apex"
+if /i "%~1"=="hybrid" set "PENARIKAN_SERVICE=hybrid"
+if /i "%~1"=="queue" set "PENARIKAN_SERVICE=import"
+if /i "%~1"=="notifications" set "PENARIKAN_SERVICE=notifications"
+if /i "%~1"=="scheduler" set "PENARIKAN_SERVICE=scheduler"
+if defined PENARIKAN_SERVICE goto service
 goto invalid
 
 :menu
 echo.
 echo === PENARIKAN JNE ===
-echo 1. Jalankan semua service di background
+echo 1. Jalankan semua service dan Cloudflare di background
 echo 2. Worker APEX
 echo 3. Worker Hybrid PM dan Puman
 echo 4. Queue import, rekonsiliasi, dokumen, pengiriman
 echo 5. Scheduler otomatis
-echo 6. Status service
+echo 6. Status service dan Cloudflare
 echo 7. Worker notifikasi mobile dan cashless
+echo 8. Hentikan semua background dan Cloudflare
 echo 0. Keluar
-choice /c 12345670 /n /m "Pilih: "
-if errorlevel 8 goto success
+choice /c 123456780 /n /m "Pilih: "
+if errorlevel 9 goto success
+if errorlevel 8 (call "%~f0" stop & goto menu)
 if errorlevel 7 (call "%~f0" notifications & goto menu)
 if errorlevel 6 (call "%~f0" status & goto menu)
 if errorlevel 5 (call "%~f0" scheduler & goto menu)
@@ -52,86 +57,41 @@ if defined PENARIKAN_CHECK (
 )
 goto result
 
-:apex
-call :require node.exe || goto failure
-call :worker || goto failure
-if defined PENARIKAN_CHECK goto checked
-echo Pool worker APEX berjalan sesuai JNE_APEX_CONCURRENCY. Tekan Ctrl+C untuk berhenti.
-pushd "workers\jne-report" || goto failure
-node --env-file=.env src/apex-pool.mjs
-set "PENARIKAN_EXIT=%errorlevel%"
-popd
-goto finish
-
-:hybrid
-call :require node.exe || goto failure
-call :worker || goto failure
-if not exist "workers\jne-report\.env.hybrid" goto missing_hybrid
-if defined PENARIKAN_CHECK goto checked
-echo Worker Hybrid PM dan Puman berjalan. Tekan Ctrl+C untuk berhenti.
-pushd "workers\jne-report" || goto failure
-node --env-file-if-exists=.env --env-file-if-exists=.env.hybrid src/hybrid-cli.mjs --serve
-set "PENARIKAN_EXIT=%errorlevel%"
-popd
-goto finish
-
-:queue
-call :require php.exe || goto failure
-call :laravel || goto failure
-if defined PENARIKAN_CHECK goto checked
-echo Queue import dan rekonsiliasi berjalan. Tekan Ctrl+C untuk berhenti.
-:queue_run
-php artisan queue:work --queue=default,reconciliation,documents,deliveries --sleep=3 --tries=1 --timeout=75 --no-interaction
-set "PENARIKAN_EXIT=%errorlevel%"
-if "%PENARIKAN_EXIT%"=="0" goto queue_restart
-if "%PENARIKAN_EXIT%"=="12" goto queue_restart
-goto finish
-
-:queue_restart
-echo Worker melakukan pergantian proses. Menjalankan kembali dalam 5 detik...
-timeout /t 5 /nobreak >nul
-goto queue_run
-
-:scheduler
-call :require php.exe || goto failure
-call :laravel || goto failure
-if defined PENARIKAN_CHECK goto checked
-echo Scheduler berjalan setiap menit. Tekan Ctrl+C untuk berhenti.
-php artisan schedule:work --no-interaction
+:stop
+call :require powershell.exe || goto failure
+if defined PENARIKAN_CHECK (
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0workers\jne-report\start-local.ps1" -Stop -CheckOnly
+) else (
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0workers\jne-report\start-local.ps1" -Stop
+)
 goto result
-
-:notifications
-call :require php.exe || goto failure
-call :laravel || goto failure
-if defined PENARIKAN_CHECK goto checked
-echo Worker notifikasi mobile dan cashless berjalan. Tekan Ctrl+C untuk berhenti.
-:notifications_run
-php artisan queue:work database --queue=mobile-push --sleep=2 --tries=1 --timeout=60 --no-interaction
-set "PENARIKAN_EXIT=%errorlevel%"
-if "%PENARIKAN_EXIT%"=="0" goto notifications_restart
-if "%PENARIKAN_EXIT%"=="12" goto notifications_restart
-goto finish
-
-:notifications_restart
-echo Worker notifikasi melakukan pergantian proses. Menjalankan kembali dalam 5 detik...
-timeout /t 5 /nobreak >nul
-goto notifications_run
 
 :status
 call :require powershell.exe || goto failure
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0workers\jne-report\start-local.ps1" -Status
+goto result
+
+:service
+call :require powershell.exe || goto failure
+if /i "%PENARIKAN_SERVICE%"=="apex" goto node_service
+if /i "%PENARIKAN_SERVICE%"=="hybrid" goto node_service
+call :require php.exe || goto failure
+call :laravel || goto failure
+goto run_service
+
+:node_service
 call :require node.exe || goto failure
 call :worker || goto failure
-if not exist "workers\jne-report\.env.hybrid" goto missing_hybrid
-if defined PENARIKAN_CHECK goto checked
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0workers\jne-report\start-local.ps1" -Status
-if errorlevel 1 goto failure
-echo.
-echo Status sesi Hybrid:
-pushd "workers\jne-report" || goto failure
-node --env-file-if-exists=.env --env-file-if-exists=.env.hybrid src/hybrid-cli.mjs --status
-set "PENARIKAN_EXIT=%errorlevel%"
-popd
-goto finish
+if /i "%PENARIKAN_SERVICE%"=="hybrid" if not exist "workers\jne-report\.env.hybrid" goto missing_hybrid
+
+:run_service
+if defined PENARIKAN_CHECK (
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0workers\jne-report\start-local.ps1" -Service %PENARIKAN_SERVICE% -CheckOnly
+) else (
+    echo Service %PENARIKAN_SERVICE% berjalan. Tekan Ctrl+C untuk berhenti.
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0workers\jne-report\start-local.ps1" -Service %PENARIKAN_SERVICE%
+)
+goto result
 
 :require
 where "%~1" >nul 2>nul
@@ -168,21 +128,20 @@ exit /b %errorlevel%
 echo [ERROR] File workers\jne-report\.env.hybrid belum tersedia.
 goto failure
 
-:checked
-echo [OK] Prasyarat %~1 tersedia. Tidak ada service atau penarikan yang dijalankan.
-goto success
-
 :invalid
 echo [ERROR] Perintah atau opsi tidak dikenal.
 echo Gunakan penarikan.bat --help untuk melihat perintah yang tersedia.
 goto failure
 
 :help
-echo Penggunaan: penarikan.bat [start^|apex^|hybrid^|queue^|notifications^|scheduler^|status] [--check]
-echo Tanpa argumen: buka menu. --check: periksa prasyarat tanpa menjalankan service.
-echo start: jalankan semua service di background; log di storage\app\private\jne-worker.
+echo Penggunaan: penarikan.bat [start^|stop^|apex^|hybrid^|queue^|notifications^|scheduler^|status] [--check]
+echo Tanpa argumen: buka menu. --check: tampilkan pemeriksaan tanpa mengubah service.
+echo start: jalankan semua service dan Cloudflare di background.
+echo stop: hentikan proses proyek beserta turunannya dan service Windows Cloudflared.
+echo Jalankan sebagai Administrator jika Windows menolak start/stop Cloudflared.
+echo Port web mengikuti SERVER_PORT di .env, default 8010; gunakan port yang sama di Cloudflare.
 echo apex, hybrid, queue, notifications, scheduler: jalankan di terminal ini sampai Ctrl+C.
-echo notifications: queue database mobile-push untuk assignment dan hasil cashless.
+echo Log: storage\app\private\jne-worker.
 goto success
 
 :result
