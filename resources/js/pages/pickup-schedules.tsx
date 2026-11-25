@@ -1,3 +1,4 @@
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
 import DataTable, {
     DataTablePagination,
     type DataTablePageMeta,
@@ -542,8 +543,7 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                                         key={day}
                                         className="flex min-h-11 items-center gap-2 text-sm"
                                     >
-                                        <input
-                                            type="checkbox"
+                                        <NativeCheckbox
                                             checked={form.data.weekdays.includes(
                                                 index + 1,
                                             )}
@@ -635,8 +635,7 @@ export default function PickupSchedules({ timezone }: { timezone: string }) {
                             message={form.errors.notes}
                         />
                         <label className="flex min-h-11 items-center gap-2">
-                            <input
-                                type="checkbox"
+                            <NativeCheckbox
                                 checked={form.data.is_active}
                                 onChange={(event) =>
                                     form.setData(

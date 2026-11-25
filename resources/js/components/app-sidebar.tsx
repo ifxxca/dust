@@ -11,6 +11,8 @@ import {
     BellRing,
     ListChecks,
     AlertTriangle,
+    Activity,
+    FileText,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -32,12 +34,16 @@ import {
     operations,
     pickupSchedules,
     pushTest,
+    itControlCenter,
 } from '@/routes';
 import type { NavItem } from '@/types';
 import { index as pickupResults } from '@/routes/pickup-results';
 import { index as pickupReconciliation } from '@/routes/pickup-automation';
+import { edit as documentDelivery } from '@/routes/document-delivery';
 import { jneNavigation } from '@/lib/jne-navigation';
 import { index as cashlessHandover } from '@/routes/cashless-handover';
+import { index as cashlessMonitoring } from '@/routes/cashless-monitoring';
+import { dashboard as customerPortal } from '@/routes/portal';
 
 export function AppSidebar() {
     const { setOpenMobile } = useSidebar();
@@ -84,6 +90,12 @@ export function AppSidebar() {
                     path === cashlessHandover.url())) &&
                 (!history || role === 'admin_supervisor')),
     );
+    const cashless = item(
+        'Monitoring Cashless',
+        cashlessMonitoring(),
+        ListChecks,
+        path === cashlessMonitoring.url(),
+    );
     const groups =
         role === 'cs'
             ? [
@@ -98,6 +110,7 @@ export function AppSidebar() {
                               pickup,
                           ),
                           customer,
+                          cashless,
                           item(
                               'Jadwal Regular',
                               pickupSchedules(),
@@ -127,6 +140,7 @@ export function AppSidebar() {
                                 History,
                                 pickup && history,
                             ),
+                            cashless,
                         ],
                     },
                 ]
@@ -137,6 +151,13 @@ export function AppSidebar() {
                           items: [
                               overview,
                               reception,
+                              cashless,
+                              item(
+                                  'Rekonsiliasi Paket',
+                                  pickupReconciliation(),
+                                  ListChecks,
+                                  path === pickupReconciliation.url(),
+                              ),
                               item(
                                   'Riwayat Handover',
                                   handover({}, { query: { history: 1 } }),
@@ -157,7 +178,8 @@ export function AppSidebar() {
                                       pickupResults(),
                                       ClipboardList,
                                       path.startsWith('/hasil-pickup') ||
-                                          path === pickupReconciliation.url(),
+                                          path === pickupReconciliation.url() ||
+                                          path === cashlessMonitoring.url(),
                                   ),
                                   children: [
                                       item(
@@ -172,6 +194,7 @@ export function AppSidebar() {
                                           ListChecks,
                                           path === pickupReconciliation.url(),
                                       ),
+                                      cashless,
                                   ],
                               },
                               item(
@@ -221,6 +244,24 @@ export function AppSidebar() {
                       {
                           label: 'Administrasi',
                           items: [
+                              item(
+                                  'IT Control Center',
+                                  itControlCenter(),
+                                  Activity,
+                                  path === itControlCenter.url(),
+                              ),
+                              item(
+                                  'Portal Customer',
+                                  customerPortal(),
+                                  Users,
+                                  false,
+                              ),
+                              item(
+                                  'Pengiriman dokumen',
+                                  documentDelivery(),
+                                  FileText,
+                                  path === documentDelivery.url(),
+                              ),
                               customer,
                               item(
                                   'Pengguna',

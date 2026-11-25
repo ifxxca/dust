@@ -4,15 +4,20 @@ namespace App\Console\Commands;
 
 use App\Actions\Pickup\DeliverPickupAwbManifest;
 use App\Actions\Pickup\QueuePickupReconciliations;
+use App\Actions\Pickup\WahaClient;
+use App\Jobs\DeliverPickupWhatsapp;
 use App\Jobs\RenderPickupAwbManifestJob;
+use App\Models\Customer;
 use App\Models\CustomerAwbDeliveryPreference;
 use App\Models\PickupAwbDelivery;
 use App\Models\PickupAwbManifest;
 use App\Models\PickupTask;
+use App\Models\PickupWhatsappDelivery;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 #[Signature('pickups:queue-automation {--recover : Pulihkan lease worker yang kedaluwarsa}')]
 #[Description('Antrekan validasi pickup, dokumen dan pengiriman yang jatuh tempo')]
@@ -23,6 +28,12 @@ class QueuePickupAutomation extends Command
      */
     public function handle(QueuePickupReconciliations $reconciliations, DeliverPickupAwbManifest $deliveries): int
     {
+        if (app(WahaClient::class)->installed()) {
+            PickupWhatsappDelivery::where('status', 'SENDING')->where('started_at', '<', now()->subMinutes(5))
+                ->update(['status' => 'UNKNOWN', 'last_error' => 'Worker berhenti saat mengirim. Periksa hasil di WhatsApp sebelum mencoba ulang.']);
+            PickupWhatsappDelivery::whereIn('status', ['READY', 'WAITING'])->orderBy('updated_at')->limit(100)
+                ->each(fn ($row) => DeliverPickupWhatsapp::dispatch($row->id));
+        }
         if (! config('pickup.automation.enabled')) {
             $this->info('Otomatisasi pickup belum diaktifkan.');
 
@@ -43,7 +54,12 @@ class QueuePickupAutomation extends Command
         $reconciliations->handle(array_values($ids), invalidate: false);
         PickupAwbManifest::whereIn('status', ['PENDING', 'FAILED'])->where('render_attempts', '<', 4)->where(fn ($query) => $query->whereNull('next_render_at')->orWhere('next_render_at', '<=', now()))->orderBy('updated_at')->limit(50)->each(fn (PickupAwbManifest $manifest) => RenderPickupAwbManifestJob::dispatch($manifest->id));
         PickupAwbManifest::where('status', 'READY')
-            ->whereHas('pickup', fn ($pickup) => $pickup->whereIn('customer_id', CustomerAwbDeliveryPreference::where('enabled', true)->select('customer_id')))
+            ->whereHas('pickup', fn ($pickup) => $pickup->whereIn('customer_id', Customer::where('is_active', true)
+                ->when(Schema::hasColumn('customers', 'document_delivery_settings'), fn ($customer) => $customer->where(fn ($choice) => $choice->whereNull('document_delivery_settings->recap_email')->orWhere('document_delivery_settings->recap_email', true)))
+                ->where(fn ($customer) => $customer->where(fn ($email) => $email->whereNotNull('email')->where('email', '!=', '')
+                    ->whereNotIn('id', CustomerAwbDeliveryPreference::select('customer_id')))
+                    ->orWhereIn('id', CustomerAwbDeliveryPreference::where('enabled', true)->where('channel', 'email')->select('customer_id')))
+                ->select('id')))
             ->whereDoesntHave('deliveries', fn ($delivery) => $delivery->whereIn('status', ['SENDING', 'UNKNOWN', 'ACCEPTED', 'DELIVERED', 'FAILED']))
             ->orderByRaw('coalesce((select max(updated_at) from pickup_awb_deliveries where pickup_awb_manifest_id = pickup_awb_manifests.id), pickup_awb_manifests.updated_at)')
             ->limit(200)->each(fn (PickupAwbManifest $manifest) => $deliveries->queue($manifest));

@@ -30,7 +30,7 @@ class PickupTaskController extends Controller
             'sort' => ['sometimes', Rule::in(['scheduled', 'newest', 'oldest'])],
             'per_page' => ['sometimes', 'integer', Rule::in([10, 20, 50])], 'summary' => ['sometimes', 'boolean']]);
         $query = PickupTask::with(['assignedStaff', 'visits'])->withExists('handoverItem');
-        if ($request->routeIs('api.tasks.candidates', 'mobile.tasks.candidates')) {
+        if ($request->routeIs('api.tasks.candidates', 'mobile.tasks.candidates', 'retail.tasks.candidates')) {
             abort_unless($request->user()->canExecutePickup(), 403);
             $query->whereNull('execution_started_at')->where(function ($available) use ($request): void {
                 $available->where(fn ($unassigned) => $unassigned->where('status', 'SCHEDULED')->whereNull('assigned_staff_id'))

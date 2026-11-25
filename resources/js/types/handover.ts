@@ -1,3 +1,10 @@
+export type CashlessReadiness = {
+    ready: boolean;
+    expected: number;
+    scanned: number;
+    success: number;
+    message: string | null;
+};
 export type HandoverQuantities = {
     manual_hybrid: number;
     cashless_hybrid: number;
@@ -7,6 +14,7 @@ export type HandoverQuantities = {
 export type HandoverItem = {
     id: number;
     task_id: number;
+    cashless_readiness?: CashlessReadiness | null;
     reference: string;
     customer_name: string;
     contact?: string;

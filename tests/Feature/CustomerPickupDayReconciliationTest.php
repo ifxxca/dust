@@ -41,6 +41,7 @@ function customerDaySecondPickup(array $fixture, int $manual = 2, int $orion = 0
 }
 
 test('two books compile once per customer day and balance category counts without moving existing ownership', function () {
+    $this->travelTo('2026-10-26 12:00:00 UTC');
     $fixture = pickupAutomationFixture(2, 0);
     $second = customerDaySecondPickup($fixture);
     importPickupAutomationReport($fixture, 4, 0);
@@ -60,7 +61,7 @@ test('two books compile once per customer day and balance category counts withou
     expect(PickupProcessingReconciliation::whereNotNull('locked_at')->count())->toBe(2);
     $this->assertDatabaseCount('pickup_awb_manifests', 1);
     $this->assertDatabaseCount('pickup_awb_manifest_items', 4);
-    $this->assertDatabaseCount('pickup_customer_reconciliation_events', 1);
+    $this->assertDatabaseCount('pickup_customer_reconciliation_events', 2);
     expect(PickupAwbManifest::sole()->snapshot['pickup_task_ids'])->toBe([$fixture['task']->id, $second->id]);
     expect((new ReconcilePickupProcessingJob($second->id))->uniqueId())->toBe((new ReconcilePickupProcessingJob($fixture['task']->id))->uniqueId());
     $monitor = app(QueryPickupAutomation::class)->handle(['date_from' => '2026-10-26', 'date_to' => '2026-10-26']);
@@ -127,10 +128,12 @@ test('a newly scheduled pickup invalidates the completed daily view until it is 
     expect($data['rows']->items()[0]['automation_status'])->toBe('NOT_EVALUATED');
     app(ReconcilePickupProcessing::class)->handle($fixture['task']->id);
     expect(PickupCustomerReconciliation::sole()->status)->toBe('AWAITING_VERIFICATION');
-    expect(PickupAwbManifest::sole()->status)->toBe('SUPERSEDED');
+    expect(PickupCustomerReconciliation::sole()->post_lock_change)->not->toBeNull();
+    expect(PickupAwbManifest::sole()->status)->toBe('REVIEW');
 });
 
 test('uncertain delivery on the shared document blocks corrections from every member book', function () {
+    $this->travelTo('2026-10-26 12:00:00 UTC');
     $fixture = pickupAutomationFixture(2, 0);
     $second = customerDaySecondPickup($fixture);
     importPickupAutomationReport($fixture, 4, 0);

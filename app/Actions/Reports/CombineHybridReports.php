@@ -53,12 +53,23 @@ class CombineHybridReports
             $rowCount = (int) $sources->sum('source_row_count');
             $batch->update([
                 'status' => $awbs === [] ? 'NO_DATA' : 'WAITING_APEX', 'report_mode' => 'A',
-                'parameters' => ['awbs' => $awbs], 'awb_count' => count($awbs), 'source_row_count' => $rowCount,
+                'parameters' => ['awbs' => $awbs, 'collection_manifest' => [
+                    'version' => 1, 'state' => 'UNKNOWN', 'enrichment_scope' => 'SUBSET_COLLECTION',
+                    'date_from' => $batch->date_from->toDateString(), 'date_thru' => $batch->date_thru->toDateString(),
+                    'account' => $batch->customer_account, 'required_children' => $expected,
+                    'pagination_complete' => null, 'source_total_verified' => false,
+                    'children' => $sources->map(fn (ReportJob $source): array => [
+                        'report_id' => $source->id, 'source' => $source->source, 'report_type' => $source->report_type,
+                        'account' => $source->customer_account, 'date_from' => $source->date_from->toDateString(), 'date_thru' => $source->date_thru->toDateString(),
+                        'checksum' => $source->source_file_checksum, 'rows' => $source->source_row_count, 'unique_awbs' => $source->awb_count,
+                        'pagination_complete' => null, 'export' => app(AssessJneCollectionProof::class)->handle($source),
+                    ])->values()->all(),
+                ]], 'awb_count' => count($awbs), 'source_row_count' => $rowCount,
                 'source_file_path' => $path, 'source_file_checksum' => $checksum,
                 'error_message' => null,
                 'completed_at' => $awbs === [] ? now() : null,
             ]);
-            $batch->recordEvent(count($parts).' report lengkap: '.$rowCount.' baris menjadi '.count($awbs).' AWB unik dalam satu file gabungan.'.($awbs === [] ? ' Tidak ada AWB untuk dikirim ke APEX.' : ' Menunggu Upload Connote APEX.'));
+            $batch->recordEvent(count($parts).' file child tersimpan: '.$rowCount.' baris menjadi '.count($awbs).' AWB unik dalam satu file gabungan. Cakupan seluruh sumber belum terbukti.'.($awbs === [] ? ' Tidak ada AWB untuk dikirim ke APEX.' : ' Menunggu Upload Connote APEX.'));
         }, 5);
     }
 

@@ -2,9 +2,23 @@ function Get-PenarikanSettings {
     param([string] $ProjectDirectory)
 
     $webPort = 8010
+    $webDriver = 'artisan'
+    $phpWorkers = 4
+    $fastCgiPort = 0
+    $nginxPath = ''
     $environmentFile = Join-Path $ProjectDirectory '.env'
     if (Test-Path -LiteralPath $environmentFile) {
         foreach ($line in Get-Content -LiteralPath $environmentFile) {
+            if ($line -match '^\s*LOCAL_WEB_(DRIVER|PHP_WORKERS|FASTCGI_PORT|NGINX_PATH)\s*=\s*(.*?)\s*$') {
+                $settingName = $Matches[1]
+                $settingValue = $Matches[2].Trim('"', "'")
+                switch ($settingName) {
+                    'DRIVER' { $webDriver = $settingValue.ToLowerInvariant() }
+                    'PHP_WORKERS' { if (![int]::TryParse($settingValue, [ref] $phpWorkers)) { throw 'LOCAL_WEB_PHP_WORKERS must be an integer.' } }
+                    'FASTCGI_PORT' { if (![int]::TryParse($settingValue, [ref] $fastCgiPort)) { throw 'LOCAL_WEB_FASTCGI_PORT must be an integer.' } }
+                    'NGINX_PATH' { $nginxPath = $settingValue }
+                }
+            }
             if ($line -match '^\s*SERVER_PORT\s*=\s*(.*?)\s*$') {
                 $configuredPort = $Matches[1].Trim('"', "'")
                 if (![int]::TryParse($configuredPort, [ref] $webPort)) {
@@ -16,7 +30,10 @@ function Get-PenarikanSettings {
     if ($webPort -lt 1 -or $webPort -gt 65535) {
         throw 'SERVER_PORT must be between 1 and 65535.'
     }
-    [pscustomobject]@{ WebPort = $webPort; WorkerUrl = "http://127.0.0.1:$webPort" }
+    if ($webDriver -notin @('artisan', 'nginx')) { throw 'LOCAL_WEB_DRIVER must be artisan or nginx.' }
+    if ($phpWorkers -lt 1 -or $phpWorkers -gt 8) { throw 'LOCAL_WEB_PHP_WORKERS must be between 1 and 8.' }
+    if ($fastCgiPort -ne 0 -and ($fastCgiPort -lt 1024 -or $fastCgiPort + $phpWorkers - 1 -gt 65535)) { throw 'Invalid LOCAL_WEB_FASTCGI_PORT range.' }
+    [pscustomobject]@{ WebPort = $webPort; WorkerUrl = "http://127.0.0.1:$webPort"; WebDriver = $webDriver; PhpWorkers = $phpWorkers; FastCgiPort = $fastCgiPort; NginxPath = $nginxPath }
 }
 
 function Get-PenarikanServiceProcesses {
@@ -29,6 +46,16 @@ function Get-PenarikanServiceProcesses {
     foreach ($process in $Processes) {
         $commandLine = [string] $process.CommandLine
         $processName = [string] $process.Name
+        if ($Service -eq 'web') {
+            $normalizedCommand = $commandLine.Replace('\', '/')
+            $normalizedProject = [regex]::Escape($ProjectDirectory.TrimEnd('\', '/').Replace('\', '/'))
+            if (($processName -eq 'nginx.exe' -and $normalizedCommand -match ('(?:^|\s)-p\s+"?' + $normalizedProject + '/storage/app/private/jne-worker/nginx-\d+/')) -or
+                ($processName -eq 'php-cgi.exe' -and $normalizedCommand -match ('(?:^|\s)"?doc_root=' + $normalizedProject + '/public(?:"|\s|$)')) -or
+                ($processName -match '^(powershell|pwsh)\.exe$' -and $commandLine -notmatch '(?:^|\s)-(?:Command|EncodedCommand|c|e)(?:\s|:)' -and $normalizedCommand -match ('(?:^|\s)-File\s+"?' + $normalizedProject + '/workers/jne-report/start-web\.ps1(?:"|\s|$)'))) {
+                $process
+                continue
+            }
+        }
         $launcherPattern = '(?:^|[\s"])-File\s+"?' + $launcherPath + '"?(?:\s|$)'
         $servicePattern = '-Service\s+"?' + [regex]::Escape($Service) + '"?(?:\s|$)'
         if ($processName -match '^(powershell|pwsh)\.exe$' -and
@@ -87,7 +114,7 @@ function Get-PenarikanWebListener {
 
     if (!(Test-PenarikanTcpPort -Port $Port)) { return }
     $webProcesses = @(Get-PenarikanServiceProcesses -Processes $Processes -ProjectDirectory $ProjectDirectory -Service web)
-    $listener = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -First 1
+    $listener = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -gt 0 } | Select-Object -First 1
     if ($listener) {
         if ($listener.OwningProcess -notin @($webProcesses.ProcessId)) {
             throw "Port $Port is owned by another application (PID $($listener.OwningProcess))."
@@ -155,11 +182,16 @@ function Get-PenarikanProcessTree {
 }
 
 function Stop-PenarikanProcesses {
-    param([string] $ProjectDirectory, [switch] $CheckOnly)
+    param(
+        [string] $ProjectDirectory,
+        [switch] $CheckOnly,
+        [ValidateSet('web', 'scheduler', 'import', 'reconciliation', 'documents', 'notifications', 'apex', 'hybrid')]
+        [string[]] $Services = @('web', 'scheduler', 'import', 'reconciliation', 'documents', 'notifications', 'apex', 'hybrid')
+    )
 
     $processes = @(Get-CimInstance Win32_Process)
     $roots = @(
-        foreach ($serviceName in @('web', 'scheduler', 'import', 'reconciliation', 'documents', 'notifications', 'apex', 'hybrid')) {
+        foreach ($serviceName in $Services) {
             Get-PenarikanServiceProcesses -Processes $processes -ProjectDirectory $ProjectDirectory -Service $serviceName
         }
     )

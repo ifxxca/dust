@@ -11,11 +11,33 @@ import * as runs from '@/routes/report-runs';
 import * as exceptions from '@/routes/jne-exceptions';
 import * as evidence from '@/routes/jne-evidence';
 import * as refresh from '@/routes/jne-refresh';
+import * as tracking from '@/routes/shipment-monitoring';
+import { operationalPerformance, userProductivity } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 export function jneNavigation(url: string): (NavItem & { active: boolean })[] {
     const path = url.split(/[?#]/)[0];
     return [
+        {
+            title: 'User Productivity',
+            href: userProductivity.url(),
+            icon: ChartNoAxesCombined,
+            active: path === userProductivity.url(),
+        },
+        {
+            title: 'Operational Performance',
+            href: operationalPerformance.url(),
+            icon: ChartNoAxesCombined,
+            active: path === operationalPerformance.url(),
+        },
+        {
+            title: 'Monitoring resi',
+            href: tracking.overview.url(),
+            icon: PackageSearch,
+            active:
+                path === tracking.index.url() ||
+                path.startsWith(tracking.index.url() + '/'),
+        },
         {
             title: 'Dashboard customer',
             href: monitoring.customerDashboard.url(),
@@ -64,21 +86,25 @@ export function jneBreadcrumbs(url: string): BreadcrumbItem[] {
     if (!active) return [];
     const path = url.split(/[?#]/)[0];
     const secondary = new Map([
+        [tracking.index.url(), 'Semua resi'],
+        [tracking.attention.url(), 'Perlu perhatian'],
         [exceptions.index.url(), 'Pemeriksaan exception'],
         [evidence.index.url(), 'Aturan bukti'],
         [refresh.index.url(), 'Kebijakan tracking'],
     ]);
     const detail =
         secondary.get(path) ??
-        (/^\/admin\/jne-monitoring\/collections\/\d+$/.test(path)
-            ? 'Koleksi eksternal'
-            : /^\/admin\/jne-monitoring\/\d+$/.test(path)
-              ? 'Detail resi'
-              : /^\/admin\/jne-reports\/\d+\/awbs$/.test(path)
-                ? 'Detail report'
-                : path === monitoring.reconciliation.url()
-                  ? 'Rekonsiliasi pickup'
-                  : null);
+        (/^\/admin\/shipment-monitoring\/\d+$/.test(path)
+            ? 'Detail resi'
+            : /^\/admin\/jne-monitoring\/collections\/\d+$/.test(path)
+              ? 'Koleksi eksternal'
+              : /^\/admin\/jne-monitoring\/\d+$/.test(path)
+                ? 'Detail resi'
+                : /^\/admin\/jne-reports\/\d+\/awbs$/.test(path)
+                  ? 'Detail report'
+                  : path === monitoring.reconciliation.url()
+                    ? 'Rekonsiliasi pickup'
+                    : null);
     return [
         { title: 'Pengiriman JNE', href: monitoring.index.url() },
         { title: active.title, href: active.href },

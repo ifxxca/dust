@@ -23,6 +23,23 @@ async function apiServer(t, handler) {
     };
 }
 
+test('a rejected checkpoint reports HTTP status and field names without leaking the response or retrying', async (t) => {
+    let calls = 0;
+    const config = await apiServer(t, (request, response) => {
+        calls++;
+        response.writeHead(422, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify({ message: 'private-token', errors: { message: ['private-password'] } }));
+    });
+    await assert.rejects(new CashlessEntryApi(config).checkpoint({ id: 10, claim_token: 'secret' }, 'scan-result'), (error) => {
+        assert.equal(error.code, 'API_REJECTED');
+        assert.equal(error.httpStatus, 422);
+        assert.match(error.message, /HTTP 422; kolom: message/);
+        assert.doesNotMatch(error.message, /private|secret/);
+        return true;
+    });
+    assert.equal(calls, 1);
+});
+
 test('checkpoint retries keep the same event and ownership after a lost Laravel acknowledgment', async (t) => {
     const received = [];
     const config = await apiServer(t, (request, response, body) => {

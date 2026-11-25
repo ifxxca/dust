@@ -3,7 +3,10 @@
 use App\Actions\Reports\ImportReportAwbs;
 use App\Actions\Reports\ProjectJneShipments;
 use App\Jobs\ImportJneReportAwbs;
+use App\Models\CashlessEntryBatch;
 use App\Models\JneReportProfile;
+use App\Models\PickupCashlessAwb;
+use App\Models\PickupTask;
 use App\Models\ReportJob;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -81,6 +84,20 @@ test('source upload retries remain idempotent after the APEX worker has acquired
     expect($job->fresh()->worker_id)->toBe('jne-report-1')->and($job->fresh()->awb_count)->toBe(2);
 });
 
+test('source upload confirms Approved Y cashless evidence before APEX enrichment when enabled', function () {
+    Storage::fake('jne_reports');
+    config(['pickup.cashless_entry.report_confirmation_enabled' => true]);
+    $task = PickupTask::factory()->create();
+    $record = PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'awb' => 'CMREPORT01', 'created_at' => '2026-10-23 05:00:00']);
+    $batch = CashlessEntryBatch::factory()->create(['pickup_task_id' => $task->id, 'source' => 'roberto', 'status' => 'UNKNOWN']);
+    $item = $batch->items()->create(['pickup_cashless_awb_id' => $record->id, 'awb' => $record->awb, 'status' => 'UNKNOWN']);
+    [$report] = pipelineSource("Cnote No,HO Date,HO No,Approved\nCMREPORT01,23-OCT-2026 20:29,HO-015-REAL,Y\n");
+    expect($item->fresh()->status)->toBe('CONFIRMED')->and($item->fresh()->previous_ho)->toBe('HO-015-REAL');
+    expect($report->status)->toBe('WAITING_APEX');
+    $event = DB::table('cashless_entry_events')->where('type', 'report-confirmed')->sole();
+    expect(json_decode($event->evidence, true)['report_id'])->toBe($report->id);
+});
+
 test('APEX output rejects missing or foreign AWBs and raw Hybrid files cannot be final output', function () {
     Storage::fake('jne_reports');
     [$job, $sourceClaim] = pipelineSource();
@@ -115,7 +132,7 @@ test('a pending APEX conversion blocks duplicate schedules and an APEX failure r
     $this->actingAs($admin)->post(route('report-runs.store'), ['profile_id' => $profile->id])->assertSessionHasErrors('run');
     $claim = pipelineApexClaim($job);
     $this->postJson(route('internal.report-jobs.fail', $job), ['status' => 'NEEDS_ATTENTION', 'error_message' => 'REPORT_REJECTED: APEX tidak menghasilkan CSV.'], pipelineHeaders('apex', $claim))->assertOk();
-    $this->post(route('report-runs.store'), ['profile_id' => $profile->id])->assertSessionHasErrors('run');
+    $this->post(route('report-runs.store'), ['profile_id' => $profile->id])->assertSessionHasNoErrors();
     expect($job->fresh()->source_file_path)->not->toBeNull()->and($job->fresh()->file_path)->toBeNull();
-    $this->assertDatabaseCount('report_jobs', 1);
+    $this->assertDatabaseCount('report_jobs', 2);
 });

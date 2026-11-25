@@ -1,3 +1,4 @@
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
 import { Head, router, useHttp, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,10 @@ import HandoverSessionList, {
     type HandoverPagination,
 } from '@/components/handover-session-list';
 import HandoverSessionDetail from '@/components/handover-session-detail';
-import { type HandoverSession as Session } from '@/types/handover';
+import {
+    type HandoverSession as Session,
+    type CashlessReadiness,
+} from '@/types/handover';
 
 type Candidate = {
     id: number;
@@ -32,6 +36,7 @@ type Candidate = {
     customer_name: string;
     staff_name: string;
     total: number;
+    cashless_readiness?: CashlessReadiness | null;
 };
 type Envelope<T> = {
     data: T;
@@ -194,6 +199,7 @@ export default function Handover({
                               customer_name: item.customer_name,
                               staff_name: item.pickup_staff?.name ?? '—',
                               total: item.pickup.total ?? 0,
+                              cashless_readiness: item.cashless_readiness,
                           }))
                         : [];
                     setCandidates([...existing, ...response.data]);
@@ -351,9 +357,13 @@ export default function Handover({
                                 key={candidate.id}
                                 className="flex items-start gap-3 rounded-md border p-3"
                             >
-                                <input
-                                    type="checkbox"
+                                <NativeCheckbox
                                     checked={selected.includes(candidate.id)}
+                                    disabled={
+                                        candidate.cashless_readiness?.ready ===
+                                            false &&
+                                        !selected.includes(candidate.id)
+                                    }
                                     onChange={(event) =>
                                         setSelected((ids) =>
                                             event.target.checked
@@ -372,6 +382,15 @@ export default function Handover({
                                     <span className="block text-xs break-all text-muted-foreground">
                                         {candidate.reference}
                                     </span>
+                                    {candidate.cashless_readiness?.ready ===
+                                        false && (
+                                        <span className="block text-xs text-amber-700 dark:text-amber-400">
+                                            {
+                                                candidate.cashless_readiness
+                                                    .message
+                                            }
+                                        </span>
+                                    )}
                                 </span>
                             </Label>
                         ))

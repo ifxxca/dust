@@ -24,6 +24,14 @@ export type ReconciliationRow = {
     staff_name: string | null;
     picked_up_at: string | null;
     automation_status: string;
+    quantity_status?: string;
+    finalization_status?: string;
+    closure_mode?: string | null;
+    closure_due_at?: string | null;
+    closure_overdue?: boolean;
+    expected_quantity?: number | null;
+    allocated_quantity?: number;
+    difference?: number | null;
     delivery_status: string;
     reconciliation_group: 'review' | 'waiting' | 'done';
     categories: Record<string, ReconciliationCounts>;
@@ -36,6 +44,22 @@ export type ReconciliationRow = {
     css_orion?: number;
 };
 export type AutomationMonitor = {
+    allocation_summary?: {
+        total: number;
+        pickup_books: number;
+        matched: number;
+        shortage: number;
+        excess: number;
+        conflict: number;
+    };
+    pool_summary?: {
+        total: number;
+        allocated: number;
+        unassigned: number;
+        date_from: string;
+        date_to: string;
+        category: string | null;
+    };
     pending_count: number;
     processing: {
         regular_target: number | null;
@@ -151,6 +175,8 @@ export type ReconciliationDetail = {
     preference: {
         enabled: boolean;
         recipient: string | null;
+        recipients?: string[] | null;
+        email_recipients?: string[];
         revision: number;
     } | null;
     history: ReconciliationPage<{

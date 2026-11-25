@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import ShipmentStatusBadge from '@/components/jne-shipment-status';
@@ -297,10 +298,10 @@ export default function JneShipment({
                                         </span>
                                     </div>
                                 </div>
-                                <details className="text-xs text-muted-foreground md:col-span-2">
-                                    <summary className="cursor-pointer">
+                                <Disclosure className="md:col-span-2">
+                                    <DisclosureSummary className="cursor-pointer">
                                         Ketentuan pencocokan pickup
-                                    </summary>
+                                    </DisclosureSummary>
                                     <p className="mt-2">
                                         Gunakan pickup dengan POP final.
                                         Keputusan manual dicatat dan tidak
@@ -308,7 +309,7 @@ export default function JneShipment({
                                         dicatat melalui Sertim; CSS / Orion
                                         tidak wajib dipindai satu per satu.
                                     </p>
-                                </details>
+                                </Disclosure>
                                 <div>
                                     <Button
                                         disabled={form.processing}
@@ -456,15 +457,12 @@ export default function JneShipment({
                 >
                     <div className="flex max-h-96 flex-col gap-2 overflow-auto">
                         {matchHistory.map((event) => (
-                            <details
-                                key={event.id}
-                                className="rounded-md border p-3 text-sm"
-                            >
-                                <summary className="cursor-pointer break-words">
+                            <Disclosure key={event.id}>
+                                <DisclosureSummary className="cursor-pointer break-words">
                                     {jneTimestamp(event.created_at, timezone)} ·{' '}
                                     {event.actor_name || 'Sistem'} ·{' '}
                                     {event.method}
-                                </summary>
+                                </DisclosureSummary>
                                 <p>
                                     {event.previous_pickup_reference || '—'} →{' '}
                                     {event.pickup_reference || '—'} ·{' '}
@@ -568,7 +566,7 @@ export default function JneShipment({
                                             )}
                                         </ul>
                                     )}
-                            </details>
+                            </Disclosure>
                         ))}
                         {matchHistory.length === 0 && (
                             <p className="text-sm text-muted-foreground">
@@ -578,18 +576,18 @@ export default function JneShipment({
                     </div>
                 </ShipmentDisclosure>
                 {decisionPages && (
-                    <details className="rounded border p-3">
-                        <summary>
+                    <Disclosure>
+                        <DisclosureSummary>
                             Audit keputusan lengkap ({decisionPages.data.length}{' '}
                             pada halaman ini)
-                        </summary>
+                        </DisclosureSummary>
                         <div className="max-h-96 overflow-auto">
                             {decisionPages.data.map((event) => (
-                                <details key={event.id} className="my-2">
-                                    <summary>
+                                <Disclosure key={event.id} className="my-2">
+                                    <DisclosureSummary>
                                         {event.created_at} · {event.method} ·{' '}
                                         {event.reason}
-                                    </summary>
+                                    </DisclosureSummary>
                                     <pre className="max-w-full overflow-auto text-xs">
                                         {JSON.stringify(
                                             event.evidence,
@@ -597,7 +595,7 @@ export default function JneShipment({
                                             2,
                                         )}
                                     </pre>
-                                </details>
+                                </Disclosure>
                             ))}
                         </div>
                         <nav className="flex gap-4">
@@ -612,7 +610,7 @@ export default function JneShipment({
                                 </Link>
                             )}
                         </nav>
-                    </details>
+                    </Disclosure>
                 )}
             </ShipmentDisclosure>
         </PageContainer>

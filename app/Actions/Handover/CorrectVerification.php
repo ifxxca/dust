@@ -5,11 +5,14 @@ namespace App\Actions\Handover;
 use App\Models\HandoverSession;
 use App\Models\PickupTask;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CorrectVerification
 {
+    public function __construct(private CashlessHandoverReadiness $cashless) {}
+
     /** @param array<string, mixed> $data */
     public function handle(User $user, int $sessionId, int $itemId, array $data): HandoverSession
     {
@@ -20,7 +23,8 @@ class CorrectVerification
             abort_unless($session->status === 'IN_VERIFICATION', 409, 'Reopen session CLOSED sebelum mengoreksi hasil.');
             abort_if($session->version !== (int) $data['expected_version'], 409, 'SESSION_STALE: Muat ulang session.');
             $member = $session->items()->whereKey($itemId)->firstOrFail(['id', 'pickup_task_id']);
-            PickupTask::whereKey($member->pickup_task_id)->lockForUpdate()->firstOrFail();
+            $task = PickupTask::whereKey($member->pickup_task_id)->lockForUpdate()->firstOrFail();
+            $this->cashless->assertReady(new Collection([$task]));
             $item = $session->items()->whereKey($itemId)->lockForUpdate()->firstOrFail();
             abort_if($item->status === 'PENDING', 409, 'Gunakan verifikasi awal untuk item yang belum diperiksa.');
             $proof = $item->proof;

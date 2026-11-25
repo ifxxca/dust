@@ -9,6 +9,10 @@ class OperationalLoginResponse extends LoginResponse
 {
     public function toResponse(mixed $request): Response
     {
+        if ($request->user()->role === 'customer' && ! $request->wantsJson()) {
+            return redirect()->route('portal.dashboard');
+        }
+
         return $request->wantsJson()
             ? response()->json(['data' => $request->user()->only(['id', 'name', 'role', 'is_active']), 'meta' => new \stdClass])
             : parent::toResponse($request);

@@ -1,5 +1,6 @@
 import { registerPlugin } from '@capacitor/core';
 import type { Session } from './types';
+import { BrowserLocal } from './browser-local';
 export type LocalEvidence = {
     name: string;
     kind: 'photo' | 'signature';
@@ -53,7 +54,9 @@ const local = registerPlugin<{
     }): Promise<void>;
     finishCapture(options: Scope & { operationId: string }): Promise<void>;
     captureFailure(options: { method: string }): Promise<void>;
-}>('MobileLocal');
+}>('MobileLocal', {
+    web: () => Promise.resolve(new BrowserLocal()),
+});
 const scope = (session: Session, name: string) => ({
     account: String(session.user.id),
     environment: session.environment,

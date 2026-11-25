@@ -24,7 +24,14 @@ class JneShipment extends Model
 
     public const TERMINAL_STATUSES = ['DELIVERED', 'CANCELLED', 'RETURNED'];
 
+    /** Conservative tracking baseline; RETURNED remains open pending source-policy verification. */
+    public const TRACKING_TERMINAL_STATUSES = ['DELIVERED', 'CANCELLED'];
+
     public const MATCH_STATUSES = ['MATCHED', 'UNMATCHED', 'AMBIGUOUS', 'CANDIDATE', 'CONFLICT'];
+
+    public const SLA_STATUSES = ['ON_TIME', 'OVER_SLA', 'DELIVERED_ON_TIME', 'DELIVERED_LATE', 'RETURN', 'EXCLUDED', 'UNKNOWN'];
+
+    public const NATIVE_SLA_GRADES = ['ON_TIME', 'OVER_SLA', 'UNKNOWN'];
 
     protected $guarded = ['id'];
 

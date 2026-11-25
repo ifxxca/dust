@@ -1,4 +1,5 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import { edit as deliverySettings } from '@/routes/document-delivery';
 import type { PropsWithChildren } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCurrentUrl } from '@/hooks/use-current-url';
@@ -27,6 +28,7 @@ const sidebarNavItems: NavItem[] = [
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
+    const role = usePage().props.auth.user.role;
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
@@ -41,7 +43,18 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         className="flex flex-wrap gap-1 lg:flex-col"
                         aria-label="Pengaturan"
                     >
-                        {sidebarNavItems.map((item, index) => (
+                        {[
+                            ...sidebarNavItems,
+                            ...(role === 'admin_supervisor'
+                                ? [
+                                      {
+                                          title: 'Pengiriman dokumen',
+                                          href: deliverySettings(),
+                                          icon: null,
+                                      },
+                                  ]
+                                : []),
+                        ].map((item, index) => (
                             <Button
                                 key={`${toUrl(item.href)}-${index}`}
                                 size="sm"

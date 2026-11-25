@@ -228,7 +228,10 @@ test('database mobile push worker sends a separate safe test payload through moc
     Http::assertSent(fn ($request) => str_contains($request->url(), 'messages:send')
         && $request['message']['notification']['title'] === 'Tes notifikasi Retail Operations'
         && $request['message']['data'] === ['type' => 'push_test', 'test_id' => $id, 'recipient_id' => (string) $device->user_id]
-        && $request['message']['android']['notification']['channel_id'] === 'pickup_assignments');
+        && $request['message']['android']['notification']['channel_id'] === 'cashless_processing'
+        && $request['message']['android']['notification']['sound'] === 'retail_notification'
+        && $request['message']['android']['notification']['notification_priority'] === 'PRIORITY_HIGH'
+        && $request['message']['android']['notification']['default_vibrate_timings'] === true);
     Http::assertSentCount(2);
     $this->assertDatabaseCount('jobs', 0);
     $this->assertDatabaseCount('pickup_tasks', 0);

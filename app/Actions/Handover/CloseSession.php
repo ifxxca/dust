@@ -3,11 +3,14 @@
 namespace App\Actions\Handover;
 
 use App\Models\HandoverSession;
+use App\Models\PickupTask;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class CloseSession
 {
+    public function __construct(private CashlessHandoverReadiness $cashless) {}
+
     public function handle(User $user, int $sessionId, int $expectedVersion): HandoverSession
     {
         return DB::transaction(function () use ($user, $sessionId, $expectedVersion) {
@@ -19,6 +22,8 @@ class CloseSession
             }
             abort_if($session->version !== $expectedVersion, 409, 'SESSION_STALE: Muat ulang session.');
             abort_unless($session->items()->exists() && ! $session->items()->where('status', 'PENDING')->exists(), 409, 'Semua item harus diperiksa sebelum penutupan.');
+            $tasks = PickupTask::whereIn('id', $session->items()->select('pickup_task_id'))->orderBy('id')->lockForUpdate()->get();
+            $this->cashless->assertReady($tasks);
             foreach ($session->items()->with(['proof.revisions', 'revisions'])->get() as $item) {
                 abort_if($item->needsReview(), 409, 'POP berubah setelah verifikasi. Admin harus memeriksa ulang hasil.');
                 $values = $item->effectiveValues();

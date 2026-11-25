@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import * as aliases from '@/routes/jne-shipper-aliases';
 import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
 import { useState } from 'react';
@@ -57,7 +58,7 @@ const emptyProfile = {
     label: '',
     enabled: false,
     mode: 'rolling',
-    lookback_days: 30,
+    lookback_days: 2,
     date_from: '',
     date_thru: '',
     interval_minutes: 360,
@@ -137,7 +138,7 @@ export default function JneProfiles({
                       ? 'Pembaruan resi aktif'
                       : '',
             lookback_days:
-                source === 'hybrid' ? 1 : reportType === 'unresolved' ? 60 : 30,
+                source === 'hybrid' ? 1 : reportType === 'unresolved' ? 60 : 2,
             interval_minutes:
                 source === 'hybrid' || reportType === 'unresolved' ? 30 : 360,
         });
@@ -344,7 +345,7 @@ export default function JneProfiles({
                                                       ? 'HYBRID_PM'
                                                       : source.toUpperCase(),
                                             lookback_days:
-                                                source === 'apex' ? 30 : 1,
+                                                source === 'apex' ? 2 : 1,
                                             interval_minutes:
                                                 source === 'apex' ? 360 : 30,
                                             mode: 'rolling',
@@ -398,9 +399,7 @@ export default function JneProfiles({
                                                             .customer_account,
                                             mode: 'rolling',
                                             lookback_days:
-                                                value === 'unresolved'
-                                                    ? 60
-                                                    : 30,
+                                                value === 'unresolved' ? 60 : 2,
                                             date_from: '',
                                             date_thru: '',
                                         })
@@ -587,14 +586,15 @@ export default function JneProfiles({
                                     <Label htmlFor="source-period">
                                         Periode data
                                     </Label>
-                                    <select
+                                    <NativeSelect
+                                        wrapperClassName="w-full"
                                         id="source-period"
                                         disabled={
                                             form.data.source !== 'apex' ||
                                             form.data.report_type ===
                                                 'unresolved'
                                         }
-                                        className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                        className="h-9 rounded-md border bg-background px-3 text-sm"
                                         value={form.data.mode}
                                         onChange={(event) =>
                                             form.setData(
@@ -614,7 +614,7 @@ export default function JneProfiles({
                                         <option value="fixed">
                                             Tanggal tertentu
                                         </option>
-                                    </select>
+                                    </NativeSelect>
                                     <InputError message={form.errors.mode} />
                                 </div>
                                 <div className="space-y-2">
@@ -636,7 +636,12 @@ export default function JneProfiles({
                                         }
                                     />
                                     <p className="text-xs text-muted-foreground">
-                                        Interval dalam menit · minimal 5 menit.
+                                        {form.data.source === 'apex' &&
+                                        form.data.report_type === 'apex' &&
+                                        Number(form.data.interval_minutes) ===
+                                            1440
+                                            ? 'Setiap hari pukul 01.00 WIB.'
+                                            : 'Interval dalam menit · minimal 5 menit. Untuk report account, 1440 = setiap hari pukul 01.00 WIB.'}
                                     </p>
                                     <InputError
                                         message={form.errors.interval_minutes}
@@ -661,7 +666,7 @@ export default function JneProfiles({
                                     <Label htmlFor="source-lookback">
                                         {form.data.report_type === 'unresolved'
                                             ? 'Batas usia entry resi (hari)'
-                                            : 'Jumlah hari terakhir'}
+                                            : 'Jumlah hari (termasuk hari ini)'}
                                     </Label>
                                     <Input
                                         id="source-lookback"
@@ -692,7 +697,11 @@ export default function JneProfiles({
                                     <p className="text-xs text-muted-foreground">
                                         {form.data.report_type === 'unresolved'
                                             ? 'AWB di luar batas usia tetap tersimpan, tetapi tidak masuk pembaruan otomatis ini.'
-                                            : 'Kiriman lama yang belum selesai juga diperbarui melalui periode asalnya.'}
+                                            : Number(
+                                                    form.data.lookback_days,
+                                                ) === 2
+                                              ? 'Kemarin dan hari ini. Resi lebih lama diperbarui lewat Pembaruan resi aktif.'
+                                              : 'Rentang tanggal berakhir hari ini. Resi lebih lama diperbarui lewat Pembaruan resi aktif.'}
                                     </p>
                                 </div>
                             ) : (

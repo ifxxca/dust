@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Actions\Monitoring\RecordReportWorkerTelemetry;
 use App\Models\ReportJob;
 use Closure;
 use Illuminate\Http\Request;
@@ -19,9 +20,16 @@ class EnsureReportWorker
             $workers[$workerId] = 'apex';
         }
         $source = $workers[$request->header('X-Worker-ID', '')] ?? null;
+        if ($source === null && $request->routeIs('internal.cashless-entries.*')
+            && preg_match('/^cashless-roberto-[1-5]$/D', $request->header('X-Worker-ID', ''))) {
+            $source = 'roberto';
+        }
         abort_unless(is_string($source), 403);
         $request->attributes->set('report_source', $source);
 
-        return $next($request);
+        $response = $next($request);
+        app(RecordReportWorkerTelemetry::class)->handle($request, $response);
+
+        return $response;
     }
 }

@@ -29,7 +29,7 @@ function categoryFixture(): array
     $staff = User::factory()->create(['role' => 'pickup_staff']);
     $task = PickupTask::factory()->create(['customer_id' => $customer->id, 'assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
     foreach (range(1, 3) as $index) {
-        app(RecordCashlessAwb::class)->handle($staff, $task->id, ['awb' => 'CASH'.$index, 'submission_key' => (string) Str::uuid()]);
+        app(RecordCashlessAwb::class)->handle($staff, $task->id, ['awb' => 'TG'.str_pad((string) $index, 10, '0', STR_PAD_LEFT), 'submission_key' => (string) Str::uuid()]);
     }
     $task->update(['status' => 'PICKED_UP']);
     PickupRecord::factory()->create(['pickup_task_id' => $task->id, 'manual_hybrid' => 0, 'cashless_hybrid' => 3, 'css_orion' => 100]);
@@ -37,7 +37,7 @@ function categoryFixture(): array
         'definition' => ['customer_code_column' => 'RETAIL_CODE_FIXTURE', 'category_column' => 'POP_KIND_FIXTURE', 'category_values' => ['CSS' => 'css_orion'], 'collection_requirements' => ['apex:apex']]]);
     $job = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'projection_status' => 'PROJECTED']);
     foreach (range(1, 103) as $index) {
-        JneReportAwb::factory()->create(['report_job_id' => $job->id, 'awb' => $index <= 3 ? 'CASH'.$index : 'CSS'.$index, 'shipper_name' => 'Tokopedia',
+        JneReportAwb::factory()->create(['report_job_id' => $job->id, 'awb' => $index <= 3 ? 'TG'.str_pad((string) $index, 10, '0', STR_PAD_LEFT) : 'CSS'.$index, 'shipper_name' => 'Tokopedia',
             'reference' => $index <= 3 ? null : $task->reference, 'entry_at' => now(), 'customer_account' => 'SHARED', 'raw_data' => $index <= 3 ? [] : ['RETAIL_CODE_FIXTURE' => '4000', 'POP_KIND_FIXTURE' => 'CSS']]);
     }
     app(ProjectJneShipments::class)->handle($job->id);

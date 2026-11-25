@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Handover\AmendSession;
+use App\Actions\Handover\CashlessHandoverReadiness;
 use App\Actions\Handover\CloseSession;
 use App\Actions\Handover\CreateSession;
 use App\Actions\Handover\VerifyItem;
@@ -13,6 +14,7 @@ use App\Models\HandoverItem;
 use App\Models\HandoverSession;
 use App\Models\PickupTask;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -55,7 +57,10 @@ class HandoverController extends Controller
         }
         $summary = $request->boolean('summary') ? ['active' => HandoverSession::where('status', '!=', 'CLOSED')->count(), 'closed' => HandoverSession::where('status', 'CLOSED')->count(), 'discrepancies' => HandoverItem::withStatus('DISCREPANCY')->count()] : null;
 
-        return HandoverResource::collection($query->orderByRaw('CASE WHEN status = ? THEN 1 ELSE 0 END', ['CLOSED'])->latest('id')->paginate($data['per_page'] ?? 20))
+        $sessions = $query->orderByRaw('CASE WHEN status = ? THEN 1 ELSE 0 END', ['CLOSED'])->latest('id')->paginate($data['per_page'] ?? 20);
+        $this->loadCashlessReadiness($sessions->getCollection());
+
+        return HandoverResource::collection($sessions)
             ->additional([
                 ...($summary === null ? [] : ['summary' => $summary]),
                 'capabilities' => [
@@ -65,7 +70,7 @@ class HandoverController extends Controller
             ]);
     }
 
-    public function candidates(Request $request): JsonResponse
+    public function candidates(Request $request, CashlessHandoverReadiness $cashless): JsonResponse
     {
         abort_unless($request->user()->canExecutePickup(), 403);
         $data = $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'q' => ['nullable', 'string', 'max:100']]);
@@ -81,11 +86,12 @@ class HandoverController extends Controller
             });
         }
         $tasks = $query->orderBy('id')->paginate(20);
+        $readiness = $cashless->handle($tasks->getCollection());
 
-        return response()->json(['data' => $tasks->getCollection()->map(function ($task) {
+        return response()->json(['data' => $tasks->getCollection()->map(function ($task) use ($readiness) {
             $values = $task->proof->effectiveValues();
 
-            return ['id' => $task->id, 'reference' => $task->reference, 'customer_name' => $values['customer_name'], 'staff_name' => $task->assignedStaff?->name, 'total' => $values['manual_hybrid'] + $values['cashless_hybrid'] + $values['css_orion']];
+            return ['id' => $task->id, 'reference' => $task->reference, 'customer_name' => $values['customer_name'], 'staff_name' => $task->assignedStaff?->name, 'total' => $values['manual_hybrid'] + $values['cashless_hybrid'] + $values['css_orion'], 'cashless_readiness' => $readiness[$task->id]];
         }), 'meta' => ['current_page' => $tasks->currentPage(), 'last_page' => $tasks->lastPage()]]);
     }
 
@@ -116,7 +122,25 @@ class HandoverController extends Controller
 
     private function resource(HandoverSession $session): HandoverResource
     {
-        return new HandoverResource($session->load(['creator:id,name', 'items.proof.revisions', 'items.revisions', 'items.task.assignedStaff', 'events']));
+        $session->load(['creator:id,name', 'items.proof.revisions', 'items.revisions', 'items.task.assignedStaff', 'events']);
+        $this->loadCashlessReadiness(new Collection([$session]));
+
+        return new HandoverResource($session);
+    }
+
+    /** @param Collection<int, HandoverSession> $sessions */
+    private function loadCashlessReadiness(Collection $sessions): void
+    {
+        $tasks = new Collection;
+        foreach ($sessions->where('status', '!=', 'CLOSED') as $session) {
+            foreach ($session->items as $item) {
+                $tasks->put($item->pickup_task_id, $item->task->setRelation('proof', $item->proof));
+            }
+        }
+        $readiness = app(CashlessHandoverReadiness::class)->handle($tasks);
+        foreach ($sessions as $session) {
+            $session->setAttribute('cashless_readiness', $readiness);
+        }
     }
 
     public function reopen(Request $request, HandoverSession $session, AmendSession $action): HandoverResource

@@ -1,3 +1,4 @@
+import { Textarea } from '@/components/ui/textarea';
 import { useHttp } from '@inertiajs/react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -155,7 +156,7 @@ export default function PickupExecution({
                             ? '(wajib)'
                             : '(opsional)'}
                     </Label>
-                    <textarea
+                    <Textarea
                         id="visit-reason"
                         required={form.data.outcome === 'NO_PACKAGES'}
                         className="min-h-20 w-full rounded-md border p-3"
@@ -171,7 +172,7 @@ export default function PickupExecution({
                         </p>
                     )}
                     <Label htmlFor="visit-notes">Catatan Kunjungan</Label>
-                    <textarea
+                    <Textarea
                         id="visit-notes"
                         className="min-h-20 w-full rounded-md border p-3"
                         value={form.data.notes}

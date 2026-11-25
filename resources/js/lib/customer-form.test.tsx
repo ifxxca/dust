@@ -3,6 +3,7 @@ import { expect, test, vi } from 'vitest';
 import CustomerForm from '../components/customer-form';
 
 vi.mock('@inertiajs/react', () => ({
+    usePage: () => ({ props: { email_recipient_limit: 5 } }),
     useHttp: (data: Record<string, unknown>) => ({
         data,
         errors: {

@@ -29,6 +29,7 @@ export function reportStage(report: ReportProcessing) {
 
     const labels: Record<string, string> = {
         QUEUED: 'Menunggu worker',
+        RETRY_WAIT: 'Menunggu retry otomatis',
         RUNNING: 'Mengambil report',
         WAITING_REPORT: 'Menunggu JNE',
         DOWNLOADING: 'Mengunduh CSV',

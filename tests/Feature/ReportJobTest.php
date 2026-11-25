@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Reports\ManageReportJobs;
 use App\Models\ReportJob;
 use App\Models\User;
 use Illuminate\Filesystem\FilesystemAdapter;
@@ -8,6 +9,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 beforeEach(function () {
     config(['jne-reports.worker_token' => str_repeat('secret', 8), 'jne-reports.worker_id' => 'jne-report-1']);
@@ -38,6 +40,32 @@ function downloadingReport(): array
     return [$job, $claim];
 }
 
+test('a stopped parameter report resumes from its pinned History identity in the normal worker claim', function (string $error) {
+    $job = ReportJob::factory()->create(['status' => 'NEEDS_ATTENTION', 'error_message' => $error, 'started_at' => now()->subHour()]);
+    $history = ['origin' => 'https://dash-ccc01.jne.co.id', 'id' => '12345', 'filename' => 'original.csv',
+        'created' => '05-NOV-2026 13:04', 'submitted_at' => 1793858640000];
+
+    app(ManageReportJobs::class)->resumeApexHistory($job->id, $history);
+
+    $this->assertDatabaseHas('report_jobs', ['id' => $job->id, 'status' => 'QUEUED', 'error_message' => null]);
+    $this->postJson(route('internal.report-jobs.claim'), ['claim_key' => (string) Str::uuid()], reportHeaders())
+        ->assertOk()->assertJsonPath('data.parameters.apex_history', $history);
+})->with(['REPORT_TIMEOUT: CSV belum tersedia.', 'WORKER_STOPPED: Melanjutkan History setelah restart.']);
+
+test('History recovery never resets an active or completed report', function (string $status) {
+    $job = ReportJob::factory()->create(['status' => $status, 'error_message' => 'REPORT_TIMEOUT: CSV belum tersedia.']);
+    $history = ['origin' => 'https://dash-ccc01.jne.co.id', 'id' => '12345', 'filename' => 'original.csv', 'created' => '05-NOV-2026 13:04', 'submitted_at' => 1793858640000];
+
+    try {
+        app(ManageReportJobs::class)->resumeApexHistory($job->id, $history);
+        $this->fail('An active or completed report must not be reset.');
+    } catch (HttpException $exception) {
+        expect($exception->getStatusCode())->toBe(409);
+    }
+    $this->assertDatabaseHas('report_jobs', ['id' => $job->id, 'status' => $status]);
+    $this->assertDatabaseCount('report_job_events', 0);
+})->with(['WAITING_REPORT', 'COMPLETED']);
+
 test('active admin creates queued report using server controlled fields and sees recent jobs', function () {
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
 
@@ -52,6 +80,72 @@ test('active admin creates queued report using server controlled fields and sees
         ->component('jne-reports')->has('jobs', 1)->where('jobs.0.status', 'QUEUED')
         ->where('limits', ['max_days' => 5, 'max_request_days' => 366, 'max_awbs' => 6000])
         ->missing('jobs.0.claim_token')->missing('jobs.0.file_path'));
+});
+
+test('admin queues retail manual and cashless reports for every selected server and day', function (string $server, array $sources) {
+    $admin = User::factory()->create(['role' => 'admin_supervisor']);
+
+    $this->actingAs($admin)->post(route('jne-reports.store'), [
+        'source' => 'hybrid', 'retail_server' => $server,
+        'date_from' => '2026-10-31', 'date_thru' => '2026-11-02',
+    ])->assertRedirectToRoute('report-runs.index', ['source' => 'hybrid']);
+
+    $parents = ReportJob::where('source', 'hybrid')->get();
+    expect($parents)->toHaveCount(count($sources) * 3);
+    $this->assertDatabaseCount('report_jobs', count($sources) * 9);
+    expect(ReportJob::where('source', 'apex')->exists())->toBeFalse();
+    foreach ($sources as $source) {
+        foreach (['manual', 'cashless'] as $type) {
+            expect(ReportJob::where('source', $source)->where('report_type', $type)->orderBy('date_from')->pluck('date_from')->map->toDateString()->all())
+                ->toBe(['2026-10-31', '2026-11-01', '2026-11-02']);
+        }
+    }
+    foreach ($parents as $parent) {
+        expect($parent->status)->toBe('COLLECTING_SOURCES');
+        $children = ReportJob::where('hybrid_batch_id', $parent->id)->get();
+        expect($children)->toHaveCount(2);
+        foreach ($children as $child) {
+            expect($child->request_key)->toBe($parent->request_key);
+            expect($child->source)->toBe(ReportJob::HYBRID_SERVERS[$parent->customer_account]);
+            expect($child->date_from->toDateString())->toBe($parent->date_from->toDateString());
+            expect($child->status)->toBe('QUEUED');
+            expect($child->created_by)->toBe($admin->id);
+        }
+    }
+})->with([
+    'PM' => ['HYBRID_PM', ['roberto']],
+    'Puman' => ['HYBRID_PUMAN', ['nuralamt']],
+    'both' => ['all', ['roberto', 'nuralamt']],
+]);
+
+test('retail report requests reject invalid or mixed sources and dates without creating jobs', function (array $overrides, string $error) {
+    $admin = User::factory()->create(['role' => 'admin_supervisor']);
+
+    $this->actingAs($admin)->post(route('jne-reports.store'), array_replace([
+        'source' => 'hybrid', 'retail_server' => 'all',
+        'date_from' => '2026-11-01', 'date_thru' => '2026-11-02',
+    ], $overrides))->assertSessionHasErrors($error);
+
+    $this->assertDatabaseCount('report_jobs', 0);
+})->with([
+    'missing server' => [['retail_server' => null], 'retail_server'],
+    'unknown server' => [['retail_server' => 'unknown'], 'retail_server'],
+    'unknown source' => [['source' => 'roberto'], 'source'],
+    'mixed account' => [['customer_account' => '12345'], 'customer_account'],
+    'mixed bulk' => [['accounts' => [['customer_account' => '12345', 'national_account' => 'N']]], 'accounts'],
+    'mixed national' => [['national_account' => 'Y'], 'national_account'],
+    'reversed dates' => [['date_thru' => '2026-10-31'], 'date_thru'],
+    'invalid date' => [['date_from' => '2026-02-30'], 'date_from'],
+    'excessive range' => [['date_thru' => '2028-11-01'], 'date_thru'],
+]);
+
+test('pickup staff cannot queue retail reports', function () {
+    $this->actingAs(User::factory()->create(['role' => 'pickup_staff']))->post(route('jne-reports.store'), [
+        'source' => 'hybrid', 'retail_server' => 'HYBRID_PUMAN',
+        'date_from' => '2026-11-01', 'date_thru' => '2026-11-01',
+    ])->assertForbidden();
+
+    $this->assertDatabaseCount('report_jobs', 0);
 });
 
 test('non admin roles cannot create reports or access admin history', function (string $role) {

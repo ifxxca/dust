@@ -34,7 +34,7 @@ function cashlessFixture() {
             document.getElementById('Connote Reports').dispatchEvent(new CustomEvent('apexafterrefresh',{bubbles:true}));}catch{}
         });</script></body></html>`;
     const rows = (ho) =>
-        `<table class="a-IRR-table"><tr><th>Cnote No</th></tr>${(
+        `${(state.hos[ho] || []).length ? `<span class="a-IRR-pagination-label">1 - ${Math.min(50, state.hos[ho].length)} of ${state.hos[ho].length}</span>` : '<div class="a-IRR-noDataMsg">No data found.</div>'}<table class="a-IRR-table"><tr><th>Cnote No</th></tr>${(
             state.hos[ho] || []
         )
             .slice(0, 50)

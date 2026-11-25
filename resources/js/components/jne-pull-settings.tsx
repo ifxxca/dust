@@ -42,6 +42,7 @@ export type PullProfile = {
     date_from: string | null;
     date_thru: string | null;
     interval_minutes: number;
+    daily_collection_time?: string | null;
     last_error: string | null;
     version: number;
     next_run_at: string | null;

@@ -24,8 +24,13 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 30 cashless shipment recap', function () {
+require_once __DIR__.'/../Fixtures/pickup-automation.php';
+
+test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 30 cashless shipment recap', function (bool $multiple) {
     $liveRecipient = getenv('PICKUP_FLOW_SMTP_TO') ?: null;
+    if ($liveRecipient !== null && $multiple) {
+        $this->markTestSkipped('Multi-recipient coverage uses only the isolated array transport.');
+    }
     $exportArtifacts = $liveRecipient !== null || getenv('PICKUP_FLOW_PREVIEW') === '1';
     expect(config('database.default'))->toBe('sqlite');
     expect(config('database.connections.sqlite.database'))->toBe(':memory:');
@@ -37,6 +42,7 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
         $this->travelTo('2026-10-31 10:00:00 UTC');
     }
     $recipient = $liveRecipient ?? 'pickup-flow@example.test';
+    $recipients = [$recipient, ...($multiple ? ['finance@example.test'] : [])];
     Storage::fake('local');
     Storage::fake('jne_reports');
     config([
@@ -44,9 +50,11 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
         'queue.default' => 'database', 'queue.connections.database.retry_after' => 120,
         'cache.default' => 'array', 'mobile-push.enabled' => false,
         'pickup.receipt_channel' => 'email', 'pickup.cashless_entry.enabled' => false,
+        'pickup.email_recipients.enabled' => $multiple, 'pickup.email_recipients.limit' => 5,
         'pickup.automation.enabled' => false, 'pickup.automation.send_enabled' => true,
         'jne-reports.evidence_policies_enabled' => true, 'jne-reports.category_reconciliation_enabled' => true,
-        'jne-reports.category_markers_enabled' => true,
+        'jne-reports.category_markers_enabled' => false,
+        'pickup.cashless_entry.handover_lock' => true,
     ]);
     app('mail.manager')->purge();
     $messages = [];
@@ -70,15 +78,17 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
     $staff = User::factory()->create(['name' => 'Petugas Uji Alur', 'role' => 'pickup_staff', 'is_active' => true]);
     $customerResponse = $this->actingAs($admin)->postJson(route('api.customers.store'), [
         'name' => 'Irfan [UJI COBA]', 'customer_code' => '999900', 'email' => $recipient,
+        ...($multiple ? ['additional_emails' => ['finance@example.test']] : []),
         'pickup_address' => 'Alamat pickup contoh — pengujian alur email', 'is_active' => true,
     ])->assertCreated();
     $customer = Customer::findOrFail($customerResponse->json('data.id'));
+    pickupAutomationCapability('SMTP_FLOW_ACCOUNT');
     JneSourceContract::factory()->create([
-        'source' => 'apex', 'report_type' => 'unresolved', 'active_key' => JneSourceContract::key('apex', 'unresolved'),
+        'source' => 'apex', 'report_type' => 'apex', 'active_key' => JneSourceContract::key('apex', 'apex'),
         'created_by' => $admin->id, 'verified_by' => $admin->id, 'verified_at' => now(),
         'definition' => ['customer_code_column' => 'CUSTOMER_CODE', 'pickup_date_column' => 'TGL_ENTRY',
             'category_column' => 'PROCESS_TYPE', 'category_values' => ['MANUAL' => 'manual_hybrid', 'CASHLESS' => 'cashless_hybrid'],
-            'automatic_reconciliation' => true],
+            'automatic_reconciliation' => true, 'collection_mode' => 'complete_date_report', 'collection_requirements' => ['apex:apex:SMTP_FLOW_ACCOUNT']],
     ]);
     config(['pickup.automation.enabled' => true]);
     $created = $this->postJson(route('api.tasks.store'), [
@@ -93,7 +103,7 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
     $this->actingAs($staff)->postJson(route('api.tasks.start', $task), ['expected_version' => $task->fresh()->version])->assertCreated();
     $this->postJson(route('api.tasks.visit', $task), ['expected_version' => $task->fresh()->version, 'outcome' => 'COLLECTED'])->assertOk();
     $manual = array_map(fn (int $number): string => '0101'.str_pad((string) $number, 12, '0', STR_PAD_LEFT), range(1, 20));
-    $cashless = array_map(fn (int $number): string => 'TGSMTP'.str_pad((string) $number, 10, '0', STR_PAD_LEFT), range(1, 30));
+    $cashless = array_map(fn (int $number): string => 'CM'.str_pad((string) $number, 11, '0', STR_PAD_LEFT), range(1, 30));
     $proofPayload = [
         'expected_version' => $task->fresh()->version, 'submission_key' => (string) Str::uuid(),
         'manual_hybrid' => 20, 'cashless_hybrid' => 30, 'css_orion' => 0,
@@ -104,13 +114,15 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
     ];
     $this->postJson(route('api.tasks.proof', $task), $proofPayload)->assertCreated()
         ->assertJsonPath('data.total', 50)->assertJsonPath('data.receipt.status', 'ACCEPTED_BY_PROVIDER');
-    expect($messages)->toHaveCount(1);
+    expect($messages)->toHaveCount(count($recipients));
     expect($messages[0]['subject'])->toContain('Receipt Pickup');
     expect($messages[0]['attachments'])->toHaveCount(2);
     expect(PickupCashlessAwb::where('pickup_task_id', $task->id)->count())->toBe(30);
     expect(CashlessEntryBatch::sole()->status)->toBe('QUEUED');
+    CashlessEntryBatch::sole()->items()->update(['status' => 'ACCEPTED']);
+    CashlessEntryBatch::sole()->update(['status' => 'DONE', 'approved_at' => now()]);
     $this->postJson(route('api.tasks.proof', $task), $proofPayload)->assertOk();
-    expect($messages)->toHaveCount(1);
+    expect($messages)->toHaveCount(count($recipients));
     $handover = $this->postJson(route('api.handovers.store'), ['task_ids' => [$task->id], 'submission_key' => (string) Str::uuid()])->assertSuccessful();
     $session = HandoverSession::findOrFail($handover->json('data.id'));
     $item = $session->items()->sole();
@@ -119,7 +131,7 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
     ])->assertOk();
     $this->postJson(route('api.handovers.close', $session), ['expected_version' => $session->fresh()->version])->assertOk();
     expect($session->fresh()->status)->toBe('CLOSED');
-    expect($messages)->toHaveCount(1);
+    expect($messages)->toHaveCount(count($recipients));
     $stream = fopen('php://temp', 'w+');
     fputcsv($stream, ['AWB', 'ID_ACCOUNT', 'CUSTOMER_CODE', 'SHIPPER_NAME', 'CONSIGNEE_NAME', 'STATUS_WEB', 'STATUS_POD', 'AWB_CANCEL', 'NOREF', 'TGL_ENTRY', 'PROCESS_TYPE'], ',', '"', '');
     foreach (['MANUAL' => $manual, 'CASHLESS' => $cashless] as $category => $awbs) {
@@ -134,9 +146,10 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
     $path = 'smtp-flow/dummy-report.csv';
     Storage::disk('jne_reports')->put($path, $csv);
     $job = ReportJob::factory()->create([
-        'source' => 'apex', 'report_type' => 'unresolved', 'report_mode' => 'A', 'created_by' => $admin->id,
+        'source' => 'apex', 'report_type' => 'apex', 'report_mode' => 'P', 'created_by' => $admin->id,
         'customer_account' => 'SMTP_FLOW_ACCOUNT', 'date_from' => now()->toDateString(), 'date_thru' => now()->toDateString(),
         'status' => 'COMPLETED', 'file_path' => $path, 'file_checksum' => hash('sha256', $csv), 'started_at' => now(), 'completed_at' => now(),
+        'row_count' => 50, 'parameters' => ['collection_evidence' => pickupAutomationCollectionEvidence(now()->toDateString(), now()->toDateString(), 50, 'SMTP_FLOW_ACCOUNT')],
     ]);
     ImportJneReportAwbs::dispatch($job->id)->onQueue('reports-import');
     Artisan::call('queue:work', ['connection' => 'database', '--queue' => 'reports-import,default,reconciliation,documents,deliveries',
@@ -152,20 +165,20 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
     expect($manifest->status)->toBe('READY');
     expect(DB::table('pickup_awb_manifest_items')->where('pickup_awb_manifest_id', $manifest->id)->count())->toBe(50);
     expect(Storage::disk('local')->get($manifest->pdf_path))->toStartWith('%PDF-');
-    $delivery = PickupAwbDelivery::sole();
+    $delivery = PickupAwbDelivery::where('recipient', $recipient)->sole();
     expect($delivery->status)->toBe('ACCEPTED');
-    expect($messages)->toHaveCount(2);
-    expect($messages[1]['subject'])->toContain('Daftar resi pickup');
-    expect($messages[1]['attachments'])->toHaveCount(2);
-    expect(collect($messages)->pluck('recipient')->unique()->all())->toBe([$recipient]);
+    expect($messages)->toHaveCount(2 * count($recipients));
+    expect($messages[count($recipients)]['subject'])->toContain('Daftar resi pickup');
+    expect($messages[count($recipients)]['attachments'])->toHaveCount(2);
+    expect(collect($messages)->pluck('recipient')->unique()->all())->toBe($recipients);
     expect($task->fresh()->status)->toBe('PICKED_UP');
-    expect($task->proof->receipt->attempts()->count())->toBe(1);
-    expect(DB::table('pickup_awb_delivery_attempts')->count())->toBe(1);
+    expect($task->proof->receipt->attempts()->count())->toBe(count($recipients));
+    expect(DB::table('pickup_awb_delivery_attempts')->count())->toBe(count($recipients));
     expect(DB::table('jobs')->count())->toBe(0);
     DeliverPickupAwbManifestJob::dispatch($delivery->id);
     Artisan::call('queue:work', ['connection' => 'database', '--queue' => 'deliveries', '--stop-when-empty' => true, '--sleep' => 0, '--tries' => 1]);
-    expect($messages)->toHaveCount(2);
-    expect(DB::table('pickup_awb_delivery_attempts')->count())->toBe(1);
+    expect($messages)->toHaveCount(2 * count($recipients));
+    expect(DB::table('pickup_awb_delivery_attempts')->count())->toBe(count($recipients));
     if ($exportArtifacts) {
         $report = ['mode' => $liveRecipient ? 'isolated-database-real-smtp' : 'isolated-database-array-mailer', 'pickup_id' => $task->id, 'reference' => $task->reference,
             'customer' => $customer->name, 'handover' => $session->fresh()->status, 'reconciliation' => $result->status,
@@ -178,4 +191,4 @@ test('pickup lifecycle sends a POP receipt before the reconciled 20 manual and 3
         File::put($artifactRoot.'/rekap.xlsx', Storage::disk('local')->get($manifest->xlsx_path));
         File::put($artifactRoot.'/rekap.pdf', Storage::disk('local')->get($manifest->pdf_path));
     }
-});
+})->with(['single recipient' => false, 'multiple recipients' => true]);

@@ -1,6 +1,6 @@
 import { useHttp } from '@inertiajs/react';
 import { useEffect, useId, useState } from 'react';
-import { ChevronsUpDown, Check, Plus, Search } from 'lucide-react';
+import { ChevronsUpDown, Check, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,10 @@ export type PickupCustomer = {
     phone?: string | null;
     is_active?: boolean;
 };
+export type CustomerSearchResult = {
+    data: PickupCustomer[];
+    meta: { last_page: number };
+};
 export default function CustomerPicker({
     selected,
     onSelect,
@@ -37,6 +41,8 @@ export default function CustomerPicker({
     placeholder,
     invalid = false,
     errorId,
+    minSearchLength = 0,
+    loadCustomers,
 }: {
     selected: Pick<PickupCustomer, 'id' | 'name' | 'customer_code'> | null;
     onSelect: (customer: PickupCustomer | null) => void;
@@ -48,6 +54,12 @@ export default function CustomerPicker({
     placeholder?: string;
     invalid?: boolean;
     errorId?: string;
+    minSearchLength?: number;
+    loadCustomers?: (
+        query: string,
+        page: number,
+        signal: AbortSignal,
+    ) => Promise<CustomerSearchResult>;
 }) {
     const id = useId();
     const [open, setOpen] = useState(false);
@@ -58,6 +70,8 @@ export default function CustomerPicker({
     const [rows, setRows] = useState<PickupCustomer[]>([]);
     const [active, setActive] = useState(0);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const canSearch = q.trim().length >= minSearchLength;
     const search = useHttp({});
     const [createBusy, setCreateBusy] = useState(false);
     const [createDirty, setCreateDirty] = useState(false);
@@ -66,38 +80,47 @@ export default function CustomerPicker({
         window.confirm('Perubahan customer belum disimpan. Buang perubahan?');
     useEffect(() => {
         if (!open || creating) return;
-        let cancelled = false;
+        const abort = new AbortController();
+        setRows([]);
+        setError('');
+        if (!canSearch) {
+            setLoading(false);
+            setLast(1);
+            return;
+        }
+        setLoading(true);
         const timer = setTimeout(() => {
-            setError('');
-            void search
-                .get(
-                    api.index.url({
-                        query: { q, page, active_only: allowClear ? 0 : 1 },
-                    }),
-                )
+            const request = loadCustomers
+                ? loadCustomers(q.trim(), page, abort.signal)
+                : search.get(
+                      api.index.url({
+                          query: { q, page, active_only: allowClear ? 0 : 1 },
+                      }),
+                  );
+            void request
                 .then((result) => {
-                    if (!result || cancelled) return;
-                    const response = result as {
-                        data: PickupCustomer[];
-                        meta: { last_page: number };
-                    };
+                    if (!result || abort.signal.aborted) return;
+                    const response = result as CustomerSearchResult;
                     setRows(response.data);
                     setLast(response.meta.last_page);
                     setActive(0);
                 })
                 .catch(() => {
-                    if (!cancelled)
+                    if (!abort.signal.aborted)
                         setError(
                             'Customer gagal dimuat. Ubah pencarian atau muat ulang.',
                         );
+                })
+                .finally(() => {
+                    if (!abort.signal.aborted) setLoading(false);
                 });
         }, 250);
         return () => {
-            cancelled = true;
+            abort.abort();
             clearTimeout(timer);
-            search.cancel();
+            if (!loadCustomers) search.cancel();
         };
-    }, [open, creating, q, page, allowClear]);
+    }, [open, creating, q, page, allowClear, canSearch, loadCustomers]);
     const choose = (customer: PickupCustomer | null) => {
         onSelect(customer);
         setOpen(false);
@@ -119,7 +142,7 @@ export default function CustomerPicker({
                     aria-invalid={invalid || undefined}
                     aria-describedby={invalid ? errorId : undefined}
                     aria-expanded={open}
-                    aria-controls={`${id}-list`}
+                    aria-controls={open ? `${id}-list` : undefined}
                     disabled={disabled}
                     className={cn(
                         'h-11 w-full justify-between gap-3 font-normal',
@@ -136,7 +159,10 @@ export default function CustomerPicker({
                                 ? 'Semua Customer'
                                 : 'Cari dan pilih customer…')}
                     </span>
-                    <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+                    <ChevronsUpDown
+                        aria-hidden="true"
+                        className="size-4 shrink-0 text-muted-foreground"
+                    />
                 </Button>
             </DialogTrigger>
             <DialogContent
@@ -187,14 +213,16 @@ export default function CustomerPicker({
                     />
                 ) : (
                     <>
-                        <div className="relative">
-                            <Search className="absolute top-3 left-3 size-4 text-muted-foreground" />
+                        <div>
                             <Input
                                 aria-label="Cari customer"
-                                className="h-11 pl-9"
+                                className="h-11"
                                 placeholder="Ketik nama customer…"
                                 value={q}
                                 role="combobox"
+                                aria-autocomplete="list"
+                                autoComplete="off"
+                                spellCheck={false}
                                 aria-expanded="true"
                                 aria-controls={`${id}-list`}
                                 aria-activedescendant={
@@ -213,24 +241,30 @@ export default function CustomerPicker({
                                         event.key === 'ArrowUp'
                                     ) {
                                         event.preventDefault();
-                                        setActive((value) =>
-                                            Math.max(
-                                                0,
-                                                Math.min(
-                                                    rows.length - 1,
-                                                    value +
-                                                        (event.key ===
-                                                        'ArrowDown'
-                                                            ? 1
-                                                            : -1),
-                                                ),
+                                        const next = Math.max(
+                                            0,
+                                            Math.min(
+                                                rows.length - 1,
+                                                active +
+                                                    (event.key === 'ArrowDown'
+                                                        ? 1
+                                                        : -1),
                                             ),
                                         );
+                                        setActive(next);
+                                        if (rows[next])
+                                            document
+                                                .getElementById(
+                                                    `${id}-option-${rows[next].id}`,
+                                                )
+                                                ?.scrollIntoView({
+                                                    block: 'nearest',
+                                                });
                                     }
                                     if (
                                         event.key === 'Enter' &&
                                         rows[active] &&
-                                        !search.processing
+                                        !loading
                                     ) {
                                         event.preventDefault();
                                         choose(rows[active]);
@@ -238,7 +272,7 @@ export default function CustomerPicker({
                                 }}
                             />
                         </div>
-                        {search.processing ? (
+                        {loading ? (
                             <p
                                 role="status"
                                 className="py-6 text-center text-sm text-muted-foreground"
@@ -250,7 +284,8 @@ export default function CustomerPicker({
                                 id={`${id}-list`}
                                 role="listbox"
                                 aria-label="Hasil pencarian customer"
-                                className="max-h-64 space-y-1 overflow-y-auto"
+                                aria-busy={loading}
+                                className="flex max-h-[min(20rem,40dvh)] flex-col gap-1 overflow-y-auto overscroll-contain"
                             >
                                 {allowClear && (
                                     <Button
@@ -289,43 +324,50 @@ export default function CustomerPicker({
                                             </span>
                                         </span>
                                         {selected?.id === customer.id && (
-                                            <Check className="size-4 shrink-0" />
+                                            <Check
+                                                aria-hidden="true"
+                                                className="size-4 shrink-0"
+                                            />
                                         )}
                                     </button>
                                 ))}
-                                {!rows.length && (
-                                    <p className="py-5 text-center text-sm text-muted-foreground">
-                                        Customer tidak ditemukan. Periksa nama
-                                        {allowCreate
-                                            ? ' atau tambahkan customer baru.'
-                                            : '.'}
+                                {!rows.length && !error && (
+                                    <p
+                                        role="status"
+                                        className="py-5 text-center text-sm text-muted-foreground"
+                                    >
+                                        {!canSearch
+                                            ? `Ketik minimal ${minSearchLength} karakter untuk mencari customer.`
+                                            : `Customer tidak ditemukan. Periksa nama${allowCreate ? ' atau tambahkan customer baru.' : '.'}`}
                                     </p>
                                 )}
                             </div>
                         )}
-                        <div className="flex items-center justify-between gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={page <= 1 || search.processing}
-                                onClick={() => setPage(page - 1)}
-                            >
-                                Sebelumnya
-                            </Button>
-                            <span className="text-xs text-muted-foreground">
-                                {page}/{last}
-                            </span>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled={page >= last || search.processing}
-                                onClick={() => setPage(page + 1)}
-                            >
-                                Berikutnya
-                            </Button>
-                        </div>
+                        {last > 1 && canSearch && !error && (
+                            <div className="flex items-center justify-between gap-3">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page <= 1 || loading}
+                                    onClick={() => setPage(page - 1)}
+                                >
+                                    Sebelumnya
+                                </Button>
+                                <span className="text-xs text-muted-foreground">
+                                    {page}/{last}
+                                </span>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={page >= last || loading}
+                                    onClick={() => setPage(page + 1)}
+                                >
+                                    Berikutnya
+                                </Button>
+                            </div>
+                        )}
                         {allowCreate && (
                             <Button
                                 type="button"

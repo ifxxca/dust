@@ -6,11 +6,13 @@ export default function SignaturePad({
     onChange,
     disabled,
     onDrawingStart,
+    showHelp = true,
 }: {
     value: string | null;
     onChange: (value: string | null) => void;
     disabled?: boolean;
     onDrawingStart?: () => void;
+    showHelp?: boolean;
 }) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const drawing = useRef(false);
@@ -102,10 +104,12 @@ export default function SignaturePad({
             >
                 Hapus / Ganti Tanda Tangan
             </Button>
-            <p className="text-xs text-muted-foreground">
-                Minta customer/sender menandatangani area putih. Tanda tangan
-                wajib untuk pickup berhasil.
-            </p>
+            {showHelp && (
+                <p className="text-xs text-muted-foreground">
+                    Minta customer/sender menandatangani area putih. Tanda
+                    tangan wajib untuk pickup berhasil.
+                </p>
+            )}
         </div>
     );
 }

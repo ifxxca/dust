@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Pickup\QueryCashlessScanProgress;
 use App\Actions\Pickup\RecordCashlessHandover;
 use App\Http\Requests\StoreCashlessHandoverRequest;
 use App\Models\CashlessEntryBatch;
@@ -46,6 +47,7 @@ class CashlessHandoverController extends Controller
             $selected = [...$this->task($task, $request), 'awbs' => PickupCashlessAwb::where('pickup_task_id', $task->id)->whereNotNull('awb')
                 ->latest('id')->paginate(50, ['id', 'awb', 'created_at'], 'awb_page')->withQueryString(),
                 'entry_enabled' => (bool) config('pickup.cashless_entry.enabled'),
+                'scan_progress' => app(QueryCashlessScanProgress::class)->handle($task->id),
                 'entry_batches' => CashlessEntryBatch::where('pickup_task_id', $task->id)->withCount('items')
                     ->with(['items' => fn ($items) => $items->where('status', '!=', 'PENDING')->select(['id', 'batch_id', 'awb', 'status', 'message'])])
                     ->latest('id')->limit(10)->get(['id', 'pickup_task_id', 'source', 'status', 'ho_number', 'error_message', 'approved_at', 'created_at'])];
@@ -54,14 +56,14 @@ class CashlessHandoverController extends Controller
         $workspace = ['tasks' => $tasks, 'selected' => $selected,
             'filters' => ['q' => $data['q'] ?? '', 'date' => $data['date'] ?? ''], 'timezone' => config('pickup.timezone')];
 
-        return $request->routeIs('mobile.cashless-handover.index') ? response()->json($workspace) : Inertia::render('cashless-handover', $workspace);
+        return $request->routeIs('mobile.cashless-handover.index', 'retail.cashless-handover.index') ? response()->json($workspace) : Inertia::render('cashless-handover', $workspace);
     }
 
     public function store(StoreCashlessHandoverRequest $request, PickupTask $task, RecordCashlessHandover $action): RedirectResponse|JsonResponse
     {
         $saved = $action->handle($request->user(), $task->id, $request->validated());
 
-        if ($request->routeIs('mobile.cashless-handover.store')) {
+        if ($request->routeIs('mobile.cashless-handover.store', 'retail.cashless-handover.store')) {
             return response()->json(['data' => ['pickup_task_id' => $task->id, 'saved' => $saved,
                 'stored_count' => $task->cashlessAwbs()->whereNotNull('awb')->count()]]);
         }

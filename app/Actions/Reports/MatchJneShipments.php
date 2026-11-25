@@ -10,6 +10,7 @@ use App\Models\JneReportAwb;
 use App\Models\JneShipment;
 use App\Models\JneShipmentMatchEvent;
 use App\Models\JneShipperAlias;
+use App\Models\JneSourceContract;
 use App\Models\PickupCashlessAwb;
 use App\Models\PickupPendingItem;
 use App\Models\PickupProcessingReconciliation;
@@ -38,11 +39,25 @@ class MatchJneShipments
      * @param  Collection<int, JneReportAwb>  $sources
      * @return array<int, array{customer_id: ?int, status: string, method: string, note: string, pickups: list<int>, candidates: list<array<string, mixed>>, evidence: list<array<string, mixed>>}>
      */
-    public function candidates(Collection $sources): array
+    public function candidates(Collection $sources, bool $lockCustomerScope = false): array
     {
         $history = collect();
+        $codeColumns = config('jne-reports.evidence_policies_enabled')
+            ? JneSourceContract::whereNotNull('active_key')->whereNotNull('verified_at')->get(['definition'])
+                ->map(fn (JneSourceContract $contract): mixed => $contract->definition['customer_code_column'] ?? null)
+                ->filter(fn (mixed $column): bool => is_string($column) && $column !== '')->unique()->values()->all()
+            : [];
+        $rawExpressions = [];
+        $rawBindings = [];
+        foreach ($codeColumns as $column) {
+            $rawExpressions[] = '?, json_extract(raw_data, ?)';
+            $rawBindings[] = $column;
+            $rawBindings[] = '$.'.json_encode($column, JSON_THROW_ON_ERROR);
+        }
         foreach ($sources->pluck('awb')->unique()->chunk(500) as $awbs) {
-            $history = $history->concat(JneReportAwb::whereIn('awb', $awbs)->orderBy('id')->get(['id', 'report_job_id', 'awb', 'shipper_name', 'reference', 'customer_account', 'raw_data', 'entry_at']));
+            $history = $history->concat(JneReportAwb::whereIn('awb', $awbs)->orderBy('id')
+                ->select(['id', 'report_job_id', 'awb', 'shipper_name', 'reference', 'customer_account', 'entry_at'])
+                ->selectRaw('json_object('.implode(', ', $rawExpressions).') as raw_data', $rawBindings)->get());
         }
         $byAwb = $history->groupBy('awb');
         $exact = $this->resolver->handle($history);
@@ -155,6 +170,13 @@ class MatchJneShipments
         }
 
         $taskIds = collect($matches)->pluck('pickups')->flatten()->unique()->values()->all();
+        if ($lockCustomerScope) {
+            $ownership = JneShipment::whereIn('awb', $sources->pluck('awb'))->get(['customer_id', 'pickup_task_id']);
+            $customerScope = collect($matches)->pluck('customer_id')->merge($ownership->pluck('customer_id'))
+                ->merge(PickupTask::whereIn('id', [...$taskIds, ...$ownership->pluck('pickup_task_id')->filter()->all()])->pluck('customer_id'))
+                ->filter()->unique()->values()->all();
+            Customer::whereIn('id', $customerScope)->orderBy('id')->lockForUpdate()->get(['id']);
+        }
         $taskQuery = PickupTask::whereIn('id', $taskIds)->with('proof')->orderBy('id');
         if (DB::transactionLevel() > 0) {
             $taskQuery->lockForUpdate();

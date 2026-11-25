@@ -3,8 +3,98 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
 import JneReports from '@/pages/jne-reports';
 import JneReportRequests from '@/components/jne-report-requests';
-import { JneRunState } from '@/components/jne-run-state';
+import { JneRunState, JneHybridSources } from '@/components/jne-run-state';
 import { reportStage } from './jne-report-flow';
+
+test('a running report waiting upstream does not claim it is still preparing the form', () => {
+    const html = renderToStaticMarkup(
+        <JneRunState run={{ status: 'WAITING_REPORT', report_type: 'apex' }} />,
+    );
+    expect(html).toContain('Menunggu hasil JNE');
+    expect(html).not.toContain('Menyiapkan report');
+});
+
+test('Hybrid recovery shows the scheduled retry and retained successful sibling without exposing its history by default', () => {
+    const html = renderToStaticMarkup(
+        <>
+            <JneRunState
+                run={{
+                    status: 'COLLECTING_SOURCES',
+                    sources: [{ status: 'RETRY_WAIT' }],
+                }}
+            />
+            <JneHybridSources
+                timezone="Asia/Jakarta"
+                sources={[
+                    {
+                        id: 134,
+                        source: 'roberto',
+                        report_type: 'cashless',
+                        status: 'RETRY_WAIT',
+                        source_row_count: null,
+                        awb_count: null,
+                        error_message: 'HYBRID_ERROR: old error',
+                        cycle_attempt: 1,
+                        max_attempts: 2,
+                        retry_available_at: '2026-11-18T03:21:06Z',
+                        events: [
+                            {
+                                id: 1,
+                                status: 'RETRY_WAIT',
+                                message: 'INTERNAL_ATTEMPT_HISTORY',
+                                worker_id: null,
+                                created_at: '2026-11-18T03:19:06Z',
+                            },
+                        ],
+                    },
+                    {
+                        id: 135,
+                        source: 'roberto',
+                        report_type: 'manual',
+                        status: 'SOURCE_SAVED',
+                        source_row_count: 15,
+                        awb_count: 15,
+                        error_message: null,
+                        cycle_attempt: 1,
+                        max_attempts: 2,
+                    },
+                ]}
+            />
+        </>,
+    );
+    expect(html).toContain('Pemulihan otomatis');
+    expect(html).toContain('Percobaan 1/2');
+    expect(html).toContain('Retry berikutnya:');
+    expect(html).toContain('15 AWB tersimpan');
+    expect(html).toContain('1 tersimpan');
+    expect(html).not.toContain('INTERNAL_ATTEMPT_HISTORY');
+    expect(html).not.toContain('HYBRID_ERROR: old error');
+});
+
+test('final Hybrid failures show the last error and used attempts', () => {
+    const html = renderToStaticMarkup(
+        <JneHybridSources
+            timezone="Asia/Jakarta"
+            sources={[
+                {
+                    id: 1,
+                    source: 'roberto',
+                    report_type: 'cashless',
+                    status: 'NEEDS_ATTENTION',
+                    source_row_count: null,
+                    awb_count: null,
+                    error_message: 'HYBRID_DOWNLOAD_TIMEOUT: unduhan terhenti',
+                    cycle_attempt: 2,
+                    max_attempts: 2,
+                },
+            ]}
+        />,
+    );
+    expect(html).toContain('Percobaan 2/2');
+    expect(html).toContain('Perlu diperiksa');
+    expect(html).toContain('unduhan terhenti');
+    expect(html).not.toContain('Retry berikutnya:');
+});
 
 test.each([
     ['unresolved', 'Tidak ada AWB jatuh tempo'],
@@ -68,6 +158,37 @@ test('reviewed failures remain failures but no longer ask for the same review', 
     expect(html).not.toContain('Perlu diperiksa');
     expect(html).not.toContain('Siap dimonitor');
 });
+
+test('retail dates still awaiting their source jobs are shown as waiting rather than running', () => {
+    const html = renderToStaticMarkup(
+        <JneRunState
+            run={{
+                status: 'COLLECTING_SOURCES',
+                sources: [{ status: 'QUEUED' }, { status: 'QUEUED' }],
+            }}
+        />,
+    );
+
+    expect(html).toContain('Menunggu giliran');
+    expect(html).not.toContain('Mengumpulkan report sumber');
+});
+
+test.each(['RUNNING', 'WAITING_REPORT', 'DOWNLOADING', 'SOURCE_SAVED'])(
+    'retail collection with a source in %s is not labeled as untouched work',
+    (status) => {
+        const html = renderToStaticMarkup(
+            <JneRunState
+                run={{
+                    status: 'COLLECTING_SOURCES',
+                    sources: [{ status }, { status: 'QUEUED' }],
+                }}
+            />,
+        );
+
+        expect(html).toContain('Mengumpulkan report sumber');
+        expect(html).not.toContain('Menunggu giliran');
+    },
+);
 
 test.each([
     ['NOT_IMPORTED', 'NOT_PROJECTED', 'CSV tersimpan · belum diproses', false],
@@ -141,8 +262,6 @@ test('one request contains all date parts with aggregate readiness and server pa
 test('pull report page keeps history and developer failures in the run workspace', () => {
     const html = renderToStaticMarkup(
         <JneReports
-            jobs={[]}
-            requests={{ data: [], current_page: 1, last_page: 1, total: 0 }}
             timezone="Asia/Jakarta"
             limits={{ max_days: 5, max_request_days: 366, max_awbs: 6000 }}
         />,

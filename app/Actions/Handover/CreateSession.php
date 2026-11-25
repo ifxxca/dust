@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 
 class CreateSession
 {
+    public function __construct(private CashlessHandoverReadiness $cashless) {}
+
     /** @param list<int> $taskIds */
     public function handle(User $user, array $taskIds, string $submissionKey): HandoverSession
     {
@@ -31,6 +33,7 @@ class CreateSession
             foreach ($tasks as $task) {
                 abort_unless($task->status === 'PICKED_UP' && $proofIds->has($task->id) && ! $memberships->has($task->id), 409, 'Task belum final atau sudah masuk session. Muat ulang kandidat.');
             }
+            $this->cashless->assertReady($tasks);
             $session = HandoverSession::create(['reference' => (string) Str::ulid(), 'submission_key' => $submissionKey, 'created_by' => $actor->id]);
             foreach ($tasks as $task) {
                 $session->items()->create(['pickup_task_id' => $task->id, 'pickup_record_id' => $proofIds->get($task->id)]);

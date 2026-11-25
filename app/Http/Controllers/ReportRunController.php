@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Reports\ManageReportJobs;
 use App\Actions\Reports\QueueScheduledJneReports;
+use App\Actions\Reports\ReportRetryPolicy;
 use App\Models\JneReportProfile;
 use App\Models\ReportJob;
 use Carbon\CarbonImmutable;
@@ -22,10 +23,14 @@ class ReportRunController extends Controller
         $this->authorizeAdmin($request);
         $data = $request->validate([
             'source' => ['nullable', Rule::in(array_keys(ReportJob::SOURCE_SLOTS))],
-            'status' => ['nullable', Rule::in(['QUEUED', 'COLLECTING_SOURCES', 'WAITING_APEX', ...ReportJob::ACTIVE_STATUSES, ...ReportJob::TERMINAL_STATUSES])],
+            'status' => ['nullable', Rule::in(['QUEUED', 'RETRY_WAIT', 'COLLECTING_SOURCES', 'WAITING_APEX', ...ReportJob::ACTIVE_STATUSES, ...ReportJob::TERMINAL_STATUSES])],
+            'run_id' => ['nullable', 'integer', 'min:1'],
             'q' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1'],
         ]);
         $query = ReportJob::whereNull('hybrid_batch_id');
+        if (! empty($data['run_id'])) {
+            $query->whereKey($data['run_id']);
+        }
         foreach (['source', 'status'] as $filter) {
             if (! empty($data[$filter])) {
                 $query->where($filter, $data[$filter]);
@@ -35,8 +40,16 @@ class ReportRunController extends Controller
             $query->whereRaw("customer_account like ? ESCAPE '!'", ['%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $data['q']).'%']);
         }
         $runs = $query->orderByDesc('id')->paginate(20)->withQueryString();
-        $events = DB::table('report_job_events')->whereIn('report_job_id', $runs->pluck('id'))->orderBy('id')->get()->groupBy('report_job_id');
-        $sources = ReportJob::whereIn('hybrid_batch_id', $runs->pluck('id'))->orderBy('id')->get(['id', 'hybrid_batch_id', 'source', 'report_type', 'status', 'source_row_count', 'awb_count', 'error_message'])->groupBy('hybrid_batch_id');
+        $sourceJobs = ReportJob::whereIn('hybrid_batch_id', $runs->pluck('id'))->withCasts(['retry_metadata' => 'array'])->orderBy('id')
+            ->get(['id', 'hybrid_batch_id', 'source', 'report_type', 'status', 'source_row_count', 'awb_count', 'error_message', 'attempt_count', 'retry_available_at', 'retry_classification', 'parameters->hybrid_retry as retry_metadata'])
+            ->each(fn (ReportJob $source) => $source->setAttribute('parameters', ['hybrid_retry' => $source->retry_metadata ?? []]));
+        $events = DB::table('report_job_events')->whereIn('report_job_id', $runs->pluck('id')->merge($sourceJobs->pluck('id')))->orderBy('id')->get()->groupBy('report_job_id');
+        $retry = app(ReportRetryPolicy::class);
+        $sources = $sourceJobs->groupBy('hybrid_batch_id');
+        $eventPayload = fn (int $id) => $events->get($id, collect())->map(fn ($event): array => [
+            'id' => $event->id, 'status' => $event->status, 'worker_id' => $event->worker_id,
+            'message' => $event->message, 'created_at' => CarbonImmutable::parse($event->created_at, 'UTC')->toIso8601String(),
+        ])->values();
         $batches = config('jne-reports.batch_checkpoints_enabled') ? DB::table('report_job_batches')->whereIn('report_job_id', $runs->pluck('id'))->orderBy('batch_number')->get(['report_job_id', 'batch_number', 'status', 'file_checksum', 'row_count', 'review_reason'])->groupBy('report_job_id') : collect();
 
         return Inertia::render('jne-report-runs', [
@@ -46,17 +59,22 @@ class ReportRunController extends Controller
                 'date_from' => $job->date_from->toDateString(), 'date_thru' => $job->date_thru->toDateString(),
                 'created_at' => $job->created_at->toIso8601String(), 'started_at' => $job->started_at?->toIso8601String(),
                 'completed_at' => $job->completed_at?->toIso8601String(), 'reviewed_at' => $job->reviewed_at?->toIso8601String(),
-                'events' => $events->get($job->id, collect())->map(fn ($event): array => [
-                    'id' => $event->id, 'status' => $event->status, 'worker_id' => $event->worker_id,
-                    'message' => $event->message, 'created_at' => CarbonImmutable::parse($event->created_at, 'UTC')->toIso8601String(),
+                'events' => $eventPayload($job->id),
+                'sources' => $sources->get($job->id, collect())->map(fn (ReportJob $source): array => [
+                    ...$source->only(['id', 'source', 'report_type', 'status', 'source_row_count', 'awb_count', 'error_message', 'attempt_count', 'retry_classification']),
+                    'cycle_attempt' => $retry->cycleAttempt($source), 'max_attempts' => $retry->cycleLimit($source),
+                    'retry_available_at' => $source->retry_available_at?->toIso8601String(),
+                    'error_stage' => $source->parameters['hybrid_retry']['last_failure']['stage'] ?? null,
+                    'root_cause' => $source->parameters['hybrid_retry']['last_failure']['root_cause'] ?? null,
+                    'events' => $eventPayload($source->id),
                 ])->values(),
-                'sources' => $sources->get($job->id, collect())->values(),
                 'apex_batches' => $batches->get($job->id, collect())->values(),
             ]),
             'profiles' => JneReportProfile::where(fn ($query) => $query->where('source', '<>', 'hybrid')->orWhere('customer_account', '<>', 'HYBRID_GABUNGAN'))->orderBy('source')->orderBy('id')->get(['id', 'source', 'report_type', 'customer_account', 'label']),
             'filters' => ['source' => $data['source'] ?? '', 'status' => $data['status'] ?? '', 'q' => $data['q'] ?? ''],
             'timezone' => config('pickup.timezone'),
             'checkpointsEnabled' => (bool) config('jne-reports.batch_checkpoints_enabled'),
+            'automaticRetryEnabled' => (bool) config('jne-reports.automatic_retry_enabled'),
             'today' => CarbonImmutable::now('Asia/Jakarta')->toDateString(),
         ]);
     }

@@ -1,3 +1,5 @@
+import { NativeSelect } from '@/components/ui/native-select';
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
 import { useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,9 +63,10 @@ export default function JneApexRecovery({
                     <Label htmlFor="apex-recovery-batch">
                         Tindakan pemulihan
                     </Label>
-                    <select
+                    <NativeSelect
+                        wrapperClassName="w-full"
                         id="apex-recovery-batch"
-                        className="h-10 w-full rounded-md border bg-background px-3"
+                        className="h-10 rounded-md border bg-background px-3"
                         value={form.data.number}
                         onChange={(event) =>
                             form.setData('number', event.target.value)
@@ -83,7 +86,7 @@ export default function JneApexRecovery({
                                     belum pasti
                                 </option>
                             ))}
-                    </select>
+                    </NativeSelect>
                     {form.data.number && (
                         <>
                             <Label htmlFor="apex-recovery-file">
@@ -115,9 +118,8 @@ export default function JneApexRecovery({
                             form.setData('reason', event.target.value)
                         }
                     />
-                    <label className="flex items-start gap-2 text-sm">
-                        <input
-                            type="checkbox"
+                    <label className="flex min-h-11 items-start gap-2 text-sm">
+                        <NativeCheckbox
                             checked={form.data.confirmed_not_submitted}
                             onChange={(event) =>
                                 form.setData(

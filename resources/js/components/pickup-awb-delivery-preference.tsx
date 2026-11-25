@@ -1,4 +1,7 @@
-import { useForm } from '@inertiajs/react';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
+import { useForm, usePage } from '@inertiajs/react';
+import { EmailRecipientsInput } from '@/components/email-recipients-input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -11,27 +14,44 @@ export function DeliveryPreference({
     detail: ReconciliationDetail;
     saved: () => void;
 }) {
+    const emailLimit = Number(usePage().props.email_recipient_limit ?? 1);
     const form = useForm({
         enabled: detail.preference?.enabled ?? false,
-        recipient: detail.preference?.recipient ?? '',
+        recipients: detail.preference?.email_recipients ??
+            detail.preference?.recipients ?? [
+                detail.preference?.recipient ?? '',
+            ],
         expected_revision: detail.preference?.revision ?? 0,
         reason: '',
     });
     return (
-        <details>
-            <summary className="cursor-pointer py-2 font-medium">
+        <Disclosure>
+            <DisclosureSummary className="cursor-pointer">
                 Pengaturan pengiriman customer
-            </summary>
+            </DisclosureSummary>
             <form
                 onSubmit={(event) => {
                     event.preventDefault();
+                    form.transform((data) => ({
+                        ...data,
+                        recipients: data.recipients.every(
+                            (email) => email.trim() === '',
+                        )
+                            ? []
+                            : data.recipients,
+                    }));
                     form.post(automationRoutes.preference.url(detail.task.id), {
                         preserveScroll: true,
                         onSuccess: saved,
                         onError: (errors) => {
-                            const field = errors.recipient
-                                ? 'automation-recipient'
-                                : 'automation-reason';
+                            const invalidRecipient = Object.keys(errors).find(
+                                (key) => key.startsWith('recipients.'),
+                            );
+                            const field = invalidRecipient
+                                ? `automation-recipient-${invalidRecipient.split('.')[1]}`
+                                : errors.recipient || errors.recipients
+                                  ? 'automation-recipient-0'
+                                  : 'automation-reason';
                             document.getElementById(field)?.focus();
                         },
                     });
@@ -45,8 +65,7 @@ export function DeliveryPreference({
                     </p>
                 )}
                 <label className="flex min-h-11 items-center gap-2 text-sm">
-                    <input
-                        type="checkbox"
+                    <NativeCheckbox
                         checked={form.data.enabled}
                         onChange={(event) =>
                             form.setData('enabled', event.target.checked)
@@ -54,34 +73,33 @@ export function DeliveryPreference({
                     />
                     Aktifkan pengiriman otomatis ke customer ini
                 </label>
-                <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="automation-recipient">
-                        Email tujuan Excel dan PDF
-                    </Label>
-                    <Input
-                        id="automation-recipient"
-                        type="email"
-                        autoComplete="email"
-                        value={form.data.recipient}
-                        aria-invalid={!!form.errors.recipient}
-                        aria-describedby={
-                            form.errors.recipient
-                                ? 'automation-recipient-error'
-                                : undefined
-                        }
-                        onChange={(event) =>
-                            form.setData('recipient', event.target.value)
-                        }
-                    />
-                    {form.errors.recipient && (
-                        <p
-                            id="automation-recipient-error"
-                            className="text-sm text-destructive"
-                        >
-                            {form.errors.recipient}
-                        </p>
-                    )}
-                </div>
+                <EmailRecipientsInput
+                    id="automation-recipient"
+                    label="Email tujuan Excel dan PDF"
+                    value={form.data.recipients}
+                    limit={emailLimit}
+                    disabled={form.processing}
+                    onChange={(emails) => form.setData('recipients', emails)}
+                    errors={{
+                        list: form.errors.recipients,
+                        ...Object.fromEntries(
+                            form.data.recipients.map((_, index) => [
+                                index,
+                                (form.errors as Record<string, string>)[
+                                    `recipients.${index}`
+                                ] ??
+                                    (index === 0
+                                        ? (
+                                              form.errors as Record<
+                                                  string,
+                                                  string
+                                              >
+                                          ).recipient
+                                        : undefined),
+                            ]),
+                        ),
+                    }}
+                />
                 <div className="flex flex-col gap-1.5">
                     <Label htmlFor="automation-reason">Alasan perubahan</Label>
                     <Input
@@ -110,6 +128,6 @@ export function DeliveryPreference({
                     {form.processing ? 'Menyimpan…' : 'Simpan pengaturan'}
                 </Button>
             </form>
-        </details>
+        </Disclosure>
     );
 }

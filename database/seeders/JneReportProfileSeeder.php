@@ -25,7 +25,7 @@ class JneReportProfileSeeder extends Seeder
                 ['source' => 'hybrid', 'report_type' => 'combined', 'customer_account' => 'HYBRID_PM', 'label' => 'Hybrid Server PM', 'lookback_days' => 1],
                 ['source' => 'hybrid', 'report_type' => 'combined', 'customer_account' => 'HYBRID_PUMAN', 'label' => 'Hybrid Server Puman', 'lookback_days' => 1],
                 ['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'label' => 'Pembaruan resi belum delivered / cancel', 'lookback_days' => 60],
-                ['source' => 'apex', 'report_type' => 'apex', 'customer_account' => '20087000', 'label' => 'Report customer 20087000', 'lookback_days' => 1],
+                ['source' => 'apex', 'report_type' => 'apex', 'customer_account' => '20087000', 'label' => 'Report customer 20087000', 'lookback_days' => 2],
             ] as $profile) {
                 JneReportProfile::firstOrCreate([
                     'source' => $profile['source'],

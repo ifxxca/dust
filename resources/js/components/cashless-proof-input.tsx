@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     playScanError,
-    playScanSuccess,
+    playScanAccepted,
+    playScanDuplicate,
     primeScanAudio,
 } from '@/lib/scan-feedback';
 import {
@@ -29,13 +30,18 @@ export default function CashlessProofInput({
     savedAwbs?: string[];
     disabled: boolean;
     error?: string;
-    onAdd: (raw: string) => Promise<{ awb?: string; error?: string }>;
+    onAdd: (raw: string) => Promise<{
+        awb?: string;
+        error?: string;
+        kind?: 'duplicate' | 'invalid';
+    }>;
     onRemove: (awb: string) => void;
     onCamera?: () => void;
 }) {
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState('');
     const [notice, setNotice] = useState('');
+    const [invalid, setInvalid] = useState(false);
     const [busy, setBusy] = useState(false);
     const adding = useRef(false);
     const input = useRef<HTMLInputElement>(null);
@@ -60,11 +66,19 @@ export default function CashlessProofInput({
         setBusy(true);
         try {
             const result = await onAdd(value);
-            if (result.error) playScanError();
-            else if (result.awb) playScanSuccess();
-            setNotice(result.error ?? `${result.awb} ditambahkan.`);
+            setInvalid(!!result.error);
+            if (result.kind === 'duplicate') playScanDuplicate();
+            else if (result.error) playScanError();
+            else if (result.awb) playScanAccepted();
+            setNotice(
+                result.error ??
+                    `${result.awb} · Draft tersimpan, belum dikirim ke server.`,
+            );
             if (!result.error) setValue('');
+            else input.current?.select();
         } catch {
+            setInvalid(true);
+            playScanError();
             setNotice(
                 'Resi belum tersimpan di draft. Periksa penyimpanan dan coba lagi.',
             );
@@ -124,7 +138,7 @@ export default function CashlessProofInput({
                     <DialogHeader>
                         <DialogTitle>Resi Cashless · {awbs.length}</DialogTitle>
                         <DialogDescription>
-                            Jumlah dihitung dari resi unik. Diproses di Puman
+                            Jumlah dihitung dari resi unik. Diproses di PM
                             setelah POP disimpan.
                         </DialogDescription>
                     </DialogHeader>
@@ -136,11 +150,15 @@ export default function CashlessProofInput({
                             <Input
                                 ref={input}
                                 id="pop-cashless-awb"
-                                className="min-w-0 flex-1"
+                                className="h-12 min-w-0 flex-1"
                                 value={value}
                                 disabled={disabled || busy}
                                 autoComplete="off"
                                 spellCheck={false}
+                                aria-invalid={invalid}
+                                aria-describedby={
+                                    notice ? 'pop-cashless-notice' : undefined
+                                }
                                 onChange={(event) =>
                                     setValue(event.target.value)
                                 }
@@ -154,6 +172,7 @@ export default function CashlessProofInput({
                             />
                             <Button
                                 type="button"
+                                className="min-h-12"
                                 disabled={disabled || busy || !value.trim()}
                                 onClick={() => void add()}
                             >
@@ -175,7 +194,11 @@ export default function CashlessProofInput({
                             </Button>
                         )}
                         {notice && (
-                            <p role="status" className="text-sm break-words">
+                            <p
+                                id="pop-cashless-notice"
+                                role={invalid ? 'alert' : 'status'}
+                                className="text-sm break-words"
+                            >
                                 {notice}
                             </p>
                         )}

@@ -13,7 +13,7 @@ try {
     await context.route('**/*', route => route.abort());
     const page = await context.newPage();
     await page.setContent(await readFile(input, 'utf8'), { waitUntil: 'load' });
-    await page.pdf({ path: output, format: 'A4', printBackground: true, margin: { top: '16mm', right: '12mm', bottom: '16mm', left: '12mm' }, displayHeaderFooter: true, headerTemplate: '<span></span>', footerTemplate: '<div style="font-size:9px;width:100%;text-align:center"><span class="pageNumber"></span> / <span class="totalPages"></span></div>' });
+    await page.pdf({ path: output, format: 'A4', landscape: true, printBackground: true, margin: { top: '14mm', right: '12mm', bottom: '16mm', left: '12mm' }, displayHeaderFooter: true, headerTemplate: '<span></span>', footerTemplate: '<div style="font-family:Arial,sans-serif;color:#475569;font-size:9px;width:100%;text-align:center"><span class="pageNumber"></span> / <span class="totalPages"></span></div>' });
 } finally {
     await browser.close();
 }

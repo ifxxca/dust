@@ -1,3 +1,5 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { NativeSelect } from '@/components/ui/native-select';
 import { router, useHttp } from '@inertiajs/react';
 import { HttpResponseError } from '@inertiajs/core';
 import { useRef, useState } from 'react';
@@ -175,10 +177,10 @@ export default function PickupAwbReview({
                 </Button>
             ) : (
                 <>
-                    <details aria-label="Resi terikat">
-                        <summary className="cursor-pointer py-2 text-sm font-medium">
+                    <Disclosure aria-label="Resi terikat">
+                        <DisclosureSummary className="cursor-pointer">
                             Resi terikat ({detail.assigned_shipments.total})
-                        </summary>
+                        </DisclosureSummary>
                         <form
                             className="my-3 flex gap-2"
                             onSubmit={(event) => {
@@ -239,7 +241,7 @@ export default function PickupAwbReview({
                                 loadPage({ attached_page })
                             }
                         />
-                    </details>
+                    </Disclosure>
                     <section
                         className="flex flex-col gap-3"
                         aria-label="Rekomendasi resi"
@@ -459,10 +461,10 @@ export default function PickupAwbReview({
                                 loadPage({ pending_page })
                             }
                         />
-                        <details>
-                            <summary className="cursor-pointer py-2 text-xs font-medium">
+                        <Disclosure>
+                            <DisclosureSummary className="cursor-pointer">
                                 Catat satu barang pending
-                            </summary>
+                            </DisclosureSummary>
                             <form
                                 className="mt-3 flex flex-col gap-3"
                                 onSubmit={(event) => {
@@ -485,7 +487,7 @@ export default function PickupAwbReview({
                                 <Label htmlFor="pending-category">
                                     Kategori
                                 </Label>
-                                <select
+                                <NativeSelect
                                     id="pending-category"
                                     className="h-10 rounded-md border bg-card px-3 text-sm"
                                     value={category}
@@ -500,17 +502,17 @@ export default function PickupAwbReview({
                                             </option>
                                         ),
                                     )}
-                                </select>
+                                </NativeSelect>
                                 <Button variant="outline" disabled={busy}>
                                     Catat pending
                                 </Button>
                             </form>
-                        </details>
+                        </Disclosure>
                     </section>
-                    <details aria-label="Resi dikeluarkan">
-                        <summary className="cursor-pointer py-2 text-sm font-medium">
+                    <Disclosure aria-label="Resi dikeluarkan">
+                        <DisclosureSummary className="cursor-pointer">
                             Dikeluarkan ({detail.excluded.total})
-                        </summary>
+                        </DisclosureSummary>
                         {detail.excluded.data.map((row) => (
                             <div key={row.id} className="border-b py-2 text-xs">
                                 <p className="break-all">{row.awb}</p>
@@ -543,7 +545,7 @@ export default function PickupAwbReview({
                                 loadPage({ excluded_page })
                             }
                         />
-                    </details>
+                    </Disclosure>
                     <form
                         id="awb-review-validate-form"
                         onSubmit={(event) => {
@@ -553,10 +555,10 @@ export default function PickupAwbReview({
                     />
                 </>
             )}
-            <details>
-                <summary className="cursor-pointer py-2 text-xs font-medium">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Riwayat koreksi isi pickup
-                </summary>
+                </DisclosureSummary>
                 {detail.review_events.data.map((event) => (
                     <div key={event.id} className="border-b py-3 text-xs">
                         <p>
@@ -572,7 +574,7 @@ export default function PickupAwbReview({
                     page={detail.review_events}
                     change={(review_page) => loadPage({ review_page })}
                 />
-            </details>
+            </Disclosure>
         </div>
     );
 }

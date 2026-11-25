@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\JneShipmentObservationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/** @property CarbonImmutable $observed_at */
 class JneShipmentObservation extends Model
 {
     /** @use HasFactory<JneShipmentObservationFactory> */

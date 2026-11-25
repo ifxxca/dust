@@ -50,7 +50,7 @@ test('customer create rejects invalid fields without persisting data', function 
 })->with([
     [['email' => 'invalid'], 'email'], [['phone' => 'telephone'], 'phone'], [['latitude' => 91], 'latitude'], [['longitude' => 181], 'longitude'],
     [['latitude' => null, 'longitude' => 0], 'latitude'], [['latitude' => 0, 'longitude' => null], 'longitude'], [['name' => ' '], 'name'],
-    [['email' => null, 'phone' => null], 'contact'], [['is_active' => 'inactive'], 'is_active'], [['customer_code' => str_repeat('a', 65)], 'customer_code'],
+    [['is_active' => 'inactive'], 'is_active'], [['customer_code' => str_repeat('a', 65)], 'customer_code'],
     [['created_by' => 1], 'created_by'], [['updated_by' => 1], 'updated_by'], [['version' => 99], 'version'], [['unexpected' => 'field'], 'unexpected'],
 ]);
 
@@ -64,12 +64,43 @@ test('customer code collision is rejected and coordinates can be cleared togethe
     $this->assertDatabaseCount('customers', 1);
 });
 
-test('customer update cannot erase all contacts and preserves data after validation failure', function () {
+test('customer can be created without optional contacts', function (array $contacts) {
+    $actor = User::factory()->create(['role' => 'cs']);
+
+    $this->actingAs($actor)->postJson(route('api.customers.store'), [
+        'name' => 'Customer Tanpa Kontak', 'pickup_address' => 'Alamat pickup', ...$contacts,
+    ])->assertCreated()->assertJsonPath('data.contact', '');
+
+    $this->assertDatabaseHas('customers', ['name' => 'Customer Tanpa Kontak', 'contact' => '', 'email' => null, 'phone' => null]);
+})->with([
+    'omitted' => [[]],
+    'null' => [['contact' => null, 'email' => null, 'phone' => null]],
+    'empty strings' => [['contact' => '', 'email' => '', 'phone' => '']],
+]);
+
+test('clearing pickup contact uses available email or phone and permits no contact', function (?string $email, ?string $phone, string $expectedContact) {
     $cs = User::factory()->create(['role' => 'cs']);
     $customer = Customer::factory()->create(['email' => 'original@example.test', 'phone' => '081234567890', 'contact' => 'original@example.test']);
-    $this->actingAs($cs)->patchJson(route('api.customers.update', $customer), ['expected_version' => 1, 'contact' => null, 'email' => null, 'phone' => null])->assertUnprocessable()->assertJsonValidationErrors('contact');
-    expect($customer->fresh()->contact)->toBe('original@example.test')->and($customer->fresh()->email)->toBe('original@example.test')->and($customer->fresh()->version)->toBe(1);
-    $this->patchJson(route('api.customers.update', $customer), ['expected_version' => 1, 'contact' => null, 'email' => null, 'phone' => '089876543210'])->assertOk()->assertJsonPath('data.contact', '089876543210')->assertJsonPath('data.email', null);
+
+    $this->actingAs($cs)->patchJson(route('api.customers.update', $customer), [
+        'expected_version' => 1, 'contact' => '', 'email' => $email, 'phone' => $phone,
+    ])->assertOk()->assertJsonPath('data.contact', $expectedContact)->assertJsonPath('data.version', 2);
+
+    $this->assertDatabaseHas('customers', ['id' => $customer->id, 'contact' => $expectedContact, 'email' => $email, 'phone' => $phone]);
+})->with([
+    'email first' => ['new@example.test', '089876543210', 'new@example.test'],
+    'phone fallback' => [null, '089876543210', '089876543210'],
+    'all empty' => [null, null, ''],
+]);
+
+test('omitting pickup contact during an update preserves the existing contact', function () {
+    $customer = Customer::factory()->create(['contact' => 'PIC lama']);
+
+    $this->actingAs(User::factory()->create(['role' => 'cs']))->patchJson(route('api.customers.update', $customer), [
+        'expected_version' => 1, 'email' => 'updated@example.test',
+    ])->assertOk()->assertJsonPath('data.contact', 'PIC lama');
+
+    $this->assertDatabaseHas('customers', ['id' => $customer->id, 'contact' => 'PIC lama', 'email' => 'updated@example.test']);
 });
 
 test('unsupported and inactive users cannot manage customer records', function (array $attributes) {

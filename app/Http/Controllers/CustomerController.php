@@ -37,13 +37,20 @@ class CustomerController extends Controller
 
     public function store(StoreCustomerRequest $request): CustomerResource
     {
-        $data = $request->safe()->only(['name', 'pickup_address', 'contact', 'customer_code', 'email', 'phone', 'latitude', 'longitude', 'is_active']);
+        $data = $request->safe()->only(['name', 'pickup_address', 'contact', 'customer_code', 'email', 'additional_emails', 'phone', 'latitude', 'longitude', 'is_active', 'document_delivery_settings']);
+        if (! config('pickup.email_recipients.enabled')) {
+            unset($data['additional_emails']);
+        }
         try {
             $customer = DB::transaction(function () use ($request, $data): Customer {
                 $actor = User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
                 abort_unless($actor->canManagePickup(), 403);
 
-                return Customer::create([...$data, 'contact' => $data['contact'] ?? $data['email'] ?? $data['phone'], 'customer_code' => $data['customer_code'] ?? 'CUST-'.Str::ulid(), 'created_by' => $actor->id])->refresh();
+                if (isset($data['document_delivery_settings'])) {
+                    $data['document_delivery_settings'] = (new Customer)->recordDocumentDeliveryConsent($data['document_delivery_settings'], $actor->id);
+                }
+
+                return Customer::create([...$data, 'contact' => $data['contact'] ?? $data['email'] ?? $data['phone'] ?? '', 'customer_code' => $data['customer_code'] ?? 'CUST-'.Str::ulid(), 'created_by' => $actor->id])->refresh();
             }, 3);
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['customer_code' => 'Kode customer sudah digunakan.']);
@@ -54,7 +61,10 @@ class CustomerController extends Controller
 
     public function update(UpdateCustomerRequest $request, Customer $customer): CustomerResource
     {
-        $data = $request->safe()->only(['name', 'pickup_address', 'contact', 'customer_code', 'email', 'phone', 'latitude', 'longitude', 'is_active']);
+        $data = $request->safe()->only(['name', 'pickup_address', 'contact', 'customer_code', 'email', 'additional_emails', 'phone', 'latitude', 'longitude', 'is_active', 'document_delivery_settings']);
+        if (! config('pickup.email_recipients.enabled')) {
+            unset($data['additional_emails']);
+        }
         abort_if($data === [], 422, 'Isi perubahan customer yang ingin disimpan.');
         try {
             $updated = DB::transaction(function () use ($request, $customer, $data): Customer {
@@ -65,10 +75,10 @@ class CustomerController extends Controller
                 if (array_key_exists('contact', $data) && $data['contact'] === null) {
                     $email = array_key_exists('email', $data) ? $data['email'] : $current->email;
                     $phone = array_key_exists('phone', $data) ? $data['phone'] : $current->phone;
-                    $data['contact'] = $email ?: $phone;
-                    if (blank($data['contact'])) {
-                        throw ValidationException::withMessages(['contact' => 'Isi kontak pickup, email, atau nomor telepon.']);
-                    }
+                    $data['contact'] = $email ?: ($phone ?: '');
+                }
+                if (isset($data['document_delivery_settings'])) {
+                    $data['document_delivery_settings'] = $current->recordDocumentDeliveryConsent($data['document_delivery_settings'], $actor->id);
                 }
                 $current->update([...$data, 'updated_by' => $actor->id, 'version' => $current->version + 1]);
                 Log::info('Customer updated', ['actor_id' => $actor->id, 'customer_id' => $current->id, 'version' => $current->version, 'is_active' => $current->is_active]);

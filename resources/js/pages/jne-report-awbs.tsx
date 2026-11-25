@@ -1,4 +1,6 @@
-import { Head, Link, useForm, usePoll } from '@inertiajs/react';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
+import { DataTablePagination } from '@/components/data-table';
 import PageContainer from '@/components/page-container';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -187,10 +189,10 @@ export default function JneReportAwbs({
                             </Button>
                         </div>
                     )}
-                    <details className="text-sm">
-                        <summary className="cursor-pointer font-medium">
+                    <Disclosure>
+                        <DisclosureSummary className="cursor-pointer">
                             Rincian penarikan & impor
-                        </summary>
+                        </DisclosureSummary>
                         <div className="mt-3 flex flex-col gap-3">
                             <p className="text-sm text-muted-foreground">
                                 Mengambil report → CSV tersimpan → Memproses
@@ -215,7 +217,7 @@ export default function JneReportAwbs({
                                 report ini tetap dipertahankan.
                             </p>
                         </div>
-                    </details>
+                    </Disclosure>
                     {stage.issue && (
                         <form
                             className="space-y-2 rounded-md border p-3"
@@ -376,44 +378,24 @@ export default function JneReportAwbs({
                             ))}
                         </TableBody>
                     </Table>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm text-muted-foreground">
-                            {awbs.total.toLocaleString('id-ID')} AWB · Halaman{' '}
-                            {awbs.current_page} / {awbs.last_page}
-                        </p>
-                        <div className="flex gap-2">
-                            {awbs.current_page > 1 && (
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        preserveScroll
-                                        href={reports.awbs.url(report.id, {
-                                            query: {
-                                                q: filters.q,
-                                                page: awbs.current_page - 1,
-                                            },
-                                        })}
-                                    >
-                                        Sebelumnya
-                                    </Link>
-                                </Button>
-                            )}
-                            {awbs.current_page < awbs.last_page && (
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        preserveScroll
-                                        href={reports.awbs.url(report.id, {
-                                            query: {
-                                                q: filters.q,
-                                                page: awbs.current_page + 1,
-                                            },
-                                        })}
-                                    >
-                                        Berikutnya
-                                    </Link>
-                                </Button>
-                            )}
-                        </div>
-                    </div>
+                    <DataTablePagination
+                        hrefForPage={(page) =>
+                            reports.awbs.url(report.id, {
+                                query: { q: filters.q, page },
+                            })
+                        }
+                        meta={awbs}
+                        page={awbs.current_page}
+                        itemLabel="AWB"
+                        onPage={(page) =>
+                            router.get(
+                                reports.awbs.url(report.id),
+                                { q: filters.q, page },
+                                { preserveScroll: true },
+                            )
+                        }
+                        className="px-0 sm:px-0 [&_button]:min-h-11 [&_button]:min-w-11"
+                    />
                 </CardContent>
             </Card>
         </PageContainer>

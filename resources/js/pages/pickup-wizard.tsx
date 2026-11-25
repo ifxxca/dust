@@ -1,3 +1,4 @@
+import { Textarea } from '@/components/ui/textarea';
 import { Head, Link, router, useHttp } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -617,7 +618,7 @@ export default function PickupWizard({
                                                         ? '(wajib)'
                                                         : '(opsional)'}
                                                 </Label>
-                                                <textarea
+                                                <Textarea
                                                     id="wizard-reason"
                                                     maxLength={2000}
                                                     required={
@@ -644,7 +645,7 @@ export default function PickupWizard({
                                                 <Label htmlFor="wizard-visit-notes">
                                                     Catatan Kunjungan
                                                 </Label>
-                                                <textarea
+                                                <Textarea
                                                     id="wizard-visit-notes"
                                                     maxLength={2000}
                                                     disabled={busy}
@@ -751,7 +752,7 @@ export default function PickupWizard({
                                             <Label htmlFor="wizard-proof-notes">
                                                 Catatan Pickup (opsional)
                                             </Label>
-                                            <textarea
+                                            <Textarea
                                                 id="wizard-proof-notes"
                                                 maxLength={2000}
                                                 disabled={busy}

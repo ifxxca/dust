@@ -241,6 +241,7 @@ class JneMonitoringController extends Controller
                 ...$profile->only(['id', 'source', 'report_type', 'customer_account', 'national_account', 'label', 'enabled', 'mode', 'lookback_days', 'interval_minutes', 'last_error', 'version']),
                 'date_from' => $profile->date_from?->toDateString(), 'date_thru' => $profile->date_thru?->toDateString(),
                 'next_run_at' => $profile->next_run_at?->toIso8601String(), 'last_run_at' => $profile->last_run_at?->toIso8601String(),
+                'daily_collection_time' => $profile->dailyCollectionTime(),
             ]),
             'issues' => ReportJob::whereNull('hybrid_batch_id')->whereNull('reviewed_at')->where(fn ($query) => $query->whereIn('status', ['FAILED', 'NEEDS_ATTENTION'])->orWhere('import_status', 'FAILED')->orWhere('projection_status', 'FAILED'))
                 ->orderByDesc('id')->limit(50)->get(['id', 'source', 'customer_account', 'status', 'error_message', 'import_error', 'projection_error']),
@@ -293,7 +294,7 @@ class JneMonitoringController extends Controller
             unset($payload['version']);
             $record->fill($payload);
             $record->fill(['created_by' => $record->exists ? $record->created_by : $request->user()->id, 'updated_by' => $request->user()->id,
-                'next_run_at' => $data['enabled'] ? now() : null, 'last_error' => null, 'version' => $record->exists ? $record->version + 1 : 1]);
+                'next_run_at' => $data['enabled'] ? ($record->dailyCollectionTime() !== null ? $record->nextScheduledRun() : now()) : null, 'last_error' => null, 'version' => $record->exists ? $record->version + 1 : 1]);
             $record->save();
         });
 
@@ -314,13 +315,14 @@ class JneMonitoringController extends Controller
 
                     continue;
                 }
-                JneReportProfile::create([
+                $record = new JneReportProfile([
                     ...$account, 'customer_account' => $number, 'source' => 'apex', 'report_type' => 'apex',
                     'label' => null, 'mode' => 'rolling', 'lookback_days' => $data['lookback_days'],
                     'enabled' => $data['enabled'], 'interval_minutes' => $data['interval_minutes'],
-                    'next_run_at' => $data['enabled'] ? now() : null,
                     'created_by' => $request->user()->id, 'updated_by' => $request->user()->id,
                 ]);
+                $record->next_run_at = $data['enabled'] ? ($record->dailyCollectionTime() !== null ? $record->nextScheduledRun() : now()) : null;
+                $record->save();
             }
         });
 

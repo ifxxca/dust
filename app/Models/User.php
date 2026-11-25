@@ -25,11 +25,13 @@ use Laravel\Sanctum\HasApiTokens;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'role', 'is_active'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'customer_id'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'hybrid_username', 'hybrid_password', 'hybrid_account_key', 'hybrid_credential_version'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
     public const ROLES = ['cs', 'pickup_staff', 'retail_staff', 'admin_supervisor'];
+
+    public const CUSTOMER_ROLE = 'customer';
 
     public const PICKUP_ROLES = ['pickup_staff', 'retail_staff', 'admin_supervisor'];
 
@@ -45,7 +47,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canVerifyHandover(): bool
     {
-        return $this->is_active && in_array($this->role, ['retail_staff', 'admin_supervisor'], true);
+        return $this->canExecutePickup();
     }
 
     /** @use HasFactory<UserFactory> */
@@ -62,6 +64,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'hybrid_password' => 'encrypted',
+            'hybrid_credential_version' => 'integer',
         ];
     }
 }

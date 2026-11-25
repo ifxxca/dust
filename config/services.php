@@ -1,6 +1,17 @@
 <?php
 
 return [
+    'waha' => [
+        'base_url' => env('WAHA_BASE_URL'),
+        'api_key' => env('WAHA_API_KEY'),
+        'delivery' => [
+            'start_hour' => 8,
+            'end_hour' => 20,
+            'send_seen' => (bool) env('WAHA_SEND_SEEN', true),
+            'recipient_hourly_limit' => (int) env('WAHA_RECIPIENT_HOURLY_LIMIT', 8),
+            'recipient_daily_limit' => (int) env('WAHA_RECIPIENT_DAILY_LIMIT', 24),
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------

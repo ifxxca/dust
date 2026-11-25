@@ -25,11 +25,11 @@ class ReviewPickupAwbsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => ['required', Rule::in(['ADD', 'REMOVE', 'UNLOCK', 'VALIDATE', 'PENDING', 'READY', 'CANCEL_PENDING'])],
+            'action' => ['required', Rule::in(['ADD', 'REMOVE', 'CONFIRM', 'UNLOCK', 'VALIDATE', 'PENDING', 'READY', 'CANCEL_PENDING'])],
             'expected_version' => ['required', 'integer', 'min:0'],
             'reason' => ['required', 'string', 'min:5', 'max:500'],
-            'shipment_id' => ['nullable', 'required_if:action,ADD,REMOVE', 'integer', 'min:1'],
-            'shipment_version' => ['nullable', 'required_if:action,ADD,REMOVE', 'integer', 'min:1'],
+            'shipment_id' => ['nullable', 'required_if:action,ADD,REMOVE,CONFIRM', 'integer', 'min:1'],
+            'shipment_version' => ['nullable', 'required_if:action,ADD,REMOVE,CONFIRM', 'integer', 'min:1'],
             'pending_id' => ['nullable', 'required_if:action,READY,CANCEL_PENDING', 'integer', 'min:1'],
             'pending_version' => ['nullable', 'required_with:pending_id', 'integer', 'min:1'],
             'category' => ['nullable', 'required_if:action,PENDING', Rule::in(PickupProcessingRecord::CATEGORIES)],

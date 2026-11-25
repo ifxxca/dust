@@ -214,6 +214,9 @@ export default function CashlessAlertsPanel({
                                         {item.customer_name}
                                     </span>
                                     <span className="notification-message">
+                                        {item.exception_count
+                                            ? `${item.exception_count} resi perlu diperiksa. `
+                                            : ''}
                                         {item.message}
                                     </span>
                                     <time

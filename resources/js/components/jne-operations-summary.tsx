@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Link } from '@inertiajs/react';
 import * as monitoring from '@/routes/jne-monitoring';
 import * as exceptions from '@/routes/jne-exceptions';
@@ -86,10 +87,10 @@ export default function JneOperationsSummary({
                 Periksa POP, kekurangan sementara, dan pengesahan koleksi per
                 pickup
             </Link>
-            <details>
-                <summary className="text-sm">
+            <Disclosure>
+                <DisclosureSummary>
                     Kesiapan aktivasi kebijakan
-                </summary>
+                </DisclosureSummary>
                 <ul className="mt-2 space-y-1 text-sm">
                     {Object.entries(data.gates).map(([name, active]) => (
                         <li key={name}>
@@ -100,7 +101,7 @@ export default function JneOperationsSummary({
                         </li>
                     ))}
                 </ul>
-            </details>
+            </Disclosure>
         </section>
     );
 }

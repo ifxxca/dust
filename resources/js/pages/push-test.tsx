@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, useHttp } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { BellRing, RefreshCw, Search } from 'lucide-react';
@@ -400,10 +401,10 @@ export default function PushTest({
                         tampilan foreground pesan tes memerlukan APK terbaru.
                     </p>
                 </section>
-                <details className="rounded-xl border bg-card p-4 text-sm">
-                    <summary className="cursor-pointer font-medium">
+                <Disclosure>
+                    <DisclosureSummary className="cursor-pointer">
                         Jika tes masih menunggu worker
-                    </summary>
+                    </DisclosureSummary>
                     <p className="mt-3">
                         Jalankan worker berikut di server Laravel dan biarkan
                         proses tetap berjalan. Setelah pembaruan kode, restart
@@ -418,7 +419,7 @@ export default function PushTest({
                         Notifikasi foreground, background, dan izin Android
                         tetap perlu dicek pada perangkat.
                     </p>
-                </details>
+                </Disclosure>
             </PageContainer>
         </>
     );

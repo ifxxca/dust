@@ -1,3 +1,5 @@
+import { NativeSelect } from '@/components/ui/native-select';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { ArrowUpRight, Filter, Search, X } from 'lucide-react';
@@ -293,9 +295,10 @@ export default function PackageProcessingMonitoring({
                                     {label}
                                 </Label>
                                 {options[key] ? (
-                                    <select
+                                    <NativeSelect
+                                        wrapperClassName="w-full"
                                         id={`processing-${key}`}
-                                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                                        className="h-9 rounded-md border bg-background px-2 text-sm"
                                         value={form.data[key]}
                                         onChange={(event) =>
                                             form.setData(
@@ -312,7 +315,7 @@ export default function PackageProcessingMonitoring({
                                                 {title}
                                             </option>
                                         ))}
-                                    </select>
+                                    </NativeSelect>
                                 ) : (
                                     <Input
                                         id={`processing-${key}`}
@@ -377,10 +380,10 @@ export default function PackageProcessingMonitoring({
                 {scope}. Backlog: pickup sebelum hari operasional{' '}
                 {operations.today}; terpisah dari periode pilihan.
             </p>
-            <details className="overflow-hidden rounded-xl border bg-card">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-medium">
+            <Disclosure className="overflow-hidden">
+                <DisclosureSummary className="cursor-pointer">
                     Ringkasan kategori
-                </summary>
+                </DisclosureSummary>
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -424,7 +427,7 @@ export default function PackageProcessingMonitoring({
                         ))}
                     </TableBody>
                 </Table>
-            </details>
+            </Disclosure>
             <section className="space-y-3" aria-label="Daftar pemrosesan">
                 {(applied.length > 0 || filters.q) && (
                     <div

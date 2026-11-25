@@ -8,6 +8,38 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
+test('temporary customer bypass allows pickup with an incomplete master on web and mobile', function (string $prefix) {
+    config(['pickup.allow_incomplete_customer' => true]);
+    $staff = User::factory()->create(['role' => 'pickup_staff']);
+    $customer = Customer::factory()->create(['contact' => '', 'pickup_address' => '', 'phone' => null, 'email' => null]);
+    if ($prefix === 'mobile') {
+        $token = $staff->createToken('mobile:'.Str::uuid().':Android', ['mobile:read', 'mobile:execute'], now()->addDay());
+        $this->withToken($token->plainTextToken);
+    } else {
+        $this->actingAs($staff);
+    }
+    $payload = ['customer_id' => $customer->id, 'pickup_address' => 'Alamat untuk pickup ini', 'scheduled_at' => '2026-11-06T09:00:00+07:00', 'notes' => 'Pickup sementara', 'submission_key' => (string) Str::uuid()];
+
+    $id = $this->postJson(route($prefix.'.tasks.store'), $payload)->assertCreated()->assertJsonPath('data.status', 'ASSIGNED')->json('data.id');
+    $this->postJson(route($prefix.'.tasks.store'), $payload)->assertOk()->assertJsonPath('data.id', $id);
+
+    expect(PickupTask::sole()->contact_snapshot)->toBe('');
+    expect(PickupTask::sole()->pickup_address)->toBe('Alamat untuk pickup ini');
+    expect($customer->fresh()->only(['contact', 'pickup_address', 'phone', 'email']))->toBe(['contact' => '', 'pickup_address' => '', 'phone' => null, 'email' => null]);
+})->with(['api', 'mobile']);
+
+test('customer contact requirement can be restored and bypass still rejects inactive customers', function (bool $bypass, bool $active, string $message) {
+    config(['pickup.allow_incomplete_customer' => $bypass]);
+    $customer = Customer::factory()->create(['contact' => '', 'is_active' => $active]);
+    $this->actingAs(User::factory()->create(['role' => 'admin_supervisor']))
+        ->postJson(route('api.tasks.store'), ['customer_id' => $customer->id, 'pickup_address' => 'Alamat pickup', 'scheduled_at' => '2026-11-06T09:00:00+07:00'])
+        ->assertUnprocessable()->assertJsonValidationErrors(['customer_id'])->assertJsonPath('errors.customer_id.0', $message);
+    $this->assertDatabaseCount('pickup_tasks', 0);
+})->with([
+    [false, true, 'Lengkapi kontak customer sebelum membuat pickup.'],
+    [true, false, 'Customer tidak aktif. Pilih customer aktif untuk pickup baru.'],
+]);
+
 test('staff manual creation is self assigned and replay returns one audited task on web and mobile', function (string $prefix) {
     $staff = User::factory()->create(['role' => 'pickup_staff']);
     $customer = Customer::factory()->create();

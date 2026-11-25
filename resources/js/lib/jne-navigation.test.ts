@@ -2,6 +2,14 @@ import { expect, test } from 'vitest';
 import { jneBreadcrumbs, jneNavigation } from './jne-navigation';
 
 test.each([
+    ['/admin/user-productivity', 'User Productivity'],
+    ['/admin/shipment-monitoring/overview', 'Monitoring resi'],
+    [
+        '/admin/shipment-monitoring/attention?attention=unknown',
+        'Monitoring resi',
+    ],
+    ['/admin/shipment-monitoring?status=DELIVERED', 'Monitoring resi'],
+    ['/admin/shipment-monitoring/123', 'Monitoring resi'],
     [
         '/admin/jne-monitoring/customer-dashboard?customer_id=2',
         'Dashboard customer',
@@ -42,6 +50,11 @@ test.each([
 });
 
 test('detail breadcrumbs keep their parent entry for return navigation', () => {
+    expect(
+        jneBreadcrumbs('/admin/shipment-monitoring/123').map(
+            (item) => item.title,
+        ),
+    ).toEqual(['Pengiriman JNE', 'Monitoring resi', 'Detail resi']);
     expect(
         jneBreadcrumbs('/admin/jne-monitoring/123').map((item) => item.title),
     ).toEqual(['Pengiriman JNE', 'Daftar pengiriman', 'Detail resi']);

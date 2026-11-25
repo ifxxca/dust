@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\Mailer\Exception\UnexpectedResponseException;
 use Throwable;
 
 class DeliverPickupAwbManifest
@@ -23,22 +24,32 @@ class DeliverPickupAwbManifest
 
     public function queue(PickupAwbManifest $manifest): void
     {
-        $preference = CustomerAwbDeliveryPreference::where('customer_id', $manifest->snapshot['customer_id'])->first();
-        if ($manifest->status !== 'READY' || ! $preference?->enabled || $preference->channel !== 'email' || ! filter_var($preference->recipient, FILTER_VALIDATE_EMAIL)) {
+        try {
+            app(ManageWhatsappDelivery::class)->queueManifest($manifest);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+        $customer = Customer::find($manifest->snapshot['customer_id']);
+        $preference = $customer === null ? null : (CustomerAwbDeliveryPreference::where('customer_id', $customer->id)->first()
+            ?? CustomerAwbDeliveryPreference::fromCustomer($customer));
+        if ($manifest->status !== 'READY' || ! $customer?->is_active || ! $customer->documentDeliveryOptions()['recap_email'] || ! $preference?->enabled || $preference->channel !== 'email') {
             return;
         }
-        $recipient = mb_strtolower(trim($preference->recipient));
         $configured = config('pickup.automation.enabled') && config('pickup.automation.send_enabled') && config('mail.default') === 'smtp';
-        $delivery = PickupAwbDelivery::firstOrCreate(['pickup_awb_manifest_id' => $manifest->id, 'channel' => 'email', 'recipient_hash' => hash('sha256', $recipient)], [
-            'recipient' => $recipient, 'submission_key' => (string) Str::uuid(), 'preference_revision' => $preference->revision,
-            'status' => $configured ? 'READY' : 'AWAITING_CONFIGURATION',
-        ]);
-        if (in_array($delivery->status, ['READY', 'AWAITING_CONFIGURATION', 'CANCELLED'], true)) {
-            $delivery->update(['status' => $configured ? 'READY' : 'AWAITING_CONFIGURATION', 'preference_revision' => $preference->revision]);
-            if ($configured) {
-                DeliverPickupAwbManifestJob::dispatch($delivery->id)->afterCommit();
+        DB::transaction(function () use ($manifest, $preference, $configured): void {
+            foreach ($preference->emailRecipients() as $recipient) {
+                $delivery = PickupAwbDelivery::firstOrCreate(['pickup_awb_manifest_id' => $manifest->id, 'channel' => 'email', 'recipient_hash' => hash('sha256', $recipient)], [
+                    'recipient' => $recipient, 'submission_key' => (string) Str::uuid(), 'preference_revision' => $preference->revision,
+                    'status' => $configured ? 'READY' : 'AWAITING_CONFIGURATION',
+                ]);
+                if (in_array($delivery->status, ['READY', 'AWAITING_CONFIGURATION', 'CANCELLED'], true)) {
+                    $delivery->update(['status' => $configured ? 'READY' : 'AWAITING_CONFIGURATION', 'preference_revision' => $preference->revision]);
+                    if ($configured) {
+                        DeliverPickupAwbManifestJob::dispatch($delivery->id)->afterCommit();
+                    }
+                }
             }
-        }
+        }, 3);
     }
 
     public function handle(int $deliveryId): void
@@ -50,7 +61,7 @@ class DeliverPickupAwbManifest
         $this->reconcile->handle($peek->manifest->pickup_task_id);
         $work = DB::transaction(function () use ($deliveryId): ?array {
             $peek = PickupAwbDelivery::with('manifest')->findOrFail($deliveryId);
-            Customer::whereKey($peek->manifest->snapshot['customer_id'])->lockForUpdate()->firstOrFail();
+            $customer = Customer::whereKey($peek->manifest->snapshot['customer_id'])->lockForUpdate()->firstOrFail();
             PickupTask::whereKey($peek->manifest->pickup_task_id)->lockForUpdate()->firstOrFail();
             $delivery = PickupAwbDelivery::whereKey($deliveryId)->lockForUpdate()->firstOrFail();
             $manifest = PickupAwbManifest::whereKey($delivery->pickup_awb_manifest_id)->lockForUpdate()->firstOrFail();
@@ -59,13 +70,14 @@ class DeliverPickupAwbManifest
             }
             $result = PickupProcessingReconciliation::where('pickup_task_id', $manifest->pickup_task_id)->first();
             $group = $manifest->customer_reconciliation_id ? PickupCustomerReconciliation::whereKey($manifest->customer_reconciliation_id)->first() : null;
-            $matched = $group ? $group->status === 'DONE' && app(ReconcileCustomerPickupDay::class)->memberIds(PickupTask::findOrFail($manifest->pickup_task_id)) === ($group->evidence['pickup_task_ids'] ?? [])
+            $matched = $group ? $group->status === 'DONE' && $group->post_lock_change === null && app(ReconcileCustomerPickupDay::class)->memberIds(PickupTask::findOrFail($manifest->pickup_task_id)) === ($group->evidence['pickup_task_ids'] ?? [])
                 && ! PickupProcessingReconciliation::where('customer_reconciliation_id', $group->id)->whereColumn('input_version', '!=', 'evaluated_input_version')->exists()
                 : $result?->status === 'DONE' && $result->input_version === $result->evaluated_input_version;
-            $preference = CustomerAwbDeliveryPreference::where('customer_id', $manifest->snapshot['customer_id'])->lockForUpdate()->first();
-            if ($manifest->status !== 'READY' || ! $matched
-                || ! $preference?->enabled || $preference->revision !== $delivery->preference_revision || $preference->channel !== $delivery->channel
-                || mb_strtolower(trim($preference->recipient ?? '')) !== $delivery->recipient) {
+            $preference = CustomerAwbDeliveryPreference::where('customer_id', $manifest->snapshot['customer_id'])->lockForUpdate()->first()
+                ?? CustomerAwbDeliveryPreference::fromCustomer($customer);
+            if ($manifest->status !== 'READY' || ! $matched || ! $customer->is_active || ! $customer->documentDeliveryOptions()['recap_email']
+                || ! $preference->enabled || $preference->revision !== $delivery->preference_revision || $preference->channel !== $delivery->channel
+                || ! in_array($delivery->recipient, $preference->emailRecipients(), true)) {
                 $delivery->update(['status' => 'CANCELLED', 'last_error' => 'Revisi dokumen, baseline atau preferensi customer berubah.']);
 
                 return null;
@@ -104,7 +116,9 @@ class DeliverPickupAwbManifest
             }
         } catch (Throwable $exception) {
             report($exception);
-            $error = 'Hasil pengiriman belum pasti; periksa provider sebelum mengirim ulang.';
+            $rejected = $exception instanceof UnexpectedResponseException && $exception->getCode() >= 400 && $exception->getCode() <= 599;
+            $status = $rejected ? 'FAILED' : 'UNKNOWN';
+            $error = $rejected ? 'Server email menolak pengiriman. Periksa alamat atau konfigurasi sebelum mencoba lagi.' : 'Hasil pengiriman belum pasti; periksa provider sebelum mengirim ulang.';
         }
         DB::transaction(function () use ($deliveryId, $work, $status, $messageId, $error): void {
             PickupAwbDelivery::whereKey($deliveryId)->where('status', 'SENDING')->update(['status' => $status, 'provider_message_id' => $messageId, 'last_error' => $error, 'accepted_at' => $status === 'ACCEPTED' ? now() : null]);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Actions\Pickup\ValidateAwbSignature;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -11,7 +12,7 @@ class FinalizePickupRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         if ($this->boolean('cashless_capture') && is_array($this->input('cashless_awbs'))) {
-            $this->merge(['cashless_awbs' => array_map(fn (mixed $awb): mixed => is_string($awb) ? mb_strtoupper(trim($awb)) : $awb, $this->input('cashless_awbs'))]);
+            $this->merge(['cashless_awbs' => array_map(fn (mixed $awb): mixed => is_string($awb) ? ValidateAwbSignature::normalize($awb) : $awb, $this->input('cashless_awbs'))]);
         }
     }
 
@@ -37,7 +38,7 @@ class FinalizePickupRequest extends FormRequest
             'cashless_hybrid' => ['required', 'integer', 'min:0', 'max:1000000'],
             'cashless_capture' => ['sometimes', 'boolean'],
             'cashless_awbs' => ['sometimes', 'array', 'list', 'max:500'],
-            'cashless_awbs.*' => ['required', 'string', 'max:100', 'distinct:strict', 'regex:/^[A-Z0-9_-]{1,100}$/D', 'not_regex:/^(0101|0166)[0-9]+$/D'],
+            'cashless_awbs.*' => ['required', 'string', 'min:6', 'max:100', 'distinct:strict', 'regex:/^[A-Z0-9_$-]{1,100}$/D', 'not_regex:/^(0101|0166)[0-9]+$/D'],
             'css_orion' => ['required', 'integer', 'min:0', 'max:1000000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'photos' => ['sometimes', 'array', 'max:4'],

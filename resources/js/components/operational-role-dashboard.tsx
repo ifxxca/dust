@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import DataTable from '@/components/data-table';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -625,10 +626,10 @@ export default function RoleDashboard({
                     </Button>
                 </div>
             )}
-            <details className="rounded-lg border px-4">
-                <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
+            <Disclosure>
+                <DisclosureSummary className="min-h-11 cursor-pointer">
                     {isRetail ? 'Ringkasan handover' : 'Ringkasan & tren'}
-                </summary>
+                </DisclosureSummary>
                 <section
                     aria-label="Ringkasan operasional"
                     aria-busy={refreshing}
@@ -682,7 +683,7 @@ export default function RoleDashboard({
                     berdasarkan status saat ini per hari jadwal, bukan snapshot
                     historis.
                 </p>
-            </details>
+            </Disclosure>
             {(manager || user.role === 'pickup_staff') && (
                 <CreatePickupDialog
                     open={createOpen}

@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { router, useForm } from '@inertiajs/react';
 import {
     Barcode,
@@ -372,10 +373,10 @@ export default function CashlessHandoverScanner({
                 batches={pickup.entry_batches ?? []}
                 enabled={pickup.entry_enabled}
             />
-            <details className="border-t p-4" open={pickup.awbs.total > 0}>
-                <summary className="cursor-pointer text-sm font-medium">
+            <Disclosure open={pickup.awbs.total > 0}>
+                <DisclosureSummary className="cursor-pointer">
                     Resi tersimpan ({pickup.awbs.total})
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex flex-col gap-3">
                     {pickup.awbs.data.length === 0 ? (
                         <p className="text-sm text-muted-foreground">
@@ -440,7 +441,7 @@ export default function CashlessHandoverScanner({
                         </div>
                     )}
                 </div>
-            </details>
+            </Disclosure>
         </section>
     );
 }

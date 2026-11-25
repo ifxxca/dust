@@ -25,8 +25,8 @@ class PickupRecordResource extends JsonResource
             'original' => $this->resource->only(['customer_name', 'pickup_address', 'contact', 'manual_hybrid', 'cashless_hybrid', 'css_orion', 'notes']),
             'revisions' => $this->resource->revisions->map(fn ($revision) => $revision->only(['revision', 'values', 'actor_id', 'reason', 'created_at'])),
             'picked_up_at' => $this->picked_up_at, 'finalized_at' => $this->finalized_at,
-            'attachments' => $this->attachments->map(fn ($file) => ['id' => $file->id, 'kind' => $file->kind, 'url' => $request->routeIs('mobile.*') ? route('mobile.evidence', $file, false) : route('api.evidence', $file)]),
-            'receipt' => $this->receipt?->only(['status', 'recipient', 'channel', 'provider_message_id', 'proof_revision', 'accepted_at', 'delivered_at', 'last_error']),
+            'attachments' => $this->attachments->map(fn ($file) => ['id' => $file->id, 'kind' => $file->kind, 'url' => $request->routeIs('retail.*') ? route('retail.evidence', $file, false) : ($request->routeIs('mobile.*') ? route('mobile.evidence', $file, false) : route('api.evidence', $file))]),
+            'receipt' => $this->receipt?->only(['status', 'recipient', 'recipient_statuses', 'channel', 'provider_message_id', 'proof_revision', 'accepted_at', 'delivered_at', 'last_error']),
             'receipt_history' => $this->resource->receipts->map(fn ($receipt) => $receipt->only(['proof_revision', 'status', 'recipient', 'provider_message_id', 'accepted_at'])),
             'can_send_receipt' => config('pickup.receipt_channel') === 'email' && config('mail.default') === 'smtp',
         ];

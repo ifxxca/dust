@@ -1,6 +1,7 @@
+import { Textarea } from '@/components/ui/textarea';
 import DataTable, { DataTablePagination } from '@/components/data-table';
 import { Head, Link, router, useHttp, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import PageContainer from '@/components/page-container';
@@ -61,6 +62,8 @@ type Account = {
     email: string;
     role: string;
     is_active: boolean;
+    hybrid_username?: string | null;
+    hybrid_configured?: boolean;
 };
 type Task = {
     id: number;
@@ -146,6 +149,7 @@ function errorMessage(error: unknown): string {
 function Editor({
     title,
     description,
+    submitLabel,
     url,
     method = 'post',
     initial,
@@ -156,6 +160,7 @@ function Editor({
 }: {
     title: string;
     description?: string;
+    submitLabel?: string;
     url: string;
     method?: 'post' | 'patch';
     initial: FormValues;
@@ -165,9 +170,11 @@ function Editor({
     timezone?: string;
 }) {
     const form = useHttp<FormValues, Envelope<unknown>>(initial);
+    const formElement = useRef<HTMLFormElement>(null);
     const [message, setMessage] = useState('');
     return (
         <form
+            ref={formElement}
             className="space-y-5"
             onSubmit={(event) => {
                 event.preventDefault();
@@ -189,6 +196,13 @@ function Editor({
                 void form[method](url)
                     .then((response) => {
                         if (!response) {
+                            requestAnimationFrame(() =>
+                                formElement.current
+                                    ?.querySelector<HTMLElement>(
+                                        '[aria-invalid="true"]',
+                                    )
+                                    ?.focus(),
+                            );
                             setMessage(
                                 'Data belum tersimpan. Periksa field yang ditandai.',
                             );
@@ -239,7 +253,7 @@ function Editor({
                             </SelectContent>
                         </Select>
                     ) : field.type === 'textarea' ? (
-                        <textarea
+                        <Textarea
                             id={field.name}
                             required={field.required}
                             value={String(form.data[field.name] ?? '')}
@@ -250,6 +264,18 @@ function Editor({
                         />
                     ) : (
                         <Input
+                            name={field.name}
+                            autoComplete={
+                                field.type === 'password'
+                                    ? 'new-password'
+                                    : undefined
+                            }
+                            aria-invalid={!!form.errors[field.name]}
+                            aria-describedby={
+                                form.errors[field.name]
+                                    ? `${field.name}-error`
+                                    : undefined
+                            }
                             id={field.name}
                             className="min-h-11"
                             required={field.required}
@@ -261,7 +287,11 @@ function Editor({
                         />
                     )}
                     {form.errors[field.name] && (
-                        <p role="alert" className="text-sm text-destructive">
+                        <p
+                            id={`${field.name}-error`}
+                            role="alert"
+                            className="text-sm text-destructive"
+                        >
                             {String(form.errors[field.name])}
                         </p>
                     )}
@@ -279,7 +309,7 @@ function Editor({
                 className="min-h-11 w-full sm:w-auto"
                 disabled={form.processing}
             >
-                {form.processing ? 'Menyimpan…' : title}
+                {form.processing ? 'Menyimpan…' : (submitLabel ?? title)}
             </Button>
         </form>
     );
@@ -370,7 +400,7 @@ export default function Operations({
     const [to, setTo] = useState('');
     const [revision, setRevision] = useState(0);
     const [modal, setModal] = useState<
-        'user' | 'assign' | 'takeover' | 'edit-user' | null
+        'user' | 'assign' | 'takeover' | 'edit-user' | 'hybrid-user' | null
     >(null);
     const [selectedUser, setSelectedUser] = useState<Account | null>(null);
     const [staff, setStaff] = useState<{ id: number; name: string }[]>([]);
@@ -1437,6 +1467,35 @@ export default function Operations({
                                                     hideable: false,
                                                     cell: (row) => (
                                                         <>
+                                                            {[
+                                                                'pickup_staff',
+                                                                'retail_staff',
+                                                                'admin_supervisor',
+                                                            ].includes(
+                                                                (row as Account)
+                                                                    .role,
+                                                            ) && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="mr-2"
+                                                                    onClick={() => {
+                                                                        setSelectedUser(
+                                                                            row as Account,
+                                                                        );
+                                                                        setModal(
+                                                                            'hybrid-user',
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Akun Hybrid
+                                                                    {(
+                                                                        row as Account
+                                                                    )
+                                                                        .hybrid_configured
+                                                                        ? ''
+                                                                        : ' · Belum diatur'}
+                                                                </Button>
+                                                            )}
                                                             {row.id !==
                                                                 user.id && (
                                                                 <Button
@@ -1499,6 +1558,29 @@ export default function Operations({
                                                     }}
                                                 >
                                                     Ubah Akses
+                                                </Button>
+                                            )}
+                                            {[
+                                                'pickup_staff',
+                                                'retail_staff',
+                                                'admin_supervisor',
+                                            ].includes(
+                                                (row as Account).role,
+                                            ) && (
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setSelectedUser(
+                                                            row as Account,
+                                                        );
+                                                        setModal('hybrid-user');
+                                                    }}
+                                                >
+                                                    Akun Hybrid
+                                                    {(row as Account)
+                                                        .hybrid_configured
+                                                        ? ''
+                                                        : ' · Belum diatur'}
                                                 </Button>
                                             )}
                                         </Panel>
@@ -1618,14 +1700,18 @@ export default function Operations({
                 <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>
-                            {modal === 'takeover'
-                                ? 'Konfirmasi Ambil Alih'
-                                : 'Data Operasional'}
+                            {modal === 'hybrid-user'
+                                ? `Akun Hybrid · ${selectedUser?.name}`
+                                : modal === 'takeover'
+                                  ? 'Konfirmasi Ambil Alih'
+                                  : 'Data Operasional'}
                         </DialogTitle>
                         <DialogDescription>
-                            {modal === 'takeover'
-                                ? `Ambil alih ${task?.customer.name} dari ${task?.assigned_staff?.name}? Tanpa approval CS. Petugas lama kehilangan ownership. Jadwal ${task ? formatTime(task.scheduled_at) : ''}.`
-                                : 'Lengkapi data. Perubahan divalidasi oleh server.'}
+                            {modal === 'hybrid-user'
+                                ? 'Akun PM untuk memproses cashless petugas ini. Kosongkan password untuk mempertahankan password tersimpan.'
+                                : modal === 'takeover'
+                                  ? `Ambil alih ${task?.customer.name} dari ${task?.assigned_staff?.name}? Tanpa approval CS. Petugas lama kehilangan ownership. Jadwal ${task ? formatTime(task.scheduled_at) : ''}.`
+                                  : 'Lengkapi data. Perubahan divalidasi oleh server.'}
                         </DialogDescription>
                     </DialogHeader>
                     {message && (
@@ -1686,6 +1772,35 @@ export default function Operations({
                                         { value: 'true', label: 'Aktif' },
                                         { value: 'false', label: 'Nonaktif' },
                                     ],
+                                },
+                            ]}
+                            onSaved={reload}
+                        />
+                    )}
+                    {modal === 'hybrid-user' && selectedUser && (
+                        <Editor
+                            title="Kredensial PM"
+                            submitLabel="Simpan akun Hybrid"
+                            method="patch"
+                            url={userApi.hybrid.url(selectedUser.id)}
+                            initial={{
+                                hybrid_username:
+                                    selectedUser.hybrid_username ?? '',
+                                hybrid_password: '',
+                            }}
+                            fields={[
+                                {
+                                    name: 'hybrid_username',
+                                    label: 'Username Hybrid',
+                                    required: true,
+                                },
+                                {
+                                    name: 'hybrid_password',
+                                    label: selectedUser.hybrid_configured
+                                        ? 'Password baru (opsional)'
+                                        : 'Password Hybrid',
+                                    type: 'password',
+                                    required: !selectedUser.hybrid_configured,
                                 },
                             ]}
                             onSaved={reload}

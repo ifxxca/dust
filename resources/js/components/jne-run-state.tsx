@@ -8,16 +8,43 @@ import {
     Minus,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { runStatusLabel } from '@/lib/scraping';
+import type { JneRun } from '@/components/jne-run-list';
+import { Button } from '@/components/ui/button';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { jneTimestamp } from '@/lib/jne-monitoring';
+import { reportLabel, sourceLabel, runStatusLabel } from '@/lib/scraping';
 
 type State = {
     status: string;
     report_type?: string;
     workflow_stage?: string;
     reviewed_at?: string | null;
+    sources?: { status: string; cycle_attempt?: number }[];
 };
 
+function waitingForSources(run: State): boolean {
+    return (
+        run.status === 'COLLECTING_SOURCES' &&
+        !!run.sources?.length &&
+        run.sources.every((source) => source.status === 'QUEUED')
+    );
+}
+
 export function JneRunState({ run }: { run: State }) {
+    const recovering =
+        run.status === 'COLLECTING_SOURCES' &&
+        run.sources?.some(
+            (source) =>
+                source.status === 'RETRY_WAIT' ||
+                (['RUNNING', 'WAITING_REPORT', 'DOWNLOADING'].includes(
+                    source.status,
+                ) &&
+                    (source.cycle_attempt ?? 0) > 1),
+        );
     const attention =
         run.workflow_stage === 'ATTENTION' ||
         ['FAILED', 'NEEDS_ATTENTION'].includes(run.status);
@@ -28,16 +55,20 @@ export function JneRunState({ run }: { run: State }) {
             : 'Perlu diperiksa'
         : ready
           ? 'Siap dimonitor'
-          : run.status === 'COMPLETED'
-            ? run.workflow_stage === 'PROCESSING'
-                ? 'Memproses CSV APEX'
-                : 'CSV tersimpan'
-            : runStatusLabel(run.status, run.report_type);
+          : recovering
+            ? 'Pemulihan otomatis'
+            : waitingForSources(run)
+              ? 'Menunggu giliran'
+              : run.status === 'COMPLETED'
+                ? run.workflow_stage === 'PROCESSING'
+                    ? 'Memproses CSV APEX'
+                    : 'CSV tersimpan'
+                : runStatusLabel(run.status, run.report_type);
     const Icon = attention
         ? CircleAlert
         : ready
           ? CircleCheck
-          : run.status === 'QUEUED'
+          : run.status === 'QUEUED' || waitingForSources(run)
             ? Clock3
             : run.status === 'NO_DATA'
               ? Minus
@@ -55,6 +86,131 @@ export function JneRunState({ run }: { run: State }) {
     );
 }
 
+export function JneHybridSources({
+    sources,
+    timezone,
+}: {
+    sources: JneRun['sources'];
+    timezone: string;
+}) {
+    return (
+        <section
+            aria-label="Report sumber Hybrid"
+            className="flex min-w-0 flex-col gap-3"
+        >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-medium">
+                    Report sumber ({sources.length})
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                    {
+                        sources.filter(
+                            (source) => source.status === 'SOURCE_SAVED',
+                        ).length
+                    }{' '}
+                    tersimpan
+                </span>
+            </div>
+            <ul className="divide-y rounded-lg border">
+                {sources.map((source) => (
+                    <li
+                        key={source.id}
+                        className="flex min-w-0 flex-col gap-2 p-3 text-sm"
+                    >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-medium">
+                                {sourceLabel(source.source)} ·{' '}
+                                {reportLabel(source.report_type)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                                Percobaan{' '}
+                                {source.cycle_attempt ??
+                                    source.attempt_count ??
+                                    0}
+                                /{source.max_attempts ?? 2}
+                            </span>
+                        </div>
+                        <p>
+                            {source.status === 'RETRY_WAIT'
+                                ? 'Pemulihan otomatis'
+                                : runStatusLabel(
+                                      source.status,
+                                      source.report_type,
+                                  )}
+                            {source.status === 'SOURCE_SAVED'
+                                ? ` · ${source.awb_count ?? 0} AWB tersimpan`
+                                : ''}
+                        </p>
+                        {source.status === 'RETRY_WAIT' &&
+                            source.retry_available_at && (
+                                <p className="text-xs text-muted-foreground">
+                                    Retry berikutnya:{' '}
+                                    {jneTimestamp(
+                                        source.retry_available_at,
+                                        timezone,
+                                    )}{' '}
+                                    · menunggu giliran worker
+                                </p>
+                            )}
+                        {['FAILED', 'NEEDS_ATTENTION'].includes(
+                            source.status,
+                        ) &&
+                            source.error_message && (
+                                <p className="text-sm break-words text-destructive">
+                                    {source.error_message}
+                                </p>
+                            )}
+                        {!!source.events?.length && (
+                            <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="min-h-11"
+                                    >
+                                        Riwayat percobaan #{source.id}
+                                    </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="flex flex-col gap-2 pt-2">
+                                    {source.error_stage && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Tahap: {source.error_stage} ·
+                                            Penyebab:{' '}
+                                            {source.root_cause ??
+                                                'UNCLASSIFIED'}
+                                        </p>
+                                    )}
+                                    <ol className="flex flex-col gap-2">
+                                        {source.events.map((event) => (
+                                            <li
+                                                key={event.id}
+                                                className="text-xs break-words text-muted-foreground"
+                                            >
+                                                <time>
+                                                    {jneTimestamp(
+                                                        event.created_at,
+                                                        timezone,
+                                                    )}
+                                                </time>{' '}
+                                                ·{' '}
+                                                {event.message ||
+                                                    runStatusLabel(
+                                                        event.status,
+                                                        source.report_type,
+                                                    )}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </CollapsibleContent>
+                            </Collapsible>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </section>
+    );
+}
+
 export function JneRunProgress({ run }: { run: State }) {
     const attention =
         run.workflow_stage === 'ATTENTION' ||
@@ -67,7 +223,8 @@ export function JneRunProgress({ run }: { run: State }) {
             ? 3
             : run.status === 'DOWNLOADING'
               ? 2
-              : ['QUEUED', 'NO_DATA'].includes(run.status)
+              : ['QUEUED', 'NO_DATA'].includes(run.status) ||
+                  waitingForSources(run)
                 ? 0
                 : 1;
     return (

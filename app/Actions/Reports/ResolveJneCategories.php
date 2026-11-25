@@ -11,6 +11,7 @@ use App\Models\PickupCashlessAwb;
 use App\Models\PickupProcessingRecord;
 use App\Models\ReportJob;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ResolveJneCategories
 {
@@ -30,6 +31,28 @@ class ResolveJneCategories
         if (! self::markersEnabled() || $shipments->isEmpty()) {
             return;
         }
+        if ($shipments->count() > 100) {
+            foreach ($shipments->chunk(100) as $chunk) {
+                $this->handle($chunk);
+            }
+
+            return;
+        }
+        DB::transaction(function () use ($shipments): void {
+            $current = JneShipment::whereIn('id', $shipments->pluck('id'))->orderBy('id')->lockForUpdate()->get();
+            $this->resolve($current);
+            $byId = $current->keyBy('id');
+            foreach ($shipments as $shipment) {
+                if ($record = $byId->get($shipment->id)) {
+                    $shipment->setRawAttributes($record->getAttributes(), true);
+                }
+            }
+        }, 3);
+    }
+
+    /** @param Collection<int, JneShipment> $shipments */
+    private function resolve(Collection $shipments): void
+    {
         $sources = JneReportAwb::whereIn('awb', $shipments->pluck('awb'))->orderBy('id')->get();
         $jobs = ReportJob::whereIn('id', $sources->pluck('report_job_id'))->get()->keyBy('id');
         $children = ReportJob::whereIn('hybrid_batch_id', $jobs->modelKeys())->where('status', 'SOURCE_SAVED')->orderBy('id')->get();
@@ -48,6 +71,8 @@ class ResolveJneCategories
                 if (preg_match('/^(0101|0166)[0-9]+$/D', $shipment->awb, $prefix)) {
                     $evidence[] = ['rule' => 'awb_prefix', 'prefix' => $prefix[1], 'category' => 'manual_hybrid'];
                 } elseif (preg_match('/^(CM|TG)[A-Z0-9_-]+$/D', mb_strtoupper($shipment->awb), $prefix)) {
+                    $evidence[] = ['rule' => 'awb_prefix', 'prefix' => $prefix[1], 'category' => 'cashless_hybrid'];
+                } elseif (preg_match('/^(JNAC-)[0-9]{10}$/D', mb_strtoupper($shipment->awb), $prefix)) {
                     $evidence[] = ['rule' => 'awb_prefix', 'prefix' => $prefix[1], 'category' => 'cashless_hybrid'];
                 }
             }

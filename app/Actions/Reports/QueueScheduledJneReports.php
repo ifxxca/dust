@@ -3,7 +3,6 @@
 namespace App\Actions\Reports;
 
 use App\Models\JneReportProfile;
-use App\Models\JneShipment;
 use App\Models\ReportJob;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -63,7 +62,7 @@ class QueueScheduledJneReports
                 return 0;
             }
             $blocked = ReportJob::where('source', $profile->source)->where('report_type', $profile->report_type)->where('customer_account', $profile->customer_account)->where(function ($query): void {
-                $query->whereIn('status', ['QUEUED', 'COLLECTING_SOURCES', 'WAITING_APEX', ...ReportJob::ACTIVE_STATUSES])
+                $query->whereIn('status', ['QUEUED', 'RETRY_WAIT', 'COLLECTING_SOURCES', 'WAITING_APEX', ...ReportJob::ACTIVE_STATUSES])
                     ->orWhere(fn ($query) => $query->where('status', 'COMPLETED')->where('import_status', '!=', 'FAILED')->where('projection_status', '!=', 'FAILED')
                         ->where(fn ($query) => $query->where('import_status', 'QUEUED')->orWhere('projection_status', 'QUEUED')));
             })->exists();
@@ -80,7 +79,7 @@ class QueueScheduledJneReports
                     $latest = $recent->first();
                     $retryAt = CarbonImmutable::instance($latest->completed_at ?? $latest->updated_at)->addMinutes($minutes);
                     if ($retryAt->isFuture()) {
-                        $profile->update(['last_error' => 'Siklus berikutnya menunggu jeda kegagalan dan akan dilanjutkan otomatis. Report lama tetap tersedia untuk ditinjau.', 'next_run_at' => $profile->enabled ? $retryAt : null]);
+                        $profile->update(['last_error' => 'Siklus berikutnya menunggu jeda kegagalan dan akan dilanjutkan otomatis. Report lama tetap tersedia untuk ditinjau.', 'next_run_at' => $retryAt]);
 
                         return 0;
                     }
@@ -116,7 +115,7 @@ class QueueScheduledJneReports
                     }
                 }
             }
-            $profile->update(['last_run_at' => now(), 'next_run_at' => $profile->enabled ? now()->addMinutes($profile->interval_minutes) : null, 'last_error' => null]);
+            $profile->update(['last_run_at' => now(), 'next_run_at' => $profile->enabled ? $profile->nextScheduledRun() : null, 'last_error' => null]);
 
             return count($periods);
         });
@@ -140,7 +139,7 @@ class QueueScheduledJneReports
             $query->orderBy('observations_max_created_at');
         }
         $awbs = $query->orderBy('awb')->limit($maximum + 1)->pluck('awb')->all();
-        if (count($awbs) > $maximum || array_any($awbs, fn (string $awb): bool => preg_match('/^[A-Z0-9_-]{1,100}$/D', $awb) !== 1)) {
+        if (count($awbs) > $maximum || array_any($awbs, fn (string $awb): bool => preg_match('/^[A-Z0-9_$-]{1,100}$/D', $awb) !== 1)) {
             $profile->update(['last_error' => 'Daftar AWB aktif terlalu besar atau berisi format AWB yang tidak didukung. Periksa data sumber.', 'next_run_at' => $profile->enabled ? now()->addMinutes(15) : null]);
 
             return 0;
@@ -159,7 +158,7 @@ class QueueScheduledJneReports
                 $job->recordEvent($batch === [] ? 'Tidak ada resi aktif yang memenuhi batas usia dan interval pembaruan.' : count($batch).' AWB aktif diantrekan untuk Upload Connote APEX.'.($policy === null ? ' Delivered dan cancel dikecualikan.' : ' Seleksi menggunakan kebijakan tracking terverifikasi.'));
             }
         }
-        $profile->update(['last_run_at' => now(), 'next_run_at' => $profile->enabled ? now()->addMinutes($profile->interval_minutes) : null, 'last_error' => null]);
+        $profile->update(['last_run_at' => now(), 'next_run_at' => $profile->enabled ? $profile->nextScheduledRun() : null, 'last_error' => null]);
 
         return count($batches);
     }
@@ -174,17 +173,6 @@ class QueueScheduledJneReports
         }
         $today = CarbonImmutable::now(config('pickup.timezone'))->startOfDay();
         yield [$today->subDays($profile->lookback_days - 1)->toDateString(), $today->toDateString()];
-        $open = JneShipment::where('customer_account', $profile->customer_account)->whereNotIn('tracking_status', JneShipment::TERMINAL_STATUSES)
-            ->select(['id', 'latest_report_awb_id'])->with(['latestSource:id,report_job_id,entry_at', 'latestSource.reportJob:id,date_from,date_thru'])->lazyById(250);
-        foreach ($open as $shipment) {
-            $source = $shipment->latestSource;
-            if ($source?->entry_at) {
-                $date = $source->entry_at->setTimezone(config('jne-reports.source_timezone'))->toDateString();
-                yield [$date, $date];
-            } elseif ($source?->reportJob) {
-                yield [$source->reportJob->date_from->toDateString(), $source->reportJob->date_thru->toDateString()];
-            }
-        }
     }
 
     /**

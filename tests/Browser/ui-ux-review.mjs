@@ -29,6 +29,12 @@ const cases = [
     ['dashboard-cs', '/dashboard', 'cs'],
     ['dashboard-retail', '/dashboard', 'retail_staff'],
     ['dashboard-pickup', '/dashboard', 'pickup_staff'],
+    ['it-control-center', '/admin/it-control-center', admin],
+    ['operational-performance', '/admin/operational-performance', admin],
+    ['tracking-workspace', '/admin/shipment-monitoring', admin],
+    ['tracking-overview', '/admin/shipment-monitoring/overview', admin],
+    ['tracking-attention', '/admin/shipment-monitoring/attention', admin],
+    ['tracking-detail', `/admin/shipment-monitoring/${ids.shipment}`, admin],
     [
         'customers',
         '/operations/customers',

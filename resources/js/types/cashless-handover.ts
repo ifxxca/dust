@@ -15,11 +15,20 @@ export type CashlessResult = {
             awb: string;
             status: string;
             message: string | null;
+            version?: number | null;
+            can_correct?: boolean;
+            replacement_batch_id?: number | null;
         }[];
         current_page: number;
         last_page: number;
         total: number;
     };
+};
+
+export type CashlessCorrection = {
+    submission_key: string;
+    expected_version: number;
+    awb: string;
 };
 
 export type CashlessPickup = {
@@ -41,9 +50,34 @@ export type CashlessPage<T> = {
 };
 
 export type SelectedCashlessPickup = CashlessPickup & {
+    scan_progress?: CashlessScanProgress;
     awbs: CashlessPage<{ id: number; awb: string; created_at: string }>;
     entry_batches?: CashlessEntryBatch[];
     entry_enabled?: boolean;
+};
+
+export type CashlessScanProgress = {
+    registered_awbs: string[];
+    summary: {
+        total: number;
+        success: number;
+        pending: number;
+        retrying: number;
+        failed: number;
+        attention: number;
+    };
+    confirmed_ids: number[];
+    failed_attempts: string[];
+    recent: {
+        id: number;
+        awb: string;
+        state: 'success' | 'pending' | 'retrying' | 'failed' | 'attention';
+        status: string | null;
+        batch_status: string | null;
+        batch_id: number | null;
+        message: string | null;
+        attempts: number;
+    }[];
 };
 
 export type CashlessEntryBatch = {

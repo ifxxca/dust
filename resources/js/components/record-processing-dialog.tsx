@@ -1,3 +1,5 @@
+import { NativeSelect } from '@/components/ui/native-select';
+import { Textarea } from '@/components/ui/textarea';
 import { router, useHttp, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -208,11 +210,12 @@ export default function RecordProcessingDialog({
                                     <Label htmlFor={`manual-${key}`}>
                                         {label}
                                     </Label>
-                                    <select
+                                    <NativeSelect
+                                        wrapperClassName="w-full"
                                         id={`manual-${key}`}
                                         required
                                         disabled={reviewing || form.processing}
-                                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                                        className="h-9 rounded-md border bg-background px-2 text-sm"
                                         value={form.data[key as 'category']}
                                         onChange={(event) =>
                                             select(
@@ -241,7 +244,7 @@ export default function RecordProcessingDialog({
                                                 {title}
                                             </option>
                                         ))}
-                                    </select>
+                                    </NativeSelect>
                                 </div>
                             ))}
                         </div>
@@ -309,7 +312,7 @@ export default function RecordProcessingDialog({
                         <Label htmlFor="manual-reason">
                             Catatan pendukung / alasan koreksi (wajib)
                         </Label>
-                        <textarea
+                        <Textarea
                             id="manual-reason"
                             required
                             maxLength={500}

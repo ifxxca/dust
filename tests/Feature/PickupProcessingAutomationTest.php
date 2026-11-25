@@ -89,7 +89,7 @@ test('same day bucket fills verified capacity and waits for the remaining pickup
     Queue::assertNotPushed(RenderPickupAwbManifestJob::class);
 });
 
-test('matching counts complete without collection configuration and changed baseline invalidates manifests', function () {
+test('matching quantities complete without collection coverage and later baseline corrections require review', function () {
     Queue::fake([RenderPickupAwbManifestJob::class]);
     Storage::fake('jne_reports');
     $fixture = pickupAutomationFixture();
@@ -98,6 +98,8 @@ test('matching counts complete without collection configuration and changed base
     $fixture['contract']->update(['definition' => $definition]);
     importPickupAutomationReport($fixture);
     expect(app(ReconcilePickupProcessing::class)->handle($fixture['task']->id)->status)->toBe('DONE');
+    expect(PickupCustomerReconciliation::sole()->status)->toBe('DONE');
+    $this->assertDatabaseCount('pickup_awb_manifests', 1);
     $fixture['contract']->update(['definition' => [...$definition, 'collection_mode' => 'complete_date_report']]);
     app(ReconcilePickupProcessing::class)->handle($fixture['task']->id);
     $fixture['task']->proof->revisions()->create(['revision' => 1, 'values' => ['manual_hybrid' => 3], 'actor_id' => $fixture['admin']->id, 'reason' => 'Koreksi jumlah POP']);
@@ -105,7 +107,7 @@ test('matching counts complete without collection configuration and changed base
     $result = app(ReconcilePickupProcessing::class)->handle($fixture['task']->id);
 
     expect($result->status)->toBe('REVIEW');
-    expect(PickupAwbManifest::sole()->status)->toBe('SUPERSEDED');
+    expect(PickupAwbManifest::sole()->status)->toBe('REVIEW');
 });
 
 test('source dates from yesterday do not fill todays pickup merely because import happens today', function () {
@@ -121,7 +123,7 @@ test('source dates from yesterday do not fill todays pickup merely because impor
     expect(DB::table('pickup_awb_manifest_items')->count())->toBe(0);
 });
 
-test('a newer empty report leaves matched pickup complete while collection coverage remains unproven', function () {
+test('a newer empty report preserves matching AWBs and permits documents without full collection coverage', function () {
     Queue::fake([RenderPickupAwbManifestJob::class]);
     Storage::fake('jne_reports');
     $fixture = pickupAutomationFixture();
@@ -132,6 +134,7 @@ test('a newer empty report leaves matched pickup complete while collection cover
     expect($result->categories['manual_hybrid']['confirmed'])->toBe(2);
     expect($result->evidence['coverage']['complete'])->toBeFalse();
     expect($result->reasons)->toBe([]);
+    expect(PickupCustomerReconciliation::sole()->status)->toBe('DONE');
     $this->assertDatabaseCount('pickup_awb_manifests', 1);
     Queue::assertPushed(RenderPickupAwbManifestJob::class);
 });

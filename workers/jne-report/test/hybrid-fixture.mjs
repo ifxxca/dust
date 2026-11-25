@@ -88,7 +88,12 @@ export async function fixture(t, options = {}) {
                 options.download503Always ||
                 (options.download503Once && state.downloads.length === 1)
             ) {
-                response.writeHead(503, { 'Content-Type': 'text/plain' });
+                response.writeHead(503, {
+                    'Content-Type': 'text/plain',
+                    ...(options.retryAfter
+                        ? { 'Retry-After': options.retryAfter }
+                        : {}),
+                });
                 return response.end('Temporary failure');
             }
             if (options.downloadTimeoutOnce && state.downloads.length === 1) {
@@ -101,7 +106,7 @@ export async function fixture(t, options = {}) {
             return send(
                 options.html
                     ? '<html>Login</html>'
-                    : `${columns}\n"001","${date} 01:00"\n"002","${date} 23:59"\n`,
+                    : options.emptyCsv ? `${columns}\n` : `${columns}\n"001","${date} 01:00"\n"002","${date} 23:59"\n`,
                 options.html ? 'text/html' : 'text/csv; charset=utf-8',
             );
         }
@@ -110,10 +115,12 @@ export async function fixture(t, options = {}) {
             state.homeReads++;
             return send(hidden);
         }
-        const select = (name, option) =>
-            `<label>${name}<select><option>${option}</option></select></label>`;
-        const input = (name, value = '') =>
-            `<label>${name}<input value="${options.paddedDates && name.startsWith('Date ') && value ? ` ${value.toLowerCase()} ` : value}" name="${name === 'Date From' ? 'from' : 'thru'}"></label>`;
+        const labeled = (name, tag) => options.separateLabels
+            ? `<label for="${name}">${name}</label>${tag.replace(/^(<\w+)/, `$1 id="${name}"`)}`
+            : `<label>${name}${tag}</label>`;
+        const select = (name, option) => labeled(name, `<select><option>${option}</option></select>`);
+        const input = (name, value = '') => labeled(name,
+            `<input value="${options.paddedDates && name.startsWith('Date ') && value ? ` ${value.toLowerCase()} ` : value}" name="${name === 'Date From' ? 'from' : 'thru'}">`);
         if (url.searchParams.has('from')) state.views++;
         const dropDateThru =
             options.dropDateThruAlways ||
@@ -122,7 +129,7 @@ export async function fixture(t, options = {}) {
             hidden +
                 `<form action="/apex/f"><input type="hidden" name="p" value="113:${page}:${session}">` +
                 select(
-                    'User Id (Value Required)',
+                    options.userLabel || 'User Id (Value Required)',
                     page === '57' ? '&lt; ALL &gt;' : '&lt;ALL USERS&gt;',
                 ) +
                 input('Date From', url.searchParams.get('from') || '') +
@@ -152,13 +159,13 @@ export async function fixture(t, options = {}) {
                           ? '<div class="a-Form-error">Report unavailable</div>'
                           : '') +
                       '</section>'
-                    : '') +
+                    : options.collectionTotal !== undefined ? `<section class="t-IRR-region"><table class="a-IRR-table"><tr><td>001</td></tr><tr><td class="a-IRR-aggregate">Count 2</td></tr></table><span class="a-IRR-pagination-label">${options.collectionLabel ?? `1 - 1 of ${options.collectionTotal}`}</span>${options.collectionFilter ? '<div class="a-IRR-controls-item--filter">Limited</div>' : ''}</section>` : '') +
                 `<script>
             ${options.datepickerClearsFocusedThru ? 'document.querySelector("form button").addEventListener("mousedown",()=>{const e=document.activeElement;if(e?.name==="thru") e.value="";});' : ''}
             ${options.resetManualDates && page === '40' ? 'document.querySelectorAll("select").forEach(select=>select.addEventListener("change",()=>{document.querySelectorAll("label").forEach(label=>{if(/^Date (From|Thru)/.test(label.textContent))label.querySelector("input").value="23-OCT-2026";});}));' : ''}
             document.getElementById('actions').onclick=()=>document.getElementById('menu').hidden=false;
-            document.getElementById('reset').onclick=()=>{document.getElementById('menu').hidden=true;const d=document.createElement('div');d.setAttribute('role','dialog');d.innerHTML='<button id="apply">Apply</button>';document.body.append(d);document.getElementById('apply').onclick=async()=>{await fetch('/reset',{method:'POST'});d.remove();};};
-            document.getElementById('download').onclick=()=>{document.getElementById('menu').hidden=true;const d=document.createElement('div');d.setAttribute('role','dialog');d.innerHTML='<a href="/apex/f?p=113:${page}:${session}:IR[fixture]_CSV::::"><img alt="CSV"></a>';document.body.append(d);};
+            document.getElementById('reset').onclick=()=>{document.getElementById('menu').hidden=true;const d=document.createElement('div');d.setAttribute('role','dialog');d.innerHTML='<button id="apply">Apply</button>';document.body.append(d);document.getElementById('apply').onclick=async()=>{await fetch('/reset',{method:'POST'});${options.resetDatesAfterApply ? 'document.querySelector("input[name=from]").value="23-OCT-2026";' : ''}${options.resetUserAfterApply ? 'const user=document.querySelector("select");user.add(new Option("fixture-user","fixture-user"));user.value="fixture-user";' : ''}d.remove();};};
+            document.getElementById('download').onclick=()=>{document.getElementById('menu').hidden=true;const d=document.createElement('div');d.setAttribute('role','dialog');document.body.append(d);${options.omitCsvLink ? '' : `setTimeout(()=>{d.innerHTML='<a href="/apex/f?p=113:${page}:${session}:IR[fixture]_CSV::::"><img alt="CSV"></a>';},${options.downloadDialogDelay || 0});`}};
             </script>`,
         );
     });

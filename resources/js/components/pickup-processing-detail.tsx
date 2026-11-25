@@ -1,3 +1,5 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { DocumentDeliveryPanel } from '@/components/document-delivery';
 import {
     Table,
     TableHeader,
@@ -33,6 +35,7 @@ export default function PickupProcessingDetail({
     return (
         <div className="space-y-5">
             <ProcessingSource />
+            <DocumentDeliveryPanel key={task.id} taskId={task.id} />
             {data.can_record && (
                 <RecordProcessingDialog
                     taskId={task.id}
@@ -186,16 +189,13 @@ export default function PickupProcessingDetail({
                     nilai sebelum/sesudah.
                 </p>
                 {data.history.data.map((record) => (
-                    <details
-                        key={record.id}
-                        className="rounded-md border p-3 text-sm"
-                    >
-                        <summary>
+                    <Disclosure key={record.id}>
+                        <DisclosureSummary>
                             {processingLabels[record.system]} ·{' '}
                             {categoryName(record.category)} · #{record.revision}{' '}
                             · {record.actor_name} ·{' '}
                             {processingDate(record.created_at, timezone)}
-                        </summary>
+                        </DisclosureSummary>
                         {record.previous_successful != null && (
                             <p className="mt-2 text-muted-foreground">
                                 Sebelumnya: berhasil{' '}
@@ -217,7 +217,7 @@ export default function PickupProcessingDetail({
                             #{record.pickup_revision} · Retail saat dicatat:{' '}
                             {record.received_quantity ?? 'Belum diverifikasi'}
                         </p>
-                    </details>
+                    </Disclosure>
                 ))}
                 <ProcessingPager page={data.history} />
             </div>

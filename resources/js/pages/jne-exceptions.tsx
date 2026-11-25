@@ -1,3 +1,5 @@
+import { NativeSelect } from '@/components/ui/native-select';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { focusFormError } from '@/lib/utils';
@@ -123,7 +125,7 @@ export default function JneExceptions({
                         search.setData('q', event.target.value)
                     }
                 />
-                <select
+                <NativeSelect
                     aria-label="Penyebab exception"
                     className="rounded border bg-background p-2"
                     value={search.data.cause}
@@ -134,7 +136,7 @@ export default function JneExceptions({
                     <option value="identity">Identitas customer</option>
                     <option value="pickup">Identitas pickup</option>
                     <option value="category">Kategori</option>
-                </select>
+                </NativeSelect>
                 <Button variant="outline">Cari exception</Button>
             </form>
             <p className="text-sm text-muted-foreground">
@@ -192,10 +194,10 @@ export default function JneExceptions({
                                     }
                                 >
                                     <TableCell className="min-w-44 whitespace-normal">
-                                        <details>
-                                            <summary className="cursor-pointer font-mono font-medium">
+                                        <Disclosure>
+                                            <DisclosureSummary className="cursor-pointer font-mono">
                                                 {row.awb}
-                                            </summary>
+                                            </DisclosureSummary>
                                             <JneCustomerCandidates
                                                 candidates={
                                                     row.customer_match_candidates ??
@@ -213,7 +215,7 @@ export default function JneExceptions({
                                                     2,
                                                 )}
                                             </pre>
-                                        </details>
+                                        </Disclosure>
                                     </TableCell>
                                     {[
                                         row.customer_match_status,
@@ -318,9 +320,10 @@ export default function JneExceptions({
                             </div>
                         )}
                         <Label htmlFor="review-action">Tindakan review</Label>
-                        <select
+                        <NativeSelect
+                            wrapperClassName="w-full"
                             id="review-action"
-                            className="block w-full rounded border bg-background p-2"
+                            className="block rounded border bg-background p-2"
                             value={form.data.action}
                             onChange={(event) =>
                                 form.setData('action', event.target.value)
@@ -332,13 +335,14 @@ export default function JneExceptions({
                             <option value="RELEASE">
                                 Cabut keputusan dan evaluasi otomatis ulang
                             </option>
-                        </select>
+                        </NativeSelect>
                         {form.data.action === 'CONFIRM' && (
                             <>
                                 <Label htmlFor="review-owner">
                                     Customer yang dikonfirmasi
                                 </Label>
-                                <select
+                                <NativeSelect
+                                    wrapperClassName="w-full"
                                     id="review-owner"
                                     aria-invalid={!!form.errors.customer_id}
                                     aria-describedby={
@@ -346,7 +350,7 @@ export default function JneExceptions({
                                             ? 'review-owner-error'
                                             : undefined
                                     }
-                                    className="block w-full rounded border bg-background p-2"
+                                    className="block rounded border bg-background p-2"
                                     value={form.data.customer_id}
                                     onChange={(event) =>
                                         form.setData(
@@ -367,7 +371,7 @@ export default function JneExceptions({
                                             {customer.customer_code})
                                         </option>
                                     ))}
-                                </select>
+                                </NativeSelect>
                                 <InputError
                                     id="review-owner-error"
                                     message={form.errors.customer_id}
@@ -400,7 +404,8 @@ export default function JneExceptions({
                                 <Label htmlFor="review-category">
                                     Kategori yang dikonfirmasi
                                 </Label>
-                                <select
+                                <NativeSelect
+                                    wrapperClassName="w-full"
                                     id="review-category"
                                     aria-invalid={!!form.errors.category}
                                     aria-describedby={
@@ -408,7 +413,7 @@ export default function JneExceptions({
                                             ? 'review-category-error'
                                             : undefined
                                     }
-                                    className="block w-full rounded border bg-background p-2"
+                                    className="block rounded border bg-background p-2"
                                     value={form.data.category}
                                     onChange={(event) =>
                                         form.setData(
@@ -429,7 +434,7 @@ export default function JneExceptions({
                                     <option value="css_orion">
                                         CSS / Orion
                                     </option>
-                                </select>
+                                </NativeSelect>
                                 <InputError
                                     id="review-category-error"
                                     message={form.errors.category}
@@ -470,10 +475,10 @@ export default function JneExceptions({
                     </form>
                 </SheetContent>
             </Sheet>
-            <details className="text-sm">
-                <summary className="cursor-pointer text-muted-foreground">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Ketentuan review
-                </summary>
+                </DisclosureSummary>
                 <p className="mt-2">
                     Keputusan hanya berlaku untuk AWB terpilih dengan bukti
                     setara. Aturan permanen disimpan pada{' '}
@@ -482,7 +487,7 @@ export default function JneExceptions({
                     </Link>
                     . Koreksi bukti Sertim aktif melalui alur Sertim.
                 </p>
-            </details>
+            </Disclosure>
         </PageContainer>
     );
 }

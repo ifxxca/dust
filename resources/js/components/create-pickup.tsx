@@ -1,3 +1,4 @@
+import { Textarea } from '@/components/ui/textarea';
 import { router, useHttp, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -225,7 +226,7 @@ export default function CreatePickup({
                 )}
                 <div className="space-y-2">
                     <Label htmlFor="pickup-address">Alamat Pickup</Label>
-                    <textarea
+                    <Textarea
                         id="pickup-address"
                         aria-invalid={!!form.errors.pickup_address}
                         aria-describedby={
@@ -288,7 +289,7 @@ export default function CreatePickup({
                     <Label htmlFor="pickup-notes">
                         Catatan {staff ? '(wajib)' : '(opsional)'}
                     </Label>
-                    <textarea
+                    <Textarea
                         id="pickup-notes"
                         aria-invalid={!!form.errors.notes}
                         aria-describedby={

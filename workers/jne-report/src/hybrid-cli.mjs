@@ -7,6 +7,7 @@ import {
 } from './hybrid.mjs';
 import { log, ReportError } from './errors.mjs';
 import { requestHybridService, startHybridService } from './hybrid-service.mjs';
+import { startOperationsMonitor, stopOperationsMonitor } from './operations-telemetry.mjs';
 
 try {
     const { values } = parseArgs({
@@ -33,10 +34,12 @@ try {
         values.report === 'all' ? ['cashless', 'manual'] : [values.report];
     if (values.serve) {
         const service = await startHybridService(config, log);
+        startOperationsMonitor('Node Hybrid', 'hybrid-service');
         const stop = () => {
             void service
                 .close()
                 .then(() => {
+                    void stopOperationsMonitor();
                     process.removeListener('SIGINT', stop);
                     process.removeListener('SIGTERM', stop);
                 })

@@ -21,6 +21,8 @@ class CustomerResource extends JsonResource
     {
         return ['id' => $this->id, 'name' => $this->name, 'pickup_address' => $this->pickup_address, 'contact' => $this->contact,
             'customer_code' => $this->customer_code, 'email' => $this->email, 'phone' => $this->phone,
+            'additional_emails' => $this->additional_emails ?? [],
+            'document_delivery_settings' => $this->resource->documentDeliveryOptions(),
             'latitude' => $this->latitude, 'longitude' => $this->longitude, 'is_active' => $this->is_active, 'version' => $this->version];
     }
 }

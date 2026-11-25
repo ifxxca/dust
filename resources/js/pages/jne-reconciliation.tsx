@@ -1,4 +1,6 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { DataTablePagination } from '@/components/data-table';
 import PageContainer from '@/components/page-container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -87,8 +89,8 @@ export default function JneReconciliation({
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
             <Head title="Rekonsiliasi POP & AWB" />
             <h1 className="text-2xl font-semibold">Rekonsiliasi POP & AWB</h1>
-            <details className="text-sm">
-                <summary className="cursor-pointer text-muted-foreground">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Ketentuan rekonsiliasi
                     {linkage
                         ? ' · ' +
@@ -97,7 +99,7 @@ export default function JneReconciliation({
                           linkage.total.toLocaleString('id-ID') +
                           ' AWB terhubung'
                         : ''}
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-2 flex flex-col gap-2 text-muted-foreground">
                     <p>
                         Bandingkan POP efektif per kategori dengan AWB yang
@@ -125,7 +127,7 @@ export default function JneReconciliation({
                         </p>
                     )}
                 </div>
-            </details>
+            </Disclosure>
             <Card className="gap-0 py-0">
                 <CardContent className="flex flex-col gap-4 p-4">
                     <form
@@ -208,10 +210,10 @@ export default function JneReconciliation({
                                                                 ''
                                                         ] ?? 'Belum disahkan'}
                                                     </Link>
-                                                    <details className="mt-2 text-xs text-muted-foreground">
-                                                        <summary className="cursor-pointer">
+                                                    <Disclosure className="mt-2">
+                                                        <DisclosureSummary className="cursor-pointer">
                                                             Bukti & verifikasi
-                                                        </summary>
+                                                        </DisclosureSummary>
                                                         <p>
                                                             {row
                                                                 .pop_reconciliation
@@ -258,7 +260,7 @@ export default function JneReconciliation({
                                                                       ? 'Jumlah cocok dengan deklarasi; bukti kategori tetap diperiksa.'
                                                                       : 'Jumlah berbeda dari deklarasi; periksa bukti dan kelengkapan report.'}
                                                         </p>
-                                                    </details>
+                                                    </Disclosure>
                                                 </TableCell>
                                             )}
                                             <TableCell>{label}</TableCell>
@@ -317,42 +319,24 @@ export default function JneReconciliation({
                             )}
                         </TableBody>
                     </Table>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm text-muted-foreground">
-                            {pickups.total} pickup · Halaman{' '}
-                            {pickups.current_page} / {pickups.last_page}
-                        </p>
-                        <div className="flex gap-2">
-                            {pickups.current_page > 1 && (
-                                <Button size="sm" variant="outline" asChild>
-                                    <Link
-                                        href={monitoring.reconciliation.url({
-                                            query: {
-                                                q: filters.q,
-                                                page: pickups.current_page - 1,
-                                            },
-                                        })}
-                                    >
-                                        Sebelumnya
-                                    </Link>
-                                </Button>
-                            )}
-                            {pickups.current_page < pickups.last_page && (
-                                <Button size="sm" variant="outline" asChild>
-                                    <Link
-                                        href={monitoring.reconciliation.url({
-                                            query: {
-                                                q: filters.q,
-                                                page: pickups.current_page + 1,
-                                            },
-                                        })}
-                                    >
-                                        Berikutnya
-                                    </Link>
-                                </Button>
-                            )}
-                        </div>
-                    </div>
+                    <DataTablePagination
+                        hrefForPage={(page) =>
+                            monitoring.reconciliation.url({
+                                query: { q: filters.q, page },
+                            })
+                        }
+                        meta={pickups}
+                        page={pickups.current_page}
+                        itemLabel="pickup"
+                        onPage={(page) =>
+                            router.get(
+                                monitoring.reconciliation.url(),
+                                { q: filters.q, page },
+                                { preserveScroll: true },
+                            )
+                        }
+                        className="px-0 sm:px-0 [&_button]:min-h-11 [&_button]:min-w-11"
+                    />
                 </CardContent>
             </Card>
         </PageContainer>

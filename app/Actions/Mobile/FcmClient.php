@@ -18,18 +18,18 @@ class FcmClient
     public function sendTest(string $token, string $testId, int $recipientId, int $ttl): bool
     {
         return $this->deliver($token, ['type' => 'push_test', 'test_id' => $testId, 'recipient_id' => (string) $recipientId], $ttl,
-            'Tes notifikasi Retail Operations', 'Ini adalah notifikasi uji dari Admin. Tidak ada perubahan pada tugas pickup.', 'push-test-'.$testId);
+            'Tes notifikasi Retail Operations', 'Ini adalah notifikasi uji dari Admin. Tidak ada perubahan pada tugas pickup.', 'push-test-'.$testId, 'cashless_processing');
     }
 
     /** @param array<string, string> $data */
     public function sendCashlessAlert(string $token, array $data, int $ttl): bool
     {
         return $this->deliver($token, $data, $ttl, 'Cashless perlu diperiksa',
-            'Ada resi cashless yang belum berhasil diproses. Ketuk untuk melihat hasil batch.', 'cashless-alert-'.$data['event_id']);
+            'Ada proses cashless yang perlu diperiksa. Ketuk untuk membuka hasil; riwayat lengkap tersedia di aplikasi.', 'cashless-task-'.$data['task_id'], 'cashless_processing');
     }
 
     /** @param array<string, string> $data */
-    private function deliver(string $token, array $data, int $ttl, string $title, string $body, string $tag): bool
+    private function deliver(string $token, array $data, int $ttl, string $title, string $body, string $tag, string $channel = 'pickup_assignments'): bool
     {
         $project = config('mobile_push.project_id');
         if (! is_string($project) || ! preg_match('/^[a-z0-9-]+$/', $project)) {
@@ -41,7 +41,8 @@ class FcmClient
                 'notification' => ['title' => $title, 'body' => $body],
                 'data' => $data,
                 'android' => ['priority' => 'HIGH', 'ttl' => $ttl.'s', 'notification' => [
-                    'channel_id' => 'pickup_assignments', 'tag' => $tag,
+                    'channel_id' => $channel, 'tag' => $tag, 'sound' => 'retail_notification',
+                    'notification_priority' => 'PRIORITY_HIGH', 'default_vibrate_timings' => true,
                 ]],
             ]]);
         if ($response->successful()) {

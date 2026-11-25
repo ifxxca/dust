@@ -18,9 +18,20 @@ import { WorkerApi } from './api.mjs';
 import { ApexClient } from './apex.mjs';
 import { retrieveHybridApex } from './hybrid-apex.mjs';
 import { log, ReportError, safeError } from './errors.mjs';
+import {
+    observeOperation,
+    startOperationsMonitor,
+    stopOperationsMonitor,
+} from './operations-telemetry.mjs';
 
 export async function runJob(job, api, apex, config, shutdownSignal) {
     if (job.status !== 'RUNNING') return;
+    if (job.automatic_retry) {
+        job = {
+            ...job,
+            retryCheckpoint: (evidence) => api.checkpoint(job, evidence),
+        };
+    }
     const controller = new AbortController();
     const shutdown = () =>
         controller.abort(
@@ -31,16 +42,19 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
         );
     shutdownSignal?.addEventListener('abort', shutdown, { once: true });
     if (shutdownSignal?.aborted) shutdown();
-    const timeout = setTimeout(
-        () =>
-            controller.abort(
-                new ReportError(
-                    'JOB_TIMEOUT',
-                    'Batas waktu worker terlampaui. Periksa History JNE sebelum membuat permintaan baru.',
-                ),
-            ),
-        config.jobTimeout,
-    );
+    const timeout =
+        config.jobTimeout > 0
+            ? setTimeout(
+                  () =>
+                      controller.abort(
+                          new ReportError(
+                              'JOB_TIMEOUT',
+                              'Batas waktu worker terlampaui. Periksa History JNE sebelum membuat permintaan baru.',
+                          ),
+                      ),
+                  config.jobTimeout,
+              )
+            : null;
     const cancelBrowser = () => {
         void apex.close();
     };
@@ -100,7 +114,7 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
         await pending;
         controller.signal.throwIfAborted();
         await progress('DOWNLOADING');
-        const result = await api.upload(job, filePath);
+        const result = await api.upload(job, filePath, 'upload', job.report_mode === 'P' ? apex.collectionEvidence : undefined);
         if (result?.status !== 'COMPLETED')
             throw new ReportError(
                 'UPLOAD_UNCONFIRMED',
@@ -124,7 +138,7 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
             } else
                 log('job_failed', {
                     job_id: job.id,
-                    status: safe.status,
+                    status: result?.status ?? safe.status,
                     code: safe.code,
                     phase: apex.phase,
                     control: apex.activeControl,
@@ -144,7 +158,34 @@ export async function runJob(job, api, apex, config, shutdownSignal) {
         shutdownSignal?.removeEventListener('abort', shutdown);
         controller.signal.removeEventListener('abort', cancelBrowser);
         if (tempDir && path.dirname(tempDir) === config.dataDir) {
-            if (job.batch_checkpoints && !completed) {
+            const files = await readdir(tempDir, { withFileTypes: true });
+            const hasHistory =
+                files.some(
+                    (entry) => entry.isFile() && entry.name === 'history.json',
+                ) ||
+                (
+                    await Promise.all(
+                        files
+                            .filter(
+                                (entry) =>
+                                    entry.isDirectory() &&
+                                    /^batch-[1-9][0-9]*$/.test(entry.name),
+                            )
+                            .map((entry) =>
+                                readFile(
+                                    path.join(
+                                        tempDir,
+                                        entry.name,
+                                        'history.json',
+                                    ),
+                                ).then(
+                                    () => true,
+                                    () => false,
+                                ),
+                            ),
+                    )
+                ).some(Boolean);
+            if (!completed && (job.batch_checkpoints || hasHistory)) {
                 const recovery = path.join(
                     config.dataDir,
                     'recovery-' + path.basename(tempDir),
@@ -205,6 +246,7 @@ export async function main() {
         await mkdir(config.dataDir, { recursive: true, mode: 0o700 });
         await chmod(config.dataDir, 0o700);
         release = await acquireProcessLock(config.dataDir);
+        startOperationsMonitor('Node APEX', config.workerId);
         for (const entry of await readdir(config.dataDir, {
             withFileTypes: true,
         })) {
@@ -234,6 +276,7 @@ export async function main() {
                     }
                 }
                 if (job) {
+                    log('job_progress', { job_id: job.id, status: 'RUNNING' });
                     const completed = await runJob(
                         job,
                         api,
@@ -243,6 +286,8 @@ export async function main() {
                     );
                     if (process.argv.includes('--once') && !completed)
                         process.exitCode = 1;
+                } else {
+                    observeOperation('worker_poll_idle');
                 }
                 if (process.argv.includes('--once')) break;
                 await sleep(config.claimInterval, undefined, {
@@ -259,6 +304,7 @@ export async function main() {
     } finally {
         await apex?.close();
         await release?.();
+        await stopOperationsMonitor();
     }
 }
 

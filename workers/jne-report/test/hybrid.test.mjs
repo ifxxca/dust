@@ -15,6 +15,90 @@ import {
     startHybridService,
 } from '../src/hybrid-service.mjs';
 
+test('Hybrid captures upstream totals independently of CSV rows and visible pagination size', async (t) => {
+    const { client } = await fixture(t, { collectionTotal: 2, separateLabels: true });
+    const result = await client.retrieve('manual', '2026-10-22');
+    assert.equal(result.rows, 2);
+    assert.deepEqual(result.collectionEvidence.before, {
+        date_from: '2026-10-22', date_thru: '2026-10-22', scope: 'ALL_USERS',
+        filters_clear: true, total_label: '1 - 1 of 2', empty: false,
+    });
+    assert.deepEqual(result.collectionEvidence.after, result.collectionEvidence.before);
+    assert.equal(result.collectionEvidence.synthesized, false);
+});
+
+test('Hybrid preserves missing totals and remaining filters as incomplete evidence', async (t) => {
+    const { client } = await fixture(t, { collectionTotal: 3, collectionFilter: true });
+    const result = await client.retrieve('cashless', '2026-10-22');
+    assert.equal(result.rows, 2);
+    assert.equal(result.collectionEvidence.before.filters_clear, false);
+    assert.equal(result.collectionEvidence.before.total_label, '1 - 1 of 3');
+});
+
+test('real Hybrid range-only pagination and aggregate cells do not become an upstream total', async (t) => {
+    const { client } = await fixture(t, {
+        collectionTotal: 2,
+        collectionLabel: '1 - 2',
+        separateLabels: true,
+    });
+    const result = await client.retrieve('manual', '2026-10-22');
+    assert.equal(result.rows, 2);
+    assert.equal(result.collectionEvidence.before.total_label, '1 - 2');
+    assert.equal(result.collectionEvidence.after.total_label, '1 - 2');
+    assert.equal(result.collectionEvidence.before.filters_clear, true);
+});
+
+test('Hybrid rereads dates after IR reset before downloading', async (t) => {
+    const { client, state } = await fixture(t, { resetDatesAfterApply: true });
+    await assert.rejects(client.retrieve('manual', '2026-10-22'), { code: 'HYBRID_FILTER' });
+    assert.deepEqual(state.downloads, []);
+});
+
+test('cashless collection recognizes the live User ID label without losing all-users scope', async (t) => {
+    const { client } = await fixture(t, {
+        userLabel: 'User ID (Value Required)',
+        separateLabels: true,
+        collectionTotal: 2,
+    });
+    const result = await client.retrieve('cashless', '2026-10-22');
+    assert.equal(result.rows, 2);
+    for (const scope of [result.collectionEvidence.before, result.collectionEvidence.after]) {
+        assert.equal(scope.scope, 'ALL_USERS');
+        assert.equal(scope.date_from, '2026-10-22');
+        assert.equal(scope.date_thru, '2026-10-22');
+        assert.equal(scope.filters_clear, true);
+    }
+});
+
+test('uppercase cashless labels do not bypass a date changed by report reset', async (t) => {
+    const { client, state } = await fixture(t, {
+        userLabel: 'User ID (Value Required)',
+        separateLabels: true,
+        resetDatesAfterApply: true,
+    });
+    await assert.rejects(client.retrieve('cashless', '2026-10-22'), { code: 'HYBRID_FILTER' });
+    assert.deepEqual(state.downloads, []);
+});
+
+test('uppercase cashless labels still reject a report restricted to one user', async (t) => {
+    const { client, state } = await fixture(t, {
+        userLabel: 'User ID (Value Required)',
+        separateLabels: true,
+        resetUserAfterApply: true,
+    });
+    await assert.rejects(client.retrieve('cashless', '2026-10-22'), { code: 'HYBRID_FILTER' });
+    assert.deepEqual(state.downloads, []);
+});
+
+test('Hybrid captures a genuinely empty export without manufacturing a total from its CSV', async (t) => {
+    const { client } = await fixture(t, { emptyReport: true, emptyCsv: true });
+    const result = await client.retrieve('cashless', '2026-10-22');
+    assert.equal(result.rows, 0);
+    assert.equal(result.collectionEvidence.before.total_label, 'No data found.');
+    assert.equal(result.collectionEvidence.before.empty, true);
+    assert.equal(result.collectionEvidence.synthesized, false);
+});
+
 test('Hybrid configuration supports both accounts and selects credentials without exposing them in errors', () => {
     const env = {
         HYBRID_ROBERTO_LOGIN_URL:
@@ -252,6 +336,23 @@ test('Hybrid retries a temporary download failure in the same session', async (t
     assert.deepEqual(state.downloads, ['57', '57']);
 });
 
+test('queue-managed Hybrid attempts do not multiply internal retries and preserve Retry-After', async (t) => {
+    const { client, state } = await fixture(t, {
+        download503Always: true,
+        retryAfter: '180',
+    });
+    await assert.rejects(
+        client.retrieve('cashless', '2026-10-22', { automaticRetry: true }),
+        (error) => {
+            assert.equal(error.code, 'HYBRID_DOWNLOAD_TRANSIENT');
+            assert.equal(error.httpStatus, 503);
+            assert.equal(error.retryAfter, '180');
+            return true;
+        },
+    );
+    assert.equal(state.downloads.length, 1);
+});
+
 test('Hybrid recovers from a download timeout without another login', async (t) => {
     const { client, state } = await fixture(t, { downloadTimeoutOnce: true });
     client.config.downloadTimeout = 150;
@@ -259,6 +360,28 @@ test('Hybrid recovers from a download timeout without another login', async (t) 
     assert.equal(report.rows, 2);
     assert.equal(state.logins, 1);
     assert.equal(state.downloads.length, 2);
+});
+
+test('queue-managed Hybrid waits for slow CSV preparation using the download deadline', async (t) => {
+    const { client, state } = await fixture(t, { downloadDialogDelay: 1200 });
+    client.page.setDefaultTimeout(700);
+    const result = await client.retrieve('cashless', '2026-10-22', { automaticRetry: true });
+    assert.equal(result.rows, 2);
+    assert.equal(state.downloads.length, 1);
+    assert.equal(state.logins, 1);
+});
+
+test('missing CSV preparation returns one retryable failure without downloading or saving a partial file', async (t) => {
+    const { client, state, outputDir } = await fixture(t, { omitCsvLink: true });
+    client.config.downloadTimeout = 200;
+    await assert.rejects(client.retrieve('cashless', '2026-10-22', { automaticRetry: true }), (error) => {
+        assert.equal(error.code, 'HYBRID_DOWNLOAD_TIMEOUT');
+        assert.equal(client.phase, 'prepare_csv');
+        assert.match(error.message, /tautan CSV/);
+        return true;
+    });
+    assert.deepEqual(state.downloads, []);
+    assert.deepEqual(await readdir(outputDir), []);
 });
 
 test('Hybrid stops after three temporary failures and never publishes a partial CSV', async (t) => {
@@ -502,4 +625,31 @@ test('Hybrid worker refreshes every five minutes and logs both accounts in once 
     await service.maintain();
     await service.maintain();
     assert.equal(state.logins, 4);
+});
+
+test('queue-managed Hybrid preserves Retry-After from a rate limited report page', async (t) => {
+    const { client, state } = await fixture(t);
+    await client.authenticate();
+    client.page.setDefaultTimeout(500);
+    await client.page.route('**/apex/f?**', async (route) => {
+        const url = new URL(route.request().url());
+        if ((url.searchParams.get('p') || '').startsWith('113:57:')) {
+            return route.fulfill({
+                status: 429,
+                headers: { 'Retry-After': '180' },
+                body: 'Rate limited',
+            });
+        }
+        return route.continue();
+    });
+    await assert.rejects(
+        client.retrieve('cashless', '2026-10-22', { automaticRetry: true }),
+        (error) => {
+            assert.equal(error.code, 'UPSTREAM_HTTP');
+            assert.equal(error.httpStatus, 429);
+            assert.equal(error.retryAfter, '180');
+            return true;
+        },
+    );
+    assert.equal(state.downloads.length, 0);
 });

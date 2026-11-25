@@ -32,6 +32,16 @@ return [
 
     'connections' => [
 
+        'telescope' => [
+            'driver' => 'sqlite',
+            'database' => storage_path('app/private/telescope.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+            'busy_timeout' => 1000,
+            'journal_mode' => 'WAL',
+            'synchronous' => 'NORMAL',
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

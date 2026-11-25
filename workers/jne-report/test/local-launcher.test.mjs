@@ -9,6 +9,7 @@ import {
     realpathSync,
     copyFileSync,
     appendFileSync,
+    readFileSync,
 } from 'node:fs';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
@@ -44,6 +45,102 @@ function runJson(code) {
     assert.equal(result.status, 0, result.stderr);
     return JSON.parse(result.stdout.trim());
 }
+
+test(
+    'queue supervisor recovers after memory and unexpected exits and applies bounded worker lifetimes',
+    { skip: !windows, timeout: 30000 },
+    async () => {
+        const directory = mkdtempSync(
+            path.join(tmpdir(), 'retail-launcher-queue-'),
+        );
+        const launcherDirectory = path.join(directory, 'workers/jne-report');
+        mkdirSync(launcherDirectory, { recursive: true });
+        copyFileSync(
+            helpers,
+            path.join(launcherDirectory, 'local-services.ps1'),
+        );
+        copyFileSync(
+            path.join(path.dirname(helpers), 'start-local.ps1'),
+            path.join(launcherDirectory, 'start-local.ps1'),
+        );
+        appendFileSync(
+            path.join(launcherDirectory, 'local-services.ps1'),
+            '\nfunction Start-Sleep { param($Seconds) [Threading.Thread]::Sleep(50) }\n',
+        );
+        writeFileSync(
+            path.join(directory, 'artisan'),
+            `<?php
+$file = __DIR__ . '/attempts.json';
+$previous = is_file($file) ? json_decode(file_get_contents($file), true)['attempt'] : 0;
+$attempt = $previous + 1;
+file_put_contents($file, json_encode(['attempt' => $attempt, 'arguments' => $argv]));
+if ($attempt <= 2) { usleep(100000); exit($attempt === 1 ? 12 : 1); }
+sleep(60);
+`,
+        );
+        const supervisor = spawn(
+            'powershell.exe',
+            [
+                '-NoProfile',
+                '-NonInteractive',
+                '-ExecutionPolicy',
+                'Bypass',
+                '-File',
+                path.join(launcherDirectory, 'start-local.ps1'),
+                '-Service',
+                'import',
+            ],
+            { windowsHide: true },
+        );
+        let output = '';
+        supervisor.stdout.on('data', (chunk) => {
+            output += chunk;
+        });
+        supervisor.stderr.on('data', (chunk) => {
+            output += chunk;
+        });
+        try {
+            const deadline = Date.now() + 20000;
+            let attempts;
+            while (Date.now() < deadline) {
+                try {
+                    attempts = JSON.parse(
+                        readFileSync(
+                            path.join(directory, 'attempts.json'),
+                            'utf8',
+                        ),
+                    );
+                } catch {}
+                if (attempts?.attempt >= 3 || supervisor.exitCode !== null)
+                    break;
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+            assert.equal(attempts?.attempt, 3, output);
+            assert.equal(supervisor.exitCode, null, output);
+            assert.ok(attempts.arguments.includes('--memory=256'));
+            assert.ok(attempts.arguments.includes('--max-jobs=100'));
+            assert.ok(attempts.arguments.includes('--max-time=3600'));
+            assert.match(output, /exited \(code 12\). Restarting in 5 seconds/);
+            assert.match(output, /exited \(code 1\). Restarting in 30 seconds/);
+        } finally {
+            const stopped = powershell(
+                'Stop-PenarikanProcesses -ProjectDirectory ' + quote(directory),
+            );
+            assert.equal(stopped.status, 0, stopped.stderr);
+            const resolved = realpathSync(directory);
+            assert.ok(
+                resolved
+                    .toLowerCase()
+                    .startsWith(
+                        realpathSync(tmpdir()).toLowerCase() +
+                            path.sep +
+                            'retail-launcher-queue-',
+                    ),
+            );
+            rmSync(resolved, { recursive: true, force: true });
+        }
+    },
+);
 
 test(
     'web readiness uses a real TCP connection when Windows omits the listener and verifies the project and port',
@@ -120,6 +217,20 @@ test(
         );
         assert.notEqual(result.status, 0);
         assert.match(result.stderr, /owned by another application \(PID 999\)/);
+    },
+);
+
+test(
+    'web readiness falls back to the verified project server when Windows reports an unknown PID zero',
+    { skip: !windows },
+    () => {
+        const result = runJson(
+            'function Test-PenarikanTcpPort { $true }; ' +
+                'function Get-NetTCPConnection { [pscustomobject]@{OwningProcess=0} }; ' +
+                'function Get-PenarikanServiceProcesses { [pscustomobject]@{ProcessId=123;Name="php.exe";CommandLine="php.exe -S 127.0.0.1:8010 server.php"} }; ' +
+                "Get-PenarikanWebListener -Processes @() -ProjectDirectory 'C:\\Retail App' -Port 8010 | ConvertTo-Json -Compress",
+        );
+        assert.deepEqual(result, { ProcessId: 123 });
     },
 );
 
@@ -259,6 +370,7 @@ test(
             assert.deepEqual(runJson(query), {
                 WebPort: 8010,
                 WorkerUrl: 'http://127.0.0.1:8010',
+                WebDriver: 'artisan', PhpWorkers: 4, FastCgiPort: 0, NginxPath: '',
             });
             writeFileSync(
                 path.join(directory, '.env'),
@@ -267,6 +379,7 @@ test(
             assert.deepEqual(runJson(query), {
                 WebPort: 8123,
                 WorkerUrl: 'http://127.0.0.1:8123',
+                WebDriver: 'artisan', PhpWorkers: 4, FastCgiPort: 0, NginxPath: '',
             });
             for (const value of ['0', '65536', 'invalid']) {
                 writeFileSync(

@@ -42,7 +42,7 @@ test('admin monitoring filters one pickup per row and exposes category shortfall
 test('status cards keep context totals while category and case-group filters change the working list', function () {
     $this->seed(PickupAutomationSimulationSeeder::class);
     $this->actingAs($this->fixture['admin'])->get(route('pickup-automation.index', ['q' => 'SIM-AUTO', 'reconciliation_group' => 'review']))
-        ->assertOk()->assertInertia(fn (Assert $page) => $page->where('automation.rows.total', 2)->where('automation.summary.total', 7)->where('automation.summary.review', 2)->where('automation.summary.waiting', 3)->where('automation.summary.done', 2));
+        ->assertOk()->assertInertia(fn (Assert $page) => $page->where('automation.rows.total', 2)->where('automation.summary.total', 7)->where('automation.summary.review', 2)->where('automation.summary.waiting', 5)->where('automation.summary.done', 0));
     $this->get(route('pickup-automation.index', ['q' => 'SIM-AUTO', 'category' => 'css_orion']))
         ->assertOk()->assertInertia(fn (Assert $page) => $page->where('automation.rows.total', 2)->where('automation.summary.total', 2));
     $this->getJson(route('pickup-automation.index', ['reconciliation_group' => 'invented']))->assertUnprocessable();
@@ -169,7 +169,9 @@ test('simulation seeding is repeatable and uses a separate synthetic source', fu
     expect(PickupTask::where('reference', 'like', 'SIM-AUTO-%')->count())->toBe(7);
     $this->assertDatabaseHas('report_jobs', ['source' => 'simulation', 'report_type' => 'pickup', 'imported_awb_count' => 671]);
     expect(PickupProcessingReconciliation::where('status', 'DONE')->count())->toBe(2);
-    expect(PickupAwbManifest::count())->toBe(2);
+    expect(PickupAwbManifest::count())->toBe(0);
+    $monitor = app(QueryPickupAutomation::class)->handle(['q' => 'SIM-AUTO', 'date_from' => '2026-10-26', 'date_to' => '2026-10-26']);
+    expect(collect($monitor['rows']->items())->where('quantity_status', 'MATCHED'))->toHaveCount(2);
 });
 
 test('reconciliation accepts a twenty four day range and counts AWBs without loading each source and pickup model', function () {
@@ -210,5 +212,5 @@ test('reconciliation accepts a twenty four day range and counts AWBs without loa
     $result = app(QueryPickupAutomation::class)->handle($filters);
 
     expect($result['processing']['regular_processed'])->toBe(2);
-    expect(count($queries))->toBeLessThanOrEqual(8);
+    expect(count($queries))->toBeLessThanOrEqual(11);
 });

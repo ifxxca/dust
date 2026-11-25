@@ -1,8 +1,15 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { Textarea } from '@/components/ui/textarea';
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { WorkflowStepper } from './workspace-ui';
 import { CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import {
+    initialReceivedQuantities,
+    matchingReceivedQuantities,
+} from '@/lib/handover-verification';
 import { me } from '@/routes/mobile';
 import {
     index,
@@ -410,6 +417,7 @@ export default function HandoverPanel({
         setErrors({});
         setConflict(false);
         if (original?.kind === 'verify' && original.verification) {
+            setVerifyingId(null);
             setVerificationDrafts((previous) => {
                 const next = { ...previous };
                 delete next[original.verification!.itemId];
@@ -808,6 +816,7 @@ export default function HandoverPanel({
                         customer_name: item.customer_name,
                         staff_name: item.pickup_staff?.name ?? null,
                         total: item.pickup.total,
+                        cashless_readiness: item.cashless_readiness,
                     },
                 ]),
             ),
@@ -819,6 +828,8 @@ export default function HandoverPanel({
         setCandidatePage(1);
     }
     function toggle(item: HandoverCandidate) {
+        if (item.cashless_readiness?.ready === false && !selected[item.id])
+            return;
         setSelected((previous) => {
             const next = { ...previous };
             if (next[item.id]) delete next[item.id];
@@ -827,15 +838,18 @@ export default function HandoverPanel({
         });
     }
     function openVerification(item: NonNullable<Handover['items']>[number]) {
-        if (!detail?.can?.verify || item.status !== 'PENDING' || attempt)
+        if (
+            !detail?.can?.verify ||
+            item.status !== 'PENDING' ||
+            attempt ||
+            item.cashless_readiness?.ready === false
+        )
             return;
         const existing = verificationDrafts[item.id];
         setVerifyingId(item.id);
         setVerification(
             existing?.values ?? {
-                manual_hybrid: '',
-                cashless_hybrid: '',
-                css_orion: '',
+                ...initialReceivedQuantities(item.pickup),
                 discrepancy_notes: '',
             },
         );
@@ -926,6 +940,9 @@ export default function HandoverPanel({
     const verifying = detail?.items?.find((item) => item.id === verifyingId);
     const remaining =
         detail?.items?.filter((item) => item.status === 'PENDING') ?? [];
+    const nextVerification = remaining.find(
+        (item) => item.cashless_readiness?.ready !== false,
+    );
     const discrepancies =
         detail?.items?.filter((item) => item.status === 'DISCREPANCY').length ??
         0;
@@ -936,6 +953,7 @@ export default function HandoverPanel({
               customer_name: item.customer_name,
               staff_name: item.pickup_staff?.name ?? null,
               total: item.pickup.total,
+              cashless_readiness: item.cashless_readiness,
           }))
         : [];
     const visibleChoices = [
@@ -1031,8 +1049,8 @@ export default function HandoverPanel({
                     >
                         Kirim Ulang Request Asli
                     </Button>
-                    <details>
-                        <summary>Kelola pemulihan</summary>
+                    <Disclosure>
+                        <DisclosureSummary>Kelola pemulihan</DisclosureSummary>
                         <Button
                             variant="ghost"
                             className="mt-2 text-red-700"
@@ -1056,7 +1074,7 @@ export default function HandoverPanel({
                         >
                             Buang Recovery Setelah Review
                         </Button>
-                    </details>
+                    </Disclosure>
                 </div>
             )}
             {verifying && detail ? (
@@ -1097,6 +1115,33 @@ export default function HandoverPanel({
                         </p>
                     </div>
                     <fieldset disabled={locked} className="space-y-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-11 w-full"
+                            disabled={conflict || !detail.can?.verify}
+                            onClick={() => {
+                                const values = {
+                                    ...verification,
+                                    ...matchingReceivedQuantities(
+                                        verifying.pickup,
+                                    ),
+                                };
+                                setVerification(values);
+                                setVerificationDrafts((previous) => ({
+                                    ...previous,
+                                    [verifying.id]: {
+                                        values,
+                                        ...verificationBaseline,
+                                    },
+                                }));
+                                setErrors({});
+                                setMessage('');
+                            }}
+                        >
+                            <CheckCircle2 aria-hidden="true" />
+                            Cocok dengan POP
+                        </Button>
                         {handoverCategories.map(([key, label]) => {
                             const received = receivedQuantity(
                                 verification[key],
@@ -1186,7 +1231,7 @@ export default function HandoverPanel({
                                 Wajib bila salah satu kategori lebih atau
                                 kurang.
                             </small>
-                            <textarea
+                            <Textarea
                                 id="verify-discrepancy"
                                 className="min-h-24 w-full rounded-lg border p-3"
                                 maxLength={2000}
@@ -1266,10 +1311,33 @@ export default function HandoverPanel({
                     </p>
                     <p className="text-sm">
                         {justCreated
-                            ? 'Terkonfirmasi server. Session DRAFT belum berarti paket telah diterima atau diverifikasi.'
+                            ? 'Lanjutkan dengan menghitung dan memvalidasi paket yang diterima.'
                             : 'Penutupan telah dikonfirmasi server. Catatan selisih tetap tersimpan.'}
                     </p>
+                    {justCreated &&
+                        detail.can?.verify &&
+                        remaining.length > 0 && (
+                            <Button
+                                type="button"
+                                className="w-full"
+                                disabled={locked || !online}
+                                onClick={() => {
+                                    setJustCreated(false);
+                                    openVerification(remaining[0]);
+                                }}
+                            >
+                                Mulai Verifikasi Paket
+                            </Button>
+                        )}
                     <Button
+                        type="button"
+                        variant={
+                            justCreated &&
+                            detail.can?.verify &&
+                            remaining.length > 0
+                                ? 'outline'
+                                : 'default'
+                        }
                         className="w-full"
                         onClick={() => {
                             setJustCreated(false);
@@ -1333,11 +1401,11 @@ export default function HandoverPanel({
                             memeriksa ulang melalui alur koreksi yang tersedia.
                         </OperationalFeedback>
                     )}
-                    {detail.can?.verify && remaining.length > 0 && (
+                    {detail.can?.verify && nextVerification && (
                         <Button
                             className="workflow-primary"
                             disabled={locked || !online}
-                            onClick={() => openVerification(remaining[0])}
+                            onClick={() => openVerification(nextVerification)}
                         >
                             {detail.verified_count
                                 ? 'Lanjutkan Verifikasi'
@@ -1435,6 +1503,14 @@ export default function HandoverPanel({
                                         {item.pickup.total} paket POP
                                     </p>
                                 </div>
+                                {item.cashless_readiness?.ready === false && (
+                                    <p
+                                        role="alert"
+                                        className="text-sm text-amber-700 dark:text-amber-400"
+                                    >
+                                        {item.cashless_readiness.message}
+                                    </p>
+                                )}
                                 <p className="text-sm font-semibold">
                                     {item.needs_review
                                         ? 'Perlu Pemeriksaan Ulang'
@@ -1449,7 +1525,12 @@ export default function HandoverPanel({
                                         <Button
                                             variant="outline"
                                             className="w-full"
-                                            disabled={locked || !online}
+                                            disabled={
+                                                locked ||
+                                                !online ||
+                                                item.cashless_readiness
+                                                    ?.ready === false
+                                            }
                                             onClick={() =>
                                                 openVerification(item)
                                             }
@@ -1504,10 +1585,10 @@ export default function HandoverPanel({
                                                 ? ` · ${date(item.verified_at)}`
                                                 : ''}
                                         </p>
-                                        <details className="text-sm">
-                                            <summary>
+                                        <Disclosure>
+                                            <DisclosureSummary>
                                                 Detail revisi dan audit
-                                            </summary>
+                                            </DisclosureSummary>
                                             <p>
                                                 POP saat verifikasi: revisi{' '}
                                                 {item.verified_pickup_revision ??
@@ -1521,7 +1602,7 @@ export default function HandoverPanel({
                                                     {revision.reason}
                                                 </p>
                                             ))}
-                                        </details>
+                                        </Disclosure>
                                     </>
                                 )}
                                 <Button
@@ -1549,13 +1630,15 @@ export default function HandoverPanel({
                             ))}
                         </ol>
                     )}
-                    <details className="text-sm text-muted-foreground">
-                        <summary>Informasi teknis session</summary>
+                    <Disclosure>
+                        <DisclosureSummary>
+                            Informasi teknis session
+                        </DisclosureSummary>
                         <p>
                             {detail.reference} · versi {detail.version} · status{' '}
                             {detail.status}
                         </p>
-                    </details>
+                    </Disclosure>
                 </>
             ) : creating || editing ? (
                 <>
@@ -1617,15 +1700,18 @@ export default function HandoverPanel({
                                 visibleChoices.map((item) => (
                                     <label
                                         key={item.id}
-                                        className="handover-candidate"
+                                        className="handover-candidate min-h-11"
                                         data-selected={!!selected[item.id]}
                                     >
-                                        <input
+                                        <NativeCheckbox
                                             aria-label={`Pilih PCK-${item.id}`}
-                                            type="checkbox"
+
                                             checked={!!selected[item.id]}
                                             disabled={
                                                 locked ||
+                                                (item.cashless_readiness
+                                                    ?.ready === false &&
+                                                    !selected[item.id]) ||
                                                 (!selected[item.id] &&
                                                     selectedItems.length >= 100)
                                             }
@@ -1643,6 +1729,15 @@ export default function HandoverPanel({
                                                 {item.staff_name ??
                                                     'Petugas belum tersedia'}
                                             </small>
+                                            {item.cashless_readiness?.ready ===
+                                                false && (
+                                                <small className="block text-amber-700 dark:text-amber-400">
+                                                    {
+                                                        item.cashless_readiness
+                                                            .message
+                                                    }
+                                                </small>
+                                            )}
                                         </span>
                                     </label>
                                 ))
@@ -1813,9 +1908,24 @@ export default function HandoverPanel({
                 </>
             ) : (
                 <>
-                    <p className="text-sm text-muted-foreground">
-                        Kelola serah terima paket fisik.
-                    </p>
+                    {capabilities.create && (
+                        <Button
+                            className="workflow-primary"
+                            disabled={locked}
+                            onClick={() => {
+                                setWizardStep(1);
+                                setCreating(true);
+                                setEditing(false);
+                                setDetail(null);
+                                setCandidatePage(1);
+                                setCandidateSearch('');
+                                setMessage('');
+                                setErrors({});
+                            }}
+                        >
+                            Buat Handover
+                        </Button>
+                    )}
                     <div
                         className="handover-list-tabs"
                         role="group"
@@ -1863,24 +1973,6 @@ export default function HandoverPanel({
                             Cari Session
                         </Button>
                     </form>
-                    {capabilities.create && (
-                        <Button
-                            className="workflow-primary"
-                            disabled={locked}
-                            onClick={() => {
-                                setWizardStep(1);
-                                setCreating(true);
-                                setEditing(false);
-                                setDetail(null);
-                                setCandidatePage(1);
-                                setCandidateSearch('');
-                                setMessage('');
-                                setErrors({});
-                            }}
-                        >
-                            Buat Handover
-                        </Button>
-                    )}
                     {listLoading && (
                         <OperationalFeedback
                             title="Memuat handover…"

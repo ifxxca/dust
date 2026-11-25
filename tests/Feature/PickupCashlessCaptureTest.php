@@ -19,23 +19,23 @@ function popCashlessFixture(): array
 
     return [$staff, $task, ['expected_version' => 1, 'submission_key' => (string) Str::uuid(),
         'manual_hybrid' => 1, 'cashless_hybrid' => 2, 'css_orion' => 0, 'cashless_capture' => 1,
-        'cashless_awbs' => ['TGPOP001', 'CMPOP002'], 'signature' => UploadedFile::fake()->image('signature.png')]];
+        'cashless_awbs' => ['TG0000000601', 'CM00000000602'], 'signature' => UploadedFile::fake()->image('signature.png')]];
 }
 
-test('POP commits scanned resi once counts them and queues Puman without a separate handover', function () {
+test('POP commits scanned resi once counts them and queues PM without a separate handover', function () {
     [$staff, $task, $payload] = popCashlessFixture();
 
-    $this->actingAs($staff)->postJson(route('api.tasks.proof', $task), [...$payload, 'source' => 'roberto'])
+    $this->actingAs($staff)->postJson(route('api.tasks.proof', $task), [...$payload, 'source' => 'nuralamt'])
         ->assertCreated()->assertJsonPath('data.cashless_hybrid', 2)->assertJsonPath('data.total', 3);
     $this->postJson(route('api.tasks.proof', $task), $payload)->assertOk();
 
     $this->assertDatabaseCount('pickup_cashless_awbs', 2);
     $this->assertDatabaseCount('cashless_entry_batches', 1);
-    $this->assertDatabaseHas('cashless_entry_batches', ['pickup_task_id' => $task->id, 'source' => 'nuralamt', 'status' => 'QUEUED']);
+    $this->assertDatabaseHas('cashless_entry_batches', ['pickup_task_id' => $task->id, 'source' => 'roberto', 'status' => 'QUEUED']);
     $this->assertDatabaseCount('pickup_records', 1);
     $this->assertDatabaseCount('pickup_attachments', 1);
     expect($task->fresh()->status)->toBe('PICKED_UP');
-    $this->postJson(route('api.tasks.proof', $task), [...$payload, 'cashless_awbs' => ['TGDIFFERENT', 'CMPOP002']])->assertConflict();
+    $this->postJson(route('api.tasks.proof', $task), [...$payload, 'cashless_awbs' => ['TG0000000603', 'CM00000000602']])->assertConflict();
     $this->assertDatabaseCount('cashless_entry_batches', 1);
 });
 
@@ -49,14 +49,15 @@ test('invalid scanned lists cannot finalize POP or create external work', functi
     $this->assertDatabaseCount('cashless_entry_batches', 0);
     expect($task->fresh()->status)->toBe('ASSIGNED');
 })->with([
-    [['cashless_hybrid' => 3]], [['cashless_awbs' => ['TGPOP001', 'tgpop001']]],
-    [['cashless_awbs' => ['016660047446626', 'TGPOP001']]], [['cashless_awbs' => []]],
-    [['cashless_awbs' => ['has spaces', 'TGPOP001']]], [['signature' => null]],
+    [['cashless_hybrid' => 3]], [['cashless_awbs' => ['TG0000000601', 'tg0000000601']]],
+    [['cashless_awbs' => ['016660047446626', 'TG0000000601']]], [['cashless_awbs' => []]],
+    [['cashless_awbs' => ['has spaces', 'TG0000000601']]], [['signature' => null]],
+    [['cashless_awbs' => ['1234', 'TG0000000601']]], [['cashless_awbs' => ['12345', 'TG0000000601']]],
 ]);
 
 test('a resi already owned by another pickup rolls back the complete POP', function () {
     [$staff, $task, $payload] = popCashlessFixture();
-    PickupCashlessAwb::factory()->create(['awb' => 'TGPOP001']);
+    PickupCashlessAwb::factory()->create(['awb' => 'TG0000000601']);
 
     $this->actingAs($staff)->postJson(route('api.tasks.proof', $task), $payload)->assertUnprocessable();
 
@@ -67,15 +68,15 @@ test('a resi already owned by another pickup rolls back the complete POP', funct
 
 test('existing unbatched resi and newly captured resi enter one POP batch', function () {
     [$staff, $task, $payload] = popCashlessFixture();
-    PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'awb' => 'TGPOP001']);
+    PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'awb' => 'TG0000000601']);
 
     $this->actingAs($staff)->postJson(route('api.tasks.proof', $task), $payload)->assertCreated();
 
     $this->assertDatabaseCount('pickup_cashless_awbs', 2);
-    expect(CashlessEntryBatch::sole()->items->pluck('awb')->all())->toBe(['TGPOP001', 'CMPOP002']);
+    expect(CashlessEntryBatch::sole()->items->pluck('awb')->all())->toBe(['TG0000000601', 'CM00000000602']);
 });
 
-test('individually scanned resi enter Puman when a legacy client finalizes POP without capture fields', function () {
+test('individually scanned resi enter PM when a legacy client finalizes POP without capture fields', function () {
     [$staff, $task, $payload] = popCashlessFixture();
     unset($payload['cashless_capture'], $payload['cashless_awbs']);
     $payload['cashless_hybrid'] = 1;
@@ -86,7 +87,7 @@ test('individually scanned resi enter Puman when a legacy client finalizes POP w
     $this->postJson(route('api.tasks.proof', $task), $payload)->assertOk();
 
     $batch = CashlessEntryBatch::sole();
-    expect($batch->source)->toBe('nuralamt')->and($batch->status)->toBe('QUEUED');
+    expect($batch->source)->toBe('roberto')->and($batch->status)->toBe('QUEUED');
     expect($batch->items->pluck('awb')->all())->toBe(['CM64041400789']);
     $this->assertDatabaseHas('cashless_entry_events', ['batch_id' => $batch->id, 'type' => 'recorded-awbs-queued']);
     $this->assertDatabaseHas('pickup_records', ['pickup_task_id' => $task->id, 'cashless_hybrid' => 1, 'cashless_capture_hash' => null]);
@@ -96,8 +97,8 @@ test('recovery queues only never batched resi and never replays attempted input'
     [$staff, $task] = popCashlessFixture();
     $task->update(['status' => 'PICKED_UP']);
     PickupRecord::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $staff->id, 'cashless_hybrid' => 2]);
-    $old = PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'awb' => 'TGATTEMPTED']);
-    PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'awb' => 'CMUNBATCHED']);
+    $old = PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'awb' => 'TG0000000606']);
+    PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'awb' => 'CM00000000605']);
     $previous = CashlessEntryBatch::factory()->create(['pickup_task_id' => $task->id, 'status' => $status]);
     $previous->items()->create(['pickup_cashless_awb_id' => $old->id, 'awb' => $old->awb, 'status' => 'PENDING']);
     $options = ['--queue-unbatched' => $task->id, '--reason' => 'Pulihkan antrean POP lama'];
@@ -107,28 +108,28 @@ test('recovery queues only never batched resi and never replays attempted input'
 
     $this->assertDatabaseCount('cashless_entry_batches', 2);
     $batch = CashlessEntryBatch::latest('id')->first();
-    expect($batch->source)->toBe('nuralamt')->and($batch->created_by)->toBe($staff->id);
-    expect($batch->items->pluck('awb')->all())->toBe(['CMUNBATCHED']);
+    expect($batch->source)->toBe('roberto')->and($batch->created_by)->toBe($staff->id);
+    expect($batch->items->pluck('awb')->all())->toBe(['CM00000000605']);
     expect($previous->fresh()->status)->toBe($status);
 })->with(['QUEUED', 'UNKNOWN', 'DONE', 'FAILED', 'CANCELLED']);
 
-test('recovery refuses unfinished POP excess quantities invalid resi and a PM override', function (string $condition) {
+test('recovery refuses unfinished POP excess quantities invalid resi and a Puman override', function (string $condition) {
     [$staff, $task] = popCashlessFixture();
     if ($condition !== 'unfinished') {
         $task->update(['status' => 'PICKED_UP']);
         PickupRecord::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $staff->id, 'cashless_hybrid' => $condition === 'quantity' ? 0 : 1]);
     }
     PickupCashlessAwb::factory()->create(['pickup_task_id' => $task->id, 'customer_id' => $task->customer_id,
-        'awb' => $condition === 'invalid' ? '016660047446626' : 'CMPENDING']);
+        'awb' => $condition === 'invalid' ? '016660047446626' : 'CM00000000604']);
     $options = ['--queue-unbatched' => $task->id, '--reason' => 'Periksa antrean'];
-    if ($condition === 'pm') {
-        $options['--source'] = 'roberto';
+    if ($condition === 'puman') {
+        $options['--source'] = 'nuralamt';
     }
 
     $this->artisan('cashless:entries', $options)->assertFailed();
 
     $this->assertDatabaseCount('cashless_entry_batches', 0);
-})->with(['unfinished', 'quantity', 'invalid', 'pm']);
+})->with(['unfinished', 'quantity', 'invalid', 'puman']);
 
 test('a mobile execution token can submit cashless with POP and processing failures never change its quantity', function () {
     [$staff, $task, $payload] = popCashlessFixture();
@@ -142,7 +143,7 @@ test('a mobile execution token can submit cashless with POP and processing failu
     $this->assertDatabaseHas('pickup_records', ['pickup_task_id' => $task->id, 'cashless_hybrid' => 2]);
     $this->assertDatabaseHas('cashless_entry_alerts', ['batch_id' => $batch->id, 'user_id' => $staff->id]);
     $this->getJson(route('mobile.cashless-results.show', $batch))->assertOk()->assertJsonPath('items.total', 2)
-        ->assertJsonPath('items.data.0.awb', 'TGPOP001')->assertJsonPath('items.data.0.message', 'Tidak ditemukan');
+        ->assertJsonPath('items.data.0.awb', 'TG0000000601')->assertJsonPath('items.data.0.message', 'Tidak ditemukan');
     $other = User::factory()->create(['role' => 'pickup_staff']);
     $otherToken = $other->createToken('mobile:'.Str::uuid().':Android', ['mobile:read'], now()->addDay());
     app('auth')->forgetGuards();
@@ -177,13 +178,13 @@ test('result view excludes accepted resi paginates exceptions and rejects other 
     [$staff, $task, $payload] = popCashlessFixture();
     $this->actingAs($staff)->postJson(route('api.tasks.proof', $task), $payload)->assertCreated();
     $batch = CashlessEntryBatch::sole();
-    $batch->items()->where('awb', 'TGPOP001')->update(['status' => 'ACCEPTED']);
-    $batch->items()->where('awb', 'CMPOP002')->update(['status' => 'NEEDS_DATA', 'message' => 'Destinasi tidak lengkap']);
+    $batch->items()->where('awb', 'TG0000000601')->update(['status' => 'ACCEPTED']);
+    $batch->items()->where('awb', 'CM00000000602')->update(['status' => 'NEEDS_DATA', 'message' => 'Destinasi tidak lengkap']);
     $batch->update(['status' => 'PARTIAL']);
 
     $this->get(route('cashless-results.show', $batch))->assertOk()->assertInertia(fn ($page) => $page
         ->component('cashless-entry-result')->where('result.accepted', 1)->where('result.items.total', 1)
-        ->where('result.items.data.0.awb', 'CMPOP002')->where('result.items.data.0.message', 'Destinasi tidak lengkap'));
+        ->where('result.items.data.0.awb', 'CM00000000602')->where('result.items.data.0.message', 'Destinasi tidak lengkap'));
     $this->getJson(route('cashless-results.show', [$batch, 'page' => 0]))->assertUnprocessable();
     $this->actingAs(User::factory()->create(['role' => 'pickup_staff']))->get(route('cashless-results.show', $batch))->assertNotFound();
 });

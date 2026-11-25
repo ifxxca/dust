@@ -22,8 +22,37 @@ export function loadConfig(env = process.env) {
         return value;
     };
     const apiUrl = new URL(required('RETAIL_OPERATIONS_URL'));
-    const loginUrl = new URL(required('APEX_LOGIN_URL'));
-    for (const url of [apiUrl, loginUrl]) {
+    let configuredUrls;
+    try {
+        const input = env.APEX_LOGIN_URLS?.trim();
+        const additional = input
+            ? input.startsWith('[')
+                ? JSON.parse(input)
+                : input.split(/[\r\n,]+/)
+            : [];
+        if (
+            !Array.isArray(additional) ||
+            additional.some((url) => typeof url !== 'string')
+        )
+            throw new Error();
+        configuredUrls = [
+            ...new Set(
+                [env.APEX_LOGIN_URL, ...additional]
+                    .filter((url) => url?.trim())
+                    .map((url) => new URL(url.trim()).toString()),
+            ),
+        ];
+        if (!configuredUrls.length || configuredUrls.length > 8)
+            throw new Error();
+    } catch {
+        throw new ReportError(
+            'CONFIG_INVALID',
+            'Isi APEX_LOGIN_URL atau APEX_LOGIN_URLS dengan 1 sampai 8 URL login yang valid.',
+            'FAILED',
+        );
+    }
+    const loginUrl = new URL(configuredUrls[0]);
+    for (const url of [apiUrl, ...configuredUrls.map((url) => new URL(url))]) {
         if (
             !['http:', 'https:'].includes(url.protocol) ||
             url.username ||
@@ -44,6 +73,25 @@ export function loadConfig(env = process.env) {
                 'Gunakan HTTPS di luar pengembangan lokal.',
                 'FAILED',
             );
+    }
+    if (env.APEX_BASE_URL) {
+        let base;
+        try {
+            base = new URL(env.APEX_BASE_URL);
+        } catch {}
+        if (
+            !base ||
+            base.origin !== loginUrl.origin ||
+            base.username ||
+            base.password ||
+            base.hash
+        ) {
+            throw new ReportError(
+                'CONFIG_INVALID',
+                'APEX_BASE_URL harus satu origin dengan URL login utama, tanpa kredensial.',
+                'FAILED',
+            );
+        }
     }
     const token = required('JNE_REPORT_WORKER_TOKEN');
     if (token.length < 32)
@@ -100,6 +148,7 @@ export function loadConfig(env = process.env) {
         instance,
         strictHistoryIdentity: instance > 0,
         loginUrl: loginUrl.toString(),
+        loginUrls: configuredUrls,
         username: required('APEX_USERNAME'),
         password: required('APEX_PASSWORD', false),
         baseUrl: env.APEX_BASE_URL || '',
@@ -115,8 +164,8 @@ export function loadConfig(env = process.env) {
         dataDir,
         sessionPath: path.join(dataDir, 'apex-session.json'),
         navigationTimeout: number('JNE_NAVIGATION_TIMEOUT_MS', 30000),
-        reportTimeout: number('JNE_REPORT_TIMEOUT_MS', 1200000),
-        jobTimeout: number('JNE_JOB_TIMEOUT_MS', 1500000),
+        reportTimeout: number('JNE_REPORT_TIMEOUT_MS', 0, 0),
+        jobTimeout: number('JNE_JOB_TIMEOUT_MS', 0, 0),
         downloadTimeout: number('JNE_DOWNLOAD_TIMEOUT_MS', 120000),
         apiTimeout: number('JNE_API_TIMEOUT_MS', 60000),
         pollInterval: number('JNE_POLL_INTERVAL_MS', 10000),

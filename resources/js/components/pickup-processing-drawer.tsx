@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Link } from '@inertiajs/react';
 import type { RefObject } from 'react';
 import { ArrowUpRight, AlertTriangle, PenLine } from 'lucide-react';
@@ -161,15 +162,12 @@ export default function PickupProcessingDrawer({
                                 Catatan pemrosesan efektif
                             </h3>
                             {data.processing.latest.map((record) => (
-                                <details
-                                    key={record.id}
-                                    className="rounded-lg border p-3 text-sm"
-                                >
-                                    <summary className="cursor-pointer font-medium">
+                                <Disclosure key={record.id}>
+                                    <DisclosureSummary className="cursor-pointer">
                                         {processingLabels[record.system]} ·{' '}
                                         {categoryName(record.category)} · #
                                         {record.revision}
-                                    </summary>
+                                    </DisclosureSummary>
                                     <p className="mt-2 text-xs text-muted-foreground">
                                         Dicatat Manual · {record.actor_name} ·{' '}
                                         {processingDate(
@@ -192,7 +190,7 @@ export default function PickupProcessingDrawer({
                                         {record.received_quantity ??
                                             'Belum diverifikasi'}
                                     </p>
-                                </details>
+                                </Disclosure>
                             ))}
                             {data.processing.latest.length === 0 && (
                                 <p className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
@@ -242,15 +240,12 @@ export default function PickupProcessingDrawer({
                             {data.processing.history.data
                                 .slice(0, 5)
                                 .map((record) => (
-                                    <details
-                                        key={record.id}
-                                        className="rounded-md border p-3 text-sm"
-                                    >
-                                        <summary className="cursor-pointer">
+                                    <Disclosure key={record.id}>
+                                        <DisclosureSummary className="cursor-pointer">
                                             {processingLabels[record.system]} ·
                                             #{record.revision} ·{' '}
                                             {record.actor_name}
-                                        </summary>
+                                        </DisclosureSummary>
                                         <p className="mt-2 text-xs text-muted-foreground">
                                             {categoryName(record.category)} ·{' '}
                                             {processingDate(
@@ -277,7 +272,7 @@ export default function PickupProcessingDrawer({
                                             hilang {record.unknown_quantity}.
                                         </p>
                                         <p className="mt-1">{record.reason}</p>
-                                    </details>
+                                    </Disclosure>
                                 ))}
                             <p className="text-xs text-muted-foreground">
                                 {Math.min(data.processing.history.total, 5)}{' '}

@@ -27,6 +27,7 @@ export async function main() {
             log('apex_pool_check', {
                 instances: count,
                 isolated_sessions: true,
+                endpoints: config.loginUrls.map((url) => new URL(url).host),
             });
             return;
         }

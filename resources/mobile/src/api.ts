@@ -1,7 +1,8 @@
 import type { Session } from './types';
 import { destroy } from '@/routes/mobile/auth';
+import { isBrowserPwa } from './platform';
 
-export const apiOrigin = __API_ORIGIN__;
+export const apiOrigin = isBrowserPwa ? window.location.origin : __API_ORIGIN__;
 export class ApiError extends Error {
     constructor(
         public status: number,
@@ -20,7 +21,11 @@ export function userFacingError(error: unknown, login = false): string {
     if (error.status === 401)
         return login
             ? 'Email atau password belum sesuai. Periksa lalu coba lagi.'
-            : 'Sesi berakhir. Masuk kembali untuk melanjutkan. Draft tetap tersimpan.';
+            : isBrowserPwa
+              ? 'Sesi berakhir. Masuk kembali untuk melanjutkan. Draft sementara telah dibersihkan.'
+              : 'Sesi berakhir. Masuk kembali untuk melanjutkan. Draft tetap tersimpan.';
+    if (error.status === 419)
+        return 'Sesi keamanan berakhir. Masuk kembali dan periksa hasil terakhir sebelum mengirim ulang.';
     if (error.status === 403)
         return 'Akses tidak tersedia untuk akun ini. Periksa akun atau hubungi Admin. Draft tetap tersimpan.';
     if (error.status === 0)
@@ -42,6 +47,17 @@ export async function request<T>(
     logout = false,
     responseType: 'json' | 'blob' = 'json',
 ): Promise<T> {
+    if (isBrowserPwa) {
+        const { browserRequest } = await import('./browser-session');
+        return browserRequest<T>(
+            route,
+            session,
+            signal,
+            body,
+            logout,
+            responseType,
+        );
+    }
     const revoking =
         logout &&
         route.method.toLowerCase() === 'delete' &&

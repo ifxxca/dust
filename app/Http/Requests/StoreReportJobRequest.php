@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreReportJobRequest extends FormRequest
@@ -33,10 +34,14 @@ class StoreReportJobRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
+        $retail = $this->input('source') === 'hybrid';
+
         return [
-            'customer_account' => ['required_without:accounts', 'prohibits:accounts', 'nullable', 'string', 'max:100', 'regex:/^[\pL\pN._\- ]+$/u'],
-            'national_account' => ['sometimes', 'required', 'in:Y,N'],
-            'accounts' => ['required_without:customer_account', 'array', 'min:1', 'max:500'],
+            'source' => ['sometimes', 'required', 'in:apex,hybrid'],
+            'retail_server' => ['required_if:source,hybrid', 'prohibited_unless:source,hybrid', 'in:HYBRID_PM,HYBRID_PUMAN,all'],
+            'customer_account' => [Rule::when($retail, ['prohibited'], ['required_without:accounts', 'prohibits:accounts']), 'nullable', 'string', 'max:100', 'regex:/^[\pL\pN._\- ]+$/u'],
+            'national_account' => [Rule::when($retail, ['prohibited'], ['sometimes', 'required']), 'in:Y,N'],
+            'accounts' => [Rule::when($retail, ['prohibited'], ['required_without:customer_account']), 'array', 'min:1', 'max:500'],
             'accounts.*' => ['required', 'array:customer_account,national_account'],
             'accounts.*.customer_account' => ['required', 'string', 'max:100', 'regex:/^[\pL\pN._\- ]+$/u', 'distinct:ignore_case'],
             'accounts.*.national_account' => ['required', 'in:Y,N'],

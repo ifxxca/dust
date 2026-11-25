@@ -31,14 +31,14 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
         $admin = User::factory()->create(['email' => 'sertim-admin@example.test', 'password' => 'SertimFixture123!', 'role' => 'admin_supervisor']);
         JneReportProfile::factory()->create(['source' => 'apex', 'report_type' => 'unresolved', 'customer_account' => 'AWB_AKTIF', 'enabled' => false, 'updated_by' => $admin->id]);
         $sourceJob = ReportJob::factory()->create(['source' => 'apex', 'status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'completed_at' => now()]);
-        JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'SERTIM001', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED', 'entry_at' => now(), 'observed_at' => now()->subDays(2), 'status_web' => 'ON PROCESS', 'status_pod' => null]);
+        JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'TG0000001101', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED', 'entry_at' => now(), 'observed_at' => now()->subDays(2), 'status_web' => 'ON PROCESS', 'status_pod' => null]);
         JneReportAwb::factory()->create(['report_job_id' => $sourceJob->id, 'awb' => 'REVIEWUI1', 'shipper_name' => 'Tokopedia', 'reference' => null, 'customer_account' => 'SHARED']);
         app(ProjectJneShipments::class)->handle($sourceJob->id);
         $contract = JneSourceContract::factory()->create(['active_key' => JneSourceContract::key('apex', 'apex'), 'verified_at' => now(), 'verified_by' => $admin->id, 'definition' => ['collection_requirements' => ['apex:apex']]]);
         $task = PickupTask::factory()->create(['assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
         PickupVisit::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $staff->id, 'outcome' => 'COLLECTED']);
         $closed = PickupTask::factory()->create(['assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
-        app(RecordCashlessAwb::class)->handle($staff, $closed->id, ['awb' => 'CLOSED001', 'submission_key' => (string) Str::uuid()]);
+        app(RecordCashlessAwb::class)->handle($staff, $closed->id, ['awb' => 'TG0000001201', 'submission_key' => (string) Str::uuid()]);
         $closed->update(['status' => 'PICKED_UP']);
         $proof = PickupRecord::factory()->create(['pickup_task_id' => $closed->id]);
         $session = HandoverSession::factory()->create(['status' => 'CLOSED', 'closed_at' => now(), 'sertim_closed_at' => now()]);
@@ -67,9 +67,9 @@ test('Chromium records cashless AWBs and audits an Admin correction in the exist
         $runner->run();
         expect($runner->isSuccessful())->toBeTrue($runner->getOutput().$runner->getErrorOutput());
         expect($runner->getOutput())->toContain('SERTIM_CHROMIUM_UI_OK');
-        $this->assertDatabaseHas('pickup_cashless_awbs', ['pickup_task_id' => $task->id, 'awb' => 'SERTIM001']);
-        $this->assertDatabaseHas('pickup_cashless_awbs', ['pickup_task_id' => $closed->id, 'original_awb' => 'CLOSED001', 'awb' => 'CLOSED002']);
-        $this->assertDatabaseHas('pickup_cashless_awb_events', ['pickup_task_id' => $closed->id, 'previous_awb' => 'CLOSED001', 'awb' => 'CLOSED002', 'reason' => 'Original label checked in UI fixture']);
+        $this->assertDatabaseHas('pickup_cashless_awbs', ['pickup_task_id' => $task->id, 'awb' => 'TG0000001101']);
+        $this->assertDatabaseHas('pickup_cashless_awbs', ['pickup_task_id' => $closed->id, 'original_awb' => 'TG0000001201', 'awb' => 'TG0000001202']);
+        $this->assertDatabaseHas('pickup_cashless_awb_events', ['pickup_task_id' => $closed->id, 'previous_awb' => 'TG0000001201', 'awb' => 'TG0000001202', 'reason' => 'Original label checked in UI fixture']);
         expect($session->fresh()->status)->toBe('CLOSED');
         expect($proof->fresh()->cashless_hybrid)->toBe(1);
     } finally {

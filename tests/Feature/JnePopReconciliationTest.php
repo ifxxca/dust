@@ -22,7 +22,7 @@ function popScenario(int $cashless = 3, int $css = 100, int $scanned = 3): Picku
     $staff = User::factory()->create(['role' => 'pickup_staff']);
     $task = PickupTask::factory()->create(['customer_id' => $customer->id, 'customer_name_snapshot' => $customer->name, 'assigned_staff_id' => $staff->id, 'status' => 'ASSIGNED', 'execution_started_at' => now()]);
     for ($index = 1; $index <= $scanned; $index++) {
-        app(RecordCashlessAwb::class)->handle($staff, $task->id, ['awb' => 'CASH'.str_pad((string) $index, 3, '0', STR_PAD_LEFT), 'submission_key' => (string) Str::uuid()]);
+        app(RecordCashlessAwb::class)->handle($staff, $task->id, ['awb' => 'TG'.str_pad((string) $index, 10, '0', STR_PAD_LEFT), 'submission_key' => (string) Str::uuid()]);
     }
     $task->update(['status' => 'PICKED_UP']);
     PickupRecord::factory()->create(['pickup_task_id' => $task->id, 'staff_id' => $staff->id, 'manual_hybrid' => 0, 'cashless_hybrid' => $cashless, 'css_orion' => $css]);
@@ -35,7 +35,7 @@ function popSource(PickupTask $task, int $cashless, int $css = 0): void
     $job = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED']);
     for ($index = 1; $index <= $cashless; $index++) {
         JneReportAwb::factory()->create(['report_job_id' => $job->id, 'customer_account' => 'SHARED',
-            'awb' => 'CASH'.str_pad((string) $index, 3, '0', STR_PAD_LEFT), 'shipper_name' => 'Shopee International']);
+            'awb' => 'TG'.str_pad((string) $index, 10, '0', STR_PAD_LEFT), 'shipper_name' => 'Shopee International']);
     }
     for ($index = 1; $index <= $css; $index++) {
         JneReportAwb::factory()->create(['report_job_id' => $job->id, 'customer_account' => 'SHARED', 'awb' => 'CSS01'.str_pad((string) $index, 4, '0', STR_PAD_LEFT),

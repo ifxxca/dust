@@ -19,7 +19,7 @@ while (! file_exists($gate) && microtime(true) < $deadline) {
     usleep(10000);
 }
 try {
-    $application->make(RecordCashlessAwb::class)->handle(User::findOrFail($staffId), (int) $taskId, ['awb' => '000001', 'submission_key' => (string) Str::uuid()]);
+    $application->make(RecordCashlessAwb::class)->handle(User::findOrFail($staffId), (int) $taskId, ['awb' => '0000000000000001', 'submission_key' => (string) Str::uuid()]);
     echo 'claimed';
 } catch (ValidationException) {
     echo 'conflict';

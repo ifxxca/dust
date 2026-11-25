@@ -14,6 +14,7 @@ import JneTrackingRefreshCard, {
 import ShipmentDetailSheet from '@/components/jne-shipment-detail-sheet';
 import ShipmentFilters from '@/components/jne-shipment-filters';
 import ShipmentDataTable from '@/components/jne-shipment-table';
+import SecondaryDisclosure from '@/components/secondary-disclosure';
 import PageContainer from '@/components/page-container';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -346,10 +347,7 @@ export default function JneMonitoring({
                 )}
             </div>
             <JneShipmentMetrics summary={summary} />
-            <details className="rounded-lg border text-sm">
-                <summary className="cursor-pointer px-4 py-3 font-medium">
-                    Koleksi & tracking
-                </summary>
+            <SecondaryDisclosure title="Koleksi & tracking">
                 <div className="flex flex-col gap-4 border-t p-4">
                     <nav
                         aria-label="Pengelolaan JNE"
@@ -400,7 +398,7 @@ export default function JneMonitoring({
                         />
                     )}
                 </div>
-            </details>
+            </SecondaryDisclosure>
             <ShipmentDetailSheet
                 id={detailId}
                 origin={detailOrigin}

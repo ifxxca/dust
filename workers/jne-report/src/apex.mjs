@@ -8,7 +8,7 @@ import {
     rename,
     mkdir,
 } from 'node:fs/promises';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { log, ReportError } from './errors.mjs';
 import { readHistory, correlateHistory, csvReady } from './history.mjs';
@@ -56,7 +56,83 @@ export function formatDate(value, format) {
 
 export class ApexClient {
     constructor(config) {
-        this.config = config;
+        this.originalConfig = config;
+        this.loginUrls = config.loginUrls?.length
+            ? config.loginUrls
+            : [config.loginUrl];
+        this.selectEndpoint(0);
+    }
+
+    selectEndpoint(index) {
+        const original = this.originalConfig;
+        const loginUrl = this.loginUrls[index];
+        const origin = new URL(loginUrl).origin;
+        let baseUrl = original.baseUrl;
+        if (baseUrl) {
+            const base = new URL(baseUrl);
+            baseUrl = new URL(base.pathname + base.search, origin).toString();
+        }
+        const suffix = createHash('sha256')
+            .update(origin)
+            .digest('hex')
+            .slice(0, 16);
+        this.endpointIndex = index;
+        this.config = {
+            ...original,
+            loginUrl,
+            baseUrl,
+            sessionPath:
+                index === 0
+                    ? original.sessionPath
+                    : original.sessionPath + '.' + suffix,
+        };
+        this.session = null;
+        this.appId = null;
+        this.endpoint = null;
+    }
+
+    async withEndpointFailover(operation, signal) {
+        if (this.automaticRetry) return operation();
+        if (this.endpointOperation) return operation();
+        this.endpointOperation = true;
+        const first = this.endpointIndex;
+        try {
+            for (let attempt = 0; attempt < this.loginUrls.length; attempt++) {
+                signal?.throwIfAborted();
+                try {
+                    return await operation();
+                } catch (error) {
+                    signal?.throwIfAborted();
+                    if (
+                        this.submissionStarted ||
+                        ![
+                            'APEX_NAVIGATION',
+                            'APEX_PAGE',
+                            'APEX_SESSION',
+                            'LOGIN_UNVERIFIED',
+                        ].includes(error.code)
+                    )
+                        throw error;
+                    if (attempt + 1 === this.loginUrls.length) {
+                        if (this.loginUrls.length === 1) throw error;
+                        throw new ReportError(
+                            'APEX_ENDPOINTS_UNAVAILABLE',
+                            'Semua server APEX tidak dapat dipakai setelah pemeriksaan terbatas. Periksa akses server; report belum dikirim.',
+                        );
+                    }
+                    const next = (first + attempt + 1) % this.loginUrls.length;
+                    log('apex_endpoint_failover', {
+                        from_host: new URL(this.config.loginUrl).host,
+                        to_host: new URL(this.loginUrls[next]).host,
+                        reason: error.code,
+                    });
+                    await this.close();
+                    this.selectEndpoint(next);
+                }
+            }
+        } finally {
+            this.endpointOperation = false;
+        }
     }
 
     async start() {
@@ -71,6 +147,26 @@ export class ApexClient {
         this.page = await this.context.newPage();
         this.page.setDefaultTimeout(this.config.navigationTimeout);
         this.page.setDefaultNavigationTimeout(this.config.navigationTimeout);
+        this.page.on('response', (response) => {
+            if (
+                !this.automaticRetry ||
+                this.phase !== 'DOWNLOADING' ||
+                new URL(response.url()).origin !==
+                    new URL(this.config.loginUrl).origin
+            )
+                return;
+            if (
+                [408, 425, 429, 500, 502, 503, 504].includes(response.status())
+            ) {
+                const error = new ReportError(
+                    'UPSTREAM_HTTP',
+                    'Unduhan APEX sementara belum tersedia.',
+                );
+                error.httpStatus = response.status();
+                error.retryAfter = response.headers()['retry-after'] ?? null;
+                this.downloadResponseError = error;
+            }
+        });
         try {
             const cached = JSON.parse(
                 await readFile(this.config.sessionPath + '.apex.json', 'utf8'),
@@ -116,11 +212,22 @@ export class ApexClient {
                 document.querySelectorAll('table.a-IRR-table').length,
             iframe_count: document.querySelectorAll('iframe').length,
         }));
-        return { ...page, last_history: this.lastHistory || null };
+        return {
+            ...page,
+            endpoint_host: new URL(this.config.loginUrl).host,
+            last_history: this.lastHistory || null,
+        };
     }
 
     async goto(url, waitUntil = 'domcontentloaded') {
-        for (let attempt = 0; attempt < 3; attempt++) {
+        const attempts =
+            this.automaticRetry ||
+            (this.endpointOperation &&
+                !this.submissionStarted &&
+                this.loginUrls.length > 1)
+                ? 1
+                : 3;
+        for (let attempt = 0; attempt < attempts; attempt++) {
             try {
                 const response = await this.page.goto(url, {
                     waitUntil,
@@ -130,16 +237,29 @@ export class ApexClient {
                         'APEX_ACCESS',
                         'Akses JNE ditolak. Periksa akun atau pembatasan akses.',
                     );
-                if (response && response.status() >= 500)
-                    throw navigationError();
+                if (
+                    response &&
+                    (response.status() >= 500 ||
+                        [408, 425, 429].includes(response.status()))
+                ) {
+                    if (!this.automaticRetry) throw navigationError();
+                    const error = new ReportError(
+                        'UPSTREAM_HTTP',
+                        'Server APEX sementara menolak permintaan.',
+                    );
+                    error.httpStatus = response.status();
+                    error.retryAfter =
+                        response.headers()['retry-after'] ?? null;
+                    throw error;
+                }
                 return;
             } catch (error) {
                 if (
                     error instanceof ReportError &&
-                    error.code === 'APEX_ACCESS'
+                    ['APEX_ACCESS', 'UPSTREAM_HTTP'].includes(error.code)
                 )
                     throw error;
-                if (attempt === 2 || this.page.isClosed())
+                if (attempt + 1 === attempts || this.page.isClosed())
                     throw navigationError();
                 await sleep(500 * (attempt + 1));
             }
@@ -147,7 +267,21 @@ export class ApexClient {
     }
 
     async authenticate() {
+        return this.withEndpointFailover(() => this.authenticateEndpoint());
+    }
+
+    async authenticateEndpoint() {
+        if (!this.browser) await this.start();
         await this.goto(this.config.loginUrl);
+        if (
+            new URL(this.page.url()).origin !==
+            new URL(this.config.loginUrl).origin
+        ) {
+            throw new ReportError(
+                'APEX_ORIGIN',
+                'Halaman login dialihkan ke server yang berbeda. Periksa URL sebelum memasukkan kredensial.',
+            );
+        }
         if (await this.page.locator('#P101_USERNAME').isVisible()) {
             if (
                 !(await this.page.locator('#P101_PASSWORD').isVisible()) ||
@@ -204,6 +338,9 @@ export class ApexClient {
             { mode: 0o600 },
         );
         await rename(metadataPath + '.tmp', metadataPath);
+        log('apex_endpoint_authenticated', {
+            host: new URL(this.config.loginUrl).host,
+        });
     }
 
     async captureSession() {
@@ -241,6 +378,10 @@ export class ApexClient {
     }
 
     async open(pageId) {
+        return this.withEndpointFailover(() => this.openEndpoint(pageId));
+    }
+
+    async openEndpoint(pageId) {
         if (!this.browser) await this.start();
         if (!this.session) await this.authenticate();
         await this.goto(
@@ -571,9 +712,73 @@ export class ApexClient {
     }
 
     async retrieve(job, tempDir, progress, signal) {
+        this.automaticRetry = Boolean(job.automatic_retry);
+        this.retryCheckpoint = job.retryCheckpoint;
+        this.retryCheckpointState = null;
+        const resume = job.parameters?.apex_history;
+        if (this.automaticRetry && !resume) {
+            const index =
+                ((job.attempt_count || 1) - 1) % this.loginUrls.length;
+            if (index !== this.endpointIndex) {
+                await this.close();
+                this.selectEndpoint(index);
+            }
+        }
+        if (resume) {
+            const index = this.loginUrls.findIndex(
+                (url) => new URL(url).origin === resume.origin,
+            );
+            if (
+                index < 0 ||
+                (job.report_mode !== 'P' &&
+                    (job.parameters?.awbs?.length || 0) > 6000) ||
+                !resume.id ||
+                !resume.filename ||
+                !resume.created ||
+                !Number.isFinite(resume.submitted_at)
+            ) {
+                throw new ReportError(
+                    'HISTORY_RESUME_INVALID',
+                    'Identitas History untuk melanjutkan report tidak valid. Process tidak dijalankan.',
+                );
+            }
+            if (index !== this.endpointIndex) {
+                await this.close();
+                this.selectEndpoint(index);
+            }
+            if (job.report_mode === 'A') {
+                job = { ...job, upload_filename: resume.filename };
+            }
+        }
+        if (this.automaticRetry) {
+            this.config = { ...this.config, strictHistoryIdentity: true };
+        }
+        this.submissionStarted = Boolean(resume);
+        const operation = () =>
+            this.retrieveEndpoint(job, tempDir, progress, signal);
+        return this.automaticRetry
+            ? operation()
+            : this.withEndpointFailover(operation, signal);
+    }
+
+    async retrieveEndpoint(job, tempDir, progress, signal) {
         this.lastHistory = null;
+        this.collectionEvidence = null;
         this.phase = 'VALIDATING_PARAMETERS';
         validateReportPeriod(job);
+        const resume = job.parameters?.apex_history;
+        if (resume) {
+            return this.waitForReport(
+                job,
+                tempDir,
+                progress,
+                signal,
+                [],
+                resume.submitted_at,
+                true,
+                resume,
+            );
+        }
         this.phase = 'HISTORY_SNAPSHOT';
         if (!this.config.historyDateFormat)
             throw new ReportError(
@@ -590,14 +795,19 @@ export class ApexClient {
             path.join(tempDir, 'submission.json'),
             JSON.stringify({
                 job_id: job.id,
+                apex_origin: new URL(this.config.loginUrl).origin,
                 submitted_at: submittedAt,
                 baseline_ids: before.map((row) => row.id),
             }),
             { mode: 0o600 },
         );
         let accepted = false;
+        if (job.automatic_retry) {
+            await job.retryCheckpoint({ submission_state: 'uncertain' });
+        }
         try {
             this.phase = 'SUBMITTING_REPORT';
+            this.submissionStarted = true;
             // This is the only Process click. Never retry it, including after a timeout.
             await Promise.all([
                 this.page.waitForNavigation({
@@ -627,17 +837,49 @@ export class ApexClient {
             if (error instanceof ReportError) throw error;
             // A response may be lost after JNE accepted the request. Correlate history first.
         }
+        return this.waitForReport(
+            job,
+            tempDir,
+            progress,
+            signal,
+            before,
+            submittedAt,
+            accepted,
+        );
+    }
+
+    async waitForReport(
+        job,
+        tempDir,
+        progress,
+        signal,
+        before,
+        submittedAt,
+        accepted,
+        resume = null,
+    ) {
         await progress('WAITING_REPORT');
         this.phase = 'POLLING_HISTORY';
-        const deadline = Date.now() + this.config.reportTimeout;
-        let pinnedId = null;
+        const deadline =
+            this.config.reportTimeout > 0
+                ? Date.now() + this.config.reportTimeout
+                : Infinity;
+        let pinnedId = resume?.id ?? null;
         let upstreamErrorSince = null;
         let upstreamErrorReads = 0;
         while (Date.now() < deadline) {
             signal.throwIfAborted();
             this.phase = 'POLLING_HISTORY';
             try {
-                const current = await this.history();
+                const history = await this.history();
+                const current = resume
+                    ? history.filter(
+                          (row) =>
+                              row.id === resume.id &&
+                              row.filename === resume.filename &&
+                              row.created === resume.created,
+                      )
+                    : history;
                 const row = correlateHistory(
                     before,
                     current,
@@ -649,6 +891,34 @@ export class ApexClient {
                 );
                 if (row) {
                     pinnedId = row.id;
+                    const history = {
+                        origin: new URL(this.config.loginUrl).origin,
+                        id: row.id,
+                        filename: row.filename,
+                        created: row.created,
+                        submitted_at: submittedAt,
+                    };
+                    await writeFile(
+                        path.join(tempDir, 'history.json'),
+                        JSON.stringify(history),
+                        { mode: 0o600 },
+                    );
+                    if (
+                        job.automatic_retry &&
+                        (!job.parameters?.awbs ||
+                            job.parameters.awbs.length <= 6000)
+                    ) {
+                        if (
+                            this.retryCheckpointState !==
+                            JSON.stringify(history)
+                        ) {
+                            await job.retryCheckpoint({
+                                submission_state: 'history',
+                                history,
+                            });
+                            this.retryCheckpointState = JSON.stringify(history);
+                        }
+                    }
                     const snapshot = {
                         status: String(row.status).slice(0, 40),
                         download_available: Boolean(row.download),
@@ -677,9 +947,23 @@ export class ApexClient {
                                 this.config.maxFileBytes,
                                 job.max_file_kb * 1024,
                             ),
+                            job,
                         );
                     }
                     if (
+                        job.automatic_retry &&
+                        row.status.trim().toUpperCase() === 'ERROR' &&
+                        snapshot.api_error_code
+                    ) {
+                        const failure = new ReportError(
+                            'APEX_SOURCE_API',
+                            'History APEX mengembalikan error API. Retry mengikuti antrean dan History yang sama.',
+                        );
+                        failure.httpStatus = Number(snapshot.api_error_code);
+                        throw failure;
+                    }
+                    if (
+                        Number.isFinite(deadline) &&
                         row.status.trim().toUpperCase() === 'ERROR' &&
                         /^Error API 500\.$/.test(row.error.trim()) &&
                         !row.download
@@ -708,17 +992,51 @@ export class ApexClient {
                     ]
                         .join(' ')
                         .toUpperCase();
+                    const sourceError = row.error
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .toUpperCase()
+                        .replace(/^CUST ID /, '');
                     if (
                         this.config.strictHistoryIdentity &&
                         job.report_mode === 'P' &&
                         row.status.trim().toUpperCase() === 'ERROR' &&
-                        row.error.replace(/\s+/g, ' ').trim().toUpperCase() ===
-                            noDataMessage
+                        sourceError === noDataMessage
                     ) {
                         throw new ReportError(
                             'APEX_NO_DATA',
                             `History ${row.id} (${row.filename}) mengonfirmasi ${row.error.trim()}.`,
                             'NO_DATA',
+                        );
+                    }
+                    const firstDayOnly = [
+                        job.customer_account,
+                        formatDate(job.date_from, 'DD-MON-YYYY'),
+                        formatDate(job.date_from, 'DD-MON-YYYY'),
+                        'No Data Found',
+                    ]
+                        .join(' ')
+                        .toUpperCase();
+                    if (
+                        this.config.strictHistoryIdentity &&
+                        job.report_mode === 'P' &&
+                        row.status.trim().toUpperCase() === 'ERROR' &&
+                        job.date_from !== job.date_thru &&
+                        sourceError === firstDayOnly
+                    ) {
+                        throw new ReportError(
+                            'APEX_PARTIAL_NO_DATA',
+                            `JNE mengembalikan No Data Found hanya untuk ${job.date_from}, sedangkan permintaan ${job.date_from} sampai ${job.date_thru}. Hasil ini belum membuktikan seluruh periode kosong. Worker melanjutkan antrean lain; Process tidak diulang.`,
+                        );
+                    }
+                    if (
+                        job.automatic_retry &&
+                        row.status.trim().toUpperCase() === 'ERROR' &&
+                        row.error.trim()
+                    ) {
+                        throw new ReportError(
+                            'APEX_REPORT_ERROR',
+                            'Report APEX gagal dengan respons yang memerlukan pemeriksaan. Process tidak dikirim ulang.',
                         );
                     }
                 }
@@ -736,6 +1054,7 @@ export class ApexClient {
                 )
                     throw error;
                 log('report_poll_retry', { job_id: job.id, code: error.code });
+                if (job.automatic_retry) throw error;
             }
             await sleep(
                 Math.min(
@@ -756,11 +1075,20 @@ export class ApexClient {
         );
     }
 
-    async download(row, tempDir, maxBytes) {
+    async download(row, tempDir, maxBytes, job = null) {
         const currentRows = await readHistory(this.page);
-        const current = currentRows.find(
+        const matches = currentRows.filter(
             (candidate) => candidate.id === row.id,
         );
+        if (
+            matches.length > 1 ||
+            matches.some((candidate) => candidate.identityAmbiguous)
+        )
+            throw new ReportError(
+                'DOWNLOAD_AMBIGUOUS',
+                'Identitas report menjadi ambigu saat download. Tidak ada file yang dipilih; periksa History JNE.',
+            );
+        const current = matches[0];
         if (!current || current.download !== row.download)
             throw new ReportError(
                 'DOWNLOAD_MISSING',
@@ -796,6 +1124,7 @@ export class ApexClient {
                 'Tautan download tidak berada pada origin JNE yang diizinkan.',
             );
         let download;
+        this.downloadResponseError = null;
         try {
             [download] = await Promise.all([
                 this.page.waitForEvent('download', {
@@ -804,6 +1133,7 @@ export class ApexClient {
                 target.click({ timeout: this.config.downloadTimeout }),
             ]);
         } catch (error) {
+            if (this.downloadResponseError) throw this.downloadResponseError;
             throw new ReportError(
                 error.name === 'TimeoutError'
                     ? 'DOWNLOAD_TIMEOUT'
@@ -811,6 +1141,7 @@ export class ApexClient {
                 'Unduhan CSV JNE belum berhasil. Refresh History dan coba tautan report yang sama.',
             );
         }
+        if (this.downloadResponseError) throw this.downloadResponseError;
         const filePath = path.join(tempDir, randomUUID() + '.csv');
         let timedOut = false;
         const timer = setTimeout(() => {
@@ -854,6 +1185,25 @@ export class ApexClient {
                     'Unduhan CSV JNE gagal.',
                 );
             await validateCsv(filePath, maxBytes);
+            if (job?.report_mode === 'P') {
+                const scope = (entry) => {
+                    const normalizeDate = (value, requested) => value && ['DD-MON-YYYY', 'YYYY-MM-DD', 'DD/MM/YYYY']
+                        .some((format) => String(value).trim().toUpperCase() === formatDate(requested, format)) ? requested : null;
+                    return {
+                        history_id: entry?.id ?? null,
+                        date_from: normalizeDate(entry?.columns.DATEFROM, job.date_from),
+                        date_thru: normalizeDate(entry?.columns.DATETHRU, job.date_thru),
+                        scope: entry?.columns.IDACCOUNT || entry?.columns.CUSTOMERACCOUNT || entry?.columns.CUST || null,
+                        total_label: entry?.columns.TOTALROWS ?? null,
+                        filters_clear: !!entry && csvReady(entry) && !entry.error,
+                    };
+                };
+                const after = (await readHistory(this.page)).filter((entry) => entry.id === current.id);
+                this.collectionEvidence = {
+                    version: 1, protocol: 'apex_history_total_v1', origin: destination.origin,
+                    before: scope(current), after: scope(after.length === 1 ? after[0] : null), synthesized: false,
+                };
+            }
             return filePath;
         } catch (error) {
             await download.cancel().catch(() => {});

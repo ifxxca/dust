@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import PageContainer from '@/components/page-container';
@@ -418,13 +419,15 @@ export default function PickupResultDetail({
                                 <h2 className="font-semibold">
                                     Riwayat revisi POP
                                 </h2>
-                                <details>
-                                    <summary>POP asli</summary>
+                                <Disclosure>
+                                    <DisclosureSummary>
+                                        POP asli
+                                    </DisclosureSummary>
                                     <RecordedValues values={proof.original} />
-                                </details>
+                                </Disclosure>
                                 {proof.revisions?.map((revision) => (
-                                    <details key={revision.revision}>
-                                        <summary>
+                                    <Disclosure key={revision.revision}>
+                                        <DisclosureSummary>
                                             Revisi #{revision.revision} ·{' '}
                                             {actors[revision.actor_id] ??
                                                 `Pengguna #${revision.actor_id}`}{' '}
@@ -433,14 +436,14 @@ export default function PickupResultDetail({
                                                 revision.created_at,
                                                 timezone,
                                             )}
-                                        </summary>
+                                        </DisclosureSummary>
                                         <p className="mt-2 text-sm">
                                             Alasan: {revision.reason}
                                         </p>
                                         <RecordedValues
                                             values={revision.values}
                                         />
-                                    </details>
+                                    </Disclosure>
                                 ))}
                                 {!proof.revisions?.length && (
                                     <p className="text-sm text-muted-foreground">
@@ -592,11 +595,11 @@ export default function PickupResultDetail({
                                     Catatan selisih:{' '}
                                     {item.discrepancy_notes ?? '—'}
                                 </p>
-                                <details className="mt-4 text-sm">
-                                    <summary>
+                                <Disclosure className="mt-4">
+                                    <DisclosureSummary>
                                         Verifikasi awal dan koreksi (
                                         {item.revisions.length})
-                                    </summary>
+                                    </DisclosureSummary>
                                     <RecordedValues
                                         values={item.original_retail}
                                     />
@@ -621,7 +624,7 @@ export default function PickupResultDetail({
                                             />
                                         </div>
                                     ))}
-                                </details>
+                                </Disclosure>
                             </div>
                         </div>
                     ) : (
@@ -664,10 +667,10 @@ export default function PickupResultDetail({
                                             : ''}
                                     </p>
                                     {(event.before || event.after) && (
-                                        <details className="text-xs">
-                                            <summary>
+                                        <Disclosure>
+                                            <DisclosureSummary>
                                                 Nilai yang tercatat
-                                            </summary>
+                                            </DisclosureSummary>
                                             <div className="mt-3 grid gap-3 md:grid-cols-2">
                                                 {(
                                                     [
@@ -699,7 +702,7 @@ export default function PickupResultDetail({
                                                     ) : null,
                                                 )}
                                             </div>
-                                        </details>
+                                        </Disclosure>
                                     )}
                                 </article>
                             ))

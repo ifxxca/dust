@@ -23,15 +23,22 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
+        <env name="CONTROL_CENTER_ENABLED" value="false"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="PICKUP_AUTOMATION_ENABLED" value="false"/>
+        <env name="PICKUP_ALLOW_INCOMPLETE_CUSTOMER" value="false" force="true"/>
         <env name="PICKUP_AWB_SEND_ENABLED" value="false"/>
+        <env name="CASHLESS_PER_USER_ACCOUNTS" value="false" force="true"/>
+        <env name="CASHLESS_REPORT_CONFIRMATION_ENABLED" value="false" force="true"/>
+        <!-- Legacy workflow fixtures; CashlessHandoverLockTest enables the new processing prerequisite. -->
+        <env name="CASHLESS_HANDOVER_LOCK_ENABLED" value="false" force="true"/>
         <env name="JNE_EVIDENCE_POLICIES_ENABLED" value="false"/>
         <env name="JNE_APEX_POOL_ENABLED" value="false" force="true"/>
+        <env name="JNE_REPORT_AUTOMATIC_RETRY_ENABLED" value="false" force="true"/>
         <env name="JNE_CATEGORY_RECONCILIATION_ENABLED" value="false"/>
         <env name="JNE_CATEGORY_MARKERS_ENABLED" value="false" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>

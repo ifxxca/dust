@@ -21,7 +21,8 @@ class PickupResultRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()->is_active && $this->user()->role === 'admin_supervisor';
+        return $this->user()->is_active && ($this->user()->role === 'admin_supervisor'
+            || ($this->user()->role === 'retail_staff' && $this->routeIs('pickup-automation.index', 'pickup-automation.export')));
     }
 
     /** @return array<string, mixed> */

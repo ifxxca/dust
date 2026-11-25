@@ -13,45 +13,67 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { CameraPermissionError, CameraScanSession } from './camera-scanner';
+import { isBrowserPwa } from './platform';
+import { browserScanner } from './browser-camera';
 import {
     playScanError,
-    playScanSuccess,
+    playScanAccepted,
+    playScanDuplicate,
     primeScanAudio,
 } from '@/lib/scan-feedback';
+import ScannerFeedbackSettings from './scanner-feedback-settings';
 
 export default function CashlessCameraScanner({
     title,
     count,
     onScan,
     onClose,
+    summary,
+    onDuplicate,
 }: {
     title: string;
     count: number;
-    onScan: (raw: string) => Promise<{ awb?: string; error?: string }>;
+    onScan: (raw: string) => Promise<{
+        awb?: string;
+        error?: string;
+        kind?: 'duplicate' | 'invalid';
+    }>;
     onClose: () => void;
+    summary?: React.ReactNode;
+    onDuplicate?: (awb: string) => Promise<void>;
 }) {
     const [phase, setPhase] = useState<
         'starting' | 'scanning' | 'error' | 'closing'
     >('starting');
     const [notice, setNotice] = useState('Arahkan kamera ke barcode resi.');
     const [warning, setWarning] = useState(false);
+    const [currentAwb, setCurrentAwb] = useState('');
+    const [restart, setRestart] = useState(0);
     const [permissionDenied, setPermissionDenied] = useState(false);
     const [torchAvailable, setTorchAvailable] = useState(false);
     const [torch, setTorch] = useState(false);
     const [torchBusy, setTorchBusy] = useState(false);
     const reader = useRef<CameraScanSession | null>(null);
+    const video = useRef<HTMLVideoElement | null>(null);
     const closing = useRef(false);
-    const callbacks = useRef({ onScan, onClose });
-    callbacks.current = { onScan, onClose };
+    const callbacks = useRef({ onScan, onClose, onDuplicate });
+    callbacks.current = { onScan, onClose, onDuplicate };
     const finish = useRef<() => Promise<void>>(async () => {});
 
     useEffect(() => {
         primeScanAudio();
+        setPhase('starting');
+        setNotice('Arahkan kamera ke barcode resi.');
+        setWarning(false);
+        setPermissionDenied(false);
+        setTorch(false);
+        setTorchAvailable(false);
         let mounted = true;
         let scanning = false;
         closing.current = false;
         const error = (reason: unknown) => {
             if (!mounted || closing.current) return;
+            playScanError();
             setWarning(true);
             setNotice(
                 reason instanceof Error
@@ -64,29 +86,40 @@ export default function CashlessCameraScanner({
         };
         const session = new CameraScanSession(
             async (raw) => {
+                if (mounted) {
+                    setCurrentAwb(raw);
+                    setNotice('Diproses · memeriksa dan menyimpan draft…');
+                }
                 const result = await callbacks.current.onScan(raw);
-                if (!mounted || closing.current) return;
+                if (!mounted || closing.current) return false;
                 setWarning(!!result.error);
-                if (result.error) playScanError();
-                else if (result.awb) playScanSuccess();
+                if (result.kind === 'duplicate') playScanDuplicate();
+                else if (result.error) playScanError();
+                else if (result.awb) playScanAccepted();
                 setNotice(
-                    result.error ?? `${result.awb} ditambahkan ke draft.`,
+                    result.error ??
+                        'Diproses · draft tersimpan, belum dikirim ke server.',
                 );
+                return !!result.awb && !result.error;
             },
             error,
-            BarcodeScanner,
+            isBrowserPwa ? browserScanner(() => video.current) : BarcodeScanner,
             (awb) => {
                 if (!mounted || closing.current) return;
                 setWarning(true);
+                setCurrentAwb(awb);
                 setNotice(
                     `Resi ${awb} sudah dipindai. Jumlah tidak bertambah.`,
                 );
-                playScanError();
+                playScanDuplicate();
+                return callbacks.current.onDuplicate?.(awb);
             },
         );
         reader.current = session;
-        document.documentElement.classList.add('cashless-camera-mode');
-        document.body.classList.add('cashless-camera-mode');
+        if (!isBrowserPwa) {
+            document.documentElement.classList.add('cashless-camera-mode');
+            document.body.classList.add('cashless-camera-mode');
+        }
         finish.current = async () => {
             if (closing.current) return;
             closing.current = true;
@@ -126,7 +159,7 @@ export default function CashlessCameraScanner({
             : [];
         void (async () => {
             try {
-                if (!Capacitor.isNativePlatform())
+                if (!Capacitor.isNativePlatform() && !isBrowserPwa)
                     throw new Error(
                         'Scan kamera tersedia di aplikasi Android. Gunakan APK terbaru, atau input manual di browser.',
                     );
@@ -138,9 +171,11 @@ export default function CashlessCameraScanner({
                     return;
                 }
                 setPhase('scanning');
-                const available = await BarcodeScanner.isTorchAvailable().catch(
-                    () => ({ available: false }),
-                );
+                const available = isBrowserPwa
+                    ? { available: false }
+                    : await BarcodeScanner.isTorchAvailable().catch(() => ({
+                          available: false,
+                      }));
                 if (mounted && !closing.current)
                     setTorchAvailable(available.available);
             } catch (reason) {
@@ -157,7 +192,7 @@ export default function CashlessCameraScanner({
             for (const listener of listeners)
                 void listener.then((handle) => handle.remove());
         };
-    }, []);
+    }, [restart]);
 
     async function toggleTorch() {
         if (torchBusy || phase !== 'scanning') return;
@@ -189,6 +224,16 @@ export default function CashlessCameraScanner({
                     onInteractOutside={(event) => event.preventDefault()}
                     onCloseAutoFocus={(event) => event.preventDefault()}
                 >
+                    {isBrowserPwa && (
+                        <video
+                            ref={video}
+                            autoPlay
+                            muted
+                            playsInline
+                            className="browser-camera-video"
+                            aria-label="Pratinjau kamera pemindai"
+                        />
+                    )}
                     <div className="relative z-10 flex min-w-0 items-start gap-3 rounded-xl bg-background p-4 text-foreground shadow-lg">
                         <div className="min-w-0 flex-1">
                             <DialogTitle className="pr-0 text-lg">
@@ -203,6 +248,7 @@ export default function CashlessCameraScanner({
                             variant="ghost"
                             size="icon"
                             aria-label="Tutup kamera"
+                            className="size-12"
                             disabled={phase === 'closing'}
                             onClick={() => void finish.current()}
                         >
@@ -210,7 +256,7 @@ export default function CashlessCameraScanner({
                         </Button>
                     </div>
                     <div
-                        className="flex min-h-0 flex-1 items-center justify-center"
+                        className="flex min-h-24 flex-1 items-center justify-center"
                         aria-hidden="true"
                     >
                         {phase === 'scanning' ? (
@@ -233,6 +279,14 @@ export default function CashlessCameraScanner({
                         )}
                     </div>
                     <div className="relative z-10 flex flex-col gap-3 rounded-xl bg-background p-4 text-foreground shadow-lg">
+                        {currentAwb && (
+                            <p
+                                className="font-mono text-xl font-semibold break-all"
+                                aria-label="Resi terakhir"
+                            >
+                                {currentAwb}
+                            </p>
+                        )}
                         <p className="flex items-center gap-2 text-sm font-medium tabular-nums">
                             <Check aria-hidden="true" className="size-4" />
                             {count} resi dalam draft
@@ -244,7 +298,32 @@ export default function CashlessCameraScanner({
                         >
                             {notice}
                         </p>
-                        {permissionDenied && (
+                        {summary}
+                        {phase === 'error' &&
+                            (!permissionDenied || isBrowserPwa) && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-h-12"
+                                    onClick={() => {
+                                        void reader.current
+                                            ?.stop()
+                                            .then(() =>
+                                                setRestart(
+                                                    (value) => value + 1,
+                                                ),
+                                            )
+                                            .catch(() =>
+                                                setNotice(
+                                                    'Kamera belum berhenti. Tutup pemindai dan coba lagi.',
+                                                ),
+                                            );
+                                    }}
+                                >
+                                    Coba kamera lagi
+                                </Button>
+                            )}
+                        {permissionDenied && !isBrowserPwa && (
                             <Button
                                 type="button"
                                 variant="outline"
@@ -286,6 +365,7 @@ export default function CashlessCameraScanner({
                                     : 'Selesai scan'}
                             </Button>
                         </div>
+                        <ScannerFeedbackSettings />
                     </div>
                 </DialogPrimitive.Content>
             </DialogPortal>

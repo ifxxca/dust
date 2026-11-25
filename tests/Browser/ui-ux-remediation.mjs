@@ -233,7 +233,7 @@ check('wave 1 contrast primary and active navigation', async (page) => {
                 .click();
         await page.waitForTimeout(650);
         const button = page.getByRole('button', {
-            name: 'Terapkan',
+            name: 'Buat pickup',
             exact: true,
         });
         ratios[theme + 'Primary'] = await textContrast(button);
@@ -811,14 +811,16 @@ check(
                     .isVisible(),
             );
             const search = await page
-                .getByLabel('Cari AWB', { exact: true })
+                .getByLabel('Cari AWB, customer, pengirim, atau penerima', {
+                    exact: true,
+                })
                 .boundingBox();
             assert(
                 search && search.y < 400,
                 'Collection failure must not obscure shipment search',
             );
             const records = page.getByRole('region', {
-                name: 'Monitoring AWB',
+                name: 'Daftar AWB',
                 exact: true,
             });
             const firstAwb = await (

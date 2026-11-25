@@ -283,7 +283,7 @@ export function OperationalActivityChart({
                 icon={BarChart3}
                 className="h-full"
                 action={
-                    <div className="flex flex-wrap items-center gap-1">
+                    <div className="flex max-w-full min-w-0 flex-wrap items-center gap-1">
                         <ToggleGroup
                             type="single"
                             value={metric}
@@ -294,7 +294,7 @@ export function OperationalActivityChart({
                                 }
                             }}
                             aria-label="Metrik aktivitas"
-                            className="rounded-lg bg-muted/60 p-0.5"
+                            className="max-w-full flex-wrap rounded-lg bg-muted/60 p-0.5"
                         >
                             {metrics.map(([key, label]) => (
                                 <ToggleGroupItem

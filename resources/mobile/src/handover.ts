@@ -1,9 +1,12 @@
+import type { CashlessReadiness } from '../../js/types/handover';
+
 export type HandoverCandidate = {
     id: number;
     reference: string;
     customer_name: string;
     staff_name: string | null;
     total: number;
+    cashless_readiness?: CashlessReadiness | null;
 };
 export type Handover = {
     id: number;
@@ -27,6 +30,7 @@ export type Handover = {
     items?: {
         id: number;
         task_id: number;
+        cashless_readiness?: CashlessReadiness | null;
         reference: string;
         customer_name: string;
         pickup_staff: { id: number; name: string } | null;

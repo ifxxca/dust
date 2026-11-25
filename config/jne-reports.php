@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'monitoring_summary_cache_seconds' => max(0, min(60, (int) env('JNE_MONITORING_SUMMARY_CACHE_SECONDS', 15))),
+    'monitoring_cache_store' => env('JNE_MONITORING_CACHE_STORE') ?: null,
+    // Only independently reviewed source capabilities belong here; collector claims cannot add entries.
+    'collection_capabilities' => [],
+    'automatic_retry_enabled' => (bool) env('JNE_REPORT_AUTOMATIC_RETRY_ENABLED', false),
+    'hybrid_auto_retry_max' => min(2, max(0, (int) env('HYBRID_AUTO_RETRY_MAX', 1))),
+    'hybrid_retry_delay_seconds' => max(120, (int) env('HYBRID_RETRY_DELAY_SECONDS', 120)),
+    'hybrid_retry_second_delay_seconds' => max(300, (int) env('HYBRID_RETRY_SECOND_DELAY_SECONDS', 300)),
     'tracking_policies_enabled' => (bool) env('JNE_TRACKING_POLICIES_ENABLED', false),
     'batch_checkpoints_enabled' => (bool) env('JNE_APEX_BATCH_CHECKPOINTS_ENABLED', false),
     'evidence_policies_enabled' => (bool) env('JNE_EVIDENCE_POLICIES_ENABLED', false),
@@ -16,6 +24,7 @@ return [
     'lease_seconds' => (int) env('JNE_REPORT_LEASE_SECONDS', 300),
     'max_file_kb' => (int) env('JNE_REPORT_MAX_FILE_KB', 20480),
     'report_mode' => env('JNE_REPORT_MODE', 'P'),
+    'daily_account_report_at' => '01:00',
     'max_report_days' => 5,
     'max_request_days' => 366,
     'max_awbs' => 6000,

@@ -1,3 +1,6 @@
+import { NativeSelect } from '@/components/ui/native-select';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,7 +106,7 @@ function CategoryMappings({
                             }
                         />
                     </div>
-                    <select
+                    <NativeSelect
                         required
                         aria-label={'Kategori POP ' + (row.id + 1)}
                         className="h-10 rounded-md border bg-background px-2 text-sm"
@@ -127,7 +130,7 @@ function CategoryMappings({
                                 {label}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                     <Button
                         type="button"
                         variant="ghost"
@@ -224,14 +227,13 @@ export default function JneSourceContractFields({
                             </div>
                         ))}
                     </div>
-                    <details className="rounded-lg border p-3">
-                        <summary className="cursor-pointer text-sm font-medium">
+                    <Disclosure>
+                        <DisclosureSummary className="cursor-pointer">
                             Otomatisasi pickup
-                        </summary>
+                        </DisclosureSummary>
                         <div className="mt-3 flex flex-col gap-3">
                             <label className="flex min-h-11 items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
+                                <NativeCheckbox
                                     checked={
                                         definition.automatic_reconciliation ===
                                         true
@@ -258,8 +260,7 @@ export default function JneSourceContractFields({
                                 tanggal pickup
                             </label>
                             <label className="flex min-h-11 items-center gap-2 text-sm">
-                                <input
-                                    type="checkbox"
+                                <NativeCheckbox
                                     checked={
                                         definition.collection_mode ===
                                         'complete_date_report'
@@ -283,11 +284,11 @@ export default function JneSourceContractFields({
                                 pemeriksaan.
                             </p>
                         </div>
-                    </details>
-                    <details className="rounded-lg border p-3">
-                        <summary className="cursor-pointer text-sm font-medium">
+                    </Disclosure>
+                    <Disclosure>
+                        <DisclosureSummary className="cursor-pointer">
                             Pemetaan kategori
-                        </summary>
+                        </DisclosureSummary>
                         <div className="mt-3 flex flex-col gap-4">
                             <CategoryMappings
                                 key={advancedRevision}
@@ -311,7 +312,7 @@ export default function JneSourceContractFields({
                                         <Label htmlFor={'contract-' + process}>
                                             {process}
                                         </Label>
-                                        <select
+                                        <NativeSelect
                                             id={'contract-' + process}
                                             className="h-10 rounded border bg-background px-2 text-sm"
                                             value={hybrid[process] ?? ''}
@@ -340,16 +341,16 @@ export default function JneSourceContractFields({
                                                     </option>
                                                 ),
                                             )}
-                                        </select>
+                                        </NativeSelect>
                                     </div>
                                 ))}
                             </fieldset>
                         </div>
-                    </details>
-                    <details className="rounded-lg border p-3">
-                        <summary className="cursor-pointer text-sm font-medium">
+                    </Disclosure>
+                    <Disclosure>
+                        <DisclosureSummary className="cursor-pointer">
                             Sumber wajib untuk pengesahan
-                        </summary>
+                        </DisclosureSummary>
                         <div className="mt-3 flex flex-col gap-2">
                             <Label htmlFor="contract-requirements">
                                 Sumber:jenis report[:account] · satu per baris
@@ -377,13 +378,13 @@ export default function JneSourceContractFields({
                                 }
                             />
                         </div>
-                    </details>
+                    </Disclosure>
                 </>
             )}
-            <details ref={advancedDetails} className="rounded-lg border p-3">
-                <summary className="cursor-pointer text-sm font-medium">
+            <Disclosure ref={advancedDetails}>
+                <DisclosureSummary className="cursor-pointer">
                     Definisi JSON lanjutan
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex flex-col gap-2">
                     <Label htmlFor="evidence-definition">
                         Definisi kolom dan aturan terverifikasi
@@ -411,7 +412,7 @@ export default function JneSourceContractFields({
                         </p>
                     )}
                 </div>
-            </details>
+            </Disclosure>
         </div>
     );
 }

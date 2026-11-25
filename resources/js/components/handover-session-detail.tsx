@@ -1,3 +1,5 @@
+import { Textarea } from '@/components/ui/textarea';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import {
     Table,
     TableHeader,
@@ -35,6 +37,10 @@ import OperationalChange, {
 import { handover, operations } from '@/routes';
 import * as api from '@/routes/api/handovers';
 import { type HandoverItem, type HandoverSession } from '@/types/handover';
+import {
+    initialReceivedQuantities,
+    matchingReceivedQuantities,
+} from '@/lib/handover-verification';
 
 const categories = [
     ['manual_hybrid', 'Manual Hybrid Non-Cashless'],
@@ -52,12 +58,6 @@ type VerificationDraft = {
     cashless_hybrid: string;
     css_orion: string;
     discrepancy_notes: string;
-};
-const emptyDraft: VerificationDraft = {
-    manual_hybrid: '',
-    cashless_hybrid: '',
-    css_orion: '',
-    discrepancy_notes: '',
 };
 
 function ItemStatus({ item }: { item: HandoverItem }) {
@@ -104,7 +104,8 @@ function VerificationForm({
         },
         { data: HandoverSession }
     >({
-        ...emptyDraft,
+        ...initialReceivedQuantities(item.pickup),
+        discrepancy_notes: '',
         ...draft,
         expected_version: session.version,
         expected_pickup_revision: item.pickup_revision,
@@ -188,6 +189,35 @@ function VerificationForm({
                     .finally(() => onBusy(false));
             }}
         >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold">Jumlah diterima</h3>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11"
+                    disabled={disabled || form.processing}
+                    onClick={() => {
+                        const quantities = matchingReceivedQuantities(
+                            item.pickup,
+                        );
+                        form.setData({ ...form.data, ...quantities });
+                        form.clearErrors(
+                            'manual_hybrid',
+                            'cashless_hybrid',
+                            'css_orion',
+                            'discrepancy_notes',
+                        );
+                        setError('');
+                        onDraft({
+                            ...quantities,
+                            discrepancy_notes: form.data.discrepancy_notes,
+                        });
+                    }}
+                >
+                    <Check aria-hidden="true" />
+                    Cocok dengan POP
+                </Button>
+            </div>
             <div className="overflow-x-auto rounded-lg border">
                 <Table className="w-full table-fixed text-left text-xs sm:text-sm">
                     <TableHeader className="bg-muted/50 text-xs text-muted-foreground">
@@ -297,7 +327,7 @@ function VerificationForm({
                 <Label htmlFor="verification-notes">
                     Catatan Verifikasi {discrepancy ? '(wajib)' : '(opsional)'}
                 </Label>
-                <textarea
+                <Textarea
                     id="verification-notes"
                     maxLength={2000}
                     required={discrepancy}
@@ -329,8 +359,8 @@ function VerificationForm({
             )}
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="max-w-sm text-xs leading-5 text-muted-foreground">
-                    Hitung fisik secara independen. Input belum tersimpan sampai
-                    verifikasi dikirim.
+                    Periksa jumlah fisik. Klik Tandai Terverifikasi untuk
+                    menyimpan.
                 </p>
                 <Button
                     className="h-11 w-full sm:w-auto"
@@ -725,6 +755,14 @@ export default function HandoverSessionDetail({
                                 taskId={selected.task_id}
                                 timezone={timezone}
                             />
+                            {selected.cashless_readiness?.ready === false && (
+                                <p
+                                    role="alert"
+                                    className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                                >
+                                    {selected.cashless_readiness.message}
+                                </p>
+                            )}
                             {selected.status === 'PENDING' &&
                             session.can?.verify &&
                             session.status !== 'CLOSED' ? (
@@ -733,7 +771,11 @@ export default function HandoverSessionDetail({
                                     session={session}
                                     item={selected}
                                     draft={drafts[selected.id]}
-                                    disabled={loading}
+                                    disabled={
+                                        loading ||
+                                        selected.cashless_readiness?.ready ===
+                                            false
+                                    }
                                     onDraft={(value) =>
                                         setDrafts((current) => ({
                                             ...current,
@@ -875,6 +917,8 @@ export default function HandoverSessionDetail({
                                         </p>
                                     )}
                                     {isAdmin &&
+                                        selected.cashless_readiness?.ready !==
+                                            false &&
                                         session.status === 'IN_VERIFICATION' &&
                                         selected.status !== 'PENDING' && (
                                             <OperationalChange
@@ -915,11 +959,11 @@ export default function HandoverSessionDetail({
                                 </>
                             )}
                             {selected.revisions.length > 0 && (
-                                <details className="rounded-lg border p-3 text-xs">
-                                    <summary className="cursor-pointer font-medium">
+                                <Disclosure>
+                                    <DisclosureSummary className="cursor-pointer">
                                         Riwayat Koreksi Verifikasi (
                                         {selected.revisions.length})
-                                    </summary>
+                                    </DisclosureSummary>
                                     <div className="mt-3">
                                         <p>Nilai awal:</p>
                                         <RecordedValues
@@ -944,7 +988,7 @@ export default function HandoverSessionDetail({
                                             />
                                         </div>
                                     ))}
-                                </details>
+                                </Disclosure>
                             )}
                         </>
                     )}
@@ -975,10 +1019,10 @@ export default function HandoverSessionDetail({
                     />
                 )}
             </div>
-            <details className="rounded-xl border bg-card p-4 text-sm">
-                <summary className="cursor-pointer font-semibold">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Jejak Session ({session.events?.length ?? 0})
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-4 space-y-3 border-l pl-4">
                     {session.events?.map((event, index) => (
                         <div key={index}>
@@ -1005,7 +1049,7 @@ export default function HandoverSessionDetail({
                         </div>
                     ))}
                 </div>
-            </details>
+            </Disclosure>
         </div>
     );
 }

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
-#[Signature('cashless:entries {--source=} {--batch=} {--queue-unbatched= : Queue recorded resi without batch history for a finalized pickup to Puman} {--resume-verification= : Recheck an existing HO without creating or scanning again before its first approval} {--confirm-approval= : Read approval evidence for a held batch without clicking Approve again} {--route= : Route an unassigned batch to the explicit source} {--cancel= : Cancel an unclaimed batch only} {--retry= : Create a new batch for definitive failures only} {--resolve-orion= : Resolve a known Orion rejection before any accepted input} {--notify-existing : Notify owners of displayed problematic batches without replaying input} {--reason=}')]
+#[Signature('cashless:entries {--source=} {--batch=} {--confirm-report= : Confirm existing Approved=Y evidence from a saved worker CSV; dry run by default} {--date=} {--pickup=} {--checksum=} {--apply : Apply the scoped report confirmation} {--queue-unbatched= : Queue recorded resi without batch history for a finalized pickup to PM} {--resume-verification= : Recheck an existing HO without creating or scanning again before its first approval} {--confirm-approval= : Read approval evidence for a held batch without clicking Approve again} {--route= : Route an unassigned batch to the explicit source} {--cancel= : Cancel an unclaimed batch only} {--retry= : Create a new batch for definitive failures only} {--resolve-orion= : Resolve a known Orion rejection before any accepted input} {--notify-existing : Notify owners of displayed problematic batches without replaying input} {--reason=}')]
 #[Description('Inspect cashless entry batches and route a legacy unassigned batch without replaying external input')]
 class CashlessEntries extends Command
 {
@@ -37,7 +37,7 @@ class CashlessEntries extends Command
 
     private function runBatchCommand(): int
     {
-        if (count(array_filter([$this->option('route'), $this->option('cancel'), $this->option('retry'), $this->option('resolve-orion'), $this->option('queue-unbatched'), $this->option('resume-verification'), $this->option('confirm-approval')], fn ($value): bool => $value !== null)) > 1) {
+        if (count(array_filter([$this->option('confirm-report'), $this->option('route'), $this->option('cancel'), $this->option('retry'), $this->option('resolve-orion'), $this->option('queue-unbatched'), $this->option('resume-verification'), $this->option('confirm-approval')], fn ($value): bool => $value !== null)) > 1) {
             $this->error('Pilih satu tindakan: route, cancel, retry, resolve-orion, queue-unbatched, atau resume-verification.');
 
             return self::FAILURE;
@@ -48,15 +48,40 @@ class CashlessEntries extends Command
 
             return self::FAILURE;
         }
+        if ($this->option('confirm-report') !== null) {
+            $date = (string) $this->option('date');
+            $checksum = (string) $this->option('checksum');
+            $pickup = (string) $this->option('pickup');
+            $path = realpath((string) $this->option('confirm-report'));
+            $root = $source !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) === 1
+                ? realpath(storage_path('app/private/jne-worker/hybrid/'.$source.'/'.$date)) : false;
+            if ($path === false || $root === false || ! str_starts_with(strtolower($path), strtolower($root.DIRECTORY_SEPARATOR))
+                || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'csv' || ! preg_match('/^[a-f0-9]{64}$/D', $checksum)
+                || ! ctype_digit($pickup) || (int) $pickup < 1 || ! is_file($path) || filesize($path) > 20971520 || $this->option('notify-existing')) {
+                $this->error('Gunakan CSV worker tersimpan dengan --source, --date, --checksum dan --pickup yang valid. Tambahkan --apply hanya setelah menyetujui hasil simulasi.');
+
+                return self::FAILURE;
+            }
+            $result = app(ManageCashlessEntryBatches::class)->confirmApprovedReport($source, $date, file_get_contents($path), $checksum,
+                taskId: (int) $pickup, dryRun: ! $this->option('apply'));
+            $this->info(($this->option('apply') ? 'Diterapkan: ' : 'Simulasi tanpa perubahan: ').$result['confirmed'].' resi terkonfirmasi Approved=Y; buku pickup #'.$pickup.'.');
+
+            return self::SUCCESS;
+        }
+        if ($this->option('apply')) {
+            $this->error('--apply hanya untuk --confirm-report.');
+
+            return self::FAILURE;
+        }
         if ($this->option('queue-unbatched') !== null) {
             $reason = trim((string) $this->option('reason'));
-            if (! ctype_digit((string) $this->option('queue-unbatched')) || $reason === '' || mb_strlen($reason) > 500 || ($source !== null && $source !== 'nuralamt')) {
-                $this->error('Gunakan --queue-unbatched=PICKUP_ID --reason="alasan". Resi diteruskan ke Puman.');
+            if (! ctype_digit((string) $this->option('queue-unbatched')) || $reason === '' || mb_strlen($reason) > 500 || ($source !== null && $source !== ManageCashlessEntryBatches::CaptureSource)) {
+                $this->error('Gunakan --queue-unbatched=PICKUP_ID --reason="alasan". Resi diteruskan ke PM.');
 
                 return self::FAILURE;
             }
             $batch = app(ManageCashlessEntryBatches::class)->enqueueUnbatched((int) $this->option('queue-unbatched'), $reason);
-            $this->info($batch === null ? 'Tidak ada resi tanpa riwayat batch yang perlu diantrekan.' : 'Batch Puman #'.$batch->id.' dibuat untuk resi yang belum pernah diantrekan.');
+            $this->info($batch === null ? 'Tidak ada resi tanpa riwayat batch yang perlu diantrekan.' : 'Batch PM #'.$batch->id.' dibuat untuk resi yang belum pernah diantrekan.');
         }
         if ($this->option('resume-verification') !== null) {
             $reason = trim((string) $this->option('reason'));

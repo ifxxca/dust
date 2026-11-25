@@ -42,3 +42,41 @@ test('category evidence ignores JSON object key order but retains strict source 
         ->toBe($before->only(['customer_id', 'pickup_task_id', 'category', 'category_status', 'match_status']));
     Http::assertNothingSent();
 })->with([['object_order', 0], ['nested_order', 0], ['scalar_type', 1], ['list_order', 1]]);
+
+test('category replay reads current persisted state instead of stale or partial model attributes', function (string $modelState) {
+    Storage::fake('jne_reports');
+    config(['pickup.automation.enabled' => false, 'jne-reports.evidence_policies_enabled' => true, 'jne-reports.category_reconciliation_enabled' => true]);
+    $fixture = pickupAutomationFixture(1, 0);
+    importPickupAutomationReport($fixture, 1, 0);
+    $before = JneShipment::sole();
+    $events = JneShipmentMatchEvent::where('method', 'CATEGORY')->count();
+    $input = $modelState === 'partial' ? JneShipment::select('id', 'awb')->sole()
+        : $before->fresh()->forceFill(['category' => null, 'category_status' => 'UNMATCHED', 'category_evidence' => [], 'version' => 1]);
+
+    app(ResolveJneCategories::class)->handle(collect([$input]));
+    app(ResolveJneCategories::class)->handle(collect([$input]));
+
+    expect(JneShipmentMatchEvent::where('method', 'CATEGORY')->count())->toBe($events)
+        ->and($before->fresh()->getAttributes())->toBe($before->getAttributes())
+        ->and($input->version)->toBe($before->version)->and($input->category)->toBe('manual_hybrid');
+})->with(['stale', 'partial']);
+
+test('category decision and audit roll back together if the audit cannot be stored', function () {
+    Storage::fake('jne_reports');
+    config(['pickup.automation.enabled' => false, 'jne-reports.evidence_policies_enabled' => true, 'jne-reports.category_reconciliation_enabled' => true]);
+    $fixture = pickupAutomationFixture(1, 0);
+    importPickupAutomationReport($fixture, 1, 0);
+    $shipment = JneShipment::sole();
+    $shipment->update(['category' => null, 'category_status' => 'UNMATCHED', 'category_evidence' => []]);
+    $before = $shipment->getAttributes();
+    $events = JneShipmentMatchEvent::where('method', 'CATEGORY')->count();
+    JneShipmentMatchEvent::creating(function (JneShipmentMatchEvent $event): void {
+        if ($event->method === 'CATEGORY') {
+            throw new RuntimeException('Audit storage unavailable');
+        }
+    });
+
+    expect(fn () => app(ResolveJneCategories::class)->handle(collect([$shipment])))->toThrow(RuntimeException::class);
+    expect($shipment->fresh()->getAttributes())->toBe($before)
+        ->and(JneShipmentMatchEvent::where('method', 'CATEGORY')->count())->toBe($events);
+});

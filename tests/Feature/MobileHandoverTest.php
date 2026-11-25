@@ -68,9 +68,11 @@ test('mobile facade denies readonly writes and exposes no correction or manageme
     $this->getJson(route('api.handovers.show', $sessionId))->assertUnauthorized();
 });
 
-test('mobile verifies cross staff quantities and closes the same session visible on web', function () {
-    [$actor, $other, $tasks, $token] = mobileHandoverFixture('retail_staff');
+test('every operational mobile role verifies cross staff quantities and closes the same session visible on web', function (string $role) {
+    [$actor, $other, $tasks, $token] = mobileHandoverFixture($role);
+    $this->withToken($token->plainTextToken)->getJson(route('mobile.handovers.index', ['receiving' => 1]))->assertOk()->assertJsonPath('capabilities.receive', true);
     $created = $this->withToken($token->plainTextToken)->postJson(route('mobile.handovers.store'), ['submission_key' => (string) Str::uuid(), 'task_ids' => [$tasks[0]->id, $tasks[1]->id]])->assertCreated();
+    $created->assertJsonPath('data.can.verify', true)->assertJsonPath('data.can.receive', true);
     $sessionId = $created->json('data.id');
     $body = ['expected_version' => 1, 'manual_hybrid' => 2, 'cashless_hybrid' => 1, 'css_orion' => 0];
     $this->postJson(route('mobile.handovers.close', $sessionId), ['expected_version' => 1])->assertConflict();
@@ -88,10 +90,10 @@ test('mobile verifies cross staff quantities and closes the same session visible
     $this->getJson(route('mobile.handovers.index', ['active' => 1]))->assertOk()->assertJsonCount(0, 'data');
     app('auth')->forgetGuards();
     $this->withHeader('Authorization', '')->actingAs($actor, 'web')->getJson(route('api.handovers.show', $sessionId))->assertOk()->assertJsonPath('data.status', 'CLOSED')->assertJsonPath('data.items.1.verified_by', $actor->id);
-});
+})->with(['pickup_staff', 'retail_staff', 'admin_supervisor']);
 
-test('mobile keeps category discrepancies after closure and validates every quantity', function () {
-    [$actor, $other, $tasks, $token] = mobileHandoverFixture('retail_staff');
+test('mobile keeps category discrepancies after closure and validates every quantity', function (string $role) {
+    [$actor, $other, $tasks, $token] = mobileHandoverFixture($role);
     $created = $this->withToken($token->plainTextToken)->postJson(route('mobile.handovers.store'), ['submission_key' => (string) Str::uuid(), 'task_ids' => [$tasks[0]->id]])->assertCreated();
     $sessionId = $created->json('data.id');
     $route = route('mobile.handovers.verify', ['session' => $sessionId, 'item' => $created->json('data.items.0.id')]);
@@ -102,7 +104,7 @@ test('mobile keeps category discrepancies after closure and validates every quan
     $this->postJson(route('mobile.handovers.close', $sessionId), ['expected_version' => 2])->assertOk()->assertJsonPath('data.items.0.status', 'DISCREPANCY')->assertJsonPath('data.items.0.discrepancy_notes', 'Kategori berbeda walaupun total sama');
     $this->postJson($route, [...$body, 'expected_version' => 3])->assertConflict();
     $this->assertDatabaseCount('handover_events', 3);
-});
+})->with(['pickup_staff', 'retail_staff']);
 
 test('mobile handover verifies only session members and rejects inactive or unauthorized personnel', function () {
     [$actor, $other, $tasks, $token] = mobileHandoverFixture('retail_staff');
@@ -110,7 +112,7 @@ test('mobile handover verifies only session members and rejects inactive or unau
     $second = $this->postJson(route('mobile.handovers.store'), ['submission_key' => (string) Str::uuid(), 'task_ids' => [$tasks[1]->id]])->assertCreated();
     $body = ['expected_version' => 1, 'manual_hybrid' => 2, 'cashless_hybrid' => 1, 'css_orion' => 0];
     $this->postJson(route('mobile.handovers.verify', ['session' => $created->json('data.id'), 'item' => $second->json('data.items.0.id')]), $body)->assertNotFound();
-    foreach ([['role' => 'retail_staff', 'is_active' => false], ['role' => 'pickup_staff'], ['role' => 'cs']] as $attributes) {
+    foreach ([['role' => 'retail_staff', 'is_active' => false], ['role' => 'pickup_staff', 'is_active' => false], ['role' => 'cs']] as $attributes) {
         $user = User::factory()->create($attributes);
         $pat = $user->createToken('mobile:'.Str::uuid().':Android', ['mobile:read', 'mobile:handover'], now()->addDay());
         app('auth')->forgetGuards();

@@ -20,6 +20,9 @@ class EnsureMobileToken
         $token = $user?->currentAccessToken();
         abort_unless($request->bearerToken() && $token instanceof PersonalAccessToken && str_starts_with($token->name, 'mobile:'), 401);
         abort_unless($token->can('mobile:read'), 403);
+        if ($request->routeIs('mobile.cashless-results.correct')) {
+            abort_unless($token->can('mobile:execute') || $token->can('mobile:handover'), 403, 'Sesi belum memiliki akses koreksi resi. Login ulang melalui aplikasi.');
+        }
         if ($request->routeIs('mobile.tasks.store', 'mobile.tasks.takeover', 'mobile.tasks.start', 'mobile.tasks.visit', 'mobile.tasks.retry', 'mobile.tasks.proof')) {
             abort_unless($user->role === 'pickup_staff' && $token->can('mobile:execute'), 403, 'Sesi belum memiliki akses execution. Logout online dan login ulang setelah pembaruan aplikasi.');
         }

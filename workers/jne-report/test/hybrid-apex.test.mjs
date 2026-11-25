@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+    mkdir,
+    mkdtemp,
+    readFile,
+    readdir,
+    rm,
+    writeFile,
+} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { ApexClient } from '../src/apex.mjs';
@@ -461,4 +468,162 @@ test('Hybrid rejects inconsistent APEX batch columns without publishing a combin
         { code: 'APEX_CSV_FORMAT' },
     );
     assert.equal(calls, 2);
+});
+
+test('automatic retries route each unfinished APEX batch to its own pinned History', async (t) => {
+    const directory = await mkdtemp(
+        path.join(os.tmpdir(), 'apex-batch-retry-'),
+    );
+    t.after(() => rm(directory, { recursive: true, force: true }));
+    const awbs = Array.from({ length: 6001 }, (_, index) => 'TG' + (index + 1));
+    const histories = {
+        1: { state: 'history', history: { id: '101' } },
+        2: { state: 'history', history: { id: '102' } },
+    };
+    const checkpoints = [];
+    const resumed = [];
+    const file = await retrieveHybridApex(
+        {
+            id: 90,
+            automatic_retry: true,
+            report_mode: 'A',
+            parameters: { awbs, apex_retry_batches: histories },
+            retryCheckpoint: async (evidence) => checkpoints.push(evidence),
+        },
+        {
+            retrieve: async (job, folder) => {
+                resumed.push(job.parameters.apex_history.id);
+                assert.equal(job.parameters.awbs.length, job.awbs.length);
+                await job.retryCheckpoint({
+                    submission_state: 'history',
+                    history: job.parameters.apex_history,
+                });
+                const target = path.join(folder, 'result.csv');
+                await writeFile(
+                    target,
+                    'AWB,ID_ACCOUNT\n' +
+                        job.awbs.map((awb) => awb + ',ACCOUNT').join('\n') +
+                        '\n',
+                );
+                return target;
+            },
+        },
+        directory,
+        async () => {},
+        new AbortController().signal,
+        20971520,
+    );
+    assert.deepEqual(resumed, ['101', '102']);
+    assert.deepEqual(
+        checkpoints.map((entry) => entry.batch_number),
+        [1, 2],
+    );
+    assert.equal(parseCsv(await readFile(file, 'utf8'), ',').length, 6002);
+});
+
+test('an automatic Upload Connote retry preserves the original filename and never uploads again', async (t) => {
+    const site = await apexUploadFixture();
+    const directory = await mkdtemp(
+        path.join(os.tmpdir(), 'apex-upload-retry-'),
+    );
+    const apex = new ApexClient(site.config(directory));
+    t.after(async () => {
+        await apex.close();
+        await site.close();
+        await rm(directory, { recursive: true, force: true });
+    });
+    const histories = {};
+    const job = {
+        id: 91,
+        automatic_retry: true,
+        report_mode: 'A',
+        report_type: 'unresolved',
+        source: 'apex',
+        date_from: '2026-10-23',
+        date_thru: '2026-10-23',
+        max_file_kb: 20480,
+        parameters: { awbs: ['00001'] },
+        retryCheckpoint: async (entry) => {
+            if (entry.submission_state === 'history')
+                histories[entry.batch_number] = {
+                    state: 'history',
+                    history: entry.history,
+                };
+        },
+    };
+    for (const attempt of [1, 2]) {
+        const folder = path.join(directory, 'attempt-' + attempt);
+        await mkdir(folder);
+        await retrieveHybridApex(
+            {
+                ...job,
+                attempt_count: attempt,
+                parameters: {
+                    ...job.parameters,
+                    apex_retry_batches: histories,
+                },
+            },
+            apex,
+            folder,
+            async () => {},
+            new AbortController().signal,
+            20971520,
+        );
+    }
+    assert.equal(site.state.uploads.length, 1);
+    assert.equal(site.state.downloads.length, 2);
+});
+
+test('a rejected History checkpoint retains the original nested batch identity before failing', async (t) => {
+    const site = await apexUploadFixture();
+    const directory = await mkdtemp(
+        path.join(os.tmpdir(), 'apex-rejected-checkpoint-'),
+    );
+    const config = { ...site.config(directory), dataDir: directory };
+    const apex = new ApexClient(config);
+    t.after(async () => {
+        await apex.close();
+        await site.close();
+        await rm(directory, { recursive: true, force: true });
+    });
+    const job = {
+        id: 92,
+        status: 'RUNNING',
+        lease_seconds: 300,
+        automatic_retry: true,
+        report_mode: 'A',
+        report_type: 'unresolved',
+        source: 'apex',
+        date_from: '2026-10-23',
+        date_thru: '2026-10-23',
+        max_file_kb: 20480,
+        parameters: { awbs: ['00001'] },
+    };
+    let pinned;
+    const api = {
+        progress: async () => {},
+        checkpoint: async (_job, entry) => {
+            if (entry.submission_state === 'history') {
+                pinned = entry.history;
+                throw new Error('Checkpoint rejected');
+            }
+        },
+        fail: async () => ({ status: 'NEEDS_ATTENTION' }),
+    };
+    assert.equal(await runJob(job, api, apex, config), false);
+    const recovery = (await readdir(directory)).find((name) =>
+        name.startsWith('recovery-job-92-'),
+    );
+    assert.ok(recovery);
+    assert.deepEqual(
+        JSON.parse(
+            await readFile(
+                path.join(directory, recovery, 'batch-1', 'history.json'),
+                'utf8',
+            ),
+        ),
+        pinned,
+    );
+    assert.equal(site.state.uploads.length, 1);
+    assert.equal(site.state.downloads.length, 0);
 });

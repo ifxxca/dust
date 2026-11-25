@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Actions\Pickup\PickupResultPeriod;
 use App\Actions\Pickup\QueryPickupAutomation;
 use App\Actions\Pickup\QueryPickupAwbCandidates;
+use App\Actions\Pickup\QueryReconciliationWorkspace;
 use App\Actions\Pickup\QueuePickupReconciliations;
 use App\Actions\Pickup\ReconcileCustomerPickupDay;
+use App\Actions\Pickup\RetryPickupAwbEmail;
 use App\Actions\Pickup\ReviewPickupAwbs;
 use App\Http\Requests\PickupResultRequest;
 use App\Http\Requests\ReviewPickupAwbsRequest;
@@ -16,6 +18,7 @@ use App\Jobs\RenderPickupAwbManifestJob;
 use App\Models\Customer;
 use App\Models\CustomerAwbDeliveryPreference;
 use App\Models\JneShipment;
+use App\Models\PickupAwbDelivery;
 use App\Models\PickupAwbManifest;
 use App\Models\PickupCustomerReconciliation;
 use App\Models\PickupPendingItem;
@@ -30,7 +33,6 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -85,7 +87,7 @@ class PickupAutomationController extends Controller
 
     public function show(Request $request, PickupTask $task): JsonResponse
     {
-        $this->authorizeAdmin($request);
+        abort_unless($request->user()?->is_active && in_array($request->user()->role, ['admin_supervisor', 'retail_staff'], true), 403);
         $request->validate(['view' => ['nullable', 'in:pickup,customer_day'], 'member_task' => ['nullable', 'integer', 'min:0']]);
         $selectedTaskId = $task->id;
         if ($request->input('view') === 'customer_day') {
@@ -120,7 +122,7 @@ class PickupAutomationController extends Controller
                 'verified_at' => $task->handoverItem?->effectiveValues()['verified_at'] ?? null, 'imported_at' => $importedAt,
                 'warehouse_needs_review' => $task->handoverItem?->needsReview() ?? false,
             ],
-            'reconciliation' => $reconciliation,
+            'reconciliation' => $reconciliation === null ? null : [...(is_array($reconciliation) ? $reconciliation : $reconciliation->toArray()), 'evidence' => ['coverage' => data_get($reconciliation, 'evidence.coverage')]],
             'delivery_attention' => $deliveryAttention,
             'shipment_query' => $shipmentQuery,
             'shipments' => JneShipment::where(fn ($query) => $query->where('pickup_task_id', $task->id)->orWhereIn('id', $candidateIds))->where(fn ($owner) => $owner->whereNull('pickup_task_id')->orWhere('pickup_task_id', $task->id))->orderBy('awb')->paginate(50)->through(fn (JneShipment $row): array => $row->only(['id', 'awb', 'version', 'pickup_task_id', 'category', 'category_status', 'match_status', 'customer_match_status'])),
@@ -130,8 +132,12 @@ class PickupAutomationController extends Controller
             'business_date' => $task->proof?->picked_up_at ? PickupResultPeriod::date($task->proof->picked_up_at)->toDateString() : null,
             'excluded' => DB::table('pickup_awb_exclusions')->where('pickup_awb_exclusions.pickup_task_id', $task->id)->join('jne_shipments', 'jne_shipments.id', '=', 'jne_shipment_id')->select('jne_shipments.id', 'awb', 'version', 'category', 'reason', 'jne_shipments.pickup_task_id')->orderBy('awb')->paginate(20, ['*'], 'excluded_page'),
             'manifests' => PickupAwbManifest::where('pickup_task_id', $task->id)->with('deliveries')->orderByDesc('revision')->paginate(10, ['*'], 'manifest_page'),
-            'preference' => CustomerAwbDeliveryPreference::where('customer_id', $task->customer_id)->first(),
-            'history' => DB::table('pickup_processing_reconciliation_events')->where('pickup_task_id', $task->id)->orderByDesc('revision')->paginate(10, ['*'], 'history_page'),
+            'preference' => CustomerAwbDeliveryPreference::effectiveForCustomer($task->customer_id)?->deliverySettings(),
+            'history' => DB::table('pickup_processing_reconciliation_events')->where('pickup_task_id', $task->id)->orderByDesc('revision')->paginate(10, ['*'], 'history_page')->through(function (object $event): object {
+                $event->snapshot = json_encode(QueryReconciliationWorkspace::historySummary(json_decode($event->snapshot, true, flags: JSON_THROW_ON_ERROR)), JSON_THROW_ON_ERROR);
+
+                return $event;
+            }),
             'send_enabled' => (bool) config('pickup.automation.send_enabled'),
         ]);
     }
@@ -176,14 +182,18 @@ class PickupAutomationController extends Controller
                 'scheduled_at' => $members->min('scheduled_at'), 'visited_at' => $members->min('proof.picked_up_at'), 'finalized_at' => $final ? $members->max('proof.finalized_at') : null,
                 'verified_at' => $verified ? $members->map(fn ($member) => $member->handoverItem->effectiveValues()['verified_at'] ?? null)->max() : null,
                 'imported_at' => ReportJob::whereIn('id', (clone $query)->select('latest_report_job_id'))->max('imported_at'), 'warehouse_needs_review' => ! $verified],
-            'reconciliation' => $reconciliation, 'delivery_attention' => $attention, 'business_date' => $date, 'shipment_query' => '',
+            'reconciliation' => $reconciliation === null ? null : [...(is_array($reconciliation) ? $reconciliation : $reconciliation->toArray()), 'evidence' => ['coverage' => data_get($reconciliation, 'evidence.coverage')]], 'delivery_attention' => $attention, 'business_date' => $date, 'shipment_query' => '',
             'shipments' => (clone $query)->orderBy('awb')->paginate(50, $columns),
             'assigned_shipments' => (clone $query)->whereIn('pickup_task_id', $ids)->orderBy('awb')->paginate(20, $columns, 'attached_page'),
             'pending_items' => PickupPendingItem::whereIn('pickup_task_id', $ids)->with('shipment:id,awb')->orderByDesc('id')->paginate(20, ['*'], 'pending_page'),
             'excluded' => $empty(), 'review_events' => $empty(),
             'manifests' => $manifests->orderByDesc('id')->paginate(10, ['*'], 'manifest_page'),
-            'preference' => CustomerAwbDeliveryPreference::where('customer_id', $customer->id)->first(),
-            'history' => DB::table('pickup_customer_reconciliation_events')->where('customer_reconciliation_id', $group?->id)->orderByDesc('revision')->paginate(10, ['*'], 'history_page'),
+            'preference' => CustomerAwbDeliveryPreference::effectiveForCustomer($customer->id)?->deliverySettings(),
+            'history' => DB::table('pickup_customer_reconciliation_events')->where('customer_reconciliation_id', $group?->id)->orderByDesc('revision')->paginate(10, ['*'], 'history_page')->through(function (object $event): object {
+                $event->snapshot = json_encode(QueryReconciliationWorkspace::historySummary(json_decode($event->snapshot, true, flags: JSON_THROW_ON_ERROR)), JSON_THROW_ON_ERROR);
+
+                return $event;
+            }),
             'send_enabled' => (bool) config('pickup.automation.send_enabled'),
         ]);
     }
@@ -226,11 +236,13 @@ class PickupAutomationController extends Controller
             Customer::whereKey($task->customer_id)->lockForUpdate()->firstOrFail();
             $preference = CustomerAwbDeliveryPreference::where('customer_id', $task->customer_id)->lockForUpdate()->first();
             abort_unless(($preference === null ? 0 : $preference->revision) === (int) $data['expected_revision'], 409, 'Preferensi customer berubah. Muat ulang sebelum menyimpan.');
-            $before = $preference?->only(['enabled', 'recipient', 'revision']) ?? [];
+            $before = $preference?->only(['enabled', 'recipient', 'recipients', 'revision']) ?? [];
             $preference ??= new CustomerAwbDeliveryPreference(['customer_id' => $task->customer_id, 'revision' => 0]);
-            $preference->fill(['enabled' => (bool) $data['enabled'], 'channel' => 'email', 'recipient' => isset($data['recipient']) ? mb_strtolower(trim($data['recipient'])) : null, 'revision' => $preference->revision + 1, 'updated_by' => $request->user()->id])->save();
+            $preference->fill(['enabled' => (bool) $data['enabled'], 'channel' => 'email', 'recipient' => $data['recipient'] ?? null,
+                ...(config('pickup.email_recipients.enabled') ? ['recipients' => $request->recipientsWereProvided() ? ($data['recipients'] ?? []) : null] : []),
+                'revision' => $preference->revision + 1, 'updated_by' => $request->user()->id])->save();
             DB::table('customer_awb_delivery_preference_events')->insert(['customer_id' => $task->customer_id, 'actor_id' => $request->user()->id, 'revision' => $preference->revision,
-                'before' => json_encode($before, JSON_THROW_ON_ERROR), 'after' => json_encode($preference->only(['enabled', 'recipient', 'revision']), JSON_THROW_ON_ERROR), 'reason' => $data['reason'], 'created_at' => now()]);
+                'before' => json_encode($before, JSON_THROW_ON_ERROR), 'after' => json_encode($preference->only(['enabled', 'recipient', 'recipients', 'revision']), JSON_THROW_ON_ERROR), 'reason' => $data['reason'], 'created_at' => now()]);
             $queue->handle(array_values(PickupTask::where('customer_id', $task->customer_id)->whereHas('proof')->pluck('id')->map(fn ($id): int => $id)->all()));
         });
 
@@ -239,14 +251,14 @@ class PickupAutomationController extends Controller
 
     public function download(Request $request, PickupTask $task, PickupAwbManifest $manifest, string $format): StreamedResponse
     {
-        $this->authorizeAdmin($request);
+        abort_unless($request->user()?->is_active && in_array($request->user()->role, ['admin_supervisor', 'retail_staff'], true), 403);
         abort_unless($manifest->pickup_task_id === $task->id || ($manifest->customer_reconciliation_id && in_array($task->id, $manifest->snapshot['pickup_task_ids'] ?? [], true)), 404);
         abort_unless(in_array($format, ['xlsx', 'pdf'], true), 404);
         $path = $manifest->getAttribute($format.'_path');
         abort_unless(is_string($path) && Storage::disk('local')->exists($path), 404, 'Dokumen belum tersedia.');
         abort_unless(hash_equals($manifest->checksums[$format] ?? '', hash('sha256', Storage::disk('local')->get($path))), 409, 'Checksum dokumen berubah; periksa sumber tersimpan.');
 
-        return Storage::disk('local')->download($path, 'resi-'.Str::slug($manifest->snapshot['reference']).'-v'.$manifest->revision.'.'.$format);
+        return Storage::disk('local')->download($path, $manifest->downloadFilename($format));
     }
 
     public function retryDocument(Request $request, PickupTask $task, PickupAwbManifest $manifest): RedirectResponse
@@ -261,6 +273,13 @@ class PickupAutomationController extends Controller
         });
 
         return back()->with('success', 'Dokumen diantrekan ulang.');
+    }
+
+    public function retryEmail(Request $request, PickupTask $task, PickupAwbDelivery $delivery, RetryPickupAwbEmail $action): RedirectResponse
+    {
+        $action->handle($request->user(), $task->id, $delivery->id);
+
+        return back()->with('success', 'Email penerima ini diantrekan ulang.');
     }
 
     public function candidates(Request $request, PickupTask $task, QueryPickupAwbCandidates $candidates): JsonResponse
@@ -280,7 +299,7 @@ class PickupAutomationController extends Controller
 
     public function pending(Request $request): JsonResponse
     {
-        $this->authorizeAdmin($request);
+        abort_unless($request->user()?->is_active && in_array($request->user()->role, ['admin_supervisor', 'retail_staff'], true), 403);
         $filters = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1']]);
         $query = PickupPendingItem::whereIn('status', ['PENDING', 'READY'])->with(['pickup:id,reference,customer_name_snapshot,customer_id', 'pickup.proof:id,pickup_task_id,picked_up_at']);
         if (! empty($filters['q'])) {

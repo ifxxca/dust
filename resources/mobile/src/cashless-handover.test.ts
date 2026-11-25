@@ -31,6 +31,10 @@ test.each([
     { ...draft, awbs: ['bad value'] },
     { ...draft, submissionKey: '-'.repeat(36) },
     { ...draft, source: 'unrecognized-server' },
+    { ...draft, scanCounts: null },
+    { ...draft, book: null },
+    { ...draft, book: {} },
+    { ...draft, scanCounts: { total: 1, duplicate: 2, invalid: 0 } },
 ])(
     'unsupported drafts are preserved as unreadable instead of silently reset: %j',
     (value) => {

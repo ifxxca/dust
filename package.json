@@ -3,8 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vp build",
-        "build:ssr": "vp build && vp build --ssr",
+        "build": "vp build && npm run build:pwa",
+        "build:ssr": "npm run build && vp build --ssr",
         "dev": "vp dev",
         "check": "vp check",
         "check:fix": "vp check --fix",
@@ -12,6 +12,8 @@
         "build:mobile": "php artisan wayfinder:generate --with-form --no-interaction && vite build --config vite.mobile.config.ts --mode development",
         "build:mobile:release": "php artisan wayfinder:generate --with-form --no-interaction && vite build --config vite.mobile.config.ts --mode production",
         "types:mobile": "tsc --noEmit -p tsconfig.mobile.json",
+        "test:mobile": "vp test run --config vitest.mobile.config.ts",
+        "build:pwa": "php artisan wayfinder:generate --with-form --no-interaction && vite build --config vite.pwa.config.ts",
         "sync:android": "cap sync android"
     },
     "dependencies": {
@@ -41,6 +43,7 @@
         "@types/react": "^19.2.0",
         "@types/react-dom": "^19.2.0",
         "@vitejs/plugin-react": "^6.1.1",
+        "@zxing/browser": "0.2.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^10.0.3",

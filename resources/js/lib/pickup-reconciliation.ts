@@ -8,6 +8,111 @@ export const reconciliationCategories = [
     ['cashless_hybrid', 'Cashless Hybrid'],
     ['css_orion', 'CSS / Orion'],
 ] as const;
+const categoryNames = {
+    manual_hybrid: 'Manual',
+    cashless_hybrid: 'Cashless',
+    css_orion: 'CSS/Orion',
+} as const;
+
+export function reconciliationCategoryStates(
+    row: Pick<ReconciliationRow, 'categories'> &
+        Partial<Pick<ReconciliationRow, 'dirty' | 'quantity_status'>>,
+) {
+    const stale = row.dirty || row.quantity_status === 'NOT_EVALUATED';
+    return reconciliationCategories.map(([key]) => {
+        const count = row.categories[key];
+        const expected = count?.expected ?? null;
+        const confirmed = count?.confirmed ?? 0;
+        const delta = expected === null ? null : confirmed - expected;
+        const relevant =
+            expected !== 0 || confirmed > 0 || (count?.pop ?? 0) > 0;
+        const state = stale
+            ? 'stale'
+            : expected === null
+              ? 'waiting'
+              : delta! < 0
+                ? 'shortage'
+                : delta! > 0
+                  ? 'excess'
+                  : 'matched';
+        const label = categoryNames[key];
+        return {
+            key,
+            label,
+            expected,
+            confirmed,
+            delta,
+            relevant,
+            state,
+            text:
+                state === 'stale'
+                    ? `${label} belum diperiksa`
+                    : state === 'waiting'
+                      ? `${label} menunggu target`
+                      : state === 'shortage'
+                        ? `${label} kurang ${Math.abs(delta!)}`
+                        : state === 'excess'
+                          ? `${label} lebih ${delta}`
+                          : `${label} cocok`,
+        };
+    });
+}
+
+export function reconciliationProgress(
+    row: Pick<ReconciliationRow, 'categories'> &
+        Partial<
+            Pick<
+                ReconciliationRow,
+                'dirty' | 'quantity_status' | 'finalization_status'
+            >
+        >,
+) {
+    const states = reconciliationCategoryStates(row);
+    if (
+        states.some(
+            (category) =>
+                category.state === 'stale' || category.expected === null,
+        )
+    ) {
+        return { percent: null, fill: 0, tone: 'pending' as const };
+    }
+    const expected = states.reduce(
+        (sum, category) => sum + category.expected!,
+        0,
+    );
+    if (expected <= 0)
+        return { percent: null, fill: 0, tone: 'pending' as const };
+    const hasShortage = states.some(
+        (category) => category.state === 'shortage',
+    );
+    const hasExcess = states.some((category) => category.state === 'excess');
+    const allocated = states.reduce(
+        (sum, category) =>
+            sum +
+            (hasShortage && hasExcess
+                ? Math.min(category.confirmed, category.expected!)
+                : category.confirmed),
+        0,
+    );
+    const percent = Math.round((allocated / expected) * 100);
+    const tone =
+        hasExcess || row.finalization_status === 'LOCKED_REVIEW'
+            ? 'danger'
+            : hasShortage ||
+                row.quantity_status === 'CONFLICT' ||
+                row.finalization_status !== 'LOCKED'
+              ? 'warning'
+              : 'success';
+    return { percent, fill: Math.min(100, percent), tone };
+}
+export const quantityLabels: Record<string, string> = {
+    MATCHED: 'Cocok',
+    SHORTAGE: 'Kurang',
+    EXCESS: 'Lebih',
+    CONFLICT: 'Konflik',
+    UNKNOWN: 'Target belum sah',
+    NOT_EVALUATED: 'Perlu hitung ulang',
+};
 export const deliveryLabels: Record<string, string> = {
     NOT_READY: 'Belum siap',
     BUILDING_DOCUMENT: 'Membuat dokumen',

@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 
-test('simultaneous MySQL claimers cannot claim the same job or create two active jobs', function (int $queuedCount) {
+test('simultaneous MySQL claimers cannot claim the same job or create two active jobs', function (int $queuedCount, bool $hybridRetry) {
     $database = 'jne_test_'.bin2hex(random_bytes(8));
     $base = config('database.connections.mysql');
     $original = config('database.default');
@@ -16,9 +16,13 @@ test('simultaneous MySQL claimers cannot claim the same job or create two active
     $processes = [];
     try {
         Artisan::call('migrate', ['--database' => 'jne_test', '--force' => true]);
-        $jobs = ReportJob::factory()->count($queuedCount)->create();
+        $jobs = ReportJob::factory()->count($queuedCount)->create($hybridRetry ? [
+            'source' => 'roberto', 'report_type' => 'cashless', 'status' => 'RETRY_WAIT', 'attempt_count' => 1,
+            'retry_available_at' => now()->subMinute(), 'retry_protocol' => 1,
+            'parameters' => ['hybrid_retry' => ['attempt_limit' => 2, 'cycle_start_attempt' => 0]],
+        ] : []);
         foreach ([0, 1] as $index) {
-            $process = new Process([PHP_BINARY, base_path('tests/Feature/report-claim-worker.php'), $database, $gate, (string) $index], base_path(), ['APP_ENV' => 'testing']);
+            $process = new Process([PHP_BINARY, base_path('tests/Feature/report-claim-worker.php'), $database, $gate, (string) $index, '', $hybridRetry ? 'roberto' : 'apex'], base_path(), ['APP_ENV' => 'testing']);
             $process->setTimeout(25);
             $process->start();
             $processes[] = $process;
@@ -41,8 +45,8 @@ test('simultaneous MySQL claimers cannot claim the same job or create two active
         sort($expected);
         expect($results)->toBe($expected);
         expect(ReportJob::where('status', 'RUNNING')->count())->toBe(1);
-        expect(ReportJob::sum('attempt_count'))->toBe('1');
-        expect(ReportJob::where('status', 'QUEUED')->count())->toBe($queuedCount - 1);
+        expect((int) ReportJob::sum('attempt_count'))->toBe($hybridRetry ? $queuedCount + 1 : 1);
+        expect(ReportJob::where('status', $hybridRetry ? 'RETRY_WAIT' : 'QUEUED')->count())->toBe($queuedCount - 1);
     } finally {
         foreach ($processes as $process) {
             if ($process->isRunning()) {
@@ -58,7 +62,7 @@ test('simultaneous MySQL claimers cannot claim the same job or create two active
             }
         }
     }
-})->with([1, 2])->group('mysql-concurrency');
+})->with([[1, false], [2, false], [1, true], [2, true]])->group('mysql-concurrency');
 
 test('five simultaneous MySQL pool claimers reserve distinct jobs and slots', function () {
     $database = 'jne_pool_test_'.bin2hex(random_bytes(8));

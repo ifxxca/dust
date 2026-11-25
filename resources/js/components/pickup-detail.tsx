@@ -24,6 +24,8 @@ import { StatusBadge } from '@/components/operational-ui';
 import OperationalChange from '@/components/operational-change';
 import PickupProof, { type Proof } from '@/components/pickup-proof';
 import PickupCashlessAwbs from '@/components/pickup-cashless-awbs';
+import { ReceiptRecipientStatus } from '@/components/receipt-recipient-status';
+import { DocumentDeliveryPanel } from '@/components/document-delivery';
 import { type Visit } from '@/components/pickup-execution';
 import { handover, operations } from '@/routes';
 import * as api from '@/routes/api/tasks';
@@ -505,6 +507,11 @@ export default function PickupDetail({
                                     </p>
                                 </div>
 
+                                <ReceiptRecipientStatus
+                                    recipients={
+                                        proof.receipt?.recipient_statuses
+                                    }
+                                />
                                 <div className="flex flex-wrap gap-2">
                                     {task.can.correct_proof && proof && (
                                         <OperationalChange
@@ -606,6 +613,7 @@ export default function PickupDetail({
                 </section>
             </div>
             <PickupCashlessAwbs taskId={task.id} timezone={timezone} />
+            {proof && <DocumentDeliveryPanel key={task.id} taskId={task.id} />}
             <div className="flex flex-wrap gap-2">
                 {task.previous_task_id && (
                     <Button asChild variant="outline">

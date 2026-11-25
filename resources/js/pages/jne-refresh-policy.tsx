@@ -1,3 +1,5 @@
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { focusFormError } from '@/lib/utils';
 import InputError from '@/components/input-error';
@@ -125,8 +127,7 @@ export default function JneRefreshPolicy({
                         error={form.errors.definition}
                     />
                     <Label className="flex gap-2">
-                        <input
-                            type="checkbox"
+                        <NativeCheckbox
                             checked={form.data.verified}
                             onChange={(event) =>
                                 form.setData('verified', event.target.checked)
@@ -181,32 +182,32 @@ export default function JneRefreshPolicy({
                     </Button>
                 </form>
             )}
-            <details className="text-sm">
-                <summary className="cursor-pointer text-muted-foreground">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Ketentuan kebijakan
-                </summary>
+                </DisclosureSummary>
                 <p className="mt-2">
                     Menyimpan kebijakan tidak mengaktifkan jadwal. Interval
                     mengikuti batas minimum jadwal. Status terminal, SLA,
                     prioritas, dan jam sumber memerlukan verifikasi.
                 </p>
-            </details>
-            <details className="rounded-lg border p-3 text-sm">
-                <summary className="cursor-pointer font-medium">
+            </Disclosure>
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Audit kebijakan
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex flex-col gap-2">
                     {events?.data.map((event) => (
-                        <details key={event.id} className="rounded border p-3">
-                            <summary>
+                        <Disclosure key={event.id}>
+                            <DisclosureSummary>
                                 {event.created_at} · {event.reason}
-                            </summary>
+                            </DisclosureSummary>
                             <pre className="max-w-full overflow-auto text-xs">
                                 {event.before}
                                 {'\n'}
                                 {event.after}
                             </pre>
-                        </details>
+                        </Disclosure>
                     ))}
                     <nav className="flex gap-3">
                         {events?.prev_page_url && (
@@ -217,7 +218,7 @@ export default function JneRefreshPolicy({
                         )}
                     </nav>
                 </div>
-            </details>
+            </Disclosure>
         </PageContainer>
     );
 }

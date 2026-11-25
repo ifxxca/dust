@@ -1,3 +1,5 @@
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -104,8 +106,7 @@ export default function JneRefreshPolicyFields({
             {definition && (
                 <>
                     <Label className="flex min-h-10 items-center gap-2">
-                        <input
-                            type="checkbox"
+                        <NativeCheckbox
                             disabled={
                                 !activationAllowed &&
                                 definition.enabled !== true
@@ -185,10 +186,10 @@ export default function JneRefreshPolicyFields({
                             )}
                         </div>
                     </fieldset>
-                    <details className="rounded-lg border p-3">
-                        <summary className="cursor-pointer text-sm font-medium">
+                    <Disclosure>
+                        <DisclosureSummary className="cursor-pointer">
                             Status terminal & prioritas
-                        </summary>
+                        </DisclosureSummary>
                         <div className="mt-3 flex flex-col gap-4">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
@@ -223,7 +224,7 @@ export default function JneRefreshPolicyFields({
                                                             key={key}
                                                             className="text-center"
                                                         >
-                                                            <label className="inline-flex min-h-10 min-w-10 items-center justify-center">
+                                                            <label className="inline-flex min-h-10 min-h-11 min-w-10 items-center justify-center">
                                                                 <span className="sr-only">
                                                                     {(key ===
                                                                     'terminal_statuses'
@@ -231,8 +232,7 @@ export default function JneRefreshPolicyFields({
                                                                         : 'Prioritas ') +
                                                                         label}
                                                                 </span>
-                                                                <input
-                                                                    type="checkbox"
+                                                                <NativeCheckbox
                                                                     checked={
                                                                         Array.isArray(
                                                                             definition[
@@ -273,11 +273,11 @@ export default function JneRefreshPolicyFields({
                                 10,
                             )}
                         </div>
-                    </details>
-                    <details className="rounded-lg border p-3">
-                        <summary className="cursor-pointer text-sm font-medium">
+                    </Disclosure>
+                    <Disclosure>
+                        <DisclosureSummary className="cursor-pointer">
                             SLA, jam sumber & retry
-                        </summary>
+                        </DisclosureSummary>
                         <div className="mt-3 grid gap-4 sm:grid-cols-2">
                             {numberField(
                                 'sla_after_days',
@@ -311,10 +311,9 @@ export default function JneRefreshPolicyFields({
                                     {Array.from({ length: 24 }, (_, hour) => (
                                         <label
                                             key={hour}
-                                            className="flex min-h-10 items-center gap-2 rounded border px-2 text-sm"
+                                            className="flex min-h-10 min-h-11 items-center gap-2 rounded border px-2 text-sm"
                                         >
-                                            <input
-                                                type="checkbox"
+                                            <NativeCheckbox
                                                 checked={
                                                     Array.isArray(
                                                         definition.availability_hours,
@@ -351,13 +350,13 @@ export default function JneRefreshPolicyFields({
                                 </p>
                             </fieldset>
                         </div>
-                    </details>
+                    </Disclosure>
                 </>
             )}
-            <details ref={advancedDetails} className="rounded-lg border p-3">
-                <summary className="cursor-pointer text-sm font-medium">
+            <Disclosure ref={advancedDetails}>
+                <DisclosureSummary className="cursor-pointer">
                     Definisi JSON lanjutan
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex flex-col gap-2">
                     <Label htmlFor="refresh-definition">
                         Definisi kebijakan
@@ -382,7 +381,7 @@ export default function JneRefreshPolicyFields({
                         </p>
                     )}
                 </div>
-            </details>
+            </Disclosure>
         </div>
     );
 }

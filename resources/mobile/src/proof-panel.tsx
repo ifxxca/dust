@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isBrowserPwa } from './platform';
+import { chooseBrowserPhoto } from './browser-local';
 import {
     Camera,
     CameraErrorCode,
@@ -21,6 +23,7 @@ import { signatureHasInk } from './signature';
 import PhotoGallery from './photo-gallery';
 import type { LocalEvidence } from './local-store';
 import SignaturePad from '@/components/signature-pad';
+import SecondaryDisclosure from '@/components/secondary-disclosure';
 import { me } from '@/routes/mobile';
 import { show, proof } from '@/routes/mobile/tasks';
 import { show as lookup } from '@/routes/mobile/submissions';
@@ -55,6 +58,11 @@ import type { Session, Task, Proof } from './types';
 import CashlessProofInput from '@/components/cashless-proof-input';
 import { prepareCashlessAwb } from '@/lib/cashless-handover';
 import CashlessCameraScanner from './cashless-camera-scanner';
+import {
+    CashlessScanHistory,
+    CashlessScanSummary,
+    useCashlessScanProgress,
+} from './cashless-scan-progress';
 
 export default function ProofPanel({
     task,
@@ -102,18 +110,46 @@ export default function ProofPanel({
     const savedRef = useRef(false);
     const [busy, setBusy] = useState(false);
     const [cashlessCamera, setCashlessCamera] = useState(false);
+    const scanProgress = useCashlessScanProgress(
+        session,
+        enabled ? taskId : undefined,
+        online,
+    );
+    function scanCounts(value: ProofDraft, kind?: 'duplicate' | 'invalid') {
+        const counts = value.scanCounts ?? {
+            total: value.cashlessAwbs?.length ?? 0,
+            duplicate: 0,
+            invalid: 0,
+        };
+        return {
+            total: counts.total + 1,
+            duplicate: counts.duplicate + (kind === 'duplicate' ? 1 : 0),
+            invalid: counts.invalid + (kind === 'invalid' ? 1 : 0),
+        };
+    }
+    async function rejectedScan(kind: 'duplicate' | 'invalid') {
+        const value = current.current;
+        if (value?.state === 'EDITING')
+            await persist({ ...value, scanCounts: scanCounts(value, kind) });
+    }
     async function addCashless(raw: string) {
         const value = current.current;
         if (!value || value.state !== 'EDITING' || active.current)
             return { error: 'Draft belum dapat diubah.' };
         const result = prepareCashlessAwb(raw, value.cashlessAwbs ?? [], []);
-        if (result.error || !result.awb) return result;
+        if (result.error || !result.awb) {
+            await rejectedScan(
+                result.kind === 'duplicate' ? 'duplicate' : 'invalid',
+            );
+            return result;
+        }
         setFieldErrors({});
         setMessage('');
         const awbs = [...(value.cashlessAwbs ?? []), result.awb];
         await persist({
             ...value,
             cashlessAwbs: awbs,
+            scanCounts: scanCounts(value),
             quantities: {
                 ...value.quantities,
                 cashless_hybrid: String(awbs.length),
@@ -385,7 +421,9 @@ export default function ProofPanel({
         await finishCapture(session, pending.operationId);
         await cleanupCamera(session, uri).catch(() =>
             setMessage(
-                'Foto tersimpan terenkripsi; cache kamera belum dapat dibersihkan.',
+                isBrowserPwa
+                    ? 'Foto ada di memori tab; pratinjau sementara belum dapat dibersihkan.'
+                    : 'Foto tersimpan terenkripsi; cache kamera belum dapat dibersihkan.',
             ),
         );
     }
@@ -436,6 +474,8 @@ export default function ProofPanel({
         active.current = true;
         setBusy(true);
         setMessage('');
+        const browserPhoto = isBrowserPwa ? chooseBrowserPhoto(source) : null;
+        void browserPhoto?.catch(() => undefined);
         try {
             await queue.current;
             const pendingCapture = {
@@ -451,17 +491,18 @@ export default function ProofPanel({
                 pendingCapture.operationId,
                 source === 'camera' ? 'getPhoto' : 'chooseFromGallery',
             );
-            const result =
-                source === 'camera'
-                    ? await Camera.getPhoto({
-                          quality: 80,
-                          width: 1920,
-                          height: 1920,
-                          source: CameraSource.Camera,
-                          resultType: CameraResultType.Uri,
-                          saveToGallery: false,
-                      }).then((value) => ({ uri: value.path }))
-                    : await chooseGallery(session, pendingCapture.operationId);
+            const result = browserPhoto
+                ? await browserPhoto
+                : source === 'camera'
+                  ? await Camera.getPhoto({
+                        quality: 80,
+                        width: 1920,
+                        height: 1920,
+                        source: CameraSource.Camera,
+                        resultType: CameraResultType.Uri,
+                        saveToGallery: false,
+                    }).then((value) => ({ uri: value.path }))
+                  : await chooseGallery(session, pendingCapture.operationId);
             if (!result?.uri) throw new Error('Tidak ada foto yang dipilih.');
             await captureResult(
                 result.uri,
@@ -674,6 +715,7 @@ export default function ProofPanel({
             );
         if (controller.current.signal.aborted) return false;
         await persist({ ...value, state: 'CONFIRMED' });
+        setMessage('');
         onTask(latest.data);
         await cleanup(current.current!).catch(() =>
             setMessage(
@@ -823,7 +865,10 @@ export default function ProofPanel({
                         : 'Finalisasi belum dapat dilakukan.',
                 );
             }
-            if (error instanceof ApiError && [401, 403].includes(error.status))
+            if (
+                error instanceof ApiError &&
+                [401, 403, 419].includes(error.status)
+            )
                 await onFailure(error);
         } finally {
             active.current = false;
@@ -863,18 +908,60 @@ export default function ProofPanel({
     )
         return null;
     return (
-        <section ref={panel} className="space-y-4 pb-3" aria-label="Draft POP">
+        <section
+            ref={panel}
+            className="proof-workspace space-y-4 pb-3"
+            aria-label="Draft POP"
+        >
             {cashlessCamera && (
                 <CashlessCameraScanner
                     title={draft?.taskReference ?? 'Pickup'}
                     count={draft?.cashlessAwbs?.length ?? 0}
                     onScan={addCashless}
                     onClose={() => setCashlessCamera(false)}
+                    onDuplicate={() => rejectedScan('duplicate')}
+                    summary={
+                        <>
+                            <CashlessScanSummary
+                                progress={scanProgress.progress}
+                                draftCount={
+                                    draft?.cashlessAwbs?.filter(
+                                        (awb) =>
+                                            !task?.cashless_awbs?.includes(awb),
+                                    ).length ?? 0
+                                }
+                                counts={draft?.scanCounts}
+                            />
+                            {scanProgress.notice && (
+                                <OperationalFeedback
+                                    title="Pemrosesan server"
+                                    tone={scanProgress.tone}
+                                >
+                                    {scanProgress.notice}
+                                </OperationalFeedback>
+                            )}
+                            {scanProgress.error && (
+                                <p role="status">{scanProgress.error}</p>
+                            )}
+                        </>
+                    }
                 />
             )}
             <h3 className="text-lg font-semibold">
                 {draft?.step === 3 ? 'Review POP' : 'Bukti Pickup (POP)'}
             </h3>
+            {!!draft?.cashlessAwbs?.length && (
+                <CashlessScanSummary
+                    progress={scanProgress.progress}
+                    draftCount={
+                        draft.cashlessAwbs.filter(
+                            (awb) => !task?.cashless_awbs?.includes(awb),
+                        ).length
+                    }
+                    counts={draft.scanCounts}
+                />
+            )}
+            <CashlessScanHistory {...scanProgress} />
             {message && !draft && (
                 <OperationalFeedback title={message} tone="error" />
             )}
@@ -924,7 +1011,9 @@ export default function ProofPanel({
                             {signatureUnsaved
                                 ? 'Tanda tangan belum disimpan · tekan Review POP'
                                 : saved
-                                  ? 'Tersimpan di perangkat'
+                                  ? isBrowserPwa
+                                      ? 'Tersimpan sementara di tab ini'
+                                      : 'Tersimpan di perangkat'
                                   : 'Menyimpan draft…'}
                         </p>
                     ) : (
@@ -1304,12 +1393,8 @@ export default function ProofPanel({
                                         <h4 className="font-semibold">
                                             Tanda tangan penerima (wajib)
                                         </h4>
-                                        <p className="text-sm text-muted-foreground">
-                                            Minta penerima menandatangani bukti
-                                            pickup. Tanda tangan kosong tidak
-                                            dapat disubmit.
-                                        </p>
                                         <SignaturePad
+                                            showHelp={false}
                                             value={signature}
                                             onDrawingStart={beginSignature}
                                             onChange={(value) =>
@@ -1324,20 +1409,27 @@ export default function ProofPanel({
                                                 )}
                                             </p>
                                         )}
-                                        <Label htmlFor="proof-notes">
-                                            Catatan pickup (opsional)
-                                        </Label>
-                                        <Input
-                                            id="proof-notes"
-                                            maxLength={2000}
-                                            value={draft.notes}
-                                            disabled={locked}
-                                            onChange={(event) =>
-                                                edit({
-                                                    notes: event.target.value,
-                                                })
-                                            }
-                                        />
+                                        <SecondaryDisclosure title="Catatan pickup (opsional)">
+                                            <Label
+                                                htmlFor="proof-notes"
+                                                className="sr-only"
+                                            >
+                                                Catatan pickup (opsional)
+                                            </Label>
+                                            <Input
+                                                id="proof-notes"
+                                                placeholder="Tulis catatan pickup…"
+                                                maxLength={2000}
+                                                value={draft.notes}
+                                                disabled={locked}
+                                                onChange={(event) =>
+                                                    edit({
+                                                        notes: event.target
+                                                            .value,
+                                                    })
+                                                }
+                                            />
+                                        </SecondaryDisclosure>
                                         <Button
                                             variant="outline"
                                             disabled={locked}
@@ -1503,7 +1595,7 @@ export default function ProofPanel({
                                             );
                                             if (
                                                 error instanceof ApiError &&
-                                                [401, 403].includes(
+                                                [401, 403, 419].includes(
                                                     error.status,
                                                 )
                                             )
@@ -1533,10 +1625,7 @@ export default function ProofPanel({
                         </>
                     )}
                     {canDiscardProofDraft(draft) && (
-                        <details className="border-t pt-3 text-sm">
-                            <summary className="flex min-h-11 cursor-pointer items-center text-muted-foreground">
-                                Kelola draft
-                            </summary>
+                        <SecondaryDisclosure title="Kelola draft">
                             <Button
                                 variant="ghost"
                                 className="text-red-700 hover:bg-red-50 hover:text-red-800"
@@ -1545,7 +1634,7 @@ export default function ProofPanel({
                             >
                                 Buang Draft
                             </Button>
-                        </details>
+                        </SecondaryDisclosure>
                     )}
                     <Dialog
                         open={discard}

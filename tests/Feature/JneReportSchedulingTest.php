@@ -33,7 +33,7 @@ test('fixed monthly profile queues six FIFO five day reports once per due cycle'
     expect($profile->fresh()->next_run_at->toIso8601String())->toBe('2026-10-21T06:00:00+00:00');
 });
 
-test('rolling profile includes older open shipment entry dates and excludes old terminal shipments', function () {
+test('rolling account collection stays within its date range while older AWBs remain available for active refresh', function () {
     $this->travelTo('2026-10-21 00:00:00 UTC');
     $profile = JneReportProfile::factory()->create(['enabled' => true, 'lookback_days' => 5, 'customer_account' => 'TESTACCOUNT']);
     $report = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'projection_status' => 'PROJECTED']);
@@ -45,8 +45,52 @@ test('rolling profile includes older open shipment entry dates and excludes old 
     app(QueueScheduledJneReports::class)->handle();
 
     expect(ReportJob::where('jne_report_profile_id', $profile->id)->orderBy('id')->get()->map(fn (ReportJob $job): array => [$job->date_from->toDateString(), $job->date_thru->toDateString()])->all())->toBe([
-        ['2026-01-10', '2026-01-10'], ['2026-10-17', '2026-10-21'],
+        ['2026-10-17', '2026-10-21'],
     ]);
+    expect(JneShipment::where('latest_report_awb_id', $open->id)->value('tracking_status'))->toBe('IN_TRANSIT');
+});
+
+test('daily account collection queues yesterday and today once then returns to 01 WIB after a delay', function () {
+    $this->travelTo('2026-11-23 18:17:00 UTC');
+    $profile = JneReportProfile::factory()->create(['enabled' => true, 'lookback_days' => 2, 'interval_minutes' => 1440, 'next_run_at' => '2026-11-23 18:00:00']);
+
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(1);
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(0);
+
+    $job = ReportJob::sole();
+    expect($job->date_from->toDateString())->toBe('2026-11-23');
+    expect($job->date_thru->toDateString())->toBe('2026-11-24');
+    expect($profile->fresh()->next_run_at->toIso8601String())->toBe('2026-11-24T18:00:00+00:00');
+});
+
+test('daily account configuration waits for 01 WIB while hourly accounts keep their cadence', function () {
+    $this->travelTo('2026-11-23 17:30:00 UTC');
+    $admin = User::factory()->create(['role' => 'admin_supervisor']);
+    $payload = ['source' => 'apex', 'report_type' => 'apex', 'customer_account' => '10561800', 'national_account' => 'N',
+        'enabled' => true, 'mode' => 'rolling', 'lookback_days' => 2, 'interval_minutes' => 1440];
+
+    $this->actingAs($admin)->post(route('jne-monitoring.profile-store'), $payload)->assertSessionHasNoErrors()->assertRedirect();
+
+    $profile = JneReportProfile::sole();
+    expect($profile->next_run_at->toIso8601String())->toBe('2026-11-23T18:00:00+00:00');
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(0);
+    $hourly = JneReportProfile::factory()->create(['customer_account' => '20087000', 'enabled' => true, 'lookback_days' => 2, 'interval_minutes' => 60]);
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(1);
+    expect($hourly->fresh()->next_run_at->toIso8601String())->toBe('2026-11-23T18:30:00+00:00');
+    expect(ReportJob::sole()->customer_account)->toBe('20087000');
+});
+
+test('bulk daily account configuration schedules the next calendar slot without immediately creating runs', function () {
+    $this->travelTo('2026-11-23 18:05:00 UTC');
+    $admin = User::factory()->create(['role' => 'admin_supervisor']);
+
+    $this->actingAs($admin)->post(route('jne-monitoring.profile-bulk'), ['accounts' => [
+        ['customer_account' => '10561800', 'national_account' => 'N'], ['customer_account' => '11111200', 'national_account' => 'N']],
+        'enabled' => true, 'lookback_days' => 2, 'interval_minutes' => 1440])->assertSessionHasNoErrors()->assertRedirect();
+
+    expect(JneReportProfile::pluck('next_run_at')->map(fn ($date): string => $date->toIso8601String())->unique()->all())->toBe(['2026-11-24T18:00:00+00:00']);
+    expect(app(QueueScheduledJneReports::class)->handle())->toBe(0);
+    $this->assertDatabaseCount('report_jobs', 0);
 });
 
 test('active account reports still prevent overlapping scheduled cycles', function (string $status) {

@@ -10,6 +10,7 @@ export type PickupNotification = {
     read: boolean;
     batch_id?: number;
     message?: string;
+    exception_count?: number;
 };
 
 export function notificationKey(item: PickupNotification): number | string {

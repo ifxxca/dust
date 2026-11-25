@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -986,10 +987,10 @@ export default function PickupReconciliationDetail({
                                             loadPage({ history_page })
                                         }
                                     />
-                                    <details className="text-xs">
-                                        <summary className="cursor-pointer py-2 font-medium">
+                                    <Disclosure>
+                                        <DisclosureSummary className="cursor-pointer">
                                             Rincian bukti sumber
-                                        </summary>
+                                        </DisclosureSummary>
                                         <p className="mt-2 text-muted-foreground">
                                             {detail.reconciliation?.evidence
                                                 ?.coverage?.method ??
@@ -1001,7 +1002,7 @@ export default function PickupReconciliationDetail({
                                                 ', ',
                                             ) || 'Belum ditetapkan'}
                                         </p>
-                                    </details>
+                                    </Disclosure>
                                 </>
                             )}
                         </div>

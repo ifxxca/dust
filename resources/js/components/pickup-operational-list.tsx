@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import DataTable, { DataTablePagination } from '@/components/data-table';
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
@@ -73,10 +74,10 @@ export function PickupSummaryCards({
         ['no_packages', 'Kunjungan tanpa paket'],
     ] as const;
     return (
-        <details className="rounded-lg border px-4">
-            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
+        <Disclosure>
+            <DisclosureSummary className="min-h-11 cursor-pointer">
                 Ringkasan jadwal hari ini{summary ? ' · ' + summary.date : ''}
-            </summary>
+            </DisclosureSummary>
             <section
                 aria-label="Ringkasan pickup hari ini"
                 className="flex flex-col gap-3 pb-4"
@@ -108,7 +109,7 @@ export function PickupSummaryCards({
                     ))}
                 </dl>
             </section>
-        </details>
+        </Disclosure>
     );
 }
 

@@ -72,6 +72,134 @@ function api(options = {}) {
     };
 }
 
+for (const awb of ['LOST1', 'UNKNOWN1'])
+    test(`inspection resolves ${awb} from the original HO without scan New or Approve`, async (t) => {
+        const { client, state } = await fixture(t);
+        const original = batch([awb, 'UNTRIED']);
+        const firstLog = api();
+        const first = await processCashlessBatch(
+            original,
+            firstLog,
+            new HybridCashlessPage(client),
+        );
+        assert.equal(first.status, 'UNKNOWN');
+        const before = {
+            news: state.news,
+            scans: state.scans.length,
+            approvals: state.approvals.length,
+            logins: state.logins,
+        };
+        const log = api();
+        await processCashlessBatch(
+            {
+                ...original,
+                status: 'INSPECTING',
+                ho_number: firstLog.events.find((e) => e.type === 'created')
+                    .ho_number,
+                items: original.items.map((item, index) => ({
+                    ...item,
+                    status: index === 0 ? 'UNKNOWN' : 'PENDING',
+                })),
+            },
+            log,
+            new HybridCashlessPage(client),
+        );
+        const proof = log.events.find((e) => e.type === 'inspection-result');
+        assert(proof, JSON.stringify(log.events));
+        assert.deepEqual(proof.verified_awbs, awb === 'LOST1' ? [awb] : []);
+        assert.equal(proof.ui_total, awb === 'LOST1' ? 1 : 0);
+        assert.equal(proof.filters_clear, true);
+        assert.equal(proof.print_available, false);
+        assert.equal(proof.approve_available, true);
+        assert.deepEqual(
+            {
+                news: state.news,
+                scans: state.scans.length,
+                approvals: state.approvals.length,
+                logins: state.logins,
+            },
+            before,
+        );
+    });
+
+test('inspection proves a lost approval acknowledgment without approving again', async (t) => {
+    const { client, state } = await fixture(t);
+    const original = batch(['TGGOOD']);
+    const firstLog = api({ failAt: 'approved' });
+    await processCashlessBatch(
+        original,
+        firstLog,
+        new HybridCashlessPage(client),
+    );
+    const log = api();
+    await processCashlessBatch(
+        {
+            ...original,
+            status: 'INSPECTING',
+            ho_number: firstLog.events.find((e) => e.type === 'created')
+                .ho_number,
+            items: original.items.map((item) => ({
+                ...item,
+                status: 'ACCEPTED',
+            })),
+        },
+        log,
+        new HybridCashlessPage(client),
+    );
+    const proof = log.events.find((e) => e.type === 'inspection-result');
+    assert(proof, JSON.stringify(log.events));
+    assert.equal(proof.print_available, true);
+    assert.equal(proof.approve_available, false);
+    assert.deepEqual(proof.verified_awbs, ['TGGOOD']);
+    assert.equal(state.approvals.length, 1);
+    assert.equal(state.scans.length, 1);
+    assert.equal(state.news, 1);
+});
+
+for (const condition of ['wrong-ho', 'csv-mismatch', 'expired-session'])
+    test(`inspection holds ${condition} without mutating Hybrid`, async (t) => {
+        const { client, state } = await fixture(t);
+        const firstLog = api();
+        await processCashlessBatch(
+            batch(['UNKNOWN1']),
+            firstLog,
+            new HybridCashlessPage(client),
+        );
+        const before = {
+            news: state.news,
+            scans: state.scans.length,
+            approvals: state.approvals.length,
+            logins: state.logins,
+        };
+        if (condition === 'csv-mismatch') state.settings.extraCsv = true;
+        if (condition === 'expired-session') client.session = null;
+        const log = api();
+        const result = await processCashlessBatch(
+            {
+                ...batch(['UNKNOWN1']),
+                status: 'INSPECTING',
+                ho_number:
+                    condition === 'wrong-ho'
+                        ? 'HO-015-OTHER'
+                        : firstLog.events.find((e) => e.type === 'created')
+                              .ho_number,
+            },
+            log,
+            new HybridCashlessPage(client),
+        );
+        assert.equal(result.status, 'UNKNOWN');
+        assert(!log.events.some((e) => e.type === 'inspection-result'));
+        assert.deepEqual(
+            {
+                news: state.news,
+                scans: state.scans.length,
+                approvals: state.approvals.length,
+                logins: state.logins,
+            },
+            before,
+        );
+    });
+
 test('two batches always create and approve distinct HOs with sequential fresh results', async (t) => {
     const { client, state } = await fixture(t);
     const log = api();
@@ -97,6 +225,22 @@ test('two batches always create and approve distinct HOs with sequential fresh r
             .filter((e) => e.type === 'scan-result')
             .every((e) => e.outcome === 'ACCEPTED'),
     );
+});
+
+test('literal dollar AWBs survive scan export verification and approval unchanged', async (t) => {
+    const { client, state } = await fixture(t);
+    const result = await client.exclusive(() =>
+        processCashlessBatch(
+            batch(['$333260100123456']),
+            api(),
+            new HybridCashlessPage(client),
+        ),
+    );
+    assert.equal(result.status, 'DONE');
+    assert.deepEqual(state.scans, [
+        { awb: '$333260100123456', ho: 'HO-015-TEST-1' },
+    ]);
+    assert.deepEqual(state.approvals, ['HO-015-TEST-1']);
 });
 
 test('an uncertain batch does not stop the next batch which logs in afresh and never resubmits its predecessor', async (t) => {

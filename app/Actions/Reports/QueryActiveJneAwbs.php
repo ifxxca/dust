@@ -21,7 +21,7 @@ class QueryActiveJneAwbs
                 $query->whereDoesntHave('latestSource')->orWhereHas('latestSource', fn (Builder $source) => $source->whereNull('entry_at')->orWhere('entry_at', '>=', $cutoff));
             });
         if ($policy === null) {
-            return $query->whereNotIn('tracking_status', ['DELIVERED', 'CANCELLED']);
+            return $query->whereNotIn('tracking_status', JneShipment::TRACKING_TERMINAL_STATUSES);
         }
         foreach ($policy['terminal_statuses'] ?? [] as $status) {
             $query->where(fn (Builder $query) => $query->where('tracking_status', '<>', $status)->orWhereRaw(

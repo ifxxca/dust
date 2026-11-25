@@ -2,21 +2,33 @@
 
 namespace App\Console\Commands;
 
+use App\Actions\Reports\ReclassifyJneShipmentStatuses;
 use App\Jobs\ImportJneReportAwbs;
 use App\Models\ReportJob;
 use Illuminate\Console\Command;
 
 class RebuildJneMonitoring extends Command
 {
-    protected $signature = 'jne-monitoring:rebuild {--sync : Process immediately instead of queueing} {--account= : Restrict to one account}';
+    protected $signature = 'jne-monitoring:rebuild {--sync : Process immediately instead of queueing} {--account= : Restrict to one account} {--statuses-only : Reclassify stored status data without reimporting or rematching AWBs} {--dry-run : Preview status corrections without changing data}';
 
     protected $description = 'Enrich stored CSV imports and rebuild JNE monitoring without requesting reports from JNE';
 
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(ReclassifyJneShipmentStatuses $statuses): int
     {
+        if ($this->option('statuses-only')) {
+            $counts = $statuses->handle($this->option('account'), (bool) $this->option('dry-run'));
+            $this->info(($this->option('dry-run') ? 'Preview: ' : '').$counts['sources'].' source rows classified; '.$counts['shipments'].' shipment status corrections; '.$counts['observations'].' observation corrections.');
+
+            return self::SUCCESS;
+        }
+        if ($this->option('dry-run')) {
+            $this->error('--dry-run requires --statuses-only.');
+
+            return self::FAILURE;
+        }
         $query = ReportJob::where('status', 'COMPLETED')->where('import_status', 'IMPORTED');
         if ($this->option('account')) {
             $query->where('customer_account', $this->option('account'));

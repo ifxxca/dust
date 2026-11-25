@@ -6,7 +6,12 @@ import path from 'node:path';
 import { WorkerApi } from '../src/api.mjs';
 import { ApexClient, formatDate } from '../src/apex.mjs';
 import { runJob } from '../src/worker.mjs';
-import { correlateHistory, csvReady, parseCreated } from '../src/history.mjs';
+import {
+    correlateHistory,
+    csvReady,
+    parseCreated,
+    readHistory,
+} from '../src/history.mjs';
 import { validateCsv } from '../src/csv.mjs';
 import { validateReportPeriod } from '../src/limits.mjs';
 import { loadConfig } from '../src/config.mjs';
@@ -193,6 +198,53 @@ test('correlation rejects ambiguous rows, malformed dates, and changed pinned ID
                 baseTime,
             ),
         { code: 'HISTORY_CHANGED' },
+    );
+});
+
+test('correlation rejects a new row sharing a baseline identity instead of silently treating it as old', () => {
+    const old = row('shared');
+
+    assert.throws(
+        () =>
+            correlateHistory(
+                [old],
+                [old, row('shared')],
+                job,
+                baseTime,
+                historyConfig,
+                null,
+                true,
+                baseTime,
+            ),
+        { code: 'HISTORY_AMBIGUOUS' },
+    );
+});
+
+test('correlation rejects a conflicting identity even when only one of its rows matches the job', () => {
+    const current = [
+        row('shared', {
+            identityAmbiguous: true,
+            columns: { IDACCOUNT: 'OTHER' },
+        }),
+        row('shared', {
+            identityAmbiguous: true,
+            columns: { IDACCOUNT: 'TEST001' },
+        }),
+    ];
+
+    assert.throws(
+        () =>
+            correlateHistory(
+                [],
+                current,
+                job,
+                baseTime,
+                historyConfig,
+                null,
+                true,
+                baseTime,
+            ),
+        { code: 'HISTORY_AMBIGUOUS' },
     );
 });
 
@@ -493,8 +545,8 @@ async function browserRun(t, options = {}) {
             : options.retryDownload
               ? 1000
               : 3000,
-        reportTimeout: options.neverReady ? 250 : 10000,
-        jobTimeout: 15000,
+        reportTimeout: options.unlimited ? 0 : options.neverReady ? 250 : 10000,
+        jobTimeout: options.unlimited ? 0 : 15000,
         pollInterval: 20,
         maxFileBytes: 1048576,
         extraFields: {
@@ -529,6 +581,32 @@ async function browserRun(t, options = {}) {
     return { fixture, completed, apex, config, dir };
 }
 
+test('APEX forwards observed History totals and identity without deriving upstream counts from its download', async (t) => {
+    const { fixture, completed } = await browserRun(t, { collectionTotal: '123' });
+    assert.equal(completed, true);
+    assert.equal(fixture.state.collectionEvidence.protocol, 'apex_history_total_v1');
+    assert.equal(fixture.state.collectionEvidence.before.total_label, '123');
+    assert.equal(fixture.state.collectionEvidence.before.scope, 'TEST001');
+    assert.equal(fixture.state.collectionEvidence.before.date_from, '2026-10-01');
+    assert.equal(fixture.state.collectionEvidence.after.history_id, fixture.state.collectionEvidence.before.history_id);
+});
+
+test('APEX leaves upstream totals unknown when History provides no independent count', async (t) => {
+    const { fixture, completed } = await browserRun(t);
+    assert.equal(completed, true);
+    assert.equal(fixture.state.collectionEvidence.before.total_label, null);
+});
+
+test('real APEX History columns without account dates or total never inherit request values as source proof', async (t) => {
+    const { fixture, completed } = await browserRun(t, { minimalHistory: true });
+    assert.equal(completed, true);
+    assert.equal(fixture.state.collectionEvidence.before.total_label, null);
+    assert.equal(fixture.state.collectionEvidence.before.scope, null);
+    assert.equal(fixture.state.collectionEvidence.before.date_from, null);
+    assert.equal(fixture.state.collectionEvidence.after.date_thru, null);
+    assert.equal(fixture.state.submissions, 1);
+});
+
 for (const nationalAccount of ['Y', 'N']) {
     test(`APEX applies National Acc/Cust ${nationalAccount} before customer and dates after navigation`, async (t) => {
         const { fixture, completed } = await browserRun(t, {
@@ -543,6 +621,68 @@ for (const nationalAccount of ['Y', 'N']) {
     });
 }
 
+test('queue-managed APEX persists uncertainty before Process and History before download', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        automaticRetry: true,
+    });
+    assert.equal(completed, true);
+    assert.equal(fixture.state.submissions, 1);
+    assert.equal(
+        fixture.state.retryCheckpoints[0].submission_state,
+        'uncertain',
+    );
+    assert.equal(fixture.state.retryCheckpoints[1].submission_state, 'history');
+    assert.equal(fixture.state.retryCheckpoints[1].history.id, '2');
+});
+
+test('APEX never submits when durable uncertainty checkpoint cannot be acknowledged', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        automaticRetry: true,
+        checkpointFailure: true,
+    });
+    assert.equal(completed, false);
+    assert.equal(fixture.state.submissions, 0);
+    assert.match(fixture.state.failed.error_message, /^API_UNAVAILABLE:/);
+});
+
+test('queue-managed APEX does not retry upload inside the worker or send Process again', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        automaticRetry: true,
+        uploadFailure: true,
+    });
+    assert.equal(completed, false);
+    assert.equal(fixture.state.submissions, 1);
+    assert.equal(fixture.state.uploadAttempts, 1);
+    assert.equal(fixture.state.failed.http_status, 503);
+});
+
+test('a delayed retry resumes the exact APEX History without another Process', async (t) => {
+    const options = { automaticRetry: true, neverReady: true };
+    const { fixture, completed, config } = await browserRun(t, options);
+    assert.equal(completed, false);
+    assert.match(fixture.state.failed.error_message, /^REPORT_TIMEOUT:/);
+    const history = fixture.state.retryCheckpoints.find(
+        (entry) => entry.submission_state === 'history',
+    ).history;
+    options.neverReady = false;
+    const resumed = new ApexClient({ ...config, reportTimeout: 5000 });
+    t.after(() => resumed.close());
+    const directory = path.join(config.dataDir, 'resumed');
+    await (await import('node:fs/promises')).mkdir(directory);
+    await resumed.retrieve(
+        {
+            ...fixture.job,
+            attempt_count: 2,
+            parameters: { apex_history: history },
+            retryCheckpoint: async () => {},
+        },
+        directory,
+        async () => {},
+        new AbortController().signal,
+    );
+    assert.equal(fixture.state.submissions, 1);
+});
+
 test('changing National Account restores parameter mode when the server navigates back to Upload', async (t) => {
     const { fixture, completed } = await browserRun(t, {
         nationalAccount: 'Y',
@@ -556,20 +696,48 @@ test('changing National Account restores parameter mode when the server navigate
     assert.equal(fixture.state.submissions, 1);
 });
 
-test('verified native No Data Found completes an empty report immediately without CSV or a second Process', async (t) => {
+for (const prefix of ['', 'Cust id ']) {
+    test(
+        'verified native No Data Found with prefix ' +
+            JSON.stringify(prefix) +
+            ' completes an empty report immediately without CSV or a second Process',
+        async (t) => {
+            const { fixture, completed } = await browserRun(t, {
+                strictHistoryIdentity: true,
+                historyStates: [
+                    {
+                        status: 'Error',
+                        download: false,
+                        error:
+                            prefix +
+                            'TEST001 01-OCT-2026 02-OCT-2026 No Data Found',
+                    },
+                ],
+            });
+            assert.equal(completed, true);
+            assert.equal(fixture.state.failed.status, 'NO_DATA');
+            assert.match(fixture.state.failed.error_message, /^APEX_NO_DATA:/);
+            assert.equal(fixture.state.submissions, 1);
+            assert.equal(fixture.state.uploadAttempts, 0);
+        },
+    );
+}
+
+test('a first-day empty response never marks a multi-day customer report empty or blocks the worker forever', async (t) => {
     const { fixture, completed } = await browserRun(t, {
         strictHistoryIdentity: true,
+        unlimited: true,
         historyStates: [
             {
                 status: 'Error',
                 download: false,
-                error: 'TEST001 01-OCT-2026 02-OCT-2026 No Data Found',
+                error: 'Cust id TEST001 01-OCT-2026 01-OCT-2026 No Data Found',
             },
         ],
     });
-    assert.equal(completed, true);
-    assert.equal(fixture.state.failed.status, 'NO_DATA');
-    assert.match(fixture.state.failed.error_message, /^APEX_NO_DATA:/);
+    assert.equal(completed, false);
+    assert.equal(fixture.state.failed.status, 'NEEDS_ATTENTION');
+    assert.match(fixture.state.failed.error_message, /^APEX_PARTIAL_NO_DATA:/);
     assert.equal(fixture.state.submissions, 1);
     assert.equal(fixture.state.uploadAttempts, 0);
 });
@@ -785,12 +953,73 @@ test('Chromium correlates and downloads history without f01 using minute precisi
     assert.equal(fixture.state.uploaded, true);
 });
 
+for (const noSelection of [false, true]) {
+    test(`Chromium ignores duplicate old history while downloading only the new report (metadata identity: ${noSelection})`, async (t) => {
+        const { fixture, completed } = await browserRun(t, {
+            duplicateOldHistory: true,
+            noSelection,
+        });
+
+        assert.equal(completed, true);
+        assert.equal(fixture.state.submissions, 1);
+        assert.deepEqual(fixture.state.downloads, ['2']);
+        assert.equal(fixture.state.uploaded, true);
+    });
+}
+
+test('Chromium collapses exact display copies with the same source ID across status changes', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        duplicateCurrentDisplay: true,
+        historyStates: [
+            { status: 'Processing', download: false },
+            { status: 'Done', download: true },
+        ],
+    });
+
+    assert.equal(completed, true);
+    assert.equal(fixture.state.submissions, 1);
+    assert.deepEqual(fixture.state.downloads, ['2']);
+    assert.ok(fixture.state.pollReads >= 2);
+});
+
+test('download refuses an identity collision introduced after report selection', async (t) => {
+    const { fixture, apex } = await browserRun(t);
+    const selected = (await readHistory(apex.page)).find(
+        (entry) => entry.id === '2',
+    );
+    await apex.page.locator('table.a-IRR-table').evaluate((table) => {
+        const original = table.querySelector('input[value="2"]').closest('tr');
+        const duplicate = original.cloneNode(true);
+        duplicate.querySelector('td[headers="C0"]').textContent =
+            'another-report.csv';
+        table.append(duplicate);
+    });
+
+    await assert.rejects(() => apex.download(selected, '', 1048576), {
+        code: 'DOWNLOAD_AMBIGUOUS',
+    });
+    assert.deepEqual(fixture.state.downloads, ['2']);
+    assert.equal(fixture.state.submissions, 1);
+});
+
 /** @type {Array<[string, object, string, number]>} */
 const failureCases = [
     [
         'duplicate history identity',
         { noSelection: true, ambiguous: true, duplicateMetadata: true },
-        'HISTORY_STRUCTURE',
+        'HISTORY_AMBIGUOUS',
+        1,
+    ],
+    [
+        'conflicting source history IDs',
+        { ambiguous: true, duplicateCurrentId: true },
+        'HISTORY_AMBIGUOUS',
+        1,
+    ],
+    [
+        'identical metadata without a source ID',
+        { noSelection: true, duplicateCurrentDisplay: true },
+        'HISTORY_AMBIGUOUS',
         1,
     ],
     ['inaccessible report page', { deniedReport: true }, 'LOGIN_UNVERIFIED', 0],
@@ -909,6 +1138,71 @@ test('temporary upstream errors can recover during the grace period', async (t) 
     assert.equal(fixture.state.uploaded, true);
 });
 
+test('unlimited waiting keeps refreshing past repeated API errors until CSV exists with one Process', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        unlimited: true,
+        upstreamErrorGrace: 0,
+        historyStates: [
+            ...Array.from({ length: 8 }, () => ({
+                status: 'Error',
+                download: false,
+                error: 'Error API 500.',
+            })),
+            { status: 'Done', download: true, error: '-' },
+        ],
+    });
+    assert.equal(completed, true);
+    assert.ok(fixture.state.pollReads >= 9);
+    assert.equal(fixture.state.submissions, 1);
+    assert.equal(fixture.state.uploaded, true);
+    assert.equal(fixture.state.failed, null);
+});
+
+test('resuming a pinned parameter report downloads the same History row without another Process', async (t) => {
+    const { fixture, apex, config, dir } = await browserRun(t);
+    const history = (await apex.history()).find((row) => row.id === '2');
+    const directory = path.join(dir, 'resume');
+    await import('node:fs/promises').then(({ mkdir }) => mkdir(directory));
+    const job = {
+        ...fixture.job,
+        id: 17,
+        customer_account: 'TEST001',
+        date_from: '2026-10-01',
+        date_thru: '2026-10-02',
+        report_mode: 'P',
+        max_file_kb: 1024,
+        parameters: {
+            apex_history: {
+                origin: new URL(config.loginUrl).origin,
+                id: history.id,
+                filename: history.filename,
+                created: history.created,
+                submitted_at: Date.parse(history.created),
+            },
+        },
+    };
+    const file = await apex.retrieve(
+        job,
+        directory,
+        async () => {},
+        new AbortController().signal,
+    );
+    assert.match(await readFile(file, 'utf8'), /AWB,ID_ACCOUNT/);
+    assert.equal(fixture.state.submissions, 1);
+    assert.deepEqual(fixture.state.downloads, ['2', '2']);
+    job.parameters.apex_history.filename = 'other-report.csv';
+    await assert.rejects(
+        apex.retrieve(
+            job,
+            directory,
+            async () => {},
+            new AbortController().signal,
+        ),
+        { code: 'HISTORY_CHANGED' },
+    );
+    assert.equal(fixture.state.submissions, 1);
+});
+
 test('lost upload response retries upload without generating a second report', async (t) => {
     const { fixture, completed } = await browserRun(t, {
         lostUploadResponse: true,
@@ -963,4 +1257,62 @@ test('graceful shutdown reports uncertainty and cleans the job directory and bro
     } finally {
         await rm(dir, { recursive: true, force: true });
     }
+});
+
+test('queue-managed APEX returns a known History API failure to the queue without an internal retry loop', async (t) => {
+    const { fixture, completed } = await browserRun(t, {
+        automaticRetry: true,
+        unlimited: true,
+        historyStates: [
+            { status: 'Error', download: false, error: 'Error API 500.' },
+        ],
+    });
+    assert.equal(completed, false);
+    assert.equal(fixture.state.pollReads, 1);
+    assert.equal(fixture.state.failed.http_status, 500);
+    assert.match(fixture.state.failed.error_message, /^APEX_SOURCE_API:/);
+    assert.equal(fixture.state.submissions, 1);
+});
+
+test('queue-managed single workers require strict History matching and accept verified No Data without retry', async (t) => {
+    const { fixture, completed, apex } = await browserRun(t, {
+        automaticRetry: true,
+        historyStates: [
+            {
+                status: 'Error',
+                download: false,
+                error: 'TEST001 01-OCT-2026 02-OCT-2026 No Data Found',
+            },
+        ],
+    });
+    assert.equal(apex.config.strictHistoryIdentity, true);
+    assert.equal(completed, true);
+    assert.equal(fixture.state.failed.status, 'NO_DATA');
+    assert.equal(fixture.state.submissions, 1);
+});
+
+test('rejected History metadata exposes only the validation field and retains its recovery checkpoint', async (t) => {
+    const { fixture, completed, dir } = await browserRun(t, {
+        automaticRetry: true,
+        historyCheckpointFailure: true,
+    });
+    assert.equal(completed, false);
+    assert.match(
+        fixture.state.failed.error_message,
+        /API_REJECTED:.*HTTP 422; kolom: history.id/,
+    );
+    assert.doesNotMatch(
+        fixture.state.failed.error_message,
+        /private|unsafe|hidden/,
+    );
+    const recovery = (await readdir(dir)).find((name) =>
+        name.startsWith('recovery-job-17-'),
+    );
+    assert.ok(
+        JSON.parse(
+            await readFile(path.join(dir, recovery, 'history.json'), 'utf8'),
+        ).id,
+    );
+    assert.equal(fixture.state.submissions, 1);
+    assert.equal(fixture.state.uploaded, false);
 });

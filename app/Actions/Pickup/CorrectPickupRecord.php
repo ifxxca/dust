@@ -2,8 +2,10 @@
 
 namespace App\Actions\Pickup;
 
+use App\Models\Customer;
 use App\Models\HandoverItem;
 use App\Models\HandoverSession;
+use App\Models\PickupReceipt;
 use App\Models\PickupTask;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +28,9 @@ class CorrectPickupRecord
             $proof = $task->proof()->firstOrFail();
             $values = collect($data)->only(['customer_name', 'pickup_address', 'contact', 'manual_hybrid', 'cashless_hybrid', 'css_orion', 'notes'])->all();
             $proof->revisions()->create(['revision' => $proof->revisionNumber() + 1, 'values' => $values, 'actor_id' => $actor->id, 'reason' => $data['reason']]);
-            $proof->receipts()->create(['proof_revision' => $proof->revisionNumber() + 1, 'recipient' => $values['contact'], 'status' => 'PENDING_CONFIGURATION']);
+            $recipients = config('pickup.email_recipients.enabled') ? Customer::findOrFail($task->customer_id)->notificationEmails($values['contact']) : null;
+            $proof->receipts()->create(['proof_revision' => $proof->revisionNumber() + 1, 'recipient' => $recipients[0] ?? $values['contact'], 'status' => 'PENDING_CONFIGURATION',
+                ...($recipients !== null ? ['recipient_statuses' => PickupReceipt::pendingRecipients($recipients)] : [])]);
             $task->update(['version' => $task->version + 1]);
             $task->events()->create(['action' => 'proof_corrected', 'actor_id' => $actor->id, 'task_version' => $task->version, 'reason' => $data['reason'], 'occurred_at' => now()]);
             if ($item !== null && $session !== null) {

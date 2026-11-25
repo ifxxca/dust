@@ -59,7 +59,7 @@ class ImportReportAwbs
                     $latestAllowed = CarbonImmutable::instance($job->completed_at ?? $job->created_at)->addMinutes(5);
                     $row['observed_at'] = $observed && CarbonImmutable::parse($observed, 'UTC')->lessThanOrEqualTo($latestAllowed)
                         ? $observed : ($job->started_at ?? $job->created_at)->utc()->format('Y-m-d H:i:s');
-                    if (! is_string($row['awb']) || ! preg_match('/^[A-Za-z0-9_-]+$/D', $row['awb'])) {
+                    if (! is_string($row['awb']) || ! preg_match('/^[A-Za-z0-9_$-]+$/D', $row['awb'])) {
                         $this->invalid("AWB kosong atau formatnya tidak valid pada baris {$sourceRow}.");
                     }
                     $row['awb'] = strtoupper($row['awb']);

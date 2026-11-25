@@ -1,3 +1,4 @@
+import { Textarea } from '@/components/ui/textarea';
 import { useHttp } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -174,7 +175,7 @@ export default function OperationalChange({
                         <Label htmlFor="change-reason">
                             Alasan perubahan (wajib)
                         </Label>
-                        <textarea
+                        <Textarea
                             id="change-reason"
                             required
                             maxLength={500}

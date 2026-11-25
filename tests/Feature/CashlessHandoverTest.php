@@ -31,12 +31,12 @@ function cashlessHandoverBook(string $role = 'pickup_staff'): array
 test('staff save a batch after pickup finalization with audit evidence and no invented JNE data', function () {
     [$staff, $task, $proof] = cashlessHandoverBook();
     $original = $proof->fresh()->getAttributes();
-    $payload = ['submission_key' => (string) Str::uuid(), 'awbs' => ['tg001', 'CM002'], 'customer_id' => 999999];
+    $payload = ['submission_key' => (string) Str::uuid(), 'awbs' => ['tg0000000001', 'CM00000000002'], 'customer_id' => 999999];
 
     $this->actingAs($staff)->post(route('cashless-handover.store', $task), $payload)
         ->assertRedirectToRoute('cashless-handover.index', ['task' => $task->id]);
 
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['awb' => 'TG001', 'original_awb' => 'tg001', 'customer_id' => $task->customer_id, 'pickup_task_id' => $task->id, 'created_by' => $staff->id]);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['awb' => 'TG0000000001', 'original_awb' => 'tg0000000001', 'customer_id' => $task->customer_id, 'pickup_task_id' => $task->id, 'created_by' => $staff->id]);
     $this->assertDatabaseCount('pickup_cashless_awbs', 2);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 2);
     $this->assertDatabaseCount('jne_shipments', 0);
@@ -45,22 +45,22 @@ test('staff save a batch after pickup finalization with audit evidence and no in
     ksort($after);
     expect($after)->toBe($original);
     expect(PickupCashlessAwbEvent::first()->affected_results['batch_submission_key'])->toBe($payload['submission_key']);
-    $this->postJson(route('api.cashless-awbs.store', $task), ['awb' => 'TG003', 'submission_key' => (string) Str::uuid()])->assertForbidden();
+    $this->postJson(route('api.cashless-awbs.store', $task), ['awb' => 'TG0000000003', 'submission_key' => (string) Str::uuid()])->assertForbidden();
 });
 
 test('batch retries do not duplicate AWBs or events and a reused key cannot change its payload', function () {
     [$staff, $task] = cashlessHandoverBook();
-    $payload = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG001', 'CM002']];
+    $payload = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000001', 'CM00000000002']];
     $this->actingAs($staff)->post(route('cashless-handover.store', $task), $payload)->assertRedirect();
     $this->post(route('cashless-handover.store', $task), $payload)->assertRedirect();
-    $this->postJson(route('cashless-handover.store', $task), [...$payload, 'awbs' => ['TG003']])->assertConflict();
+    $this->postJson(route('cashless-handover.store', $task), [...$payload, 'awbs' => ['TG0000000003']])->assertConflict();
     $this->assertDatabaseCount('pickup_cashless_awbs', 2);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 2);
 });
 
 test('duplicate scans are rejected after normalization without partially saving a batch', function () {
     [$staff, $task] = cashlessHandoverBook();
-    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TGNEW', 'tg001', 'TG001']])
+    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000201', 'tg0000000001', 'TG0000000001']])
         ->assertUnprocessable()->assertJsonValidationErrors(['awbs.1', 'awbs.2']);
     $this->assertDatabaseCount('pickup_cashless_awbs', 0);
 });
@@ -68,8 +68,8 @@ test('duplicate scans are rejected after normalization without partially saving 
 test('a claimed AWB cannot be saved again in this or another pickup and the entire batch rolls back', function (bool $samePickup) {
     [$staff, $task] = cashlessHandoverBook();
     $owner = $samePickup ? $task : PickupTask::factory()->create();
-    PickupCashlessAwb::factory()->create(['pickup_task_id' => $owner->id, 'awb' => 'TGCLAIMED']);
-    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TGNEW', 'TGCLAIMED']])
+    PickupCashlessAwb::factory()->create(['pickup_task_id' => $owner->id, 'awb' => 'TG0000000501']);
+    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000201', 'TG0000000501']])
         ->assertUnprocessable()->assertJsonValidationErrors('awbs');
     $this->assertDatabaseCount('pickup_cashless_awbs', 1);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 0);
@@ -78,11 +78,11 @@ test('a claimed AWB cannot be saved again in this or another pickup and the enti
 test('a shipment owned by another pickup cannot be claimed through cashless handover', function () {
     [$staff, $task] = cashlessHandoverBook();
     $other = PickupTask::factory()->create();
-    JneShipment::factory()->create(['awb' => 'TGOWNED', 'pickup_task_id' => $other->id]);
-    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TGNEW', 'TGOWNED']])
+    JneShipment::factory()->create(['awb' => 'TG0000000502', 'pickup_task_id' => $other->id]);
+    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000201', 'TG0000000502']])
         ->assertUnprocessable()->assertJsonValidationErrors('awbs');
     $this->assertDatabaseCount('pickup_cashless_awbs', 0);
-    $this->assertDatabaseHas('jne_shipments', ['awb' => 'TGOWNED', 'pickup_task_id' => $other->id]);
+    $this->assertDatabaseHas('jne_shipments', ['awb' => 'TG0000000502', 'pickup_task_id' => $other->id]);
 });
 
 test('invalid entries and manual prefixes are rejected', function (array $awbs, string $field) {
@@ -93,13 +93,13 @@ test('invalid entries and manual prefixes are rejected', function (array $awbs, 
 })->with([
     'empty' => [[], 'awbs'], 'invalid characters' => [['TG 001'], 'awbs.0'],
     'manual 0101' => [['010150075649226'], 'awbs.0'], 'manual 0166' => [['016660047940726'], 'awbs.0'],
-    'too large' => [array_fill(0, 501, 'TG001'), 'awbs'],
+    'too large' => [array_fill(0, 501, 'TG0000000001'), 'awbs'],
 ]);
 
 test('known Manual and Orion categories cannot be overwritten by scanning', function (string $category) {
     [$staff, $task] = cashlessHandoverBook();
-    JneShipment::factory()->create(['awb' => 'OTHER123', 'pickup_task_id' => null, 'category' => $category, 'category_status' => 'MATCHED']);
-    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['OTHER123']])
+    JneShipment::factory()->create(['awb' => 'TG0000000901', 'pickup_task_id' => null, 'category' => $category, 'category_status' => 'MATCHED']);
+    $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000901']])
         ->assertUnprocessable()->assertJsonValidationErrors('awbs');
     $this->assertDatabaseCount('pickup_cashless_awbs', 0);
 })->with(['manual_hybrid', 'css_orion']);
@@ -129,7 +129,7 @@ test('unstarted cancelled or closed books reject writes at HTTP and action bound
     if ($state === 'locked') {
         PickupProcessingReconciliation::factory()->create(['pickup_task_id' => $task->id, 'status' => 'DONE', 'locked_at' => now()]);
     }
-    $data = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG001']];
+    $data = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000001']];
     $this->actingAs($staff)->postJson(route('cashless-handover.store', $task), $data)->assertForbidden();
     expect(fn () => app(RecordCashlessHandover::class)->handle($staff, $task->id, $data))->toThrow(AuthorizationException::class);
     $this->assertDatabaseCount('pickup_cashless_awbs', 0);
@@ -143,7 +143,7 @@ test('cashless handover lists only own books and hides another user selected boo
         ->component('cashless-handover')->has('tasks.data', 1)->where('tasks.data.0.id', $task->id)
         ->where('selected.id', $task->id)->where('selected.can_record', true)->where('selected.target', 2));
     $this->get(route('cashless-handover.index', ['task' => $other->id]))->assertNotFound();
-    $this->postJson(route('cashless-handover.store', $other), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG001']])->assertForbidden();
+    $this->postJson(route('cashless-handover.store', $other), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000001']])->assertForbidden();
     $this->actingAs(User::factory()->create(['role' => 'cs']))->get(route('cashless-handover.index'))->assertForbidden();
 });
 
@@ -160,12 +160,12 @@ test('pickup searching is paginated and operational date includes the next morni
 test('cashless handover connects an existing source to the pickup and queues its reconciliation', function () {
     [$staff, $task] = cashlessHandoverBook();
     $job = ReportJob::factory()->create(['source' => 'hybrid', 'report_type' => 'combined', 'status' => 'COMPLETED', 'import_status' => 'IMPORTED', 'projection_status' => 'PROJECTED']);
-    JneReportAwb::factory()->create(['report_job_id' => $job->id, 'awb' => 'TG001', 'shipper_name' => 'MARKETPLACE', 'customer_account' => 'SHARED', 'reference' => null, 'entry_at' => $task->proof->picked_up_at]);
+    JneReportAwb::factory()->create(['report_job_id' => $job->id, 'awb' => 'TG0000000001', 'shipper_name' => 'MARKETPLACE', 'customer_account' => 'SHARED', 'reference' => null, 'entry_at' => $task->proof->picked_up_at]);
     app(ProjectJneShipments::class)->handle($job->id);
     Queue::fake([ReconcilePickupProcessingJob::class]);
     config(['pickup.automation.enabled' => true, 'jne-reports.category_markers_enabled' => true]);
-    $this->actingAs($staff)->post(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG001']])->assertRedirect();
-    $this->assertDatabaseHas('jne_shipments', ['awb' => 'TG001', 'customer_id' => $task->customer_id, 'pickup_task_id' => $task->id, 'customer_match_status' => 'MATCHED', 'match_status' => 'MATCHED', 'category' => 'cashless_hybrid']);
+    $this->actingAs($staff)->post(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000001']])->assertRedirect();
+    $this->assertDatabaseHas('jne_shipments', ['awb' => 'TG0000000001', 'customer_id' => $task->customer_id, 'pickup_task_id' => $task->id, 'customer_match_status' => 'MATCHED', 'match_status' => 'MATCHED', 'category' => 'cashless_hybrid']);
     Queue::assertPushed(ReconcilePickupProcessingJob::class, fn ($job) => $job->taskId === $task->id);
 });
 
@@ -175,7 +175,7 @@ test('cashless handover guests are redirected to login', function () {
 
 test('the maximum batch is inserted and audited without one save request per AWB', function () {
     [$staff, $task] = cashlessHandoverBook();
-    $awbs = array_map(fn (int $number): string => 'TGBULK'.$number, range(1, 500));
+    $awbs = array_map(fn (int $number): string => 'TG'.str_pad((string) $number, 10, '0', STR_PAD_LEFT), range(1, 500));
     DB::enableQueryLog();
     try {
         $this->actingAs($staff)->post(route('cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => $awbs])->assertRedirect();

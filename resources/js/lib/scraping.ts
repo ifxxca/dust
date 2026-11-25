@@ -13,8 +13,9 @@ export const scrapingReports = {
 };
 export const runStatuses: Record<string, string> = {
     QUEUED: 'Antrean',
+    RETRY_WAIT: 'Menunggu retry otomatis',
     RUNNING: 'Dimulai',
-    WAITING_REPORT: 'Menyiapkan report',
+    WAITING_REPORT: 'Menunggu hasil JNE',
     WAITING_APEX: 'Menunggu konversi APEX',
     COLLECTING_SOURCES: 'Mengumpulkan report sumber',
     SOURCE_SAVED: 'Sumber tersimpan',

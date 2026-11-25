@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { CalendarDays, ChevronDown, Download, RefreshCw } from 'lucide-react';
@@ -137,10 +138,10 @@ export function MonitoringWorkspaceHeader({
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     {insights && (
-                        <details className="text-sm">
-                            <summary className="cursor-pointer rounded-md px-2 py-2 font-medium focus-visible:outline-2 focus-visible:outline-ring">
+                        <Disclosure>
+                            <DisclosureSummary className="cursor-pointer focus-visible:outline-2 focus-visible:outline-ring">
                                 Rincian monitoring
-                            </summary>
+                            </DisclosureSummary>
                             <div className="mt-2 flex flex-col gap-3">
                                 {insights}
                                 {current === 'pickup' && (
@@ -158,7 +159,7 @@ export function MonitoringWorkspaceHeader({
                                     </Link>
                                 )}
                             </div>
-                        </details>
+                        </Disclosure>
                     )}
                     <span className="text-xs text-muted-foreground">
                         {operationalRangeLabel(

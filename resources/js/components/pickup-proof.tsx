@@ -1,3 +1,5 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { Textarea } from '@/components/ui/textarea';
 import { useHttp } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +18,10 @@ import { toast } from 'sonner';
 import { RecordedValues } from '@/components/operational-change';
 import CashlessProofInput from '@/components/cashless-proof-input';
 import { prepareCashlessAwb } from '@/lib/cashless-handover';
+import {
+    ReceiptRecipientStatus,
+    type ReceiptRecipientStatuses,
+} from '@/components/receipt-recipient-status';
 
 export type Proof = {
     id: number;
@@ -43,6 +49,7 @@ export type Proof = {
         last_error?: string | null;
         accepted_at?: string | null;
         provider_message_id?: string | null;
+        recipient_statuses?: ReceiptRecipientStatuses | null;
     };
     can_send_receipt?: boolean;
     receipt_history?: {
@@ -165,17 +172,26 @@ export default function PickupProof({
                             } as Record<string, string>
                         )[proof.receipt.status] ?? proof.receipt.status}
                     </p>
+                    <ReceiptRecipientStatus
+                        recipients={proof.receipt.recipient_statuses}
+                    />
                     {proof.receipt.last_error && (
                         <p className="text-sm text-amber-700 dark:text-amber-300">
                             {proof.receipt.last_error}
                         </p>
                     )}
                     {proof.can_send_receipt &&
-                        [
+                        ([
                             'PENDING_CONFIGURATION',
                             'FAILED',
                             'PENDING_RECIPIENT',
-                        ].includes(proof.receipt.status) && (
+                        ].includes(proof.receipt.status) ||
+                            (proof.receipt.status !== 'PROCESSING' &&
+                                Object.values(
+                                    proof.receipt.recipient_statuses ?? {},
+                                ).some(
+                                    (result) => result.status === 'FAILED',
+                                ))) && (
                             <Button
                                 variant="outline"
                                 disabled={delivery.processing}
@@ -194,14 +210,22 @@ export default function PickupProof({
                             >
                                 {delivery.processing
                                     ? 'Mengirim…'
-                                    : 'Kirim Receipt Email'}
+                                    : proof.receipt.recipient_statuses &&
+                                        Object.values(
+                                            proof.receipt.recipient_statuses,
+                                        ).some(
+                                            (result) =>
+                                                result.status === 'FAILED',
+                                        )
+                                      ? 'Coba ulang email gagal'
+                                      : 'Kirim Receipt Email'}
                             </Button>
                         )}
                     {proof.revisions && proof.revisions.length > 0 && (
-                        <details className="rounded-md border p-3 text-sm">
-                            <summary>
+                        <Disclosure>
+                            <DisclosureSummary>
                                 Riwayat koreksi POP ({proof.revisions.length})
-                            </summary>
+                            </DisclosureSummary>
                             <p className="mt-2 break-words">Nilai awal</p>
                             <RecordedValues values={proof.original} />
                             {proof.revisions.map((revision) => (
@@ -219,19 +243,21 @@ export default function PickupProof({
                                     <RecordedValues values={revision.values} />
                                 </div>
                             ))}
-                        </details>
+                        </Disclosure>
                     )}
                     {proof.receipt_history &&
                         proof.receipt_history.length > 1 && (
-                            <details className="rounded-md border p-3 text-sm">
-                                <summary>Riwayat Receipt</summary>
+                            <Disclosure>
+                                <DisclosureSummary>
+                                    Riwayat Receipt
+                                </DisclosureSummary>
                                 {proof.receipt_history.map((receipt) => (
                                     <p key={receipt.proof_revision}>
                                         Versi {receipt.proof_revision} ·{' '}
                                         {receipt.recipient} · {receipt.status}
                                     </p>
                                 ))}
-                            </details>
+                            </Disclosure>
                         )}
                 </>
             ) : (
@@ -355,7 +381,7 @@ export default function PickupProof({
                         </strong>
                     </p>
                     <Label htmlFor="proof-notes">Catatan khusus</Label>
-                    <textarea
+                    <Textarea
                         id="proof-notes"
                         maxLength={2000}
                         className="min-h-20 w-full rounded-md border p-3"

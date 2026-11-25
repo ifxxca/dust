@@ -1,10 +1,12 @@
 <?php
 
+use App\Actions\Reports\MatchJneShipments;
 use App\Actions\Reports\ProjectJneShipments;
 use App\Models\Customer;
 use App\Models\JneReportAwb;
 use App\Models\JneShipment;
 use App\Models\JneShipperAlias;
+use App\Models\JneSourceContract;
 use App\Models\PickupRecord;
 use App\Models\PickupTask;
 use App\Models\ReportJob;
@@ -40,3 +42,26 @@ test('projection bounds source date fallback reads and preserves retry observati
     app(ProjectJneShipments::class)->handle($report->id);
     $this->assertDatabaseCount('jne_shipment_observations', $size);
 })->with([1, 10, 100])->with([false, true]);
+
+test('historical matching retains verified customer code evidence without hydrating unrelated CSV payloads', function () {
+    config(['jne-reports.evidence_policies_enabled' => true]);
+    $customer = Customer::factory()->create(['customer_code' => '472']);
+    JneSourceContract::factory()->create(['active_key' => JneSourceContract::key('apex', 'apex'), 'verified_at' => now(), 'definition' => ['customer_code_column' => 'CUST_CODE']]);
+    $report = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED']);
+    $source = JneReportAwb::factory()->create(['report_job_id' => $report->id, 'shipper_name' => '', 'raw_data' => ['CUST_CODE' => '472', 'UNUSED' => str_repeat('x', 1000000)]]);
+    $seen = null;
+    $queryListener = function (JneReportAwb $row) use (&$seen): void {
+        if ($row->getAttribute('awb') !== null) {
+            $seen = $row->raw_data;
+        }
+    };
+    JneReportAwb::retrieved($queryListener);
+    try {
+        $result = app(MatchJneShipments::class)->candidates(collect([$source]));
+    } finally {
+        JneReportAwb::flushEventListeners();
+    }
+    expect($seen)->toBe(['CUST_CODE' => '472']);
+    expect($result[$source->id]['customer_id'])->toBe($customer->id);
+    expect(strlen($source->fresh()->raw_data['UNUSED']))->toBe(1000000);
+});

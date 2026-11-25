@@ -92,6 +92,9 @@ export type Proof = {
     }[];
     receipt: {
         status: string;
+        recipient_statuses?:
+            | import('@/components/receipt-recipient-status').ReceiptRecipientStatuses
+            | null;
         proof_revision?: number;
         accepted_at?: string | null;
         delivered_at?: string | null;

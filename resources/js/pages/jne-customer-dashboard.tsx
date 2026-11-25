@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import {
@@ -21,6 +22,8 @@ import {
     XCircle,
     type LucideIcon,
 } from 'lucide-react';
+import DateRangeFields from '@/components/date-range-fields';
+import FilterSelect from '@/components/filter-select';
 import CustomerPicker from '@/components/customer-picker';
 import {
     CustomerServerDetails,
@@ -46,7 +49,6 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
@@ -333,7 +335,7 @@ export default function JneCustomerDashboard({
                 className="flex flex-col gap-3 py-1"
             >
                 <form
-                    className="grid grid-cols-2 items-end gap-3 xl:grid-cols-[1.25fr_1fr_1fr_1.1fr_auto]"
+                    className="grid grid-cols-2 items-end gap-3 xl:grid-cols-[1fr_1.7fr_1fr_auto]"
                     onSubmit={(event) => {
                         event.preventDefault();
                         setNetworkError(false);
@@ -396,100 +398,50 @@ export default function JneCustomerDashboard({
                             </p>
                         )}
                     </div>
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label htmlFor="dashboard-from">Tanggal awal</Label>
-                        <Input
-                            id="dashboard-from"
-                            type="date"
-                            className="min-h-11"
-                            required
-                            value={form.data.date_from}
-                            aria-invalid={!!form.errors.date_from}
-                            aria-describedby={
-                                form.errors.date_from
-                                    ? 'dashboard-from-error'
-                                    : undefined
-                            }
-                            onChange={(event) =>
-                                form.setData('date_from', event.target.value)
-                            }
-                        />
-                        {form.errors.date_from && (
-                            <p
-                                id="dashboard-from-error"
-                                className="text-xs text-destructive"
-                            >
-                                {form.errors.date_from}
-                            </p>
-                        )}
-                    </div>
-                    <div className="flex min-w-0 flex-col gap-1.5">
-                        <Label htmlFor="dashboard-thru">Tanggal akhir</Label>
-                        <Input
-                            id="dashboard-thru"
-                            type="date"
-                            className="min-h-11"
-                            required
-                            min={form.data.date_from}
-                            value={form.data.date_thru}
-                            aria-invalid={!!form.errors.date_thru}
-                            aria-describedby={
-                                form.errors.date_thru
-                                    ? 'dashboard-thru-error'
-                                    : undefined
-                            }
-                            onChange={(event) =>
-                                form.setData('date_thru', event.target.value)
-                            }
-                        />
-                        {form.errors.date_thru && (
-                            <p
-                                id="dashboard-thru-error"
-                                className="text-xs text-destructive"
-                            >
-                                {form.errors.date_thru}
-                            </p>
-                        )}
-                    </div>
-                    <div className="col-span-2 flex min-w-0 flex-col gap-1.5 sm:col-span-1">
-                        <Label htmlFor="dashboard-mapping">
-                            Pemetaan customer
-                        </Label>
-                        <select
+                    <DateRangeFields
+                        id="dashboard"
+                        label="Periode pengiriman"
+                        fromLabel="Tanggal awal"
+                        thruLabel="Tanggal akhir"
+                        from={form.data.date_from}
+                        thru={form.data.date_thru}
+                        required
+                        onFromChange={(value) =>
+                            form.setData('date_from', value)
+                        }
+                        onThruChange={(value) =>
+                            form.setData('date_thru', value)
+                        }
+                        fromError={form.errors.date_from}
+                        thruError={form.errors.date_thru}
+                        className="col-span-2 xl:col-span-1"
+                    />
+                    <div className="col-span-2 sm:col-span-1">
+                        <FilterSelect
                             id="dashboard-mapping"
-                            className="h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm shadow-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                            value={form.data.mapping}
-                            onChange={(event) => {
-                                form.setData('mapping', event.target.value);
-                                if (event.target.value !== 'all') {
+                            label="Pemetaan customer"
+                            value={
+                                form.data.mapping === 'all'
+                                    ? ''
+                                    : form.data.mapping
+                            }
+                            all="Semua pemetaan"
+                            options={[
+                                ['matched', 'Customer terkonfirmasi'],
+                                ['unmapped', 'Belum terpetakan'],
+                                ['ambiguous', 'Pemetaan ambigu'],
+                                ['candidate', 'Kandidat customer'],
+                                ['conflict', 'Bukti bertentangan'],
+                            ]}
+                            error={form.errors.mapping}
+                            onChange={(value) => {
+                                form.setData('mapping', value || 'all');
+                                if (value) {
                                     form.setData('customer_id', null);
                                     setCustomer(null);
                                 }
                             }}
-                            aria-invalid={!!form.errors.mapping}
-                            aria-describedby={
-                                form.errors.mapping
-                                    ? 'dashboard-mapping-error'
-                                    : undefined
-                            }
-                        >
-                            <option value="all">Semua pemetaan</option>
-                            <option value="matched">
-                                Customer terkonfirmasi
-                            </option>
-                            <option value="unmapped">Belum terpetakan</option>
-                            <option value="ambiguous">Pemetaan ambigu</option>
-                            <option value="candidate">Kandidat customer</option>
-                            <option value="conflict">Bukti bertentangan</option>
-                        </select>
-                        {form.errors.mapping && (
-                            <p
-                                id="dashboard-mapping-error"
-                                className="text-xs text-destructive"
-                            >
-                                {form.errors.mapping}
-                            </p>
-                        )}
+                        />
                     </div>
                     <Button
                         type="submit"
@@ -543,21 +495,25 @@ export default function JneCustomerDashboard({
                                 Kustom
                             </ToggleGroupItem>
                         </ToggleGroup>
-                        <select
-                            aria-label="Server resi"
-                            className="h-11 max-w-full rounded-md border border-input bg-background px-2 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                            value={filters.server}
-                            onChange={(event) =>
-                                visit({ server: event.target.value })
-                            }
-                        >
-                            <option value="all">Semua server</option>
-                            {servers.map((server) => (
-                                <option key={server.key} value={server.key}>
-                                    {server.label} ({number(server.shipments)})
-                                </option>
-                            ))}
-                        </select>
+                        <div className="w-full sm:w-64">
+                            <FilterSelect
+                                id="dashboard-server"
+                                label="Server resi"
+                                value={
+                                    filters.server === 'all'
+                                        ? ''
+                                        : filters.server
+                                }
+                                all="Semua server"
+                                options={servers.map((server) => [
+                                    server.key,
+                                    `${server.label} (${number(server.shipments)})`,
+                                ])}
+                                onChange={(value) =>
+                                    visit({ server: value || 'all' })
+                                }
+                            />
+                        </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
                         Terakhir diperbarui:{' '}
@@ -1134,10 +1090,10 @@ export default function JneCustomerDashboard({
                         </div>
                     ))}
                 </div>
-                <details>
-                    <summary className="min-h-11 cursor-pointer py-3 text-xs font-medium">
+                <Disclosure>
+                    <DisclosureSummary className="min-h-11 cursor-pointer">
                         Lihat perbandingan periode dan rincian server
-                    </summary>
+                    </DisclosureSummary>
                     <div className="flex flex-col gap-3">
                         <CustomerComparison comparison={comparison} />
                         <CustomerServerDetails servers={servers} />
@@ -1155,7 +1111,7 @@ export default function JneCustomerDashboard({
                             .
                         </p>
                     </div>
-                </details>
+                </Disclosure>
             </DetailSection>
             <DetailSection title="Status pengiriman" icon={Clock3} defaultOpen>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1211,10 +1167,10 @@ export default function JneCustomerDashboard({
                     </div>
                 )}
             </DetailSection>
-            <details className="rounded-lg border bg-card px-4 text-xs leading-relaxed text-muted-foreground">
-                <summary className="min-h-11 cursor-pointer py-3 font-medium text-foreground">
+            <Disclosure className="leading-relaxed">
+                <DisclosureSummary className="min-h-11 cursor-pointer">
                     Tentang data dashboard
-                </summary>
+                </DisclosureSummary>
                 <div className="flex flex-col gap-2 pb-4">
                     <p>
                         Amount berasal dari kolom AMOUNT APEX untuk seluruh
@@ -1238,7 +1194,7 @@ export default function JneCustomerDashboard({
                         lain masuk Lainnya.
                     </p>
                 </div>
-            </details>
+            </Disclosure>
         </PageContainer>
     );
 }

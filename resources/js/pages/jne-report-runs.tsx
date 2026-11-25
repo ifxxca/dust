@@ -15,7 +15,11 @@ import {
     Settings2,
 } from 'lucide-react';
 import JneRunList, { type JneRun } from '@/components/jne-run-list';
-import { JneRunState, JneRunProgress } from '@/components/jne-run-state';
+import {
+    JneRunState,
+    JneRunProgress,
+    JneHybridSources,
+} from '@/components/jne-run-state';
 import JneWorkspaceMetrics from '@/components/jne-workspace-metrics';
 import {
     Collapsible,
@@ -86,6 +90,7 @@ type Props = {
     timezone: string;
     today: string;
     checkpointsEnabled?: boolean;
+    automaticRetryEnabled?: boolean;
 };
 
 export default function ReportRuns({
@@ -95,6 +100,7 @@ export default function ReportRuns({
     timezone,
     today,
     checkpointsEnabled,
+    automaticRetryEnabled,
 }: Props) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [runOpen, setRunOpen] = useState(false);
@@ -537,7 +543,11 @@ export default function ReportRuns({
                                 </p>
                             )}
                             <JneRunProgress run={selected} />
-                            <div className="flex flex-wrap gap-2">
+                            <div
+                                role="status"
+                                aria-atomic="true"
+                                className="flex flex-wrap gap-2"
+                            >
                                 <JneRunState run={selected} />
                             </div>
                             {problem && (
@@ -583,7 +593,7 @@ export default function ReportRuns({
                                                         'HYBRID_SOURCE_INVALID:',
                                                     )
                                                   ? 'Periksa ulang file sumber'
-                                                  : 'Ulangi sumber gagal'}
+                                                  : 'Coba Lagi yang Gagal'}
                                         </Button>
                                         <p className="text-xs text-muted-foreground">
                                             {selected.error_message?.startsWith(
@@ -628,48 +638,69 @@ export default function ReportRuns({
                                     </div>
                                 ))}
                             </div>
-                            <ol
-                                className="ml-2 flex flex-col gap-5 border-l border-primary/20 pl-6 [&>li]:relative [&>li]:before:absolute [&>li]:before:top-1 [&>li]:before:-left-[29px] [&>li]:before:size-2.5 [&>li]:before:rounded-full [&>li]:before:border-2 [&>li]:before:border-background [&>li]:before:bg-primary"
-                                aria-label="Timeline proses"
-                            >
-                                <li className="flex flex-col gap-1">
-                                    <p className="text-sm font-medium">
-                                        Masuk antrean
-                                    </p>
-                                    <time className="text-xs text-muted-foreground">
-                                        {jneTimestamp(
-                                            selected.created_at,
-                                            timezone,
-                                        )}
-                                    </time>
-                                </li>
-                                {selected.events.map((event) => (
-                                    <li
-                                        key={event.id}
-                                        className="flex flex-col gap-1"
+                            {selected.sources?.length > 0 && (
+                                <JneHybridSources
+                                    sources={selected.sources}
+                                    timezone={timezone}
+                                />
+                            )}
+                            <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        className="min-h-11"
                                     >
-                                        <p className="text-sm font-medium">
-                                            {runStatusLabel(
-                                                event.status,
-                                                selected.report_type,
-                                            )}
-                                        </p>
-                                        <time className="text-xs text-muted-foreground">
-                                            {jneTimestamp(
-                                                event.created_at,
-                                                timezone,
-                                            )}{' '}
-                                            · {event.worker_id || 'Aplikasi'}
-                                        </time>
-                                        {event.message && (
-                                            <p className="text-sm break-words text-muted-foreground">
-                                                {event.message}
+                                        Riwayat proses ({selected.events.length}
+                                        )
+                                    </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-3">
+                                    <ol
+                                        className="ml-2 flex flex-col gap-5 border-l border-primary/20 pl-6 [&>li]:relative [&>li]:before:absolute [&>li]:before:top-1 [&>li]:before:-left-[29px] [&>li]:before:size-2.5 [&>li]:before:rounded-full [&>li]:before:border-2 [&>li]:before:border-background [&>li]:before:bg-primary"
+                                        aria-label="Timeline proses"
+                                    >
+                                        <li className="flex flex-col gap-1">
+                                            <p className="text-sm font-medium">
+                                                Masuk antrean
                                             </p>
-                                        )}
-                                    </li>
-                                ))}
-                            </ol>
-                            {checkpointsEnabled && (
+                                            <time className="text-xs text-muted-foreground">
+                                                {jneTimestamp(
+                                                    selected.created_at,
+                                                    timezone,
+                                                )}
+                                            </time>
+                                        </li>
+                                        {selected.events.map((event) => (
+                                            <li
+                                                key={event.id}
+                                                className="flex flex-col gap-1"
+                                            >
+                                                <p className="text-sm font-medium">
+                                                    {runStatusLabel(
+                                                        event.status,
+                                                        selected.report_type,
+                                                    )}
+                                                </p>
+                                                <time className="text-xs text-muted-foreground">
+                                                    {jneTimestamp(
+                                                        event.created_at,
+                                                        timezone,
+                                                    )}{' '}
+                                                    ·{' '}
+                                                    {event.worker_id ||
+                                                        'Aplikasi'}
+                                                </time>
+                                                {event.message && (
+                                                    <p className="text-sm break-words text-muted-foreground">
+                                                        {event.message}
+                                                    </p>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </CollapsibleContent>
+                            </Collapsible>
+                            {checkpointsEnabled && !automaticRetryEnabled && (
                                 <JneApexRecovery
                                     key={selected.id}
                                     id={selected.id}
@@ -679,38 +710,6 @@ export default function ReportRuns({
                                         'NEEDS_ATTENTION',
                                     ].includes(selected.status)}
                                 />
-                            )}
-                            {selected.sources?.length > 0 && (
-                                <div className="space-y-3 rounded-lg border p-4">
-                                    <p className="text-sm font-medium">
-                                        Empat report sumber
-                                    </p>
-                                    {selected.sources.map((source) => (
-                                        <div
-                                            key={source.id}
-                                            className="flex flex-col gap-1 text-sm"
-                                        >
-                                            <p>
-                                                {sourceLabel(source.source)} ·{' '}
-                                                {reportLabel(
-                                                    source.report_type,
-                                                )}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                {runStatuses[source.status]}
-                                                {source.source_row_count !==
-                                                null
-                                                    ? ` · ${source.source_row_count} baris`
-                                                    : ''}
-                                            </p>
-                                            {source.error_message && (
-                                                <p className="text-xs text-destructive">
-                                                    {source.error_message}
-                                                </p>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
                             )}
                             <div className="flex flex-wrap gap-2">
                                 {selected.status === 'COMPLETED' && (

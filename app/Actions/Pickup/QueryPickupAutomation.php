@@ -51,13 +51,61 @@ class QueryPickupAutomation
      */
     public function handle(array $filters): array
     {
-        $query = app(QueryCustomerPickupDays::class)->handle($filters);
-        $summary = (array) (clone $query)->selectRaw("count(*) as total, sum(case when reconciliation_group = 'review' then 1 else 0 end) as review, sum(case when reconciliation_group = 'done' then 1 else 0 end) as done, sum(case when reconciliation_group = 'waiting' then 1 else 0 end) as waiting, sum(case when automation_status = 'DONE' and delivery_status not in ('ACCEPTED','DELIVERED') then 1 else 0 end) as unsent")->first();
+        $query = $this->withQuantities(app(QueryCustomerPickupDays::class)->handle($filters));
+        $summary = (array) (clone $query)->select([])->selectRaw("count(*) as total, sum(case when reconciliation_group = 'review' then 1 else 0 end) as review, sum(case when reconciliation_group = 'done' then 1 else 0 end) as done, sum(case when reconciliation_group = 'waiting' then 1 else 0 end) as waiting, sum(case when automation_status = 'DONE' and delivery_status not in ('ACCEPTED','DELIVERED') then 1 else 0 end) as unsent")->first();
         $query = $this->filtered($query, $filters);
+        $allocation = (array) (clone $query)->select([])->selectRaw("count(*) as total, coalesce(sum(pickup_count),0) as pickup_books,
+            sum(case when quantity_status = 'MATCHED' then 1 else 0 end) as matched,
+            sum(case when quantity_status = 'SHORTAGE' then 1 else 0 end) as shortage,
+            sum(case when quantity_status = 'EXCESS' then 1 else 0 end) as excess,
+            sum(case when quantity_status = 'CONFLICT' then 1 else 0 end) as conflict")->first();
         $rows = $query->orderByRaw("case when automation_status = 'REVIEW' then 0 when automation_status <> 'DONE' then 1 else 2 end")
             ->orderByDesc('period_at')->orderByDesc('id')->paginate($filters['per_page'] ?? 10)->withQueryString()->through($this->row(...));
 
-        return ['rows' => $rows, 'summary' => array_map(intval(...), $summary), 'processing' => $this->processing($filters), 'pending_count' => PickupPendingItem::whereIn('status', ['PENDING', 'READY'])->count(), 'generated_at' => now()->toIso8601String(), 'enabled' => (bool) config('pickup.automation.enabled')];
+        return ['rows' => $rows, 'summary' => array_map(intval(...), $summary), 'allocation_summary' => array_map(intval(...), $allocation), 'pool_summary' => $this->poolSummary($filters), 'processing' => $this->processing($filters), 'pending_count' => PickupPendingItem::whereIn('status', ['PENDING', 'READY'])->count(), 'generated_at' => now()->toIso8601String(), 'enabled' => (bool) config('pickup.automation.enabled')];
+    }
+
+    private function withQuantities(Builder $query): Builder
+    {
+        $expected = $confirmed = $missing = $excess = $unknown = [];
+        foreach (['manual_hybrid', 'cashless_hybrid', 'css_orion'] as $category) {
+            $value = "json_extract(automation_categories, '$.$category.expected')";
+            $expected[] = $value;
+            $unknown[] = "($value is null or json_type($value) = 'NULL')";
+            $confirmed[] = "coalesce(json_extract(automation_categories, '$.$category.confirmed'), 0)";
+            $missing[] = "coalesce(json_extract(automation_categories, '$.$category.shortfall'), 0)";
+            $excess[] = "coalesce(json_extract(automation_categories, '$.$category.excess'), 0)";
+        }
+        $unknownSql = implode(' or ', $unknown);
+        $expectedSql = implode(' + ', $expected);
+        $confirmedSql = implode(' + ', $confirmed);
+        $missingSql = implode(' + ', $missing);
+        $excessSql = implode(' + ', $excess);
+        $quantities = DB::query()->fromSub($query, 'quantities')->select('quantities.*')
+            ->selectRaw("case when $unknownSql then null else $expectedSql end as expected_quantity, ($confirmedSql) as allocated_quantity")
+            ->selectRaw("case when input_version <> evaluated_input_version then 'NOT_EVALUATED' when $unknownSql then 'UNKNOWN'
+                when ($missingSql) > 0 and ($excessSql) > 0 then 'CONFLICT' when ($excessSql) > 0 then 'EXCESS'
+                when ($missingSql) > 0 then 'SHORTAGE' when automation_status = 'REVIEW' then 'CONFLICT' else 'MATCHED' end as quantity_status");
+
+        return DB::query()->fromSub($quantities, 'quantity_statuses')->select('quantity_statuses.*')->selectRaw('allocated_quantity - expected_quantity as difference');
+    }
+
+    /** Global canonical AWBs, independently scoped to the displayed operational dates and category.
+     * @param  array<string, mixed>  $filters
+     * @return array<string, int|string|null>
+     */
+    private function poolSummary(array $filters): array
+    {
+        $from = $filters['date_from'] ?? PickupResultPeriod::today()->toDateString();
+        $to = $filters['date_to'] ?? $from;
+        $query = DB::table('jne_shipments as awb')->join('jne_report_awbs as source', 'source.id', '=', 'awb.latest_report_awb_id')
+            ->where('source.entry_at', '>=', PickupResultPeriod::start($from)->utc())
+            ->where('source.entry_at', '<', PickupResultPeriod::start($to)->addDay()->utc())
+            ->when(! empty($filters['category']), fn (Builder $rows) => $rows->where('awb.category', $filters['category']));
+        $counts = $query->selectRaw('count(*) as total, sum(case when awb.pickup_task_id is not null then 1 else 0 end) as allocated, sum(case when awb.pickup_task_id is null then 1 else 0 end) as unassigned')->first();
+
+        return ['total' => (int) $counts->total, 'allocated' => (int) $counts->allocated, 'unassigned' => (int) $counts->unassigned,
+            'date_from' => $from, 'date_to' => $to, 'category' => $filters['category'] ?? null];
     }
 
     /** @param array<string, mixed> $filters
@@ -142,7 +190,15 @@ class QueryPickupAutomation
         $data['reasons'] = $row->automation_reasons ? json_decode($row->automation_reasons, true, 512, JSON_THROW_ON_ERROR) : [];
         $data['picked_up_at'] = $row->picked_up_at ? CarbonImmutable::parse($row->picked_up_at, 'UTC')->toIso8601String() : null;
         $data['evaluated_at'] = $row->evaluated_at ? CarbonImmutable::parse($row->evaluated_at, 'UTC')->toIso8601String() : null;
+        $deadline = isset($row->validation_started_at) ? CarbonImmutable::parse($row->validation_started_at, 'UTC')->addHours(12) : null;
+        $data['closure_due_at'] = $deadline?->toIso8601String();
+        $data['closure_overdue'] = $deadline !== null && now()->greaterThanOrEqualTo($deadline) && ($row->finalization_status ?? 'PENDING') === 'PENDING';
         $data['dirty'] = (int) $row->input_version !== (int) $row->evaluated_input_version;
+        foreach (['expected_quantity', 'allocated_quantity', 'difference'] as $quantity) {
+            if (property_exists($row, $quantity)) {
+                $data[$quantity] = $row->{$quantity} === null ? null : (int) $row->{$quantity};
+            }
+        }
         if (isset($data['pickup_count'])) {
             $data['pickup_count'] = (int) $data['pickup_count'];
         }

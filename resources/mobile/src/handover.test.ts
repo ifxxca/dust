@@ -1,5 +1,9 @@
 import { expect, test } from 'vitest';
 import {
+    initialReceivedQuantities,
+    matchingReceivedQuantities,
+} from '@/lib/handover-verification';
+import {
     confirmedAmend,
     confirmedHandoverLifecycle,
     readableHandoverAttempt,
@@ -39,6 +43,62 @@ const value: Handover = {
         },
     ],
 };
+
+test('zero POP categories start at zero while physical counts for positive categories remain required', () => {
+    const pickup = { manual_hybrid: 9, cashless_hybrid: 0, css_orion: 0 };
+    const values = {
+        ...initialReceivedQuantities(pickup),
+        discrepancy_notes: '',
+    };
+    expect(values).toEqual({
+        manual_hybrid: '',
+        cashless_hybrid: '0',
+        css_orion: '0',
+        discrepancy_notes: '',
+    });
+    expect(verificationErrors(values, pickup)).toHaveProperty('manual_hybrid');
+    expect(
+        verificationErrors({ ...values, manual_hybrid: '9' }, pickup),
+    ).toEqual({});
+    expect(
+        initialReceivedQuantities({
+            manual_hybrid: 0,
+            cashless_hybrid: 2,
+            css_orion: 3,
+        }),
+    ).toEqual({ manual_hybrid: '0', cashless_hybrid: '', css_orion: '' });
+});
+
+test('matching POP fills every category and still allows a physical discrepancy with a required note', () => {
+    const pickup = { manual_hybrid: 9, cashless_hybrid: 2, css_orion: 3 };
+    const values = {
+        discrepancy_notes: 'Catatan penerimaan',
+        ...matchingReceivedQuantities(pickup),
+    };
+    expect(values).toEqual({
+        manual_hybrid: '9',
+        cashless_hybrid: '2',
+        css_orion: '3',
+        discrepancy_notes: 'Catatan penerimaan',
+    });
+    expect(verificationErrors(values, pickup)).toEqual({});
+    expect(
+        verificationErrors(
+            { ...values, manual_hybrid: '8', discrepancy_notes: '' },
+            pickup,
+        ),
+    ).toHaveProperty('discrepancy_notes');
+    expect(
+        verificationErrors({ ...values, manual_hybrid: '8' }, pickup),
+    ).toEqual({});
+    expect(
+        matchingReceivedQuantities({
+            manual_hybrid: 0,
+            cashless_hybrid: 0,
+            css_orion: 0,
+        }),
+    ).toEqual({ manual_hybrid: '0', cashless_hybrid: '0', css_orion: '0' });
+});
 
 test.each(['-1', '1.5', '', '1000001', 'NaN'])(
     'received input %s cannot be submitted',

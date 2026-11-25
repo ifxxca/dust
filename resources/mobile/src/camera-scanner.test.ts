@@ -43,12 +43,92 @@ beforeEach(() => {
     native.scanner.stopScan.mockResolvedValue();
 });
 
+test('rescanning the same barcode after a gap reports it even when Android never emits an empty frame', async () => {
+    let now = 0;
+    const write = vi.fn(async () => {});
+    const duplicate = vi.fn();
+    const session = new CameraScanSession(
+        write,
+        vi.fn(),
+        undefined,
+        duplicate,
+        () => now,
+    );
+    await session.start();
+    const frame = () =>
+        native.handlers.get('barcodesScanned')!({
+            barcodes: [{ rawValue: 'CM123456' }],
+        });
+    frame();
+    now = 100;
+    frame();
+    expect(duplicate).not.toHaveBeenCalled();
+    now = 1000;
+    frame();
+    now = 1100;
+    frame();
+    await session.stop();
+
+    expect(write).toHaveBeenCalledOnce();
+    expect(duplicate).toHaveBeenCalledExactlyOnceWith('CM123456');
+});
+
+test('a continuously visible barcode does not warn on every camera frame', async () => {
+    let now = 0;
+    const duplicate = vi.fn();
+    const session = new CameraScanSession(
+        vi.fn(async () => {}),
+        vi.fn(),
+        undefined,
+        duplicate,
+        () => now,
+    );
+    await session.start();
+    for (now = 0; now <= 3000; now += 100) {
+        native.handlers.get('barcodesScanned')!({
+            barcodes: [{ rawValue: 'CM123456' }],
+        });
+    }
+    await session.stop();
+    expect(duplicate).not.toHaveBeenCalled();
+});
+
+test('a rejected code is not presented as a saved duplicate and may be scanned again after a gap', async () => {
+    let now = 0;
+    const write = vi.fn(async () => false);
+    const duplicate = vi.fn();
+    const session = new CameraScanSession(
+        write,
+        vi.fn(),
+        undefined,
+        duplicate,
+        () => now,
+    );
+    await session.start();
+    const frame = () =>
+        native.handlers.get('barcodesScanned')!({
+            barcodes: [{ rawValue: '12345' }],
+        });
+    frame();
+    await vi.waitFor(() => expect(write).toHaveBeenCalledOnce());
+    now = 100;
+    frame();
+    now = 1000;
+    frame();
+    await session.stop();
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(duplicate).not.toHaveBeenCalled();
+});
+
 test('a deliberately rescanned barcode reports a duplicate once without replaying its write or warning on every frame', async () => {
     const scan = vi.fn(async () => {});
     const duplicate = vi.fn();
     const session = new CameraScanSession(scan, vi.fn(), undefined, duplicate);
     await session.start();
-    const frame = (values: string[]) => native.handlers.get('barcodesScanned')!({ barcodes: values.map((rawValue) => ({ rawValue })) });
+    const frame = (values: string[]) =>
+        native.handlers.get('barcodesScanned')!({
+            barcodes: values.map((rawValue) => ({ rawValue })),
+        });
     frame(['TG001', 'TG001']);
     frame(['TG001']);
     expect(duplicate).not.toHaveBeenCalled();
@@ -181,4 +261,32 @@ test('a stop failure can be retried instead of leaving a permanently stuck scann
     await session.stop();
 
     expect(native.scanner.stopScan).toHaveBeenCalledTimes(2);
+});
+
+test('a delayed rejected barcode cannot turn into a duplicate while its validation is pending', async () => {
+    let now = 0;
+    let reject!: (value: boolean) => void;
+    const duplicate = vi.fn();
+    const session = new CameraScanSession(
+        () =>
+            new Promise<boolean>((resolve) => {
+                reject = resolve;
+            }),
+        vi.fn(),
+        undefined,
+        duplicate,
+        () => now,
+    );
+    await session.start();
+    native.handlers.get('barcodesScanned')!({
+        barcodes: [{ rawValue: 'INVALID-SKU' }],
+    });
+    await vi.waitFor(() => expect(reject).toBeDefined());
+    now = 1000;
+    native.handlers.get('barcodesScanned')!({
+        barcodes: [{ rawValue: 'INVALID-SKU' }],
+    });
+    reject(false);
+    await session.stop();
+    expect(duplicate).not.toHaveBeenCalled();
 });

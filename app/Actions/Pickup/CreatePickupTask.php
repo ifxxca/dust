@@ -35,7 +35,7 @@ class CreatePickupTask
             if (! $customer->is_active) {
                 throw ValidationException::withMessages(['customer_id' => 'Customer tidak aktif. Pilih customer aktif untuk pickup baru.']);
             }
-            if (blank($customer->contact)) {
+            if (! config('pickup.allow_incomplete_customer') && blank($customer->contact)) {
                 throw ValidationException::withMessages(['customer_id' => 'Lengkapi kontak customer sebelum membuat pickup.']);
             }
             if ($previousId) {

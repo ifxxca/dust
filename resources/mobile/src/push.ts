@@ -98,6 +98,7 @@ export async function listenPush(
 ): Promise<() => Promise<void>> {
     if (!Capacitor.isNativePlatform()) return async () => {};
     const handles: PluginListenerHandle[] = [];
+    const seen = new Set<string>();
     handles.push(
         await PushNotifications.addListener(
             'pushNotificationActionPerformed',
@@ -172,6 +173,11 @@ export async function listenPush(
                     session.user.id === link.recipientId &&
                     Date.parse(session.expiresAt) > Date.now()
                 ) {
+                    const incident = `${link.recipientId}:${link.batchId ? 'cashless' : 'pickup'}:${link.eventId}`;
+                    if (seen.has(incident)) return;
+                    seen.add(incident);
+                    if (seen.size > 500)
+                        seen.delete(seen.values().next().value!);
                     received?.(link);
                     notice(
                         link.batchId
@@ -204,9 +210,21 @@ export async function registerPush(
     if (!shouldContinue()) return null;
     await PushNotifications.createChannel({
         id: 'pickup_assignments',
-        name: 'Assignment Pickup',
+        name: 'Penugasan Pickup',
         importance: 4,
         visibility: 0,
+        vibration: true,
+        sound: 'retail_notification.wav',
+    });
+    if (!shouldContinue()) return null;
+    await PushNotifications.createChannel({
+        id: 'cashless_processing',
+        name: 'Pemrosesan Cashless',
+        description: 'Hasil pemrosesan cashless yang perlu diperiksa.',
+        importance: 4,
+        visibility: 0,
+        vibration: true,
+        sound: 'retail_notification.wav',
     });
     if (shouldContinue()) await PushNotifications.register();
     return null;

@@ -29,11 +29,12 @@ class RecordCashlessHandover
         $data = Validator::make($data, self::rules())->validate();
         /** @var list<string> $rawAwbs */
         $rawAwbs = array_values($data['awbs']);
-        $awbs = array_map(fn (string $awb): string => mb_strtoupper(trim($awb)), $rawAwbs);
+        $awbs = array_map(ValidateAwbSignature::normalize(...), $rawAwbs);
         Validator::make(['awbs' => $awbs], [
-            'awbs.*' => ['required', 'string', 'regex:/^[A-Z0-9_-]{1,100}$/D', 'distinct:strict', 'not_regex:/^(0101|0166)[0-9]+$/D'],
+            'awbs.*' => ['required', 'string', 'min:6', 'regex:/^[A-Z0-9_$-]{1,100}$/D', 'distinct:strict', 'not_regex:/^(0101|0166)[0-9]+$/D'],
         ], ['awbs.*.distinct' => 'Ada resi yang sama dalam daftar. Hapus duplikat sebelum menyimpan.',
             'awbs.*.regex' => 'Nomor resi hanya boleh berisi huruf, angka, tanda hubung atau garis bawah.',
+            'awbs.*.min' => 'Nomor resi minimal 6 karakter. Kode barang/SKU pendek tidak dapat digunakan.',
             'awbs.*.not_regex' => 'Resi berawalan 0101 atau 0166 termasuk Manual, bukan Cashless.'])->validate();
 
         try {
@@ -57,6 +58,10 @@ class RecordCashlessHandover
                     return count($awbs);
                 }
                 Gate::forUser($actor)->authorize('handoverCashlessAwb', $task);
+                $signatureMatches = [];
+                foreach ($awbs as $index => $awb) {
+                    $signatureMatches[$awb] = app(ValidateAwbSignature::class)->handle($awb, 'awbs.'.$index);
+                }
                 $claimed = PickupCashlessAwb::whereIn('awb', $awbs)->orderBy('awb')->lockForUpdate()->first();
                 if ($claimed !== null) {
                     throw ValidationException::withMessages(['awbs' => 'Resi '.$claimed->awb.' sudah tersimpan pada buku pickup'.($claimed->pickup_task_id === $taskId ? ' ini.' : ' lain.').' Hapus dari daftar sebelum menyimpan.']);
@@ -89,7 +94,7 @@ class RecordCashlessHandover
                         'submission_key' => $index === 0 ? $data['submission_key'] : Uuid::uuid5($data['submission_key'], 'cashless-handover:'.$index)->toString(),
                         'payload_hash' => $hash, 'revision' => 1, 'previous_awb' => null, 'awb' => $awb,
                         'previous_raw_awb' => null, 'raw_awb' => $rawAwbs[$index], 'reason' => null, 'created_at' => $now,
-                        'affected_results' => json_encode(['batch_submission_key' => $data['submission_key'],
+                        'affected_results' => json_encode(['batch_submission_key' => $data['submission_key'], 'signature_matches' => $signatureMatches[$awb],
                             'before' => ['shipments' => $before->has($awb) ? [$before->get($awb)->only(['id', 'awb', 'customer_id', 'pickup_task_id', 'customer_match_status', 'match_status', 'version'])] : [], 'reconciliation' => $beforeReconciliation],
                             'after' => ['shipments' => $after->has($awb) ? [$after->get($awb)->only(['id', 'awb', 'customer_id', 'pickup_task_id', 'customer_match_status', 'match_status', 'version'])] : [], 'reconciliation' => $afterReconciliation],
                         ], JSON_THROW_ON_ERROR)];

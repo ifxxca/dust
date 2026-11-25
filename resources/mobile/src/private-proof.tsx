@@ -5,6 +5,7 @@ import { request } from './api';
 import { receiptLabel } from './proof-draft';
 import type { Session, Proof } from './types';
 import { OperationalFeedback } from './feedback';
+import { ReceiptRecipientStatus } from '@/components/receipt-recipient-status';
 export default function PrivateProof({
     proof,
     session,
@@ -44,6 +45,9 @@ export default function PrivateProof({
                 tone={
                     proof.receipt?.status === 'DELIVERED' ? 'success' : 'info'
                 }
+            />
+            <ReceiptRecipientStatus
+                recipients={proof.receipt?.recipient_statuses}
             />
             {proof.receipt?.proof_revision !== undefined && (
                 <p>

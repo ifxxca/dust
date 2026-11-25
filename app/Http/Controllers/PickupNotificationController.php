@@ -19,7 +19,7 @@ class PickupNotificationController extends Controller
     {
         abort_unless($request->user()?->is_active && ($request->user()->canManagePickup() || $request->user()->canExecutePickup()), 403);
         $request->validate(['page' => ['sometimes', 'integer', 'min:1'], 'unread_only' => ['sometimes', 'boolean']]);
-        $query = $this->events($request->user(), $request->routeIs('mobile.*'));
+        $query = $this->events($request->user(), $request->routeIs('mobile.*', 'retail.*'));
         $unreadCount = (clone $query)->whereNull('read_at')->count();
         if ($request->boolean('unread_only')) {
             $query->whereNull('read_at');
@@ -42,6 +42,7 @@ class PickupNotificationController extends Controller
                 'occurred_at' => CarbonImmutable::parse($event->occurred_at, 'UTC')->toIso8601String(),
                 'read' => $event->read_at !== null,
                 ...($event->batch_id === null ? [] : ['batch_id' => (int) $event->batch_id,
+                    'exception_count' => (int) $event->exception_count,
                     'message' => $event->message ?? 'Ada resi yang belum berhasil diproses. Periksa hasil per resi pada batch.']),
             ]),
             'meta' => [
@@ -55,7 +56,7 @@ class PickupNotificationController extends Controller
     public function update(Request $request): JsonResponse
     {
         abort_unless($request->user()?->is_active && ($request->user()->canManagePickup() || $request->user()->canExecutePickup()), 403);
-        abort_if($request->filled('event_ids') && (! $request->user()->canManagePickup() || $request->routeIs('mobile.*')), 403);
+        abort_if($request->filled('event_ids') && (! $request->user()->canManagePickup() || $request->routeIs('mobile.*', 'retail.*')), 403);
         $data = $request->validate([
             'event_ids' => ['required_without:cashless_alert_ids', 'array', 'min:1', 'max:20'],
             'event_ids.*' => ['required', 'integer', 'distinct', Rule::exists('pickup_task_events', 'id')->whereIn('action', self::ACTIONS)],
@@ -86,7 +87,7 @@ class PickupNotificationController extends Controller
             ->whereRaw($user->canManagePickup() && ! $mobile ? '1 = 1' : '1 = 0')
             ->select(['events.id', 'events.action', 'events.occurred_at', 'tasks.id as task_id', 'tasks.reference',
                 'tasks.customer_name_snapshot', 'actors.name as staff_name', 'reads.read_at'])
-            ->selectRaw('NULL as batch_id, NULL as batch_status, NULL as message');
+            ->selectRaw('NULL as batch_id, NULL as batch_status, NULL as message, NULL as exception_count');
         $cashless = DB::table('cashless_entry_alerts as alerts')
             ->join('cashless_entry_batches as batches', 'batches.id', '=', 'alerts.batch_id')
             ->join('pickup_tasks as tasks', 'tasks.id', '=', 'batches.pickup_task_id')
@@ -95,7 +96,8 @@ class PickupNotificationController extends Controller
             ->select(['alerts.id'])->selectRaw("'cashless_entry_attention' as action")
             ->addSelect(['alerts.created_at as occurred_at', 'tasks.id as task_id', 'tasks.reference',
                 'tasks.customer_name_snapshot', 'actors.name as staff_name', 'alerts.read_at', 'batches.id as batch_id',
-                'batches.status as batch_status', 'batches.error_message as message']);
+                'batches.status as batch_status', 'batches.error_message as message'])
+            ->selectSub(DB::table('cashless_entry_items')->whereColumn('batch_id', 'batches.id')->where('status', '!=', 'ACCEPTED')->selectRaw('COUNT(*)'), 'exception_count');
 
         return DB::query()->fromSub($events->unionAll($cashless), 'notifications');
     }

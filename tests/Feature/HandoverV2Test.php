@@ -67,9 +67,9 @@ test('verification preserves POP and audits exact lower excess zero and category
     'offset' => [['manual_hybrid' => 4, 'cashless_hybrid' => 1, 'css_orion' => 1], ['manual_hybrid' => 1, 'cashless_hybrid' => -1, 'css_orion' => 0], 'DISCREPANCY'],
 ]);
 
-test('pickup creators and CS cannot verify or close even with a handover token', function (string $platform, string $role) {
-    $actor = User::factory()->create(['role' => $role]);
-    $creator = $role === 'pickup_staff' ? $actor : User::factory()->create(['role' => 'pickup_staff']);
+test('inactive operators and CS cannot verify or close even with a handover token', function (string $platform, string $role, bool $active) {
+    $actor = User::factory()->create(['role' => $role, 'is_active' => $active]);
+    $creator = User::factory()->create(['role' => 'pickup_staff']);
     $session = handoverV2Session($creator);
     $item = $session->items()->sole();
     if ($platform === 'mobile') {
@@ -82,7 +82,7 @@ test('pickup creators and CS cannot verify or close even with a handover token',
     expect($session->fresh()->version)->toBe(1);
     expect($item->fresh()->status)->toBe('PENDING');
     $this->assertDatabaseCount('handover_events', 1);
-})->with(['api', 'mobile'])->with(['pickup_staff', 'cs']);
+})->with(['api', 'mobile'])->with([['pickup_staff', false], ['retail_staff', false], ['cs', true]]);
 
 test('stale POP revision and concurrent receiving updates cannot overwrite verification', function () {
     $creator = User::factory()->create(['role' => 'pickup_staff']);

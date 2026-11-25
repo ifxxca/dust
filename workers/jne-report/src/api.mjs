@@ -9,7 +9,8 @@ export class WorkerApi {
     }
 
     async request(endpoint, makeBody, claimToken = '') {
-        for (let attempt = 0; attempt < 3; attempt++) {
+        const attempts = this.automaticRetry ? 1 : 3;
+        for (let attempt = 0; attempt < attempts; attempt++) {
             try {
                 const body = await makeBody();
                 const headers = {
@@ -17,12 +18,15 @@ export class WorkerApi {
                     'X-Worker-ID': this.config.workerId,
                     Accept: 'application/json',
                 };
-                if (claimToken) headers[this.config.claimHeader || 'X-Report-Claim'] = claimToken;
+                if (claimToken)
+                    headers[this.config.claimHeader || 'X-Report-Claim'] =
+                        claimToken;
                 if (!(body instanceof FormData))
                     headers['Content-Type'] = 'application/json';
                 const response = await fetch(
                     this.config.apiUrl +
-                        (this.config.apiBasePath || '/api/internal/report-jobs/') +
+                        (this.config.apiBasePath ||
+                            '/api/internal/report-jobs/') +
                         endpoint,
                     {
                         method: 'POST',
@@ -36,16 +40,34 @@ export class WorkerApi {
                     },
                 );
                 if (response.status === 204) return null;
-                if (response.status >= 500 || response.status === 429)
-                    throw new ReportError(
+                if (response.status >= 500 || response.status === 429) {
+                    const error = new ReportError(
                         'API_TRANSIENT',
                         'Laravel belum dapat menerima pembaruan worker.',
                     );
-                if (!response.ok)
-                    throw new ReportError(
+                    error.httpStatus = response.status;
+                    error.retryAfter = response.headers.get('retry-after');
+                    throw error;
+                }
+                if (!response.ok) {
+                    const rejected = await response.json().catch(() => null);
+                    const fields = Object.keys(rejected?.errors || {})
+                        .filter(
+                            (field) =>
+                                field.length <= 100 &&
+                                /^[a-z_]+(?:\.(?:[a-z_]+|[0-9]+))*$/.test(
+                                    field,
+                                ),
+                        )
+                        .slice(0, 8);
+                    const error = new ReportError(
                         'API_REJECTED',
-                        'Laravel menolak identitas, kepemilikan, status, atau file worker. Periksa konfigurasi dan job.',
+                        `Laravel menolak pembaruan worker (HTTP ${response.status}${fields.length ? `; kolom: ${fields.join(', ')}` : ''}). Periksa konfigurasi dan status batch.`,
                     );
+                    error.httpStatus = response.status;
+                    error.validationFields = fields;
+                    throw error;
+                }
                 return (await response.json()).data;
             } catch (error) {
                 if (
@@ -53,18 +75,37 @@ export class WorkerApi {
                     error.code === 'API_REJECTED'
                 )
                     throw error;
-                if (attempt === 2)
-                    throw new ReportError(
+                if (attempt === attempts - 1) {
+                    const unavailable = new ReportError(
                         'API_UNAVAILABLE',
                         'Komunikasi dengan Laravel gagal setelah percobaan terbatas.',
                     );
+                    unavailable.httpStatus = error.httpStatus;
+                    unavailable.retryAfter = error.retryAfter;
+                    throw unavailable;
+                }
                 await sleep(500 * (attempt + 1));
             }
         }
     }
 
-    claim(key) {
-        return this.request('claim', () => ({ claim_key: key }));
+    async claim(key) {
+        const job = await this.request('claim', () => ({
+            claim_key: key,
+            ...(!this.config.apiBasePath ||
+            this.config.apiBasePath.includes('report-jobs')
+                ? { retry_protocol: 1 }
+                : {}),
+        }));
+        this.automaticRetry = Boolean(job?.automatic_retry);
+        return job;
+    }
+    checkpoint(job, evidence) {
+        return this.request(
+            job.id + '/retry-checkpoint',
+            () => evidence,
+            job.claim_token,
+        );
     }
     beginBatch(job, number) {
         const key = randomUUID();
@@ -90,18 +131,36 @@ export class WorkerApi {
             () => ({
                 status: error.status,
                 error_message: error.code + ': ' + error.message,
+                ...(job.automatic_retry
+                    ? {
+                          http_status: error.httpStatus ?? null,
+                          retry_after: error.retryAfter ?? null,
+                          ...(error.errorStage
+                              ? {
+                                    error_stage: error.errorStage,
+                                    root_cause: error.rootCause,
+                                }
+                              : {}),
+                      }
+                    : {}),
             }),
             job.claim_token,
         );
     }
-    uploadSource(job, filePath) {
-        return this.upload(job, filePath, 'source-upload');
+    uploadSource(job, filePath, collectionEvidence) {
+        return this.upload(job, filePath, 'source-upload', collectionEvidence);
     }
-    upload(job, filePath, endpoint = 'upload') {
+    upload(job, filePath, endpoint = 'upload', collectionEvidence) {
         return this.request(
             job.id + '/' + endpoint,
             async () => {
                 const form = new FormData();
+                if (collectionEvidence) {
+                    form.set(
+                        'collection_evidence',
+                        JSON.stringify(collectionEvidence),
+                    );
+                }
                 form.set(
                     'file',
                     await openAsBlob(filePath, { type: 'text/csv' }),

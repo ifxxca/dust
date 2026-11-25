@@ -1,3 +1,6 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { NativeSelect } from '@/components/ui/native-select';
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { focusFormError } from '@/lib/utils';
 import { collectionLabels } from '@/lib/jne-monitoring';
@@ -79,12 +82,12 @@ export default function JneCollectionWindow({
                 {collectionLabels[window.status] ?? window.status}
             </p>
             {window.reason && (
-                <details className="text-sm text-muted-foreground">
-                    <summary className="cursor-pointer">
+                <Disclosure>
+                    <DisclosureSummary className="cursor-pointer">
                         Alasan terakhir
-                    </summary>
+                    </DisclosureSummary>
                     <p className="mt-2">{window.reason}</p>
-                </details>
+                </Disclosure>
             )}
             {!enabled && (
                 <p role="status">Pengesahan nonaktif di lingkungan ini.</p>
@@ -140,7 +143,8 @@ export default function JneCollectionWindow({
                 }}
             >
                 <Label htmlFor="collection-status">Keputusan</Label>
-                <select
+                <NativeSelect
+                    wrapperClassName="w-full"
                     id="collection-status"
                     aria-invalid={!!form.errors.status}
                     aria-describedby={
@@ -148,7 +152,7 @@ export default function JneCollectionWindow({
                             ? 'collection-status-error'
                             : undefined
                     }
-                    className="block w-full rounded border bg-background p-2"
+                    className="block rounded border bg-background p-2"
                     value={form.data.status}
                     onChange={(event) =>
                         form.setData('status', event.target.value)
@@ -158,7 +162,7 @@ export default function JneCollectionWindow({
                     <option value="OPEN">
                         Buka kembali pengesahan eksternal
                     </option>
-                </select>
+                </NativeSelect>
                 <InputError
                     id="collection-status-error"
                     message={form.errors.status}
@@ -178,7 +182,8 @@ export default function JneCollectionWindow({
                         <Label htmlFor="collection-contract">
                             Kontrak sumber terverifikasi
                         </Label>
-                        <select
+                        <NativeSelect
+                            wrapperClassName="w-full"
                             id="collection-contract"
                             aria-invalid={!!form.errors.contract_id}
                             aria-describedby={
@@ -186,7 +191,7 @@ export default function JneCollectionWindow({
                                     ? 'collection-contract-error'
                                     : undefined
                             }
-                            className="block w-full rounded border bg-background p-2"
+                            className="block rounded border bg-background p-2"
                             value={form.data.contract_id}
                             onChange={(event) =>
                                 form.setData('contract_id', event.target.value)
@@ -199,13 +204,15 @@ export default function JneCollectionWindow({
                                     {contract.report_type} r{contract.revision}
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                         <InputError
                             id="collection-contract-error"
                             message={form.errors.contract_id}
                         />
-                        <details>
-                            <summary>Persyaratan kontrak</summary>
+                        <Disclosure>
+                            <DisclosureSummary>
+                                Persyaratan kontrak
+                            </DisclosureSummary>
                             <pre className="overflow-auto text-xs">
                                 {JSON.stringify(
                                     contracts.find(
@@ -217,7 +224,7 @@ export default function JneCollectionWindow({
                                     2,
                                 )}
                             </pre>
-                        </details>
+                        </Disclosure>
                         <fieldset
                             className="flex min-w-0 flex-col gap-2"
                             tabIndex={-1}
@@ -260,8 +267,7 @@ export default function JneCollectionWindow({
                                         key={report.id}
                                         className="flex gap-2 rounded border p-3"
                                     >
-                                        <input
-                                            type="checkbox"
+                                        <NativeCheckbox
                                             checked={form.data.report_job_ids.includes(
                                                 report.id,
                                             )}
@@ -370,8 +376,7 @@ export default function JneCollectionWindow({
                 {complete && contracts.length > 0 && (
                     <>
                         <Label className="flex items-start gap-2">
-                            <input
-                                type="checkbox"
+                            <NativeCheckbox
                                 aria-invalid={!!form.errors.confirmed_scope}
                                 aria-describedby={
                                     form.errors.confirmed_scope
@@ -432,23 +437,23 @@ export default function JneCollectionWindow({
                     Simpan pengesahan
                 </Button>
             </form>
-            <details className="rounded-lg border p-3 text-sm">
-                <summary className="cursor-pointer font-medium">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Riwayat pengesahan
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex flex-col gap-2">
                     {events?.data.map((event) => (
-                        <details key={event.id} className="rounded border p-3">
-                            <summary>
+                        <Disclosure key={event.id}>
+                            <DisclosureSummary>
                                 {event.created_at} · {event.actor_name} ·{' '}
                                 {event.reason}
-                            </summary>
+                            </DisclosureSummary>
                             <pre className="overflow-auto text-xs">
                                 {event.before}
                                 {'\n'}
                                 {event.after}
                             </pre>
-                        </details>
+                        </Disclosure>
                     ))}
                     <nav className="flex gap-4">
                         {events?.prev_page_url && (
@@ -463,7 +468,7 @@ export default function JneCollectionWindow({
                         )}
                     </nav>
                 </div>
-            </details>
+            </Disclosure>
         </PageContainer>
     );
 }

@@ -1,4 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { Textarea } from '@/components/ui/textarea';
+import {
+    lazy,
+    Suspense,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from 'react';
+import type { CustomerSearchResult } from '@/components/customer-picker';
 import { OperationalFeedback } from './feedback';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +31,7 @@ type Payload = {
 };
 type Pending = { schema: 1; body: Payload; state: 'SENDING' | 'UNCERTAIN' };
 const journal = 'manual-pickup';
+const CustomerPicker = lazy(() => import('@/components/customer-picker'));
 
 export function validateManualPending(value: unknown): Pending | null {
     if (value === null) return null;
@@ -88,10 +98,6 @@ export default function ManualPickup({
             ? { ...source.customer, pickup_address: source.pickup_address }
             : null,
     );
-    const [rows, setRows] = useState<Customer[]>([]);
-    const [query, setQuery] = useState('');
-    const [page, setPage] = useState(1),
-        [last, setLast] = useState(1);
     const [address, setAddress] = useState(source?.pickup_address || '');
     const [scheduled, setScheduled] = useState(''),
         [notes, setNotes] = useState('');
@@ -99,11 +105,14 @@ export default function ManualPickup({
     const [ready, setReady] = useState(false),
         [busy, setBusy] = useState(false);
     const [readAttempt, setReadAttempt] = useState(0);
-    const [message, setMessage] = useState(''),
-        [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
     const [retryAllowed, setRetryAllowed] = useState(false);
     const lock = useRef(false);
+    const failureHandler = useRef(onFailure);
     const controller = useRef(new AbortController());
+    useEffect(() => {
+        failureHandler.current = onFailure;
+    }, [onFailure]);
     useEffect(() => {
         const abort = new AbortController();
         controller.current = abort;
@@ -127,36 +136,27 @@ export default function ManualPickup({
             onBusyChange(false);
         };
     }, [session.token, readAttempt]);
-    useEffect(() => {
-        if (pending || source || !ready || !online) return;
-        const abort = new AbortController();
-        setLoading(true);
-        void request<{ data: Customer[]; meta: { last_page: number } }>(
-            customers({ query: { q: query, page } }),
-            session,
-            abort.signal,
-        )
-            .then((result) => {
-                if (!abort.signal.aborted) {
-                    setRows(result.data);
-                    setLast(result.meta.last_page);
+    const loadCustomers = useCallback(
+        async (query: string, page: number, signal: AbortSignal) => {
+            try {
+                return await request<CustomerSearchResult>(
+                    customers({ query: { q: query, page, active_only: true } }),
+                    session,
+                    signal,
+                );
+            } catch (error) {
+                if (
+                    !signal.aborted &&
+                    error instanceof ApiError &&
+                    [401, 403, 419].includes(error.status)
+                ) {
+                    await failureHandler.current(error);
                 }
-            })
-            .catch((error) => {
-                if (!abort.signal.aborted) {
-                    setMessage('Customer gagal dimuat; periksa koneksi.');
-                    if (
-                        error instanceof ApiError &&
-                        [401, 403].includes(error.status)
-                    )
-                        void onFailure(error);
-                }
-            })
-            .finally(() => {
-                if (!abort.signal.aborted) setLoading(false);
-            });
-        return () => abort.abort();
-    }, [query, page, ready, online, pending, source, session.token]);
+                throw error;
+            }
+        },
+        [session],
+    );
     function setWorking(value: boolean) {
         lock.current = value;
         setBusy(value);
@@ -266,7 +266,7 @@ export default function ManualPickup({
                     );
                 if (
                     error instanceof ApiError &&
-                    [401, 403].includes(error.status)
+                    [401, 403, 419].includes(error.status)
                 )
                     await onFailure(error);
             } else
@@ -289,12 +289,13 @@ export default function ManualPickup({
     }, [onClose]);
     return (
         <section aria-label="Buat Pickup Manual" className="space-y-4">
-            <h2 className="text-lg font-semibold">
-                {source ? 'Buat Kunjungan Baru' : 'Buat Pickup Manual'}
-            </h2>
+            {source && (
+                <h2 className="text-lg font-semibold">Buat Kunjungan Baru</h2>
+            )}
             <p className="text-sm text-muted-foreground">
-                Customer existing · ditugaskan kepada Anda · online saja.
-                Duplikasi customer pada menit jadwal yang sama ditolak.
+                {session.user.role === 'pickup_staff'
+                    ? 'Pickup ditugaskan kepada Anda.'
+                    : 'Pickup akan menunggu penugasan petugas.'}
             </p>
             {source && (
                 <p className="text-sm">
@@ -393,84 +394,50 @@ export default function ManualPickup({
                     }}
                 >
                     <fieldset className="space-y-4" disabled={!ready || busy}>
-                        {!source && !customer && (
-                            <div className="space-y-2">
-                                <Label htmlFor="manual-customer-search">
-                                    Cari Customer
-                                </Label>
-                                <Input
-                                    id="manual-customer-search"
-                                    value={query}
-                                    onChange={(event) => {
-                                        setQuery(event.target.value);
-                                        setPage(1);
-                                    }}
-                                />
-                                {loading && <p>Memuat customer…</p>}
-                                {rows.map((row) => (
-                                    <Button
-                                        key={row.id}
-                                        data-manual-customer={row.id}
-                                        type="button"
-                                        variant="outline"
-                                        className="w-full justify-start"
-                                        onClick={() => {
-                                            setCustomer(row);
-                                            setAddress(row.pickup_address);
-                                        }}
-                                    >
-                                        {row.name}
-                                    </Button>
-                                ))}
-                                {!loading && online && rows.length === 0 && (
-                                    <p className="text-sm">
-                                        Customer tidak ditemukan.
-                                    </p>
-                                )}
-                                <div className="flex justify-between gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={page === 1 || loading}
-                                        onClick={() => setPage(page - 1)}
-                                    >
-                                        Sebelumnya
-                                    </Button>
-                                    <span>
-                                        {page} / {last}
-                                    </span>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={page >= last || loading}
-                                        onClick={() => setPage(page + 1)}
-                                    >
-                                        Berikutnya
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                        {customer && (
-                            <div className="space-y-2">
+                        <div className="flex flex-col gap-2">
+                            <Label
+                                htmlFor={
+                                    !source ? 'manual-customer' : undefined
+                                }
+                            >
+                                Customer
+                            </Label>
+                            {source ? (
                                 <p className="font-semibold">
-                                    Customer: {customer.name}
+                                    {customer?.name}
                                 </p>
-                                {!source && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setCustomer(null)}
-                                    >
-                                        Ganti Customer
-                                    </Button>
-                                )}
-                            </div>
-                        )}
+                            ) : (
+                                <Suspense
+                                    fallback={
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            disabled
+                                        >
+                                            Memuat pemilih customer…
+                                        </Button>
+                                    }
+                                >
+                                    <CustomerPicker
+                                        triggerId="manual-customer"
+                                        selected={customer}
+                                        disabled={!online || !ready || busy}
+                                        minSearchLength={2}
+                                        loadCustomers={loadCustomers}
+                                        onSelect={(selected) => {
+                                            if (!selected) return;
+                                            setCustomer(selected);
+                                            setAddress(selected.pickup_address);
+                                        }}
+                                    />
+                                </Suspense>
+                            )}
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="manual-address">
                                 Alamat Pickup
                             </Label>
-                            <textarea
+                            <Textarea
                                 id="manual-address"
                                 className="min-h-24 w-full rounded-md border p-3"
                                 maxLength={2000}
@@ -499,7 +466,7 @@ export default function ManualPickup({
                             <Label htmlFor="manual-notes">
                                 Alasan / Catatan (wajib)
                             </Label>
-                            <textarea
+                            <Textarea
                                 id="manual-notes"
                                 className="min-h-20 w-full rounded-md border p-3"
                                 maxLength={2000}

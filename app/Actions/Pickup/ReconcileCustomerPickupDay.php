@@ -14,10 +14,13 @@ use App\Models\PickupProcessingReconciliation;
 use App\Models\PickupProcessingRecord;
 use App\Models\PickupTask;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ReconcileCustomerPickupDay
 {
+    private const POST_LOCK_DOCUMENT_ERROR = 'Bukti setelah penguncian bertentangan dengan snapshot. Periksa selisih sebelum melanjutkan.';
+
     public function __construct(private QueryPickupResults $pickups, private PickupAwbEligibility $eligibility, private BuildPickupAwbManifest $manifests) {}
 
     /** @return list<int> */
@@ -42,7 +45,7 @@ class ReconcileCustomerPickupDay
             }
             $group = PickupCustomerReconciliation::firstOrCreate(['customer_id' => $customer->id, 'business_date' => $date], ['anchor_task_id' => min($ids)]);
             $group = PickupCustomerReconciliation::whereKey($group->id)->lockForUpdate()->firstOrFail();
-            if ($group->status === 'DONE' && $group->locked_at !== null) {
+            if ($group->approval_snapshot !== null && $group->locked_at !== null) {
                 PickupProcessingReconciliation::whereIn('pickup_task_id', $group->evidence['pickup_task_ids'] ?? [])
                     ->where('review_open', false)->whereNull('locked_at')->update(['locked_at' => $group->locked_at]);
             }
@@ -145,9 +148,14 @@ class ReconcileCustomerPickupDay
                 }
             }
             $status = $reasons !== [] ? 'REVIEW' : (! $baseline ? 'AWAITING_VERIFICATION' : ($same ? 'DONE' : ($confirmed->isNotEmpty() ? 'PARTIAL' : 'WAITING_DATA')));
+            $explained = ($group->approval_snapshot['mode'] ?? null) === 'EXCEPTION'
+                && QueryReconciliationWorkspace::materialFingerprint($counts, $ids, $scope->map->only(QueryReconciliationWorkspace::MATERIAL_FIELDS)->all()) === ($group->approval_snapshot['material_fingerprint'] ?? null);
+            if ($explained) {
+                $status = 'DONE';
+            }
             $snapshot = ['status' => $status, 'categories' => $counts, 'reasons' => array_values(array_unique($reasons)), 'evidence' => [
                 'unit' => 'AWB', 'pickup_task_ids' => $ids, 'business_date' => $date,
-                'shipments' => $scope->map(fn (JneShipment $row): array => $row->only(['id', 'awb', 'pickup_task_id', 'customer_id', 'category', 'match_status', 'category_status', 'customer_match_status']))->all(),
+                'shipments' => $scope->map(fn (JneShipment $row): array => $row->only(['id', 'awb', 'pickup_task_id', 'customer_id', 'category', 'match_status', 'category_status', 'customer_match_status', 'tracking_status']))->all(),
                 'input_versions' => $results->pluck('input_version', 'pickup_task_id')->all(),
             ]];
             $hash = hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR));
@@ -156,12 +164,27 @@ class ReconcileCustomerPickupDay
                 DB::table('pickup_customer_reconciliation_events')->insert(['customer_reconciliation_id' => $group->id, 'revision' => $group->revision, 'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR), 'created_at' => now()]);
             }
             $group->fill(['anchor_task_id' => min($ids), 'pickup_count' => count($ids), 'evaluated_at' => now()]);
-            if ($status === 'DONE') {
-                $group->locked_at ??= now();
+            if ($group->approval_snapshot === null && $status !== 'DONE') {
+                $group->locked_at = null;
+                PickupProcessingReconciliation::whereIn('pickup_task_id', $ids)->update(['locked_at' => null]);
             }
             $group->save();
+            $this->recordPostLockChange($group, $results);
             PickupProcessingReconciliation::whereIn('pickup_task_id', $ids)->update(['customer_reconciliation_id' => $group->id]);
-            if ($status === 'DONE') {
+            if ($explained) {
+                PickupProcessingReconciliation::whereIn('pickup_task_id', $ids)->update(['status' => 'DONE']);
+            }
+            if ($status === 'DONE' && $group->approval_snapshot === null && config('pickup.automation.auto_lock', true)) {
+                app(ManageReconciliationWorkspace::class)->lock(null, $origin, ['action' => 'LOCK', 'expected_revision' => $group->revision], automatic: true);
+                $group->refresh();
+            }
+            if ($group->approval_snapshot !== null && $group->post_lock_change !== null) {
+                return $group;
+            }
+            if ($group->approval_snapshot !== null && $status !== 'DONE') {
+                return $group;
+            }
+            if ($status === 'DONE' && ($group->approval_snapshot !== null || ! config('pickup.automation.auto_lock', true))) {
                 PickupProcessingReconciliation::whereIn('pickup_task_id', $ids)->whereNull('locked_at')->update(['locked_at' => now()]);
                 $manifest = $this->manifests->handle($tasks->get($group->anchor_task_id), $counts, $confirmed, $group);
                 if ($manifest->status === 'PENDING') {
@@ -175,5 +198,42 @@ class ReconcileCustomerPickupDay
 
             return $group;
         }, 3);
+    }
+
+    /** @param Collection<int, PickupProcessingReconciliation> $results */
+    private function recordPostLockChange(PickupCustomerReconciliation $group, Collection $results): void
+    {
+        $approval = $group->approval_snapshot;
+        if ($approval === null) {
+            return;
+        }
+        $fingerprint = QueryReconciliationWorkspace::materialFingerprint($group->categories ?? [], $group->evidence['pickup_task_ids'] ?? [], $group->evidence['shipments'] ?? []);
+        $approvedFingerprint = $approval['material_fingerprint'] ?? QueryReconciliationWorkspace::materialFingerprint($approval['categories'], array_column($approval['members'], 'id'), $approval['included_awbs']);
+        $complete = $results->every(fn ($result): bool => (bool) ($result->evidence['coverage']['complete'] ?? false));
+        if ($fingerprint === $approvedFingerprint) {
+            if ($group->post_lock_change !== null && $group->status === 'DONE') {
+                $resolution = ['event' => 'POST_LOCK_RESOLVED', 'approved_version' => $approval['version'], 'reason' => 'Atribusi resi, baseline POP/gudang dan jumlah per kategori kembali sesuai snapshot.'];
+                $group->fill(['post_lock_change' => null, 'revision' => $group->revision + 1])->save();
+                DB::table('pickup_customer_reconciliation_events')->insert(['customer_reconciliation_id' => $group->id, 'revision' => $group->revision, 'snapshot' => json_encode($resolution, JSON_THROW_ON_ERROR), 'created_at' => now()]);
+                foreach (PickupAwbManifest::where('customer_reconciliation_id', $group->id)->where('status', 'REVIEW')->where('last_error', self::POST_LOCK_DOCUMENT_ERROR)->get() as $manifest) {
+                    $manifest->update(['status' => $manifest->xlsx_path && $manifest->pdf_path ? 'READY' : 'PENDING', 'last_error' => null]);
+                }
+            }
+
+            return;
+        }
+        $hash = $fingerprint;
+        if (($group->post_lock_change['hash'] ?? null) === $hash) {
+            return;
+        }
+        $before = array_column($approval['included_awbs'] ?? [], 'id');
+        $after = array_column($group->evidence['shipments'] ?? [], 'id');
+        $change = ['event' => 'POST_LOCK', 'hash' => $hash, 'detected_at' => now()->toIso8601String(), 'approved_version' => $approval['version'],
+            'added_count' => count(array_diff($after, $before)), 'removed_count' => count(array_diff($before, $after)), 'current_categories' => $group->categories, 'coverage_complete' => $complete];
+        $group->fill(['post_lock_change' => $change, 'revision' => $group->revision + 1])->save();
+        $manifestIds = PickupAwbManifest::where('customer_reconciliation_id', $group->id)->whereIn('status', ['PENDING', 'RENDERING', 'READY'])->pluck('id');
+        PickupAwbManifest::whereIn('id', $manifestIds)->update(['status' => 'REVIEW', 'last_error' => self::POST_LOCK_DOCUMENT_ERROR]);
+        PickupAwbDelivery::whereIn('pickup_awb_manifest_id', $manifestIds)->whereIn('status', ['READY', 'AWAITING_CONFIGURATION'])->update(['status' => 'CANCELLED']);
+        DB::table('pickup_customer_reconciliation_events')->insert(['customer_reconciliation_id' => $group->id, 'revision' => $group->revision, 'snapshot' => json_encode($change, JSON_THROW_ON_ERROR), 'created_at' => now()]);
     }
 }

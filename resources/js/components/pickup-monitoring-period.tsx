@@ -1,3 +1,4 @@
+import { NativeSelect } from '@/components/ui/native-select';
 import { Link, router } from '@inertiajs/react';
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -148,9 +149,10 @@ export function MonitoringPeriodControls({
                     <Label htmlFor="monitoring-basis">
                         Acuan tanggal daftar & ekspor
                     </Label>
-                    <select
+                    <NativeSelect
+                        wrapperClassName="w-full"
                         id="monitoring-basis"
-                        className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                        className="h-9 rounded-md border bg-background px-2 text-sm"
                         value={values.date_basis}
                         onChange={(event) => {
                             const value = event.target.value;
@@ -165,7 +167,7 @@ export function MonitoringPeriodControls({
                                 {label}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                 </div>
             </div>
             <p className="text-xs text-muted-foreground">

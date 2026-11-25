@@ -1,3 +1,5 @@
+import { observeOperation } from './operations-telemetry.mjs';
+
 export class ReportError extends Error {
     constructor(code, message, status = 'NEEDS_ATTENTION') {
         super(message);
@@ -7,6 +9,7 @@ export class ReportError extends Error {
 }
 
 export function log(event, fields = {}) {
+    observeOperation(event, fields);
     process.stdout.write(
         JSON.stringify({ time: new Date().toISOString(), event, ...fields }) +
             '\n',

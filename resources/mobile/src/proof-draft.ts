@@ -1,5 +1,6 @@
 import type { LocalEvidence } from './local-store';
 import type { Task } from './types';
+import { readableScanCounts } from './cashless-handover';
 export type ProofDraft = {
     schema: 1;
     id: string;
@@ -17,6 +18,7 @@ export type ProofDraft = {
     };
     notes: string;
     cashlessAwbs?: string[];
+    scanCounts?: { total: number; duplicate: number; invalid: number };
     photos: LocalEvidence[];
     signature: LocalEvidence | null;
     updatedAt: string;
@@ -82,13 +84,14 @@ export function readableProofDraft(value: unknown): value is ProofDraft {
                 ] === 'string',
         ) &&
         Array.isArray(draft.photos) &&
+        readableScanCounts(draft.scanCounts) &&
         (draft.cashlessAwbs === undefined ||
             (Array.isArray(draft.cashlessAwbs) &&
                 draft.cashlessAwbs.length <= 500 &&
                 draft.cashlessAwbs.every(
                     (awb) =>
                         typeof awb === 'string' &&
-                        /^[A-Z0-9_-]{1,100}$/.test(awb) &&
+                        /^[A-Z0-9_$-]{1,100}$/.test(awb) &&
                         !/^(0101|0166)[0-9]+$/.test(awb),
                 ) &&
                 new Set(draft.cashlessAwbs).size ===

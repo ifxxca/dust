@@ -1,3 +1,5 @@
+import { NativeSelect } from '@/components/ui/native-select';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useRef, useState, type CSSProperties } from 'react';
 import {
@@ -677,9 +679,10 @@ export default function PickupMonitoring({
                             <ArrowUpRight aria-hidden="true" />
                         </Button>
                     </div>
-                    <select
+                    <NativeSelect
+                        wrapperClassName="min-w-0"
                         aria-label="Petugas pickup"
-                        className="h-11 min-w-0 rounded-md border border-input bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className="h-11 rounded-md border border-input bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         value={filters.staff_id ?? ''}
                         onChange={(event) =>
                             submit({
@@ -695,10 +698,11 @@ export default function PickupMonitoring({
                                 {staff.name}
                             </option>
                         ))}
-                    </select>
-                    <select
+                    </NativeSelect>
+                    <NativeSelect
+                        wrapperClassName="min-w-0"
                         aria-label="Status pickup"
-                        className="h-11 min-w-0 rounded-md border border-input bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        className="h-11 rounded-md border border-input bg-card px-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         value={statusSelection}
                         onChange={(event) => {
                             const [key, value] = event.target.value.split(':');
@@ -718,7 +722,7 @@ export default function PickupMonitoring({
                                 {label}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                     <Button
                         variant="outline"
                         type="button"
@@ -756,9 +760,10 @@ export default function PickupMonitoring({
                                         {label}
                                     </Label>
                                     {options[key] ? (
-                                        <select
+                                        <NativeSelect
+                                            wrapperClassName="min-w-0"
                                             id={'pickup-' + key}
-                                            className="h-11 min-w-0 rounded-md border border-input bg-background px-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                            className="h-11 rounded-md border border-input bg-background px-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                             value={form.data[key]}
                                             aria-invalid={!!form.errors[key]}
                                             onChange={(event) =>
@@ -785,7 +790,7 @@ export default function PickupMonitoring({
                                                     </option>
                                                 ),
                                             )}
-                                        </select>
+                                        </NativeSelect>
                                     ) : (
                                         <Input
                                             id={'pickup-' + key}
@@ -1432,7 +1437,7 @@ export default function PickupMonitoring({
                         </span>
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
-                        <select
+                        <NativeSelect
                             aria-label="Baris per halaman"
                             className="h-11 rounded-md border border-input bg-card px-3 text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                             value={filters.per_page ?? '20'}
@@ -1448,7 +1453,7 @@ export default function PickupMonitoring({
                                     {label} per halaman
                                 </option>
                             ))}
-                        </select>
+                        </NativeSelect>
                         <nav
                             aria-label="Halaman pickup"
                             className="flex flex-wrap gap-1"
@@ -1515,10 +1520,10 @@ export default function PickupMonitoring({
                     </div>
                 </div>
             )}
-            <details>
-                <summary className="min-h-11 cursor-pointer py-3 text-xs text-muted-foreground">
+            <Disclosure>
+                <DisclosureSummary className="min-h-11 cursor-pointer">
                     Rincian monitoring
-                </summary>
+                </DisclosureSummary>
                 <MonitoringInsights
                     key={selectedId ?? 'closed'}
                     operations={operations}
@@ -1527,7 +1532,7 @@ export default function PickupMonitoring({
                     pickupSummary={summary}
                     timezone={timezone}
                 />
-            </details>
+            </Disclosure>
             <Dialog open={rangeOpen} onOpenChange={setRangeOpen}>
                 <DialogContent id="pickup-date-range" className="sm:max-w-md">
                     <DialogHeader>

@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { useEffect, useRef, useState } from 'react';
 import {
     Barcode,
@@ -10,6 +11,7 @@ import {
     X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { isBrowserPwa } from './platform';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { prepareCashlessAwb } from '@/lib/cashless-handover';
@@ -25,11 +27,22 @@ import { readLocal, writeLocal } from './local-store';
 import { OperationalFeedback } from './feedback';
 import {
     confirmedCashlessHandover,
+    cachedCashlessPickup,
     readableCashlessDraft,
     type CashlessDraft,
 } from './cashless-handover';
 import type { Session } from './types';
 import CashlessCameraScanner from './cashless-camera-scanner';
+import {
+    CashlessScanHistory,
+    CashlessScanSummary,
+    useCashlessScanProgress,
+} from './cashless-scan-progress';
+import {
+    playScanAccepted,
+    playScanDuplicate,
+    playScanError,
+} from '@/lib/scan-feedback';
 import {
     CashlessEntryStatus,
     CashlessSourcePicker,
@@ -66,6 +79,7 @@ export default function CashlessHandoverPanel({
     const [search, setSearch] = useState('');
     const [value, setValue] = useState('');
     const [error, setError] = useState('');
+    const [awbError, setAwbError] = useState('');
     const [message, setMessage] = useState('');
     const [ready, setReady] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -77,6 +91,37 @@ export default function CashlessHandoverPanel({
     const epoch = useRef(0);
     const controller = useRef(new AbortController());
     const input = useRef<HTMLInputElement>(null);
+    const previousOnline = useRef(online);
+    const scanProgress = useCashlessScanProgress(session, selected?.id, online);
+
+    function scanCounts(
+        current: CashlessDraft,
+        kind?: 'duplicate' | 'invalid',
+    ) {
+        const counts = current.scanCounts ?? {
+            total: current.awbs.length,
+            duplicate: 0,
+            invalid: 0,
+        };
+        return {
+            total: counts.total + 1,
+            duplicate: counts.duplicate + (kind === 'duplicate' ? 1 : 0),
+            invalid: counts.invalid + (kind === 'invalid' ? 1 : 0),
+        };
+    }
+    async function rejectedScan(kind: 'duplicate' | 'invalid') {
+        const current = draftRef.current;
+        if (!current || current.pending) return;
+        work(true);
+        try {
+            await persist({
+                ...current,
+                scanCounts: scanCounts(current, kind),
+            });
+        } finally {
+            if (active.current) work(false);
+        }
+    }
     const date = (at: string) =>
         new Intl.DateTimeFormat('id-ID', {
             dateStyle: 'medium',
@@ -103,6 +148,7 @@ export default function CashlessHandoverPanel({
     }
     async function failure(reason: unknown) {
         if (!active.current) return;
+        playScanError();
         const fields =
             reason instanceof ApiError
                 ? Object.values(reason.errors).flat()
@@ -112,7 +158,10 @@ export default function CashlessHandoverPanel({
                 ? fields.slice(0, 5).join(' ')
                 : userFacingError(reason),
         );
-        if (reason instanceof ApiError && [401, 403].includes(reason.status))
+        if (
+            reason instanceof ApiError &&
+            [401, 403, 419].includes(reason.status)
+        )
             await onFailure(reason);
     }
     async function load(
@@ -132,6 +181,38 @@ export default function CashlessHandoverPanel({
                 controller.current.signal,
             );
             if (!active.current || requestEpoch !== epoch.current) return;
+            const selectedBook = result.selected;
+            const book: CashlessPickup | undefined = selectedBook
+                ? {
+                      id: selectedBook.id,
+                      reference: selectedBook.reference,
+                      customer: selectedBook.customer,
+                      scheduled_at: selectedBook.scheduled_at,
+                      status: selectedBook.status,
+                      target: selectedBook.target,
+                      saved_count: selectedBook.saved_count,
+                      can_record: selectedBook.can_record,
+                  }
+                : undefined;
+            if (result.selected && !draftRef.current) {
+                await persist({
+                    schema: 1,
+                    pickupId: result.selected.id,
+                    awbs: [],
+                    submissionKey: submissionKey(),
+                    pending: false,
+                    book,
+                });
+                if (!active.current || requestEpoch !== epoch.current) return;
+            } else if (
+                book &&
+                draftRef.current?.pickupId === book.id &&
+                !busyRef.current &&
+                !cameraOpenRef.current
+            ) {
+                await persist({ ...draftRef.current, book });
+                if (!active.current || requestEpoch !== epoch.current) return;
+            }
             setWorkspace(result);
             setSelected(result.selected);
         } catch (reason) {
@@ -154,6 +235,7 @@ export default function CashlessHandoverPanel({
                     );
                 draftRef.current = saved;
                 setDraft(saved);
+                if (saved) setSelected(cachedCashlessPickup(saved));
                 setReady(true);
                 if (
                     saved &&
@@ -164,13 +246,14 @@ export default function CashlessHandoverPanel({
                         'Draft buku lain masih tersimpan. Selesaikan draft sebelum membuka buku pada notifikasi.',
                     );
                 }
-                await load(
-                    saved
-                        ? { task: saved.pickupId }
-                        : initialPickupId
-                          ? { task: initialPickupId }
-                          : {},
-                );
+                if (online)
+                    await load(
+                        saved
+                            ? { task: saved.pickupId }
+                            : initialPickupId
+                              ? { task: initialPickupId }
+                              : {},
+                    );
             } catch (reason) {
                 await failure(reason);
             }
@@ -182,6 +265,20 @@ export default function CashlessHandoverPanel({
             onFocusChange(false);
         };
     }, [session.token, session.user.id, session.environment]);
+    useEffect(() => {
+        const reconnected = online && !previousOnline.current;
+        previousOnline.current = online;
+        if (
+            reconnected &&
+            ready &&
+            !busyRef.current &&
+            !cameraOpenRef.current
+        ) {
+            void load(
+                draftRef.current ? { task: draftRef.current.pickupId } : {},
+            );
+        }
+    }, [online, ready]);
     useEffect(() => {
         onFocusChange(selected !== null);
         if (selected) window.scrollTo({ top: 0 });
@@ -262,6 +359,7 @@ export default function CashlessHandoverPanel({
                     awbs: [],
                     submissionKey: submissionKey(),
                     pending: false,
+                    book,
                 });
             setValue('');
             await load({ q: search, task: book.id });
@@ -276,24 +374,36 @@ export default function CashlessHandoverPanel({
         const parsed = prepareCashlessAwb(
             value,
             draft.awbs,
-            selected.awbs.data.map((row) => row.awb),
+            scanProgress.progress?.registered_awbs ??
+                selected.awbs.data.map((row) => row.awb),
         );
         if (parsed.error) {
-            setError(parsed.error);
+            if (parsed.kind === 'duplicate') playScanDuplicate();
+            else playScanError();
+            await rejectedScan(
+                parsed.kind === 'duplicate' ? 'duplicate' : 'invalid',
+            ).catch(failure);
+            setAwbError(parsed.error);
             input.current?.focus();
             input.current?.select();
             return;
         }
         work(true);
+        setAwbError('');
         setError('');
         setMessage('');
         try {
             await persist({
                 ...draft,
                 awbs: [...draft.awbs, parsed.awb!],
+                scanCounts: scanCounts(draft),
                 submissionKey: submissionKey(),
             });
             setValue('');
+            playScanAccepted();
+            setMessage(
+                `${parsed.awb} · Draft tersimpan, belum dikirim ke server.`,
+            );
         } catch (reason) {
             await failure(reason);
         } finally {
@@ -303,9 +413,11 @@ export default function CashlessHandoverPanel({
             }
         }
     }
-    async function addFromCamera(
-        raw: string,
-    ): Promise<{ awb?: string; error?: string }> {
+    async function addFromCamera(raw: string): Promise<{
+        awb?: string;
+        error?: string;
+        kind?: 'duplicate' | 'invalid';
+    }> {
         const current = draftRef.current;
         if (
             !selected?.can_record ||
@@ -319,14 +431,21 @@ export default function CashlessHandoverPanel({
         const parsed = prepareCashlessAwb(
             raw,
             current.awbs,
-            selected.awbs.data.map((row) => row.awb),
+            scanProgress.progress?.registered_awbs ??
+                selected.awbs.data.map((row) => row.awb),
         );
-        if (parsed.error) return { error: parsed.error };
+        if (parsed.error) {
+            await rejectedScan(
+                parsed.kind === 'duplicate' ? 'duplicate' : 'invalid',
+            );
+            return parsed;
+        }
         work(true);
         try {
             await persist({
                 ...current,
                 awbs: [...current.awbs, parsed.awb!],
+                scanCounts: scanCounts(current),
                 submissionKey: submissionKey(),
             });
             setError('');
@@ -369,18 +488,23 @@ export default function CashlessHandoverPanel({
             const parsed = prepareCashlessAwb(
                 value,
                 draft.awbs,
-                selected.awbs.data.map((row) => row.awb),
+                scanProgress.progress?.registered_awbs ??
+                    selected.awbs.data.map((row) => row.awb),
             );
             if (parsed.error) {
-                setError(parsed.error);
+                setAwbError(parsed.error);
+                if (parsed.kind === 'duplicate') playScanDuplicate();
+                else playScanError();
                 input.current?.focus();
                 return;
             }
             next = {
                 ...draft,
                 awbs: [...draft.awbs, parsed.awb!],
+                scanCounts: scanCounts(draft),
                 submissionKey: submissionKey(),
             };
+            setAwbError('');
         }
         if (!next.awbs.length) {
             setError('Tambahkan minimal satu resi sebelum menyimpan.');
@@ -421,11 +545,7 @@ export default function CashlessHandoverPanel({
             );
             await load({ q: search, task: selected.id });
         } catch (reason) {
-            if (
-                reason instanceof ApiError &&
-                reason.status >= 400 &&
-                reason.status < 500
-            ) {
+            if (reason instanceof ApiError && reason.status === 422) {
                 try {
                     await persist({ ...next, pending: false });
                 } catch {
@@ -441,7 +561,7 @@ export default function CashlessHandoverPanel({
     const queued = draft?.pickupId === selected?.id ? (draft?.awbs ?? []) : [];
     return (
         <section
-            className="flex min-w-0 flex-col gap-4 pb-4"
+            className="cashless-workspace flex min-w-0 flex-col gap-4 pb-4"
             aria-label="Handover Cashless"
         >
             {cameraOpen && selected && (
@@ -450,6 +570,28 @@ export default function CashlessHandoverPanel({
                     count={queued.length}
                     onScan={addFromCamera}
                     onClose={() => camera(false)}
+                    onDuplicate={() => rejectedScan('duplicate')}
+                    summary={
+                        <>
+                            <CashlessScanSummary
+                                progress={scanProgress.progress}
+                                draftCount={queued.length}
+                                pending={draft?.pending}
+                                counts={draft?.scanCounts}
+                            />
+                            {scanProgress.notice && (
+                                <OperationalFeedback
+                                    title="Pemrosesan server"
+                                    tone={scanProgress.tone}
+                                >
+                                    {scanProgress.notice}
+                                </OperationalFeedback>
+                            )}
+                            {scanProgress.error && (
+                                <p role="status">{scanProgress.error}</p>
+                            )}
+                        </>
+                    }
                 />
             )}
             {error && (
@@ -458,14 +600,37 @@ export default function CashlessHandoverPanel({
                 </OperationalFeedback>
             )}
             {message && (
-                <OperationalFeedback title="Berhasil disimpan" tone="success">
+                <OperationalFeedback title="Status pengiriman" tone="info">
                     {message}
                 </OperationalFeedback>
             )}
             {!online && (
                 <OperationalFeedback title="Perangkat offline" tone="warning">
-                    Scan tetap menjadi draft perangkat. Sambungkan internet
-                    untuk menyimpan ke server.
+                    Data buku terakhir dari perangkat. Scan tetap menjadi draft;
+                    sambungkan internet untuk memeriksa status dan mengirim ke
+                    server.
+                </OperationalFeedback>
+            )}
+            {ready && draft && !selected && !online && (
+                <OperationalFeedback
+                    title={`Draft buku #${draft.pickupId}`}
+                    tone="warning"
+                >
+                    {draft.awbs.length} resi tetap tersimpan. Konteks buku belum
+                    tersedia pada versi draft ini; sambungkan internet untuk
+                    melanjutkan.
+                    <Disclosure>
+                        <DisclosureSummary className="min-h-12 cursor-pointer content-center">
+                            Lihat resi tertunda
+                        </DisclosureSummary>
+                        <ul>
+                            {draft.awbs.map((awb) => (
+                                <li key={awb} className="font-mono break-all">
+                                    {awb}
+                                </li>
+                            ))}
+                        </ul>
+                    </Disclosure>
                 </OperationalFeedback>
             )}
             {!ready ? (
@@ -474,7 +639,7 @@ export default function CashlessHandoverPanel({
                 </p>
             ) : selected ? (
                 <>
-                    <div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
+                    <div className="cashless-book flex flex-col gap-2">
                         <h2 className="text-lg font-semibold">
                             {selected.customer}
                         </h2>
@@ -489,7 +654,7 @@ export default function CashlessHandoverPanel({
                         <Button
                             type="button"
                             variant="outline"
-                            className="h-11"
+                            className="cashless-change-book h-11"
                             disabled={busy || loading}
                             onClick={() => {
                                 if (
@@ -503,7 +668,7 @@ export default function CashlessHandoverPanel({
                                 setSelected(null);
                             }}
                         >
-                            Ganti buku pickup
+                            Ganti<span className="sr-only"> buku pickup</span>
                         </Button>
                     </div>
                     {draft?.pending && (
@@ -518,7 +683,7 @@ export default function CashlessHandoverPanel({
                     )}
                     <form
                         onSubmit={save}
-                        className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4"
+                        className="cashless-scan-form flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4"
                         aria-busy={busy}
                     >
                         {selected.can_record || draft?.pending ? (
@@ -578,6 +743,12 @@ export default function CashlessHandoverPanel({
                                             placeholder="Contoh: TG3583843345…"
                                             disabled={busy || !!draft?.pending}
                                             value={value}
+                                            aria-invalid={!!awbError}
+                                            aria-describedby={
+                                                awbError
+                                                    ? 'mobile-cashless-awb-error'
+                                                    : undefined
+                                            }
                                             onChange={(event) =>
                                                 setValue(event.target.value)
                                             }
@@ -603,11 +774,26 @@ export default function CashlessHandoverPanel({
                                             Tambah
                                         </Button>
                                     </div>
-                                    <p className="text-xs text-muted-foreground">
+                                    {awbError && (
+                                        <p
+                                            id="mobile-cashless-awb-error"
+                                            role="alert"
+                                            className="text-sm text-destructive"
+                                        >
+                                            {awbError}
+                                        </p>
+                                    )}
+                                    <p className="cashless-keyboard-hint text-xs text-muted-foreground">
                                         Scanner keyboard/Bluetooth dengan
                                         akhiran Enter.
                                     </p>
                                 </div>
+                                <CashlessScanSummary
+                                    progress={scanProgress.progress}
+                                    draftCount={queued.length}
+                                    pending={draft?.pending}
+                                    counts={draft?.scanCounts}
+                                />
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-medium">
                                         Belum dikirim ke server
@@ -661,8 +847,9 @@ export default function CashlessHandoverPanel({
                                         </p>
                                     )}
                                 <p className="text-xs text-muted-foreground">
-                                    Daftar scan disimpan sebagai draft perangkat
-                                    sampai dikirim.
+                                    {isBrowserPwa
+                                        ? 'Draft hanya di tab ini sampai dikirim.'
+                                        : 'Daftar scan disimpan sebagai draft perangkat sampai dikirim.'}
                                 </p>
                                 <Button
                                     type="submit"
@@ -691,7 +878,8 @@ export default function CashlessHandoverPanel({
                             </p>
                         )}
                     </form>
-                    {!!selected.entry_batches?.length && (
+                    <CashlessScanHistory {...scanProgress} />
+                    {online && (
                         <Button
                             type="button"
                             variant="outline"
@@ -710,13 +898,10 @@ export default function CashlessHandoverPanel({
                         batches={selected.entry_batches ?? []}
                         enabled={selected.entry_enabled}
                     />
-                    <details
-                        className="rounded-xl border bg-card p-4"
-                        open={selected.awbs.total > 0}
-                    >
-                        <summary className="cursor-pointer text-sm font-medium">
+                    <Disclosure open={selected.awbs.total > 0}>
+                        <DisclosureSummary className="cursor-pointer">
                             Resi tersimpan ({selected.awbs.total})
-                        </summary>
+                        </DisclosureSummary>
                         <ul className="mt-3 max-h-64 divide-y overflow-y-auto">
                             {selected.awbs.data.map((row) => (
                                 <li
@@ -780,7 +965,7 @@ export default function CashlessHandoverPanel({
                                 </Button>
                             </div>
                         )}
-                    </details>
+                    </Disclosure>
                 </>
             ) : (
                 <>

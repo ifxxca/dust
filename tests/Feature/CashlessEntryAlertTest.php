@@ -8,8 +8,34 @@ use App\Models\MobilePushDevice;
 use App\Models\PickupTask;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+
+test('cashless push requests an audible high priority channel without changing its recipient or deep link', function () {
+    Storage::fake('local');
+    $key = openssl_pkey_new(['private_key_bits' => 2048]);
+    openssl_pkey_export($key, $privateKey);
+    Storage::disk('local')->put('fcm-test.json', json_encode(['project_id' => 'cashless-test', 'client_email' => 'test@example.test', 'private_key' => $privateKey], JSON_THROW_ON_ERROR));
+    config(['mobile_push.project_id' => 'cashless-test', 'mobile_push.credentials' => Storage::disk('local')->path('fcm-test.json')]);
+    Http::preventStrayRequests();
+    Http::fake(['https://oauth2.googleapis.com/token' => Http::response(['access_token' => 'fixture-oauth']),
+        'https://fcm.googleapis.com/v1/projects/cashless-test/messages:send' => Http::response(['name' => 'fixture-message'])]);
+    $data = ['type' => 'cashless_entry_attention', 'task_id' => '854', 'batch_id' => '11', 'event_id' => '9', 'recipient_id' => '1'];
+
+    expect(app(FcmClient::class)->sendCashlessAlert('fixture-device-token', $data, 300))->toBeTrue();
+
+    Http::assertSent(fn ($request): bool => str_contains($request->url(), 'messages:send')
+        && $request['message']['token'] === 'fixture-device-token' && $request['message']['data'] === $data
+        && $request['message']['android']['notification']['tag'] === 'cashless-task-854'
+        && $request['message']['android']['priority'] === 'HIGH'
+        && $request['message']['android']['notification']['channel_id'] === 'cashless_processing'
+        && $request['message']['android']['notification']['sound'] === 'retail_notification'
+        && $request['message']['android']['notification']['notification_priority'] === 'PRIORITY_HIGH'
+        && $request['message']['android']['notification']['default_vibrate_timings'] === true);
+    Http::assertSentCount(2);
+});
 
 function cashlessAlertDevice(User $user): MobilePushDevice
 {

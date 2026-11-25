@@ -3,6 +3,13 @@ import { MapPin, CalendarDays, PackageCheck, PackageX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { show, takeover, start, visit, retry } from '@/routes/mobile/tasks';
 import { request, ApiError } from './api';
 import { readLocal, writeLocal, removeLocal } from './local-store';
@@ -44,9 +51,14 @@ export default function ExecutionPanel({
     const [localBlocked, setLocalBlocked] = useState(false);
     const [recoveryAttempt, setRecoveryAttempt] = useState(0);
     const sending = useRef(false);
+    const takeoverButton = useRef<HTMLButtonElement>(null);
+    const cancelTakeoverButton = useRef<HTMLButtonElement>(null);
     const controller = useRef(new AbortController());
     const name = `task-${task.id}-operation`;
     const latest = task.visits?.at(-1);
+    const takeoverLabel = task.assigned_staff
+        ? 'Ambil Alih Tugas'
+        : 'Ambil Tugas';
     useEffect(() => {
         onBusyChange(busy);
         return () => onBusyChange(false);
@@ -211,7 +223,7 @@ export default function ExecutionPanel({
                 );
                 if (
                     error instanceof ApiError &&
-                    [401, 403].includes(error.status)
+                    [401, 403, 419].includes(error.status)
                 )
                     await onFailure(error);
                 else if (online && !controller.current.signal.aborted)
@@ -274,13 +286,20 @@ export default function ExecutionPanel({
         >
             <h3 className="text-lg font-semibold">
                 {task.can.take_over
-                    ? 'Ambil Tugas'
+                    ? takeoverLabel
                     : latest?.outcome === 'NO_PACKAGES'
                       ? 'Hasil: tidak ada paket'
                       : task.execution_started_at
                         ? 'Catat Hasil Kunjungan'
                         : 'Mulai Pickup'}
             </h3>
+            {task.can.take_over && !pending && (
+                <p className="text-sm break-words text-muted-foreground">
+                    {task.assigned_staff
+                        ? `Petugas saat ini: ${task.assigned_staff.name}. Tugas belum mulai dikerjakan.`
+                        : 'Belum ditugaskan. Ambil tugas untuk memasukkannya ke Tugas Saya.'}
+                </p>
+            )}
             {!pending && task.can.execute && !task.execution_started_at && (
                 <div className="pickup-start-context info-card space-y-3">
                     <p className="text-sm text-muted-foreground">
@@ -367,7 +386,7 @@ export default function ExecutionPanel({
                                     );
                                     if (
                                         error instanceof ApiError &&
-                                        [401, 403].includes(error.status)
+                                        [401, 403, 419].includes(error.status)
                                     )
                                         void onFailure(error);
                                 })
@@ -425,10 +444,11 @@ export default function ExecutionPanel({
                         )}
                         {task.can.take_over && (
                             <Button
+                                ref={takeoverButton}
                                 disabled={busy || !online}
                                 onClick={() => setConfirm('takeover')}
                             >
-                                Ambil Tugas
+                                {takeoverLabel}
                             </Button>
                         )}
                         {task.can.execute && !task.execution_started_at && (
@@ -595,7 +615,48 @@ export default function ExecutionPanel({
                     </>
                 )
             )}
-            {confirm && (
+            <Dialog
+                open={confirm === 'takeover' && !pending}
+                onOpenChange={(open) => {
+                    if (!open && !busy) setConfirm(null);
+                }}
+            >
+                <DialogContent
+                    className="mobile-dialog"
+                    onOpenAutoFocus={(event) => {
+                        event.preventDefault();
+                        cancelTakeoverButton.current?.focus();
+                    }}
+                    onCloseAutoFocus={(event) => {
+                        event.preventDefault();
+                        takeoverButton.current?.focus();
+                    }}
+                >
+                    <DialogTitle>{takeoverLabel}?</DialogTitle>
+                    <DialogDescription>
+                        {task.assigned_staff
+                            ? `Ambil alih PCK-${task.id} dari ${task.assigned_staff.name}? Tugas akan ditugaskan kepada Anda.`
+                            : `Ambil PCK-${task.id}? Tugas akan ditugaskan kepada Anda.`}
+                    </DialogDescription>
+                    <DialogFooter>
+                        <Button
+                            ref={cancelTakeoverButton}
+                            variant="outline"
+                            disabled={busy}
+                            onClick={() => setConfirm(null)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            disabled={busy || !online}
+                            onClick={() => void send(prepare('takeover'))}
+                        >
+                            {takeoverLabel}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            {confirm && (confirm !== 'takeover' || pending) && (
                 <div
                     role="dialog"
                     aria-label="Konfirmasi operasi"
@@ -654,7 +715,9 @@ export default function ExecutionPanel({
                             disabled={busy || !online}
                             onClick={() => void send(prepare(confirm))}
                         >
-                            Konfirmasi Operasi
+                            {confirm === 'takeover'
+                                ? takeoverLabel
+                                : 'Konfirmasi Operasi'}
                         </Button>
                     )}
                     <Button

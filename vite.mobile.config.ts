@@ -61,7 +61,10 @@ export default defineConfig(({ mode }) => {
             },
         ],
         resolve: { alias: { '@': path.resolve('resources/js') } },
-        define: { __API_ORIGIN__: JSON.stringify(url.origin) },
+        define: {
+            __API_ORIGIN__: JSON.stringify(url.origin),
+            __BROWSER_PWA__: 'false',
+        },
         build: {
             outDir: 'dist',
             emptyOutDir: true,

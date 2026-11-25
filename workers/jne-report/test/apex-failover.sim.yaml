@@ -1,0 +1,6 @@
+simulation: apex-endpoint-failover
+routing: header
+mocks:
+  - name: apex
+    routeKey: apex
+    path: workers/jne-report/test/apex-failover-postman.cjs

@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import type { JneSourceProvenance } from '@/types/jne';
 
 export default function JneSourceEvidence({
@@ -12,8 +13,10 @@ export default function JneSourceEvidence({
     if (!code && !evidence?.contract && !evidence?.hybrid_origins?.length)
         return null;
     return (
-        <details className="rounded-lg border p-3 text-sm">
-            <summary className="cursor-pointer font-medium">{title}</summary>
+        <Disclosure>
+            <DisclosureSummary className="cursor-pointer">
+                {title}
+            </DisclosureSummary>
             <div className="mt-3 space-y-2 break-words">
                 {code != null && (
                     <p>
@@ -44,6 +47,6 @@ export default function JneSourceEvidence({
                     tetap memerlukan aturan terverifikasi.
                 </p>
             </div>
-        </details>
+        </Disclosure>
     );
 }

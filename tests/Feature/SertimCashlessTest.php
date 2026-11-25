@@ -30,7 +30,7 @@ function sertimTask(string $role = 'pickup_staff'): array
     return [$staff, $task];
 }
 
-function sertimEntry(User $staff, PickupTask $task, string $awb = '0001'): PickupCashlessAwb
+function sertimEntry(User $staff, PickupTask $task, string $awb = '0000000000000001'): PickupCashlessAwb
 {
     return app(RecordCashlessAwb::class)->handle($staff, $task->id, ['awb' => $awb, 'submission_key' => (string) Str::uuid()]);
 }
@@ -60,15 +60,15 @@ function sertimImport(string $csv): ReportJob
 
 test('assigned executing staff record normalized cashless AWBs idempotently without inventing a collected shipment', function () {
     [$staff, $task] = sertimTask();
-    $payload = ['awb' => 'cgk0001', 'submission_key' => (string) Str::uuid(), 'customer_id' => 99999];
+    $payload = ['awb' => 'cgk0000000000001', 'submission_key' => (string) Str::uuid(), 'customer_id' => 99999];
 
-    $id = $this->actingAs($staff)->postJson(route('api.cashless-awbs.store', $task), $payload)->assertOk()->assertJsonPath('data.awb', 'CGK0001')->json('data.id');
+    $id = $this->actingAs($staff)->postJson(route('api.cashless-awbs.store', $task), $payload)->assertOk()->assertJsonPath('data.awb', 'CGK0000000000001')->json('data.id');
     $this->postJson(route('api.cashless-awbs.store', $task), $payload)->assertOk()->assertJsonPath('data.id', $id);
 
     $this->assertDatabaseCount('pickup_cashless_awbs', 1);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 1);
     $this->assertDatabaseCount('jne_shipments', 0);
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $id, 'original_awb' => 'cgk0001', 'customer_id' => $task->customer_id]);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $id, 'original_awb' => 'cgk0000000000001', 'customer_id' => $task->customer_id]);
     $this->getJson(route('api.cashless-awbs.index', $task))->assertOk()->assertJsonPath('reconciliation.awaiting_source_awbs', 1)->assertJsonPath('reconciliation.missing_quantity', null);
 });
 
@@ -76,13 +76,13 @@ test('Sertim establishes marketplace customer identity but a different verified 
     $this->withoutVite();
     Storage::fake('jne_reports');
     [$staff, $task] = sertimTask();
-    sertimEntry($staff, $task, 'CONFLICTING_PICKUP');
+    sertimEntry($staff, $task, 'TG0000000801');
     sertimClose($task);
     $other = PickupTask::factory()->create(['customer_id' => $task->customer_id, 'status' => 'PICKED_UP']);
     PickupRecord::factory()->create(['pickup_task_id' => $other->id]);
-    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME,NOREF\nCONFLICTING_PICKUP,SHARED,Shopee International,".$other->reference."\n");
+    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME,NOREF\nTG0000000801,SHARED,Shopee International,".$other->reference."\n");
 
-    $shipment = JneShipment::where('awb', 'CONFLICTING_PICKUP')->sole();
+    $shipment = JneShipment::where('awb', 'TG0000000801')->sole();
     expect($shipment->customer_id)->toBe($task->customer_id)->and($shipment->customer_match_status)->toBe('MATCHED');
     expect($shipment->pickup_task_id)->toBeNull()->and($shipment->match_status)->toBe('CONFLICT');
     $this->assertDatabaseCount('pickup_cashless_awbs', 1);
@@ -100,13 +100,13 @@ test('pickup and retail staff cannot add or correct evidence after POP finalizat
     $record = sertimEntry($staff, $task);
     $task->update(['status' => 'PICKED_UP']);
     PickupRecord::factory()->create(['pickup_task_id' => $task->id]);
-    $data = ['awb' => '0002', 'submission_key' => (string) Str::uuid(), 'evidence_id' => $record->id, 'expected_version' => 1, 'reason' => 'Try correction'];
+    $data = ['awb' => '0000000000000002', 'submission_key' => (string) Str::uuid(), 'evidence_id' => $record->id, 'expected_version' => 1, 'reason' => 'Try correction'];
 
     $this->actingAs($staff)->postJson(route('api.cashless-awbs.correct', $task), $data)->assertForbidden();
-    $this->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
+    $this->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0000000000000002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
     expect(fn () => app(RecordCashlessAwb::class)->handle($staff, $task->id, $data, true))->toThrow(AuthorizationException::class);
 
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'awb' => '0001', 'version' => 1]);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'awb' => '0000000000000001', 'version' => 1]);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 1);
 })->with(['pickup_staff', 'retail_staff']);
 
@@ -115,24 +115,24 @@ test('Admin correction after closure audits before and after matches while prese
     [$staff, $task] = sertimTask();
     $record = sertimEntry($staff, $task);
     $session = sertimClose($task);
-    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0001,SHARED,Shopee International\n0002,SHARED,Tokopedia\n");
+    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0000000000000001,SHARED,Shopee International\n0000000000000002,SHARED,Tokopedia\n");
     $proofBefore = $task->proof()->first()->getAttributes();
     $itemBefore = $session->items()->sole()->getAttributes();
     $closureBefore = $session->getAttributes();
     $eventCount = $session->events()->count();
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
-    $data = ['awb' => '0002', 'evidence_id' => $record->id, 'expected_version' => 1, 'submission_key' => (string) Str::uuid(), 'reason' => 'Scanned label verified against original package'];
+    $data = ['awb' => '0000000000000002', 'evidence_id' => $record->id, 'expected_version' => 1, 'submission_key' => (string) Str::uuid(), 'reason' => 'Scanned label verified against original package'];
 
     $this->actingAs($admin)->postJson(route('api.cashless-awbs.correct', $task), $data)->assertOk()->assertJsonPath('data.version', 2);
     $this->postJson(route('api.cashless-awbs.correct', $task), $data)->assertOk();
 
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'original_awb' => '0001', 'awb' => '0002']);
-    $this->assertDatabaseHas('jne_shipments', ['awb' => '0001', 'pickup_task_id' => null, 'customer_id' => null, 'match_status' => 'UNMATCHED']);
-    $this->assertDatabaseHas('jne_shipments', ['awb' => '0002', 'pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'match_status' => 'MATCHED']);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'original_awb' => '0000000000000001', 'awb' => '0000000000000002']);
+    $this->assertDatabaseHas('jne_shipments', ['awb' => '0000000000000001', 'pickup_task_id' => null, 'customer_id' => null, 'match_status' => 'UNMATCHED']);
+    $this->assertDatabaseHas('jne_shipments', ['awb' => '0000000000000002', 'pickup_task_id' => $task->id, 'customer_id' => $task->customer_id, 'match_status' => 'MATCHED']);
     $audit = PickupCashlessAwbEvent::orderByDesc('id')->first();
     expect($audit->actor_id)->toBe($admin->id);
-    expect($audit->previous_awb)->toBe('0001');
-    expect($audit->awb)->toBe('0002');
+    expect($audit->previous_awb)->toBe('0000000000000001');
+    expect($audit->awb)->toBe('0000000000000002');
     expect($audit->reason)->toBe($data['reason']);
     expect($audit->created_at)->not->toBeNull();
     expect($audit->affected_results['before']['shipments'][0]['pickup_task_id'])->toBe($task->id);
@@ -151,8 +151,8 @@ test('closing a handover blocks normal entries but late Hybrid APEX imports stil
     $session = sertimClose($task);
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
 
-    $this->actingAs($admin)->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
-    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0001,SHARED,Shopee International\n");
+    $this->actingAs($admin)->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0000000000000002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
+    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0000000000000001,SHARED,Shopee International\n");
 
     $this->actingAs($staff)->getJson(route('api.cashless-awbs.index', $task))->assertOk()
         ->assertJsonPath('reconciliation.window', 'CLOSED')->assertJsonPath('reconciliation.confirmed_awbs', 1)
@@ -172,7 +172,7 @@ test('handover reopen retains the first Sertim closure and does not permit norma
 
     expect($session->fresh()->status)->toBe('IN_VERIFICATION');
     expect($session->fresh()->sertim_closed_at->equalTo($firstClosed))->toBeTrue();
-    $this->actingAs($staff)->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
+    $this->actingAs($staff)->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0000000000000002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
     $this->getJson(route('api.cashless-awbs.index', $task))->assertOk()->assertJsonPath('reconciliation.window', 'CLOSED');
 });
 
@@ -182,11 +182,11 @@ test('Retail cannot add replace or revoke Sertim AWBs after handover closure', f
     sertimClose($task);
     $base = ['submission_key' => (string) Str::uuid(), 'evidence_id' => $record->id, 'expected_version' => 1, 'reason' => 'Attempt after closure'];
 
-    $this->actingAs($retail)->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
-    $this->postJson(route('api.cashless-awbs.correct', $task), [...$base, 'awb' => '0002'])->assertForbidden();
+    $this->actingAs($retail)->postJson(route('api.cashless-awbs.store', $task), ['awb' => '0000000000000002', 'submission_key' => (string) Str::uuid()])->assertForbidden();
+    $this->postJson(route('api.cashless-awbs.correct', $task), [...$base, 'awb' => '0000000000000002'])->assertForbidden();
     $this->postJson(route('api.cashless-awbs.correct', $task), [...$base, 'awb' => null])->assertForbidden();
 
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'awb' => '0001', 'version' => 1]);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'awb' => '0000000000000001', 'version' => 1]);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 1);
 });
 
@@ -197,20 +197,20 @@ test('audit history is paginated and cannot be read through another pickup', fun
     $other = PickupTask::factory()->create();
 
     $this->actingAs($admin)->getJson(route('api.cashless-awbs.history', [$task, $record->id]))->assertOk()
-        ->assertJsonPath('data.0.awb', '0001')->assertJsonPath('data.0.actor_id', $staff->id)->assertJsonPath('total', 1);
+        ->assertJsonPath('data.0.awb', '0000000000000001')->assertJsonPath('data.0.actor_id', $staff->id)->assertJsonPath('total', 1);
     $this->getJson(route('api.cashless-awbs.history', [$other, $record->id]))->assertNotFound();
 });
 
 test('duplicate and conflicting claim corrections are rejected without changing either customer or audit history', function () {
     [$staff, $task] = sertimTask();
-    $one = sertimEntry($staff, $task, '0001');
+    $one = sertimEntry($staff, $task, '0000000000000001');
     [$otherStaff, $otherTask] = sertimTask();
-    sertimEntry($otherStaff, $otherTask, '0002');
+    sertimEntry($otherStaff, $otherTask, '0000000000000002');
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
 
-    $this->actingAs($admin)->postJson(route('api.cashless-awbs.correct', $task), ['awb' => '0002', 'evidence_id' => $one->id, 'expected_version' => 1, 'submission_key' => (string) Str::uuid(), 'reason' => 'Check duplicate'])->assertUnprocessable()->assertJsonValidationErrors('awb');
+    $this->actingAs($admin)->postJson(route('api.cashless-awbs.correct', $task), ['awb' => '0000000000000002', 'evidence_id' => $one->id, 'expected_version' => 1, 'submission_key' => (string) Str::uuid(), 'reason' => 'Check duplicate'])->assertUnprocessable()->assertJsonValidationErrors('awb');
 
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $one->id, 'awb' => '0001', 'customer_id' => $task->customer_id, 'version' => 1]);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $one->id, 'awb' => '0000000000000001', 'customer_id' => $task->customer_id, 'version' => 1]);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 2);
 });
 
@@ -220,7 +220,7 @@ test('an exact registered owner conflicting with Sertim is flagged instead of co
     sertimEntry($staff, $task);
     JneShipperAlias::factory()->create(['shipper_name' => 'OTHER VERIFIED OWNER']);
 
-    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0001,SHARED,OTHER VERIFIED OWNER\n");
+    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0000000000000001,SHARED,OTHER VERIFIED OWNER\n");
 
     expect(JneShipment::sole()->customer_match_status)->toBe('CONFLICT');
     expect(JneShipment::sole()->customer_id)->toBeNull();
@@ -231,16 +231,16 @@ test('Admin late entry and revocation preserve original evidence and require a r
     [$staff, $task] = sertimTask();
     sertimClose($task);
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
-    $data = ['awb' => '0001', 'submission_key' => (string) Str::uuid(), 'reason' => 'Late label evidence checked'];
+    $data = ['awb' => '0000000000000001', 'submission_key' => (string) Str::uuid(), 'reason' => 'Late label evidence checked'];
     $this->actingAs($admin)->postJson(route('api.cashless-awbs.correct', $task), [...$data, 'reason' => ''])->assertUnprocessable()->assertJsonValidationErrors('reason');
     $id = $this->postJson(route('api.cashless-awbs.correct', $task), $data)->assertOk()->json('data.id');
-    $this->postJson(route('api.cashless-awbs.correct', $task), [...$data, 'awb' => '0002'])->assertConflict();
+    $this->postJson(route('api.cashless-awbs.correct', $task), [...$data, 'awb' => '0000000000000002'])->assertConflict();
     $revoke = ['awb' => null, 'evidence_id' => $id, 'expected_version' => 1, 'submission_key' => (string) Str::uuid(), 'reason' => 'Incorrect label removed from this pickup'];
 
     $this->postJson(route('api.cashless-awbs.correct', $task), $revoke)->assertOk()->assertJsonPath('data.awb', null);
-    $this->postJson(route('api.cashless-awbs.correct', $task), [...$revoke, 'awb' => '0003', 'submission_key' => (string) Str::uuid()])->assertConflict();
+    $this->postJson(route('api.cashless-awbs.correct', $task), [...$revoke, 'awb' => '0000000000000003', 'submission_key' => (string) Str::uuid()])->assertConflict();
 
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $id, 'awb' => null, 'original_awb' => '0001']);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $id, 'awb' => null, 'original_awb' => '0000000000000001']);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 2);
 });
 
@@ -277,15 +277,15 @@ test('a failed correction audit rolls back both AWB ownership re-evaluations', f
     [$staff, $task] = sertimTask();
     $record = sertimEntry($staff, $task);
     sertimClose($task);
-    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0001,SHARED,Shopee International\n0002,SHARED,Tokopedia\n");
+    sertimImport("AWB,ID_ACCOUNT,SHIPPER_NAME\n0000000000000001,SHARED,Shopee International\n0000000000000002,SHARED,Tokopedia\n");
     $admin = User::factory()->create(['role' => 'admin_supervisor']);
     Event::listen('eloquent.creating: '.PickupCashlessAwbEvent::class, fn () => throw new RuntimeException('synthetic audit failure'));
 
-    expect(fn () => app(RecordCashlessAwb::class)->handle($admin, $task->id, ['awb' => '0002', 'evidence_id' => $record->id, 'expected_version' => 1, 'submission_key' => (string) Str::uuid(), 'reason' => 'Check rollback'], true))->toThrow(RuntimeException::class);
+    expect(fn () => app(RecordCashlessAwb::class)->handle($admin, $task->id, ['awb' => '0000000000000002', 'evidence_id' => $record->id, 'expected_version' => 1, 'submission_key' => (string) Str::uuid(), 'reason' => 'Check rollback'], true))->toThrow(RuntimeException::class);
 
-    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'awb' => '0001', 'version' => 1]);
-    $this->assertDatabaseHas('jne_shipments', ['awb' => '0001', 'pickup_task_id' => $task->id, 'customer_match_status' => 'MATCHED']);
-    $this->assertDatabaseHas('jne_shipments', ['awb' => '0002', 'pickup_task_id' => null, 'customer_id' => null]);
+    $this->assertDatabaseHas('pickup_cashless_awbs', ['id' => $record->id, 'awb' => '0000000000000001', 'version' => 1]);
+    $this->assertDatabaseHas('jne_shipments', ['awb' => '0000000000000001', 'pickup_task_id' => $task->id, 'customer_match_status' => 'MATCHED']);
+    $this->assertDatabaseHas('jne_shipments', ['awb' => '0000000000000002', 'pickup_task_id' => null, 'customer_id' => null]);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 1);
 });
 

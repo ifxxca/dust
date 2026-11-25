@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Monitoring\RecordOperationsTelemetry;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->trimStrings(except: ['hybrid_password', 'awb', 'awbs.*', 'cashless_awbs.*']);
 
         $middleware->web(append: [
             HandleAppearance::class,
@@ -38,6 +40,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->report(function (Throwable $exception): void {
+            app(RecordOperationsTelemetry::class)->exception($exception);
+        });
+        $exceptions->dontFlash(['hybrid_password']);
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

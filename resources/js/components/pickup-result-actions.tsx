@@ -1,3 +1,4 @@
+import { Textarea } from '@/components/ui/textarea';
 import { router, useHttp, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
@@ -466,7 +467,7 @@ export default function PickupResultActions({
                                         Catatan selisih{' '}
                                         {discrepancy ? '(wajib)' : ''}
                                     </Label>
-                                    <textarea
+                                    <Textarea
                                         id="result-discrepancy"
                                         maxLength={2000}
                                         required={discrepancy}
@@ -501,7 +502,7 @@ export default function PickupResultActions({
                                         <Label htmlFor="result-reason">
                                             Alasan (wajib)
                                         </Label>
-                                        <textarea
+                                        <Textarea
                                             id="result-reason"
                                             required
                                             maxLength={500}

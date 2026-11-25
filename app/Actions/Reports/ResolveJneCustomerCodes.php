@@ -23,7 +23,7 @@ class ResolveJneCustomerCodes
         if (! config('jne-reports.evidence_policies_enabled')) {
             return [];
         }
-        $jobs = ReportJob::whereIn('id', $sources->pluck('report_job_id'))->get(['id', 'source', 'report_type'])->keyBy('id');
+        $jobs = ReportJob::whereIn('id', $sources->pluck('report_job_id')->unique()->values())->get(['id', 'source', 'report_type'])->keyBy('id');
         $contracts = JneSourceContract::whereNotNull('active_key')->whereNotNull('verified_at')->get()->keyBy('active_key');
         $inputs = [];
         foreach ($sources as $source) {
@@ -50,11 +50,17 @@ class ResolveJneCustomerCodes
             return [];
         }
         $codes = array_values(array_unique(array_column($inputs, 'code')));
-        $customers = collect();
-        foreach (array_chunk($codes, 500) as $chunk) {
-            $customers = $customers->concat(Customer::where('is_active', true)->whereIn(DB::raw('UPPER(TRIM(customer_code))'), $chunk)->get(['id', 'name', 'customer_code']));
+        $baseCodes = [];
+        foreach ($inputs as $input) {
+            if ($input['method'] === 'SHIPPER_CODE_PREFIX' && preg_match('/^([0-9]+)[A-Z]$/D', $input['code'], $prefix)) {
+                $baseCodes[$input['code']] = $prefix[1];
+            }
         }
-        $aliases = JneCustomerCodeAlias::where('is_active', true)->whereNotNull('verified_at')->whereIn('normalized_code', $codes)->get();
+        $customers = collect();
+        foreach (array_chunk(array_values(array_unique([...$codes, ...array_values($baseCodes)])), 500) as $chunk) {
+            $customers = $customers->concat(Customer::whereIn(DB::raw('UPPER(TRIM(customer_code))'), $chunk)->get(['id', 'name', 'customer_code', 'is_active']));
+        }
+        $aliases = JneCustomerCodeAlias::whereIn('normalized_code', $codes)->get();
         $activeAliasCustomers = Customer::whereIn('id', $aliases->pluck('customer_id'))->where('is_active', true)->pluck('id')->all();
         $catalog = Customer::where('is_active', true)->whereNotNull('customer_code')->orderBy('id')->limit(5001)->get(['id', 'name', 'customer_code']);
         $aliasCatalog = JneCustomerCodeAlias::where('is_active', true)->whereNotNull('verified_at')->whereHas('customer', fn ($query) => $query->where('is_active', true))->with('customer:id,name,customer_code')->orderBy('id')->limit(5001)->get();
@@ -68,25 +74,37 @@ class ResolveJneCustomerCodes
             $owners = [];
             $evidence = [$input['evidence']];
             $usedShipperAlias = false;
+            $usedBaseCode = false;
             foreach ($customersByCode->get($input['code'], collect()) as $customer) {
-                if (JneCustomerCodeAlias::normalize($customer->customer_code ?? '') === $input['code']) {
+                if ($customer->is_active && JneCustomerCodeAlias::normalize($customer->customer_code ?? '') === $input['code']) {
                     $owners[] = $customer->id;
                     $evidence[] = [...$input['evidence'], 'registered_code' => $customer->customer_code, 'customer_id' => $customer->id];
                 }
             }
             foreach ($aliasesByCode->get($input['code'], collect()) as $alias) {
-                if ($alias->normalized_code === $input['code'] && $this->scope->allows($alias, $input['source']) && in_array($alias->customer_id, $activeAliasCustomers, true)) {
+                if ($alias->is_active && $alias->verified_at !== null && $alias->normalized_code === $input['code'] && $this->scope->allows($alias, $input['source']) && in_array($alias->customer_id, $activeAliasCustomers, true)) {
                     $owners[] = $alias->customer_id;
                     $evidence[] = [...$input['evidence'], 'code_alias_id' => $alias->id, 'code_alias_version' => $alias->version, 'registered_code' => $alias->code, 'customer_id' => $alias->customer_id];
                 }
             }
             if ($input['method'] === 'SHIPPER_CODE_PREFIX') {
                 foreach ($shipperAliasesByCode->get($input['code'], collect()) as $alias) {
-                    if ($this->scope->allows($alias, $input['source'])) {
+                    if ($alias->is_active && $alias->customer->is_active && $this->scope->allows($alias, $input['source'])) {
                         $owners[] = $alias->customer_id;
                         $usedShipperAlias = true;
                         $evidence[] = [...$input['evidence'], 'shipper_alias_id' => $alias->id, 'shipper_alias_version' => $alias->version,
                             'registered_name' => $alias->shipper_name, 'registered_code' => $alias->customer->customer_code, 'customer_id' => $alias->customer_id];
+                    }
+                }
+                if ($owners === [] && isset($baseCodes[$input['code']]) && ! $customersByCode->has($input['code']) && ! $aliasesByCode->has($input['code']) && ! $shipperAliasesByCode->has($input['code'])) {
+                    foreach ($customersByCode->get($baseCodes[$input['code']], collect()) as $customer) {
+                        if (! $customer->is_active) {
+                            continue;
+                        }
+                        $owners[] = $customer->id;
+                        $usedBaseCode = true;
+                        $evidence[] = [...$input['evidence'], 'method' => 'SHIPPER_BASE_CODE', 'base_code' => $baseCodes[$input['code']],
+                            'registered_code' => $customer->customer_code, 'customer_id' => $customer->id];
                     }
                 }
             }
@@ -115,8 +133,8 @@ class ResolveJneCustomerCodes
             }
             $decision = ['customer_id' => count($owners) === 1 ? $owners[0] : null,
                 'status' => count($owners) > 1 ? 'CONFLICT' : ($owners !== [] ? 'MATCHED' : ($candidates !== [] ? 'CANDIDATE' : 'UNMATCHED')),
-                'method' => $usedShipperAlias ? 'SHIPPER_ALIAS_CODE' : $input['method'],
-                'note' => $usedShipperAlias ? 'Kode berakhiran huruf dikenali dari alias pengirim aktif milik kode dasar customer yang sama.' : ($input['method'] === 'SHIPPER_CODE_PREFIX' ? 'Kode awal nama pengirim diperiksa persis terhadap master customer dan alias kode terverifikasi.' : 'Exact registered code and verified code aliases are checked independently of the account.'),
+                'method' => $usedBaseCode ? 'SHIPPER_BASE_CODE' : ($usedShipperAlias ? 'SHIPPER_ALIAS_CODE' : $input['method']),
+                'note' => $usedBaseCode ? 'Kode pengirim dengan satu huruf akhiran dikenali dari kode angka master customer; kode lengkap dan alias terdaftar diperiksa lebih dahulu.' : ($usedShipperAlias ? 'Kode berakhiran huruf dikenali dari alias pengirim aktif milik kode dasar customer yang sama.' : ($input['method'] === 'SHIPPER_CODE_PREFIX' ? 'Kode awal nama pengirim diperiksa persis terhadap master customer dan alias kode terverifikasi.' : 'Exact registered code and verified code aliases are checked independently of the account.')),
                 'evidence' => $evidence, 'candidates' => $candidates];
             $result[$id] = $this->combine($result[$id] ?? null, $decision);
         }
@@ -136,9 +154,8 @@ class ResolveJneCustomerCodes
         }
         $codeSet = array_fill_keys($suffixCodes, true);
 
-        return JneShipperAlias::whereNotNull('mapping_key')->where('is_active', true)
-            ->whereHas('customer', fn ($query) => $query->where('is_active', true))
-            ->with('customer:id,customer_code')->get()->toBase()
+        return JneShipperAlias::whereNotNull('mapping_key')
+            ->with('customer:id,customer_code,is_active')->get()->toBase()
             ->filter(function (JneShipperAlias $alias) use ($codeSet): bool {
                 return preg_match('/^(([0-9]+)[A-Z]+)(?: |$)/D', $alias->normalized_name, $prefix) === 1
                     && isset($codeSet[$prefix[1]])

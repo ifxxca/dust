@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\PickupAwbManifestFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * @property array{customer_id: int, customer_name: string, customer_code: string|null, reference: string, pickup_date: string, categories: array<string, mixed>, unit: string, template_version: int, pickup_task_ids?: list<int>, pickup_references?: list<string>} $snapshot
@@ -22,6 +24,15 @@ class PickupAwbManifest extends Model
     protected function casts(): array
     {
         return ['snapshot' => 'array', 'checksums' => 'array', 'revision' => 'integer', 'render_attempts' => 'integer', 'next_render_at' => 'immutable_datetime'];
+    }
+
+    public function downloadFilename(string $format): string
+    {
+        $customer = preg_replace('/[^A-Za-z0-9 .,&()_@+-]+/', ' ', Str::ascii($this->snapshot['customer_name'])) ?? '';
+        $customer = rtrim(Str::limit(Str::squish($customer), 100, ''), ' .') ?: 'Customer';
+        $date = CarbonImmutable::createFromFormat('!Y-m-d', $this->snapshot['pickup_date'])->locale('id')->translatedFormat('j F Y');
+
+        return 'Rekap Resi - '.$customer.' - '.$date.' - v'.$this->revision.'.'.$format;
     }
 
     /** @return BelongsTo<PickupTask, $this> */

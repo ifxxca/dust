@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class AmendSession
 {
+    public function __construct(private CashlessHandoverReadiness $cashless) {}
+
     /** @param list<int>|null $taskIds */
     public function handle(User $user, int $sessionId, int $expectedVersion, string $reason, ?array $taskIds = null): HandoverSession
     {
@@ -37,6 +39,7 @@ class AmendSession
                     $memberSessionId = $memberships->get($id);
                     abort_if($memberSessionId !== null && $memberSessionId !== $session->id, 409, 'Task sudah masuk session lain.');
                 }
+                $this->cashless->assertReady($tasks->whereIn('id', $taskIds));
                 $session->items()->whereNotIn('pickup_task_id', $taskIds)->delete();
                 foreach (array_diff($taskIds, $oldIds) as $id) {
                     $session->items()->create(['pickup_task_id' => $id, 'pickup_record_id' => $proofIds->get($id)]);

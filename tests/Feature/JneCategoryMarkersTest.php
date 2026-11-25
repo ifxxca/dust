@@ -9,6 +9,7 @@ use App\Models\PickupRecord;
 use App\Models\PickupTask;
 use App\Models\ReportJob;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -39,7 +40,29 @@ test('known AWB prefixes mark categories without enabling reconciliation policie
 })->with([
     ['010100012345678', 'manual_hybrid'], ['016660047446626', 'manual_hybrid'],
     ['CM123456789', 'cashless_hybrid'], ['TG3583843345', 'cashless_hybrid'],
+    ['JNAC-3064401124', 'cashless_hybrid'], ['JNAC-3064401235', 'cashless_hybrid'],
 ]);
+
+test('category resolution reads source history in bounded groups while preserving reviewed decisions', function () {
+    $shipments = collect();
+    for ($index = 1; $index <= 101; $index++) {
+        $shipments->push(JneShipment::factory()->create(['awb' => 'TG'.str_pad((string) $index, 10, '0', STR_PAD_LEFT)]));
+    }
+    $reviewed = $shipments->last();
+    $reviewed->update(['category' => 'manual_hybrid', 'category_status' => 'MATCHED', 'category_method' => 'REVIEW']);
+    $reads = [];
+    DB::listen(function ($query) use (&$reads): void {
+        if (str_contains($query->sql, 'from "jne_report_awbs"')) {
+            $reads[] = count($query->bindings);
+        }
+    });
+
+    app(ResolveJneCategories::class)->handle($shipments);
+
+    expect($reads)->toBe([100, 1]);
+    expect(JneShipment::where('category', 'cashless_hybrid')->where('category_status', 'MATCHED')->count())->toBe(100);
+    expect($reviewed->fresh()->only(['category', 'category_status', 'category_method']))->toBe(['category' => 'manual_hybrid', 'category_status' => 'CONFLICT', 'category_method' => 'REVIEW']);
+});
 
 test('manual and cashless source reports classify additional prefixes from their recorded origins', function (string $awb, string $kind, string $category) {
     $source = categoryMarkerSource($awb, kind: $kind);

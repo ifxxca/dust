@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Link } from '@inertiajs/react';
 import {
     ArrowLeft,
@@ -37,11 +38,15 @@ export function ShipmentDisclosure({
     icon?: LucideIcon;
 }) {
     return (
-        <details
+        <Disclosure
+            variant="plain"
             open={defaultOpen}
             className="group/disclosure min-w-0 rounded-xl border bg-card shadow-sm"
         >
-            <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+            <DisclosureSummary
+                indicator={false}
+                className="flex min-h-12 cursor-pointer list-none items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden"
+            >
                 <Icon
                     aria-hidden="true"
                     className="size-4 shrink-0 text-primary"
@@ -51,11 +56,11 @@ export function ShipmentDisclosure({
                     aria-hidden="true"
                     className="size-4 shrink-0 group-open/disclosure:rotate-180"
                 />
-            </summary>
+            </DisclosureSummary>
             <div className="flex min-w-0 flex-col gap-4 border-t p-4">
                 {children}
             </div>
-        </details>
+        </Disclosure>
     );
 }
 
@@ -374,10 +379,10 @@ export function ShipmentSourceDetails({
                     Belum ada sumber report.
                 </p>
             )}
-            <details className="min-w-0 text-sm">
-                <summary className="cursor-pointer">
+            <Disclosure className="min-w-0">
+                <DisclosureSummary className="cursor-pointer">
                     Rincian bukti dan status sumber
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex min-w-0 flex-col gap-4">
                     <JneSourceEvidence
                         code={source?.original_customer_code}
@@ -402,10 +407,10 @@ export function ShipmentSourceDetails({
                         ))}
                     </dl>
                     {shipment.category_evidence != null && (
-                        <details className="min-w-0 text-sm">
-                            <summary className="cursor-pointer">
+                        <Disclosure className="min-w-0">
+                            <DisclosureSummary className="cursor-pointer">
                                 Bukti kategori POP
-                            </summary>
+                            </DisclosureSummary>
                             <pre className="mt-3 max-h-64 overflow-auto text-xs">
                                 {JSON.stringify(
                                     shipment.category_evidence,
@@ -413,10 +418,10 @@ export function ShipmentSourceDetails({
                                     2,
                                 )}
                             </pre>
-                        </details>
+                        </Disclosure>
                     )}
                 </div>
-            </details>
+            </Disclosure>
         </ShipmentDisclosure>
     );
 }

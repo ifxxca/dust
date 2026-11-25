@@ -1,3 +1,5 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { NativeSelect } from '@/components/ui/native-select';
 import {
     Head,
     router,
@@ -6,18 +8,15 @@ import {
     usePage,
     usePoll,
 } from '@inertiajs/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-    AlertCircle,
     CalendarDays,
-    CheckCircle2,
     ListChecks,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
     ChevronsRight,
-    Clock3,
     Download,
     Filter,
     Files,
@@ -25,16 +24,28 @@ import {
     RefreshCw,
     Search,
     PanelRightOpen,
+    MoreHorizontal,
+    Info,
+    BookOpen,
+    CheckCircle2,
+    AlertTriangle,
+    CircleAlert,
+    Clock3,
+    Layers,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -43,6 +54,7 @@ import {
     SheetDescription,
     SheetHeader,
     SheetTitle,
+    SheetTrigger,
 } from '@/components/ui/sheet';
 import {
     Table,
@@ -52,101 +64,422 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import PickupReconciliationDetail, {
-    ReconciliationStatus,
-} from '@/components/pickup-reconciliation-detail';
+import PickupReconciliationDetail from '@/components/reconciliation-workspace';
 import PickupPendingQueue from '@/components/pickup-pending-queue';
 import { cn } from '@/lib/utils';
 import {
     deliveryLabels,
     reconciliationCategories as categories,
     reconciliationLabels,
+    quantityLabels,
     reconciliationTime,
-    rowPackageTotal,
+    reconciliationCategoryStates,
+    reconciliationProgress,
 } from '@/lib/pickup-reconciliation';
 import type {
     AutomationMonitor,
-    ReconciliationDetail,
     ReconciliationRow,
 } from '@/types/pickup-reconciliation';
 import * as routes from '@/routes/pickup-automation';
+
 export type { AutomationMonitor } from '@/types/pickup-reconciliation';
 
-function Differences({ row }: { row: ReconciliationRow }) {
-    const differences = categories.flatMap(([key, label]) => {
-        const count = row.categories[key];
-        if (count?.expected == null || count.confirmed === count.expected)
-            return [];
-        return [
-            {
-                label: label.replace(' Hybrid', '').replace('CSS / ', ''),
-                delta: count.confirmed - count.expected,
-            },
-        ];
-    });
-    if (row.last_error)
-        return (
-            <p className="max-w-56 text-xs whitespace-normal text-destructive">
-                {row.last_error}
-            </p>
-        );
-    if (
-        ['UNKNOWN', 'FAILED', 'DOCUMENT_FAILED', 'REVIEW'].includes(
-            row.delivery_status,
-        )
-    )
-        return (
-            <p className="flex items-center gap-2 text-xs text-destructive">
-                <span className="size-1.5 shrink-0 rounded-full bg-destructive" />
-                {deliveryLabels[row.delivery_status]}
-            </p>
-        );
-    if (differences.length)
-        return (
-            <ul className="flex flex-col gap-1">
-                {differences.map(({ label, delta }) => (
-                    <li key={label} className="flex items-center gap-2 text-xs">
+export function AllocationCards({
+    data,
+}: {
+    data: Pick<AutomationMonitor, 'pool_summary' | 'allocation_summary'>;
+}) {
+    const pool = data.pool_summary;
+    const summary = data.allocation_summary;
+    const percentage = (value: number | undefined) =>
+        pool && pool.total > 0 && value != null
+            ? `${Math.round((value / pool.total) * 100)}%`
+            : null;
+    const cards = [
+        {
+            label: 'Total AWB',
+            value: pool?.total,
+            Icon: Package,
+            note: 'Pool global · lintas customer',
+            tone: 'bg-primary/10 text-primary',
+        },
+        {
+            label: 'Terikat ke pickup',
+            value: pool?.allocated,
+            Icon: BookOpen,
+            note: percentage(pool?.allocated) ?? 'Pool global',
+            tone: 'bg-success/10 text-success',
+        },
+        {
+            label: 'Belum terikat',
+            value: pool?.unassigned,
+            Icon: Layers,
+            note: percentage(pool?.unassigned) ?? 'Pool global',
+            tone: 'bg-warning/10 text-warning',
+        },
+        {
+            label: 'Buku pickup',
+            value: summary?.pickup_books,
+            Icon: Files,
+            note: `${summary?.total.toLocaleString('id-ID') ?? '—'} customer/hari`,
+            tone: 'bg-primary/10 text-primary',
+        },
+        {
+            label: 'Jumlah cocok',
+            value: summary?.matched,
+            Icon: CheckCircle2,
+            note: 'Per customer/hari',
+            tone: 'bg-success/10 text-success',
+        },
+    ];
+    return (
+        <section
+            aria-label="Ringkasan rekonsiliasi"
+            className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 lg:gap-3"
+        >
+            {cards.map(({ label, value, Icon, note, tone }, index) => (
+                <Card
+                    key={label}
+                    className={cn(
+                        'gap-0 py-3 shadow-none',
+                        index === 4 && 'col-span-2 sm:col-span-1',
+                    )}
+                >
+                    <CardContent className="flex items-center gap-3 px-3 lg:px-4">
                         <span
                             className={cn(
-                                'size-1.5 shrink-0 rounded-full',
-                                delta > 0 ? 'bg-destructive' : 'bg-warning',
+                                'hidden size-11 shrink-0 items-center justify-center rounded-xl sm:flex',
+                                tone,
                             )}
-                        />
-                        <span>
-                            {label}{' '}
-                            <span
-                                className={cn(
-                                    'font-medium tabular-nums',
-                                    delta > 0
-                                        ? 'text-destructive'
-                                        : 'text-warning',
-                                )}
-                            >
-                                {delta > 0 ? '+' : ''}
-                                {delta}
-                            </span>
+                        >
+                            <Icon className="size-6" aria-hidden="true" />
                         </span>
-                    </li>
-                ))}
-            </ul>
-        );
+                        <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 sm:block">
+                            <h2 className="text-xs leading-5">{label}</h2>
+                            <p className="text-xl leading-7 font-semibold tracking-tight tabular-nums sm:text-2xl sm:leading-8">
+                                {value?.toLocaleString('id-ID') ?? '—'}
+                            </p>
+                            <p className="sr-only text-xs leading-4 text-muted-foreground sm:not-sr-only">
+                                {note}
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
+        </section>
+    );
+}
+
+export function AllocationSummary({
+    data,
+}: {
+    data: Pick<AutomationMonitor, 'pool_summary' | 'allocation_summary'>;
+}) {
     return (
-        <p className="flex max-w-64 items-start gap-2 text-xs leading-5 whitespace-normal text-muted-foreground">
-            <span
-                className={cn(
-                    'mt-1.5 size-1.5 shrink-0 rounded-full',
-                    row.automation_status === 'DONE'
-                        ? 'bg-success'
-                        : 'bg-muted-foreground/50',
-                )}
-            />
-            {row.reasons[0] ??
-                (row.automation_status === 'DONE'
-                    ? 'Tidak ada selisih'
-                    : row.automation_status === 'NOT_EVALUATED'
-                      ? 'Menunggu evaluasi pertama'
-                      : 'Belum ada target sah')}
-        </p>
+        <div className="flex flex-col gap-3">
+            {data.pool_summary && (
+                <section
+                    aria-label="Alokasi AWB global"
+                    className="flex flex-col gap-3"
+                >
+                    <p className="text-xs text-muted-foreground">
+                        Pool global · {data.pool_summary.date_from}–
+                        {data.pool_summary.date_to} ·{' '}
+                        {categories.find(
+                            ([key]) => key === data.pool_summary?.category,
+                        )?.[1] ?? 'Semua kategori'}{' '}
+                        · lintas customer
+                    </p>
+                    <dl className="flex flex-wrap gap-x-6 gap-y-3">
+                        {(
+                            [
+                                ['AWB unik tersimpan', data.pool_summary.total],
+                                ['Terikat', data.pool_summary.allocated],
+                                ['Unassigned', data.pool_summary.unassigned],
+                            ] as const
+                        ).map(([label, value]) => (
+                            <div key={label}>
+                                <dt className="text-xs text-muted-foreground">
+                                    {label}
+                                </dt>
+                                <dd className="font-semibold tabular-nums">
+                                    {value.toLocaleString('id-ID')}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                </section>
+            )}
+            {data.allocation_summary && (
+                <section
+                    aria-label="Jumlah sesuai filter tabel"
+                    className="flex flex-col gap-2"
+                >
+                    <p className="text-xs text-muted-foreground">
+                        {data.allocation_summary.total.toLocaleString('id-ID')}{' '}
+                        customer/hari ·{' '}
+                        {data.allocation_summary.pickup_books.toLocaleString(
+                            'id-ID',
+                        )}{' '}
+                        buku pickup · sesuai filter tabel
+                    </p>
+                    <dl className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+                        {(
+                            [
+                                ['Cocok', data.allocation_summary.matched],
+                                ['Kurang', data.allocation_summary.shortage],
+                                ['Lebih', data.allocation_summary.excess],
+                                ['Konflik', data.allocation_summary.conflict],
+                            ] as const
+                        ).map(([label, value]) => (
+                            <div key={label} className="flex gap-2">
+                                <dt>{label}</dt>
+                                <dd className="font-medium tabular-nums">
+                                    {value.toLocaleString('id-ID')}
+                                </dd>
+                            </div>
+                        ))}
+                    </dl>
+                </section>
+            )}
+        </div>
+    );
+}
+
+export function AllocationStatus({
+    row,
+}: {
+    row: Pick<
+        ReconciliationRow,
+        'quantity_status' | 'finalization_status' | 'automation_status'
+    > &
+        Partial<
+            Pick<
+                ReconciliationRow,
+                | 'categories'
+                | 'dirty'
+                | 'closure_mode'
+                | 'closure_due_at'
+                | 'closure_overdue'
+            >
+        >;
+}) {
+    const finalized = row.finalization_status === 'LOCKED';
+    const review = row.finalization_status === 'LOCKED_REVIEW';
+    if (finalized && row.closure_mode === 'EXCEPTION') {
+        return <Badge variant="secondary">Selesai dengan selisih</Badge>;
+    }
+    const states = reconciliationCategoryStates({
+        ...row,
+        categories: row.categories ?? {},
+    });
+    const discrepancies = states.filter((category) =>
+        ['shortage', 'excess'].includes(category.state),
+    );
+    const waiting = states.filter(
+        (category) => category.state === 'waiting' && category.relevant,
+    );
+    const stale = row.dirty || row.quantity_status === 'NOT_EVALUATED';
+    const generic = stale
+        ? 'Menunggu pemeriksaan'
+        : (quantityLabels[row.quantity_status ?? 'NOT_EVALUATED'] ??
+          row.quantity_status);
+    return (
+        <div className="flex flex-col items-start gap-1">
+            {!finalized && !review && row.closure_due_at && (
+                <span
+                    className={
+                        row.closure_overdue
+                            ? 'text-xs font-medium text-destructive'
+                            : 'text-xs text-muted-foreground'
+                    }
+                >
+                    {row.closure_overdue
+                        ? 'Lewat tenggat · '
+                        : 'Tutup sebelum '}
+                    {reconciliationTime(row.closure_due_at, 'Asia/Jakarta')}
+                </span>
+            )}
+            {discrepancies.length ? (
+                discrepancies.map((category) => (
+                    <Badge
+                        key={category.key}
+                        variant={
+                            category.state === 'excess'
+                                ? 'destructive'
+                                : 'warning'
+                        }
+                    >
+                        {category.state === 'excess' ? (
+                            <CircleAlert aria-hidden="true" />
+                        ) : (
+                            <AlertTriangle aria-hidden="true" />
+                        )}
+                        {category.text}
+                    </Badge>
+                ))
+            ) : (
+                <Badge
+                    variant={
+                        stale
+                            ? 'secondary'
+                            : row.quantity_status === 'MATCHED'
+                              ? finalized
+                                  ? 'success'
+                                  : 'outline'
+                              : row.quantity_status === 'CONFLICT'
+                                ? 'destructive'
+                                : 'secondary'
+                    }
+                >
+                    {row.quantity_status === 'MATCHED' && !stale ? (
+                        <CheckCircle2 aria-hidden="true" />
+                    ) : (
+                        <Clock3 aria-hidden="true" />
+                    )}
+                    {generic}
+                </Badge>
+            )}
+            {!stale &&
+                waiting.length > 0 &&
+                waiting.length < 3 &&
+                waiting.map((category) => (
+                    <Badge key={category.key} variant="secondary">
+                        {category.text}
+                    </Badge>
+                ))}
+            <span className="text-xs text-muted-foreground">
+                {finalized
+                    ? 'Final: terkunci'
+                    : review
+                      ? 'Snapshot terkunci · perlu review'
+                      : row.quantity_status === 'MATCHED' &&
+                          row.automation_status === 'WAITING_DATA'
+                        ? 'Finalisasi: menunggu sumber'
+                        : 'Belum difinalisasi'}
+            </span>
+        </div>
+    );
+}
+
+export function AllocationProgress({ row }: { row: ReconciliationRow }) {
+    const progress = reconciliationProgress(row);
+    return (
+        <div
+            className="flex min-w-24 flex-col gap-1.5"
+            aria-label="Progress alokasi per kategori"
+        >
+            <span className="text-right text-xs tabular-nums">
+                {progress.percent === null ? '—' : `${progress.percent}%`}
+            </span>
+            <div
+                role="progressbar"
+                aria-label="Kecocokan alokasi kategori"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={
+                    progress.percent === null ? undefined : progress.fill
+                }
+                aria-valuetext={
+                    progress.percent === null
+                        ? 'Target belum tersedia atau menunggu pemeriksaan'
+                        : `${progress.percent}% alokasi kategori`
+                }
+                className="h-1.5 overflow-hidden rounded-full bg-muted"
+            >
+                <div
+                    className={cn(
+                        'h-full rounded-full',
+                        progress.tone === 'danger'
+                            ? 'bg-destructive'
+                            : progress.tone === 'success'
+                              ? 'bg-success'
+                              : 'bg-warning',
+                    )}
+                    style={{ width: `${progress.fill}%` }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function AllocationDelta({ row }: { row: ReconciliationRow }) {
+    if (
+        row.dirty ||
+        row.quantity_status === 'NOT_EVALUATED' ||
+        row.difference == null
+    )
+        return '—';
+    const differences = reconciliationCategoryStates(row).some(
+        (category) =>
+            category.state === 'shortage' || category.state === 'excess',
+    );
+    return (
+        <div className="flex flex-col items-end gap-1">
+            <Badge
+                variant={
+                    row.difference > 0
+                        ? 'destructive'
+                        : row.difference < 0
+                          ? 'warning'
+                          : 'secondary'
+                }
+            >
+                {row.difference > 0 ? '+' : ''}
+                {row.difference}
+            </Badge>
+            {row.difference === 0 && differences && (
+                <span className="text-xs text-destructive">Beda kategori</span>
+            )}
+        </div>
+    );
+}
+
+function Differences({ row }: { row: ReconciliationRow }) {
+    const states = reconciliationCategoryStates(row);
+    const visible = states.filter(
+        (category) => category.relevant && category.expected !== null,
+    );
+    const stale = row.dirty || row.quantity_status === 'NOT_EVALUATED';
+    const deliveryError = [
+        'UNKNOWN',
+        'FAILED',
+        'DOCUMENT_FAILED',
+        'REVIEW',
+    ].includes(row.delivery_status);
+    return (
+        <div className="flex max-w-64 flex-col gap-1 text-xs leading-5 whitespace-normal">
+            {!stale && visible.length > 0 && (
+                <p className="text-muted-foreground">
+                    {visible
+                        .map(
+                            (category) =>
+                                `${category.label} ${category.confirmed}/${category.expected}`,
+                        )
+                        .join(' · ')}
+                </p>
+            )}
+            {row.last_error ? (
+                <p className="text-destructive">{row.last_error}</p>
+            ) : deliveryError ? (
+                <p className="text-destructive">
+                    {deliveryLabels[row.delivery_status]}
+                </p>
+            ) : (
+                <p className="text-muted-foreground">
+                    {stale
+                        ? 'Menunggu evaluasi terbaru'
+                        : (row.reasons?.[0] ??
+                          (row.finalization_status === 'LOCKED'
+                              ? 'Semua kategori sesuai'
+                              : row.quantity_status === 'MATCHED'
+                                ? 'Jumlah sesuai; finalisasi belum selesai'
+                                : visible.length
+                                  ? 'Alokasi / target per kategori'
+                                  : 'Menunggu target kategori yang sah'))}
+                </p>
+            )}
+        </div>
     );
 }
 
@@ -164,12 +497,11 @@ export default function PickupAutomationMonitoring({
     const selected =
         usePage<{ selectedPickup: number | null }>().props.selectedPickup ??
         null;
+    const canAdmin =
+        usePage<{ auth: { user: { role: string } } }>().props.auth?.user
+            ?.role === 'admin_supervisor';
     const selectedRef = useRef(selected);
     selectedRef.current = selected;
-    const [detail, setDetail] = useState<ReconciliationDetail | null>(null);
-    const detailRef = useRef(detail);
-    detailRef.current = detail;
-    const [error, setError] = useState('');
     const [refreshError, setRefreshError] = useState('');
     const [busy, setBusy] = useState(false);
     const navigating = useRef(false);
@@ -199,10 +531,8 @@ export default function PickupAutomationMonitoring({
         }
     };
     const dateDetails = useRef<HTMLDetailsElement>(null);
-    const request = useHttp<Record<string, never>, ReconciliationDetail>({});
-    const requestRef = useRef(request);
-    requestRef.current = request;
-    const detailVersion = useRef(0);
+    const [poolOpen, setPoolOpen] = useState(false);
+    const [filtersOpen, setFiltersOpen] = useState(false);
     const filter = useForm({
         q: filters.q ?? '',
         category: filters.category ?? '',
@@ -216,72 +546,13 @@ export default function PickupAutomationMonitoring({
         scope: filters.scope ?? 'daily',
         per_page: filters.per_page ?? '10',
     });
-    const loadDetail = useCallback(
-        async (id: number, pages: Record<string, string | number> = {}) => {
-            const token = ++detailVersion.current;
-            const current = detailRef.current;
-            requestRef.current.cancel();
-            if ((current?.selected_task_id ?? current?.task.id) !== id)
-                setDetail(null);
-            setError('');
-            const pagination =
-                current && (current.selected_task_id ?? current.task.id) === id
-                    ? {
-                          page: current.shipments.current_page,
-                          shipment_q: current.shipment_query,
-                          attached_page:
-                              current.assigned_shipments.current_page,
-                          manifest_page: current.manifests.current_page,
-                          history_page: current.history.current_page,
-                          pending_page: current.pending_items.current_page,
-                          excluded_page: current.excluded.current_page,
-                          review_page: current.review_events.current_page,
-                          view: current.customer_day
-                              ? 'customer_day'
-                              : 'pickup',
-                          member_task: current.task.id,
-                      }
-                    : { view: 'customer_day' };
-            try {
-                const response = await requestRef.current.get(
-                    routes.show.url(id, { query: { ...pagination, ...pages } }),
-                );
-                if (
-                    token === detailVersion.current &&
-                    selectedRef.current === id &&
-                    (response.selected_task_id ?? response.task.id) === id
-                )
-                    setDetail(response);
-            } catch {
-                if (
-                    token === detailVersion.current &&
-                    selectedRef.current === id
-                )
-                    setError(
-                        'Detail belum dapat dimuat. Periksa koneksi atau sesi, lalu coba lagi.',
-                    );
-            }
-        },
-        [],
-    );
-    useEffect(() => {
-        if (selected) void loadDetail(selected);
-        else {
-            detailVersion.current++;
-            requestRef.current.cancel();
-            setDetail(null);
-            setError('');
-        }
-        return () => {
-            detailVersion.current++;
-            requestRef.current.cancel();
-        };
-    }, [selected, loadDetail]);
     usePoll(15000, {
         only: ['automation'],
         onBefore: () =>
             selectedRef.current === null &&
             !navigating.current &&
+            !poolOpen &&
+            !filtersOpen &&
             !dateDetails.current?.open,
         onError: () =>
             setRefreshError(
@@ -378,40 +649,6 @@ export default function PickupAutomationMonitoring({
                 ? [...new Set([...current, id])].slice(0, 200)
                 : current.filter((value) => value !== id),
         );
-    const summaryCards = [
-        {
-            key: 'review',
-            label: 'Perlu diperiksa',
-            count: data.summary.review,
-            description: 'Memerlukan tindakan',
-            icon: AlertCircle,
-            tone: 'text-destructive bg-destructive/10',
-        },
-        {
-            key: 'waiting',
-            label: 'Menunggu data',
-            count: data.summary.waiting,
-            description: 'Bukti belum lengkap',
-            icon: Clock3,
-            tone: 'text-warning bg-warning/10',
-        },
-        {
-            key: 'done',
-            label: 'Selesai',
-            count: data.summary.done,
-            description: 'Rekonsiliasi lengkap',
-            icon: CheckCircle2,
-            tone: 'text-success bg-success/10',
-        },
-        {
-            key: '',
-            label: 'Customer / hari',
-            count: data.summary.total,
-            description: 'Dalam periode ini',
-            icon: Package,
-            tone: 'text-muted-foreground bg-muted',
-        },
-    ];
     const group = filters.reconciliation_group ?? '';
     const groupChange = (reconciliation_group: string) =>
         navigate({
@@ -443,548 +680,688 @@ export default function PickupAutomationMonitoring({
     const panel = selected ? (
         <PickupReconciliationDetail
             key={selected}
-            detail={detail}
-            error={error}
+            taskId={selected}
+            detail={null}
+            error=""
             timezone={timezone}
-            enabled={data.enabled}
+            enabled={data.enabled && canAdmin}
             close={() => select(null)}
-            reload={() => void loadDetail(selected)}
-            loadPage={(pages) => void loadDetail(selected, pages)}
+            reload={() => {
+                router.reload({ only: ['automation'] });
+            }}
+            loadPage={() => {}}
         />
     ) : null;
     return (
-        <div
-            aria-busy={busy}
-            className="reconciliation-workspace flex min-w-0 flex-col gap-4"
-        >
-            <Head title="Rekonsiliasi Paket" />
-            <header className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl leading-7 font-semibold tracking-tight">
-                        Rekonsiliasi Paket
-                    </h1>
-                    <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
-                        Cocokkan jumlah paket dengan data JNE dan identifikasi
-                        selisih atau data yang belum lengkap.
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <PickupPendingQueue
-                        count={data.pending_count}
-                        select={select}
-                    />
-                    <details ref={dateDetails} className="relative">
-                        <summary
-                            className={cn(
-                                buttonVariants({ variant: 'outline' }),
-                                'cursor-pointer list-none gap-2 bg-card [&::-webkit-details-marker]:hidden',
+        <Sheet open={poolOpen} onOpenChange={setPoolOpen}>
+            <div
+                aria-busy={busy}
+                className="reconciliation-workspace flex min-w-0 flex-col gap-4"
+            >
+                <Head title="Rekonsiliasi Paket" />
+                <header className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h1 className="text-2xl leading-7 font-semibold tracking-tight">
+                                Rekonsiliasi Paket
+                            </h1>
+                            {!data.enabled && (
+                                <Badge variant="outline">
+                                    Otomatisasi nonaktif
+                                </Badge>
                             )}
-                        >
-                            <CalendarDays
-                                className="size-4"
-                                aria-hidden="true"
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Rekonsiliasi AWB hasil penarikan dengan buku pickup
+                            per customer.
+                        </p>
+                    </div>
+                    <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 sm:flex sm:w-auto sm:flex-wrap">
+                        {data.pending_count > 0 && (
+                            <PickupPendingQueue
+                                count={data.pending_count}
+                                select={select}
                             />
-                            <span className="text-xs">
-                                {rangeLabel(filters.date_from)} –{' '}
-                                {rangeLabel(filters.date_to)}
-                            </span>
-                            <ChevronDown className="ml-2 size-3.5" />
-                        </summary>
-                        <form
-                            className="mt-2 flex w-full max-w-full min-w-0 flex-col gap-3 rounded-lg border bg-card p-4 shadow-lg sm:absolute sm:right-0 sm:z-10 sm:w-80"
-                            onSubmit={(event) => {
-                                event.preventDefault();
-                                navigate(filter.data);
-                            }}
+                        )}
+                        <Disclosure
+                            variant="plain"
+                            ref={dateDetails}
+                            className="relative col-span-3 sm:col-span-1"
                         >
-                            {[
-                                ['date_from', 'Dari tanggal pickup'],
-                                ['date_to', 'Sampai tanggal pickup'],
-                            ].map(([key, label]) => (
-                                <div
-                                    key={key}
-                                    className="flex flex-col gap-1.5"
-                                >
-                                    <Label
-                                        htmlFor={`recon-${key === 'date_from' ? 'date-from' : 'date-to'}`}
+                            <DisclosureSummary
+                                indicator={false}
+                                className={cn(
+                                    buttonVariants({ variant: 'outline' }),
+                                    'min-h-11 w-full cursor-pointer list-none gap-2 px-3 py-2 sm:min-h-9 sm:w-auto [&::-webkit-details-marker]:hidden',
+                                )}
+                            >
+                                <CalendarDays aria-hidden="true" />
+                                <span className="text-xs">
+                                    {rangeLabel(filters.date_from)} –{' '}
+                                    {rangeLabel(filters.date_to)}
+                                </span>
+                                <ChevronDown aria-hidden="true" />
+                            </DisclosureSummary>
+                            <form
+                                className="mt-2 flex w-full max-w-full min-w-0 flex-col gap-3 rounded-lg border bg-card p-4 shadow-lg sm:absolute sm:right-0 sm:z-10 sm:w-80"
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    navigate(filter.data);
+                                }}
+                            >
+                                {[
+                                    ['date_from', 'Dari tanggal pickup'],
+                                    ['date_to', 'Sampai tanggal pickup'],
+                                ].map(([key, label]) => (
+                                    <div
+                                        key={key}
+                                        className="flex flex-col gap-1.5"
                                     >
-                                        {label}
-                                    </Label>
-                                    <Input
-                                        id={`recon-${key === 'date_from' ? 'date-from' : 'date-to'}`}
-                                        name={key}
-                                        type="date"
-                                        value={
-                                            filter.data[
-                                                key as 'date_from' | 'date_to'
-                                            ]
-                                        }
-                                        aria-invalid={
-                                            !!filter.errors[
-                                                key as 'date_from' | 'date_to'
-                                            ]
-                                        }
-                                        aria-describedby={
-                                            filter.errors[
-                                                key as 'date_from' | 'date_to'
-                                            ]
-                                                ? `recon-${key}-error`
-                                                : undefined
-                                        }
-                                        onChange={(event) =>
-                                            filter.setData(
-                                                key as 'date_from' | 'date_to',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    {filter.errors[
-                                        key as 'date_from' | 'date_to'
-                                    ] && (
-                                        <p
-                                            id={`recon-${key}-error`}
-                                            className="text-xs text-destructive"
+                                        <Label
+                                            htmlFor={`recon-${key === 'date_from' ? 'date-from' : 'date-to'}`}
                                         >
-                                            {
-                                                filter.errors[
+                                            {label}
+                                        </Label>
+                                        <Input
+                                            id={`recon-${key === 'date_from' ? 'date-from' : 'date-to'}`}
+                                            name={key}
+                                            type="date"
+                                            value={
+                                                filter.data[
                                                     key as
                                                         | 'date_from'
                                                         | 'date_to'
                                                 ]
                                             }
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                            <Button type="submit" disabled={busy}>
-                                Terapkan periode
-                            </Button>
-                        </form>
-                    </details>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button
-                                variant="outline"
-                                disabled={
-                                    !data.enabled ||
-                                    !data.rows.total ||
-                                    busy ||
-                                    bulk.processing
-                                }
-                            >
-                                <ListChecks
-                                    data-icon="inline-start"
-                                    aria-hidden="true"
-                                />
-                                {bulk.processing
-                                    ? 'Mengantrekan…'
-                                    : 'Validasi massal'}
-                                <ChevronDown
-                                    data-icon="inline-end"
-                                    aria-hidden="true"
-                                />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuGroup>
-                                <DropdownMenuItem
-                                    disabled={!checked.length}
-                                    onSelect={() => void validateBulk(true)}
-                                >
-                                    Validasi pilihan ({checked.length})
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onSelect={() => void validateBulk(false)}
-                                >
-                                    Validasi semua hasil filter (
-                                    {data.rows.total})
-                                </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        aria-label="Muat ulang rekonsiliasi"
-                        disabled={busy}
-                        onClick={() =>
-                            router.reload({
-                                only: ['automation'],
-                                onSuccess: () => {
-                                    if (selected) void loadDetail(selected);
-                                },
-                            })
-                        }
-                    >
-                        <RefreshCw className="size-4" />
-                    </Button>
-                    <Button
-                        asChild
-                        disabled={!data.rows.total}
-                        className="size-9 p-0 sm:h-9 sm:w-auto sm:px-4"
-                    >
-                        <a
-                            aria-label={
-                                checked.length
-                                    ? `Ekspor CSV (${checked.length} pickup dipilih)`
-                                    : 'Ekspor CSV'
-                            }
-                            title="Ekspor CSV"
-                            href={routes.exportMethod.url({
-                                query: {
-                                    ...filters,
-                                    ...(checked.length
-                                        ? { selected_ids: checked }
-                                        : {}),
-                                },
-                            })}
-                        >
-                            <Download className="size-4" />
-                            <span className="hidden sm:inline">
-                                Ekspor CSV
-                                {checked.length ? ` (${checked.length})` : ''}
-                            </span>
-                        </a>
-                    </Button>
-                </div>
-            </header>
-            {busy && (
-                <p role="status" className="text-sm text-muted-foreground">
-                    Memuat rekonsiliasi…
-                </p>
-            )}
-            {bulkNotice && (
-                <p
-                    role="status"
-                    aria-live="polite"
-                    className="text-xs text-muted-foreground"
-                >
-                    {bulkNotice}
-                </p>
-            )}
-            {bulkError && (
-                <p role="alert" className="text-xs text-destructive">
-                    {bulkError}
-                </p>
-            )}
-            <p className="text-xs leading-5 text-muted-foreground">
-                Hari operasional 05.00–04.59 WIB · Target pickup{' '}
-                {data.processing.regular_target ?? '—'} + pending masuk{' '}
-                {data.processing.pending_incoming} ={' '}
-                {data.processing.target ?? '—'} AWB · Diproses{' '}
-                {data.processing.processed} AWB
-            </p>
-            {refreshError && (
-                <p role="alert" className="text-sm text-destructive">
-                    {refreshError}
-                </p>
-            )}
-            {!data.enabled && (
-                <p role="status" className="text-xs text-muted-foreground">
-                    Validasi otomatis belum aktif. Hasil evaluasi terakhir tetap
-                    ditampilkan.
-                </p>
-            )}
-            <div className="min-w-0">
-                <section
-                    aria-label="Daftar rekonsiliasi"
-                    className="flex min-w-0 flex-col gap-5"
-                >
-                    <section
-                        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
-                        aria-label="Ringkasan rekonsiliasi"
-                    >
-                        {summaryCards.map((card) => (
-                            <button
-                                type="button"
-                                key={card.key}
-                                disabled={busy}
-                                onClick={() => groupChange(card.key)}
-                                className="flex min-w-0 items-start gap-2 rounded-lg border bg-card p-3 text-left transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring sm:gap-3 sm:p-4"
-                            >
-                                <span
-                                    className={cn(
-                                        'flex size-8 shrink-0 items-center justify-center rounded-lg sm:size-11 sm:rounded-xl',
-                                        card.tone,
-                                    )}
-                                >
-                                    <card.icon
-                                        className="size-5 sm:size-6"
-                                        aria-hidden="true"
-                                    />
-                                </span>
-                                <span className="min-w-0">
-                                    <span className="block text-[11px] text-muted-foreground sm:text-xs">
-                                        {card.label}
-                                    </span>
-                                    <span className="mt-1 block text-xl leading-6 font-semibold tabular-nums sm:text-2xl sm:leading-8">
-                                        {card.count}
-                                    </span>
-                                    <span className="mt-1 hidden text-[11px] text-muted-foreground sm:block">
-                                        {card.description}
-                                    </span>
-                                </span>
-                            </button>
-                        ))}
-                    </section>
-                    <nav
-                        className="flex flex-wrap gap-2"
-                        aria-label="Status rekonsiliasi paket"
-                    >
-                        {[
-                            ['', 'Semua', data.summary.total],
-                            ['review', 'Perlu diperiksa', data.summary.review],
-                            ['waiting', 'Menunggu data', data.summary.waiting],
-                            ['done', 'Selesai', data.summary.done],
-                        ].map(([key, label, count]) => (
-                            <Button
-                                key={key}
-                                variant="outline"
-                                size="sm"
-                                disabled={busy}
-                                aria-current={
-                                    group === key ? 'page' : undefined
-                                }
-                                onClick={() => groupChange(String(key))}
-                                className={cn(
-                                    'gap-2 bg-card',
-                                    group === key &&
-                                        'border-primary/40 bg-primary/5 text-primary',
-                                )}
-                            >
-                                <span>{label}</span>
-                                <span
-                                    className={cn(
-                                        'rounded px-1.5 py-0.5 text-[10px] tabular-nums',
-                                        group === key
-                                            ? 'bg-primary/10'
-                                            : 'bg-muted',
-                                    )}
-                                >
-                                    {count}
-                                </span>
-                            </Button>
-                        ))}
-                    </nav>
-                    <form
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            navigate(filter.data);
-                        }}
-                        className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
-                        aria-label="Filter rekonsiliasi paket"
-                    >
-                        <div className="relative col-span-2 min-w-48 flex-1">
-                            <Search
-                                className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground"
-                                aria-hidden="true"
-                            />
-                            <Input
-                                name="q"
-                                aria-label="Cari customer, kode pickup, atau keterangan"
-                                className="h-10 bg-card pl-9"
-                                placeholder="Cari customer, kode pickup, atau keterangan…"
-                                autoComplete="off"
-                                value={filter.data.q}
-                                onChange={(event) =>
-                                    filter.setData('q', event.target.value)
-                                }
-                            />
-                        </div>
-                        <select
-                            aria-label="Kategori paket"
-                            className="h-10 min-w-0 rounded-md border bg-card px-3 text-xs sm:max-w-36"
-                            value={filter.data.category}
-                            onChange={(event) =>
-                                navigate({ category: event.target.value })
-                            }
-                        >
-                            <option value="">Semua kategori</option>
-                            {categories.map(([key, label]) => (
-                                <option key={key} value={key}>
-                                    {label}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            aria-label="Petugas pickup"
-                            className="h-10 min-w-0 rounded-md border bg-card px-3 text-xs sm:max-w-36"
-                            value={filter.data.staff || filter.data.staff_id}
-                            onChange={(event) =>
-                                navigate({
-                                    staff_id: event.target.value,
-                                    staff: '',
-                                })
-                            }
-                        >
-                            <option value="">Semua petugas</option>
-                            {filter.data.staff && (
-                                <option value={filter.data.staff}>
-                                    {filter.data.staff}
-                                </option>
-                            )}
-                            {staffOptions.map((staff) => (
-                                <option key={staff.id} value={staff.id}>
-                                    {staff.name}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            aria-label="Status rekonsiliasi atau pengiriman"
-                            className="h-10 min-w-0 rounded-md border bg-card px-3 text-xs sm:max-w-40"
-                            value={statusValue}
-                            onChange={(event) => {
-                                const [type, value] =
-                                    event.target.value.split(':');
-                                navigate({
-                                    automation_status:
-                                        type === 'reconciliation' ? value : '',
-                                    delivery_status:
-                                        type === 'delivery' ? value : '',
-                                });
-                            }}
-                        >
-                            <option value="">Semua status</option>
-                            <optgroup label="Rekonsiliasi">
-                                {Object.entries(reconciliationLabels).map(
-                                    ([key, label]) => (
-                                        <option
-                                            key={key}
-                                            value={`reconciliation:${key}`}
-                                        >
-                                            {label}
-                                            {key === 'PARTIAL'
-                                                ? ' (sebagian)'
-                                                : ''}
-                                        </option>
-                                    ),
-                                )}
-                            </optgroup>
-                            <optgroup label="Pengiriman resi">
-                                {Object.entries(deliveryLabels).map(
-                                    ([key, label]) => (
-                                        <option
-                                            key={key}
-                                            value={`delivery:${key}`}
-                                        >
-                                            {label}
-                                        </option>
-                                    ),
-                                )}
-                            </optgroup>
-                        </select>
-                        <Button
-                            type="submit"
-                            variant="outline"
-                            className="h-10 bg-card"
-                            disabled={busy}
-                        >
-                            <Filter className="size-4" />
-                            Filter
-                        </Button>
-                    </form>
-                    {checked.length > 0 && (
-                        <div
-                            className="flex items-center justify-between gap-3 text-xs text-muted-foreground"
-                            role="status"
-                        >
-                            <span>
-                                {checked.length} customer / hari dipilih.
-                            </span>
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setChecked([])}
-                            >
-                                Batalkan pilihan
-                            </Button>
-                        </div>
-                    )}
-                    <div className="hidden min-w-0 overflow-hidden rounded-lg border bg-card md:block">
-                        <Table className="text-xs">
-                            <TableHeader>
-                                <TableRow className="bg-muted/20">
-                                    <TableHead className="w-9 px-3">
-                                        <Checkbox
-                                            aria-label="Pilih semua pickup pada halaman ini"
-                                            checked={
-                                                allChecked
-                                                    ? true
-                                                    : visibleIds.some((id) =>
-                                                            checked.includes(
-                                                                id,
-                                                            ),
-                                                        )
-                                                      ? 'indeterminate'
-                                                      : false
+                                            aria-invalid={
+                                                !!filter.errors[
+                                                    key as
+                                                        | 'date_from'
+                                                        | 'date_to'
+                                                ]
                                             }
-                                            disabled={!visibleIds.length}
-                                            onCheckedChange={(value) =>
-                                                setChecked((current) =>
-                                                    value
-                                                        ? [
-                                                              ...new Set([
-                                                                  ...current,
-                                                                  ...visibleIds,
-                                                              ]),
-                                                          ].slice(0, 200)
-                                                        : current.filter(
-                                                              (id) =>
-                                                                  !visibleIds.includes(
-                                                                      id,
-                                                                  ),
-                                                          ),
+                                            aria-describedby={
+                                                filter.errors[
+                                                    key as
+                                                        | 'date_from'
+                                                        | 'date_to'
+                                                ]
+                                                    ? `recon-${key}-error`
+                                                    : undefined
+                                            }
+                                            onChange={(event) =>
+                                                filter.setData(
+                                                    key as
+                                                        | 'date_from'
+                                                        | 'date_to',
+                                                    event.target.value,
                                                 )
                                             }
                                         />
-                                    </TableHead>
-                                    <TableHead>Customer / Pickup</TableHead>
-                                    <TableHead className="text-right whitespace-nowrap">
-                                        Total paket
-                                    </TableHead>
-                                    <TableHead>
-                                        Rincian selisih / masalah utama
-                                    </TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="hidden 2xl:table-cell">
-                                        Terakhir diperbarui
-                                    </TableHead>
-                                    <TableHead className="text-right">
-                                        Aksi
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {data.rows.data.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        data-selected={selected === row.id}
-                                        className={cn(
-                                            'hover:bg-primary/5',
-                                            selected === row.id &&
-                                                'bg-primary/5',
+                                        {filter.errors[
+                                            key as 'date_from' | 'date_to'
+                                        ] && (
+                                            <p
+                                                id={`recon-${key}-error`}
+                                                className="text-xs text-destructive"
+                                            >
+                                                {
+                                                    filter.errors[
+                                                        key as
+                                                            | 'date_from'
+                                                            | 'date_to'
+                                                    ]
+                                                }
+                                            </p>
                                         )}
+                                    </div>
+                                ))}
+                                <Button type="submit" disabled={busy}>
+                                    Terapkan periode
+                                </Button>
+                            </form>
+                        </Disclosure>
+                        <SheetTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="min-h-11 sm:min-h-9"
+                            >
+                                Pool AWB
+                                {!!data.pool_summary?.unassigned && (
+                                    <Badge variant="secondary">
+                                        {data.pool_summary.unassigned.toLocaleString(
+                                            'id-ID',
+                                        )}
+                                    </Badge>
+                                )}
+                            </Button>
+                        </SheetTrigger>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-11 sm:size-9"
+                                    aria-label="Tindakan lainnya"
+                                >
+                                    <MoreHorizontal aria-hidden="true" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                        asChild
+                                        disabled={!data.rows.total}
                                     >
-                                        <TableCell className="px-3">
+                                        <a
+                                            href={routes.exportMethod.url({
+                                                query: {
+                                                    ...filters,
+                                                    ...(checked.length
+                                                        ? {
+                                                              selected_ids:
+                                                                  checked,
+                                                          }
+                                                        : {}),
+                                                },
+                                            })}
+                                        >
+                                            <Download aria-hidden="true" />
+                                            {checked.length
+                                                ? `Ekspor ${checked.length} pilihan`
+                                                : 'Ekspor CSV'}
+                                        </a>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        disabled={
+                                            !canAdmin ||
+                                            !data.enabled ||
+                                            !data.rows.total ||
+                                            busy ||
+                                            bulk.processing
+                                        }
+                                        onSelect={() =>
+                                            void validateBulk(false)
+                                        }
+                                    >
+                                        <ListChecks aria-hidden="true" />
+                                        Validasi semua hasil filter (
+                                        {data.rows.total})
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                        onSelect={() => setPoolOpen(true)}
+                                    >
+                                        <Info aria-hidden="true" />
+                                        Ringkasan & aturan operasional
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="size-11 sm:size-9"
+                            aria-label="Muat ulang rekonsiliasi"
+                            disabled={busy}
+                            onClick={() =>
+                                router.reload({
+                                    only: ['automation'],
+                                })
+                            }
+                        >
+                            <RefreshCw aria-hidden="true" />
+                        </Button>
+                    </div>
+                </header>
+                {busy && (
+                    <p role="status" className="text-sm text-muted-foreground">
+                        Memuat rekonsiliasi…
+                    </p>
+                )}
+                {bulkNotice && (
+                    <p
+                        role="status"
+                        aria-live="polite"
+                        className="text-xs text-muted-foreground"
+                    >
+                        {bulkNotice}
+                    </p>
+                )}
+                {bulkError && (
+                    <p role="alert" className="text-xs text-destructive">
+                        {bulkError}
+                    </p>
+                )}
+                {refreshError && (
+                    <p role="alert" className="text-sm text-destructive">
+                        {refreshError}
+                    </p>
+                )}
+                <AllocationCards data={data} />
+                <div className="min-w-0">
+                    <section
+                        aria-label="Daftar rekonsiliasi"
+                        className="flex min-w-0 flex-col gap-3"
+                    >
+                        <ToggleGroup
+                            type="single"
+                            variant="navigation"
+                            value={group || 'all'}
+                            disabled={busy}
+                            onValueChange={(value) => {
+                                if (value)
+                                    groupChange(value === 'all' ? '' : value);
+                            }}
+                            className="grid w-full grid-cols-2 gap-1.5 sm:flex sm:w-fit"
+                            aria-label="Status rekonsiliasi paket"
+                        >
+                            {[
+                                ['', 'Semua', data.summary.total],
+                                [
+                                    'review',
+                                    'Perlu diperiksa',
+                                    data.summary.review,
+                                ],
+                                [
+                                    'waiting',
+                                    'Menunggu data',
+                                    data.summary.waiting,
+                                ],
+                                ['done', 'Selesai', data.summary.done],
+                            ].map(([key, label, count]) => (
+                                <ToggleGroupItem
+                                    key={key}
+                                    value={String(key) || 'all'}
+                                    className="min-h-11 gap-2 rounded-md px-3 sm:min-h-9"
+                                >
+                                    <span>{label}</span>
+                                    <Badge variant="secondary">{count}</Badge>
+                                </ToggleGroupItem>
+                            ))}
+                        </ToggleGroup>
+                        <form
+                            onSubmit={(event) => {
+                                event.preventDefault();
+                                navigate(filter.data);
+                            }}
+                            className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap"
+                            aria-label="Filter rekonsiliasi paket"
+                        >
+                            <div className="col-span-2 flex min-w-0 flex-1 gap-2 sm:min-w-48">
+                                <Input
+                                    name="q"
+                                    aria-label="Cari customer, kode pickup, atau keterangan"
+                                    className="min-h-11 min-w-0 sm:min-h-9"
+                                    placeholder="Cari customer atau buku pickup…"
+                                    autoComplete="off"
+                                    value={filter.data.q}
+                                    onChange={(event) =>
+                                        filter.setData('q', event.target.value)
+                                    }
+                                />
+                                <Button
+                                    type="submit"
+                                    variant="outline"
+                                    className="min-h-11 sm:min-h-9"
+                                    disabled={busy}
+                                >
+                                    <Search aria-hidden="true" />
+                                    Cari
+                                </Button>
+                            </div>
+                            <NativeSelect
+                                wrapperClassName="min-w-0 sm:w-44"
+                                aria-label="Kategori paket"
+                                className="min-h-11 sm:min-h-9"
+                                value={filter.data.category}
+                                onChange={(event) =>
+                                    navigate({ category: event.target.value })
+                                }
+                            >
+                                <option value="">Semua kategori</option>
+                                {categories.map(([key, label]) => (
+                                    <option key={key} value={key}>
+                                        {label}
+                                    </option>
+                                ))}
+                            </NativeSelect>
+                            <NativeSelect
+                                id="reconciliation-status"
+                                aria-label="Status rekonsiliasi atau pengiriman"
+                                wrapperClassName="min-w-0 sm:w-48"
+                                className="min-h-11 sm:min-h-9"
+                                value={statusValue}
+                                onChange={(event) => {
+                                    const [type, value] =
+                                        event.target.value.split(':');
+                                    navigate({
+                                        automation_status:
+                                            type === 'reconciliation'
+                                                ? value
+                                                : '',
+                                        delivery_status:
+                                            type === 'delivery' ? value : '',
+                                    });
+                                }}
+                            >
+                                <option value="">Semua status</option>
+                                <optgroup label="Rekonsiliasi">
+                                    {Object.entries(reconciliationLabels).map(
+                                        ([key, label]) => (
+                                            <option
+                                                key={key}
+                                                value={`reconciliation:${key}`}
+                                            >
+                                                {label}
+                                                {key === 'PARTIAL'
+                                                    ? ' (sebagian)'
+                                                    : ''}
+                                            </option>
+                                        ),
+                                    )}
+                                </optgroup>
+                                <optgroup label="Pengiriman resi">
+                                    {Object.entries(deliveryLabels).map(
+                                        ([key, label]) => (
+                                            <option
+                                                key={key}
+                                                value={`delivery:${key}`}
+                                            >
+                                                {label}
+                                            </option>
+                                        ),
+                                    )}
+                                </optgroup>
+                            </NativeSelect>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="min-h-11 sm:min-h-9"
+                                onClick={() => setFiltersOpen(true)}
+                            >
+                                <Filter aria-hidden="true" />
+                                Filter lainnya
+                                {(!!filter.data.staff ||
+                                    !!filter.data.staff_id) && (
+                                    <Badge variant="secondary">1</Badge>
+                                )}
+                            </Button>
+                            <Sheet
+                                open={filtersOpen}
+                                onOpenChange={setFiltersOpen}
+                            >
+                                <SheetContent className="w-full sm:max-w-md">
+                                    <SheetHeader>
+                                        <SheetTitle>
+                                            Filter rekonsiliasi
+                                        </SheetTitle>
+                                        <SheetDescription>
+                                            Saring hasil berdasarkan petugas
+                                            pickup.
+                                        </SheetDescription>
+                                    </SheetHeader>
+                                    <div className="flex flex-col gap-4 px-4">
+                                        <Label htmlFor="reconciliation-staff">
+                                            Petugas pickup
+                                        </Label>
+                                        <NativeSelect
+                                            id="reconciliation-staff"
+                                            aria-label="Petugas pickup"
+                                            className="min-h-11"
+                                            value={
+                                                filter.data.staff ||
+                                                filter.data.staff_id
+                                            }
+                                            onChange={(event) =>
+                                                navigate({
+                                                    staff_id:
+                                                        event.target.value,
+                                                    staff: '',
+                                                })
+                                            }
+                                        >
+                                            <option value="">
+                                                Semua petugas
+                                            </option>
+                                            {filter.data.staff && (
+                                                <option
+                                                    value={filter.data.staff}
+                                                >
+                                                    {filter.data.staff}
+                                                </option>
+                                            )}
+                                            {staffOptions.map((staff) => (
+                                                <option
+                                                    key={staff.id}
+                                                    value={staff.id}
+                                                >
+                                                    {staff.name}
+                                                </option>
+                                            ))}
+                                        </NativeSelect>
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+                        </form>
+                        {checked.length > 0 && (
+                            <div
+                                className="flex flex-wrap items-center gap-2 rounded-md border p-2 text-sm"
+                                role="status"
+                            >
+                                <span>
+                                    {checked.length} customer / hari dipilih.
+                                </span>
+                                <Button
+                                    size="sm"
+                                    className="min-h-11 sm:min-h-8"
+                                    disabled={
+                                        !canAdmin ||
+                                        !data.enabled ||
+                                        busy ||
+                                        bulk.processing
+                                    }
+                                    onClick={() => void validateBulk(true)}
+                                >
+                                    <ListChecks aria-hidden="true" />
+                                    {bulk.processing
+                                        ? 'Mengantrekan…'
+                                        : 'Validasi pilihan'}
+                                </Button>
+                                <Button
+                                    asChild
+                                    size="sm"
+                                    variant="outline"
+                                    className="min-h-11 sm:min-h-8"
+                                >
+                                    <a
+                                        href={routes.exportMethod.url({
+                                            query: {
+                                                ...filters,
+                                                selected_ids: checked,
+                                            },
+                                        })}
+                                    >
+                                        Ekspor pilihan
+                                    </a>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setChecked([])}
+                                >
+                                    Batalkan pilihan
+                                </Button>
+                            </div>
+                        )}
+                        <div className="hidden min-w-0 overflow-hidden rounded-lg border bg-card md:block">
+                            <Table className="text-sm">
+                                <TableHeader>
+                                    <TableRow className="bg-muted/20">
+                                        <TableHead className="w-9 px-3">
                                             <Checkbox
-                                                aria-label={`Pilih pickup ${row.reference}`}
-                                                checked={checked.includes(
-                                                    row.id,
-                                                )}
+                                                aria-label="Pilih semua pickup pada halaman ini"
+                                                checked={
+                                                    allChecked
+                                                        ? true
+                                                        : visibleIds.some(
+                                                                (id) =>
+                                                                    checked.includes(
+                                                                        id,
+                                                                    ),
+                                                            )
+                                                          ? 'indeterminate'
+                                                          : false
+                                                }
+                                                disabled={!visibleIds.length}
                                                 onCheckedChange={(value) =>
-                                                    chooseRow(row.id, !!value)
+                                                    setChecked((current) =>
+                                                        value
+                                                            ? [
+                                                                  ...new Set([
+                                                                      ...current,
+                                                                      ...visibleIds,
+                                                                  ]),
+                                                              ].slice(0, 200)
+                                                            : current.filter(
+                                                                  (id) =>
+                                                                      !visibleIds.includes(
+                                                                          id,
+                                                                      ),
+                                                              ),
+                                                    )
                                                 }
                                             />
-                                        </TableCell>
-                                        <TableCell className="max-w-60 whitespace-normal">
-                                            <button
-                                                type="button"
-                                                className="text-left leading-5 font-semibold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
-                                                onClick={() => select(row.id)}
+                                        </TableHead>
+                                        <TableHead>
+                                            Customer / Buku pickup
+                                        </TableHead>
+                                        <TableHead className="text-right whitespace-nowrap">
+                                            Target
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            Alokasi
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            Selisih
+                                        </TableHead>
+                                        <TableHead>Progress</TableHead>
+                                        <TableHead>Status kategori</TableHead>
+                                        <TableHead>Rincian / masalah</TableHead>
+                                        <TableHead className="text-right">
+                                            Aksi
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {data.rows.data.map((row) => (
+                                        <TableRow
+                                            key={row.id}
+                                            data-selected={selected === row.id}
+                                            className={cn(
+                                                'hover:bg-primary/5',
+                                                selected === row.id &&
+                                                    'bg-primary/5',
+                                            )}
+                                        >
+                                            <TableCell className="px-3">
+                                                <Checkbox
+                                                    aria-label={`Pilih pickup ${row.reference}`}
+                                                    checked={checked.includes(
+                                                        row.id,
+                                                    )}
+                                                    onCheckedChange={(value) =>
+                                                        chooseRow(
+                                                            row.id,
+                                                            !!value,
+                                                        )
+                                                    }
+                                                />
+                                            </TableCell>
+                                            <TableCell className="max-w-60 whitespace-normal">
+                                                <button
+                                                    type="button"
+                                                    className="text-left leading-5 font-semibold outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+                                                    onClick={() =>
+                                                        select(row.id)
+                                                    }
+                                                >
+                                                    {row.customer_name}
+                                                </button>
+                                                <p className="mt-0.5 text-[11px] break-all text-muted-foreground">
+                                                    {row.reference}
+                                                </p>
+                                                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                                    {row.business_date
+                                                        ? row.business_date
+                                                        : reconciliationTime(
+                                                              row.picked_up_at,
+                                                              timezone,
+                                                              true,
+                                                          )}
+                                                    <Badge variant="outline">
+                                                        {row.pickup_count ?? 1}{' '}
+                                                        pickup
+                                                    </Badge>
+                                                </p>
+                                            </TableCell>
+                                            <TableCell
+                                                className="text-right font-medium tabular-nums"
+                                                title="Target kategori dari POP/handover final"
                                             >
+                                                {row.expected_quantity ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {row.allocated_quantity ?? '—'}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                <AllocationDelta row={row} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <AllocationProgress row={row} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <AllocationStatus row={row} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Differences row={row} />
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 gap-1 px-2 text-[11px]"
+                                                    onClick={() =>
+                                                        select(row.id)
+                                                    }
+                                                    aria-label={`Lihat rekonsiliasi ${row.customer_name}`}
+                                                >
+                                                    <Files className="size-3.5 text-primary" />
+                                                    Lihat
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        <div className="flex flex-col divide-y rounded-lg border bg-card md:hidden">
+                            {data.rows.data.map((row) => (
+                                <article
+                                    key={row.id}
+                                    className={cn(
+                                        'flex flex-col gap-3 p-4',
+                                        selected === row.id && 'bg-primary/5',
+                                    )}
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <h2 className="text-sm leading-5 font-semibold">
                                                 {row.customer_name}
-                                            </button>
-                                            <p className="mt-0.5 text-[11px] break-all text-muted-foreground">
+                                            </h2>
+                                            <p className="mt-1 text-[11px] break-all text-muted-foreground">
                                                 {row.business_date
                                                     ? row.business_date +
                                                       ' · ' +
@@ -992,274 +1369,290 @@ export default function PickupAutomationMonitoring({
                                                       ' pickup'
                                                     : row.reference}
                                             </p>
-                                            {row.dirty && (
-                                                <p className="mt-1 text-[10px] text-warning">
-                                                    Menunggu evaluasi terbaru
-                                                </p>
-                                            )}
-                                        </TableCell>
-                                        <TableCell
-                                            className="text-right font-medium tabular-nums"
-                                            title="Jumlah resi / AWB unik pada POP"
-                                        >
-                                            {rowPackageTotal(row) ?? '—'}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Differences row={row} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <ReconciliationStatus
-                                                status={row.automation_status}
-                                                group={row.reconciliation_group}
-                                            />
-                                        </TableCell>
-                                        <TableCell className="hidden whitespace-nowrap text-muted-foreground 2xl:table-cell">
-                                            {reconciliationTime(
-                                                row.evaluated_at,
-                                                timezone,
-                                                true,
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 gap-1 px-2 text-[11px]"
-                                                onClick={() => select(row.id)}
-                                                aria-label={`Lihat rekonsiliasi ${row.customer_name}`}
-                                            >
-                                                <Files className="size-3.5 text-primary" />
-                                                Lihat
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                    <div className="flex flex-col divide-y rounded-lg border bg-card md:hidden">
-                        {data.rows.data.map((row) => (
-                            <article
-                                key={row.id}
-                                className={cn(
-                                    'flex flex-col gap-3 p-4',
-                                    selected === row.id && 'bg-primary/5',
-                                )}
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <h2 className="text-sm leading-5 font-semibold">
-                                            {row.customer_name}
-                                        </h2>
-                                        <p className="mt-1 text-[11px] break-all text-muted-foreground">
-                                            {row.business_date
-                                                ? row.business_date +
-                                                  ' · ' +
-                                                  row.pickup_count +
-                                                  ' pickup'
-                                                : row.reference}
-                                        </p>
+                                        </div>
+                                        <Checkbox
+                                            aria-label={`Pilih pickup ${row.reference}`}
+                                            checked={checked.includes(row.id)}
+                                            onCheckedChange={(value) =>
+                                                chooseRow(row.id, !!value)
+                                            }
+                                        />
                                     </div>
-                                    <Checkbox
-                                        aria-label={`Pilih pickup ${row.reference}`}
-                                        checked={checked.includes(row.id)}
-                                        onCheckedChange={(value) =>
-                                            chooseRow(row.id, !!value)
-                                        }
-                                    />
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-xs text-muted-foreground">
-                                        Total paket{' '}
-                                        <strong className="ml-1 text-foreground tabular-nums">
-                                            {rowPackageTotal(row) ?? '—'}
-                                        </strong>
-                                    </span>
-                                    <ReconciliationStatus
-                                        status={row.automation_status}
-                                        group={row.reconciliation_group}
-                                    />
-                                </div>
-                                <Differences row={row} />
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[10px] text-muted-foreground">
-                                        {row.dirty
-                                            ? 'Menunggu evaluasi terbaru'
-                                            : reconciliationTime(
-                                                  row.evaluated_at,
-                                                  timezone,
-                                                  true,
-                                              )}
-                                    </span>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="min-h-10"
-                                        onClick={() => select(row.id)}
-                                    >
-                                        <PanelRightOpen className="size-4" />
-                                        Lihat detail
-                                    </Button>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
-                    {!data.rows.total && (
-                        <div className="rounded-lg border bg-card px-4 py-12 text-center">
-                            <Package className="mx-auto size-8 text-muted-foreground" />
-                            <h2 className="mt-3 text-sm font-medium">
-                                Tidak ada rekonsiliasi sesuai filter
-                            </h2>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Ubah periode, pencarian, atau status untuk
-                                melihat data lain.
-                            </p>
-                            <Button
-                                variant="outline"
-                                className="mt-4"
-                                onClick={() =>
-                                    navigate({
-                                        q: '',
-                                        category: '',
-                                        staff: '',
-                                        staff_id: '',
-                                        automation_status: '',
-                                        delivery_status: '',
-                                        reconciliation_group: '',
-                                    })
-                                }
-                            >
-                                Reset filter pencarian
-                            </Button>
-                        </div>
-                    )}
-                    <footer className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-                        <p>
-                            Menampilkan {data.rows.from ?? 0} –{' '}
-                            {data.rows.to ?? 0} dari {data.rows.total} customer
-                            / hari
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <select
-                                aria-label="Jumlah customer per halaman"
-                                className="h-9 rounded-md border bg-card px-2 text-xs"
-                                value={filter.data.per_page}
-                                onChange={(event) =>
-                                    navigate({ per_page: event.target.value })
-                                }
-                            >
-                                {[10, 20, 50].map((count) => (
-                                    <option key={count} value={count}>
-                                        {count} per halaman
-                                    </option>
-                                ))}
-                            </select>
-                            {[
-                                [1, ChevronsLeft, 'Halaman pertama'],
-                                [
-                                    data.rows.current_page - 1,
-                                    ChevronLeft,
-                                    'Halaman sebelumnya',
-                                ],
-                            ].map(([page, Icon, label]) => {
-                                const PageIcon = Icon as typeof ChevronLeft;
-                                return (
-                                    <Button
-                                        key={String(label)}
-                                        variant="outline"
-                                        size="icon"
-                                        className="size-8 bg-card"
-                                        disabled={
-                                            busy || data.rows.current_page <= 1
-                                        }
-                                        aria-label={String(label)}
-                                        onClick={() => changePage(Number(page))}
-                                    >
-                                        <PageIcon className="size-3.5" />
-                                    </Button>
-                                );
-                            })}
-                            {pages.map((page) => (
-                                <Button
-                                    key={page}
-                                    variant={
-                                        page === data.rows.current_page
-                                            ? 'default'
-                                            : 'outline'
-                                    }
-                                    className="size-8 px-0"
-                                    aria-label={`Halaman ${page}`}
-                                    aria-current={
-                                        page === data.rows.current_page
-                                            ? 'page'
-                                            : undefined
-                                    }
-                                    disabled={busy}
-                                    onClick={() => changePage(page)}
-                                >
-                                    {page}
-                                </Button>
+                                    <dl className="grid grid-cols-3 gap-3 text-sm">
+                                        {(
+                                            [
+                                                [
+                                                    'Target',
+                                                    row.expected_quantity,
+                                                ],
+                                                [
+                                                    'Alokasi',
+                                                    row.allocated_quantity,
+                                                ],
+                                                ['Selisih', row.difference],
+                                            ] as const
+                                        ).map(([label, value]) => (
+                                            <div key={label}>
+                                                <dt className="text-xs text-muted-foreground">
+                                                    {label}
+                                                </dt>
+                                                <dd className="font-medium tabular-nums">
+                                                    {value ?? '—'}
+                                                </dd>
+                                            </div>
+                                        ))}
+                                    </dl>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <AllocationStatus row={row} />
+                                    </div>
+                                    <AllocationProgress row={row} />
+                                    <Differences row={row} />
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-[10px] text-muted-foreground">
+                                            {row.dirty
+                                                ? 'Menunggu evaluasi terbaru'
+                                                : reconciliationTime(
+                                                      row.evaluated_at,
+                                                      timezone,
+                                                      true,
+                                                  )}
+                                        </span>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="min-h-10"
+                                            onClick={() => select(row.id)}
+                                        >
+                                            <PanelRightOpen className="size-4" />
+                                            Lihat detail
+                                        </Button>
+                                    </div>
+                                </article>
                             ))}
-                            {[
-                                [
-                                    data.rows.current_page + 1,
-                                    ChevronRight,
-                                    'Halaman berikutnya',
-                                ],
-                                [
-                                    data.rows.last_page,
-                                    ChevronsRight,
-                                    'Halaman terakhir',
-                                ],
-                            ].map(([page, Icon, label]) => {
-                                const PageIcon = Icon as typeof ChevronLeft;
-                                return (
-                                    <Button
-                                        key={String(label)}
-                                        variant="outline"
-                                        size="icon"
-                                        className="size-8 bg-card"
-                                        disabled={
-                                            busy ||
-                                            data.rows.current_page >=
-                                                data.rows.last_page
-                                        }
-                                        aria-label={String(label)}
-                                        onClick={() => changePage(Number(page))}
-                                    >
-                                        <PageIcon className="size-3.5" />
-                                    </Button>
-                                );
-                            })}
                         </div>
-                    </footer>
-                </section>
-            </div>
-            <Sheet
-                open={selected !== null}
-                onOpenChange={(open) => {
-                    if (!open) select(null);
-                }}
-            >
-                <SheetContent
-                    className="w-full gap-0 p-0 sm:max-w-xl [&>button:last-child]:hidden"
-                    onCloseAutoFocus={(event) => {
-                        if (detailTrigger.current?.isConnected) {
-                            event.preventDefault();
-                            detailTrigger.current.focus();
-                        }
-                    }}
-                >
-                    <SheetHeader className="sr-only">
-                        <SheetTitle>Detail Rekonsiliasi</SheetTitle>
+                        {!data.rows.total && (
+                            <div className="rounded-lg border bg-card px-4 py-12 text-center">
+                                <Package className="mx-auto size-8 text-muted-foreground" />
+                                <h2 className="mt-3 text-sm font-medium">
+                                    Tidak ada rekonsiliasi sesuai filter
+                                </h2>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Ubah periode, pencarian, atau status untuk
+                                    melihat data lain.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    className="mt-4"
+                                    onClick={() =>
+                                        navigate({
+                                            q: '',
+                                            category: '',
+                                            staff: '',
+                                            staff_id: '',
+                                            automation_status: '',
+                                            delivery_status: '',
+                                            reconciliation_group: '',
+                                        })
+                                    }
+                                >
+                                    Reset filter pencarian
+                                </Button>
+                            </div>
+                        )}
+                        <footer className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+                            <p>
+                                Menampilkan {data.rows.from ?? 0} –{' '}
+                                {data.rows.to ?? 0} dari {data.rows.total}{' '}
+                                customer / hari
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <NativeSelect
+                                    aria-label="Jumlah customer per halaman"
+                                    className="h-9 rounded-md border bg-card px-2 text-xs"
+                                    value={filter.data.per_page}
+                                    onChange={(event) =>
+                                        navigate({
+                                            per_page: event.target.value,
+                                        })
+                                    }
+                                >
+                                    {[10, 20, 50].map((count) => (
+                                        <option key={count} value={count}>
+                                            {count} per halaman
+                                        </option>
+                                    ))}
+                                </NativeSelect>
+                                {[
+                                    [1, ChevronsLeft, 'Halaman pertama'],
+                                    [
+                                        data.rows.current_page - 1,
+                                        ChevronLeft,
+                                        'Halaman sebelumnya',
+                                    ],
+                                ].map(([page, Icon, label]) => {
+                                    const PageIcon = Icon as typeof ChevronLeft;
+                                    return (
+                                        <Button
+                                            key={String(label)}
+                                            variant="outline"
+                                            size="icon"
+                                            className="size-8 bg-card"
+                                            disabled={
+                                                busy ||
+                                                data.rows.current_page <= 1
+                                            }
+                                            aria-label={String(label)}
+                                            onClick={() =>
+                                                changePage(Number(page))
+                                            }
+                                        >
+                                            <PageIcon className="size-3.5" />
+                                        </Button>
+                                    );
+                                })}
+                                {pages.map((page) => (
+                                    <Button
+                                        key={page}
+                                        variant={
+                                            page === data.rows.current_page
+                                                ? 'default'
+                                                : 'outline'
+                                        }
+                                        className="size-8 px-0"
+                                        aria-label={`Halaman ${page}`}
+                                        aria-current={
+                                            page === data.rows.current_page
+                                                ? 'page'
+                                                : undefined
+                                        }
+                                        disabled={busy}
+                                        onClick={() => changePage(page)}
+                                    >
+                                        {page}
+                                    </Button>
+                                ))}
+                                {[
+                                    [
+                                        data.rows.current_page + 1,
+                                        ChevronRight,
+                                        'Halaman berikutnya',
+                                    ],
+                                    [
+                                        data.rows.last_page,
+                                        ChevronsRight,
+                                        'Halaman terakhir',
+                                    ],
+                                ].map(([page, Icon, label]) => {
+                                    const PageIcon = Icon as typeof ChevronLeft;
+                                    return (
+                                        <Button
+                                            key={String(label)}
+                                            variant="outline"
+                                            size="icon"
+                                            className="size-8 bg-card"
+                                            disabled={
+                                                busy ||
+                                                data.rows.current_page >=
+                                                    data.rows.last_page
+                                            }
+                                            aria-label={String(label)}
+                                            onClick={() =>
+                                                changePage(Number(page))
+                                            }
+                                        >
+                                            <PageIcon className="size-3.5" />
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        </footer>
+                    </section>
+                </div>
+                <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+                    <SheetHeader>
+                        <SheetTitle>Pool AWB</SheetTitle>
                         <SheetDescription>
-                            Perbandingan jumlah pickup, verifikasi gudang dan
-                            resi JNE.
+                            Alokasi AWB global dan ringkasan buku sesuai filter.
                         </SheetDescription>
                     </SheetHeader>
-                    {panel}
+                    <div className="flex flex-col gap-6 px-4 pb-6">
+                        <AllocationSummary data={data} />
+                        <PickupPendingQueue
+                            count={data.pending_count}
+                            select={(id) => {
+                                setPoolOpen(false);
+                                select(id);
+                            }}
+                        />
+                        <Disclosure>
+                            <DisclosureSummary>
+                                Aturan & status otomatisasi
+                            </DisclosureSummary>
+                            <p className="text-sm text-muted-foreground">
+                                Hari operasional 05.00–04.59 WIB. Target
+                                mengikuti POP/handover final; barang pending
+                                dihitung pada tanggal pemrosesannya.
+                            </p>
+                            <p className="text-sm">
+                                {data.enabled
+                                    ? 'Validasi otomatis aktif.'
+                                    : 'Validasi otomatis belum aktif. Hasil evaluasi terakhir tetap ditampilkan.'}
+                            </p>
+                            <dl className="grid grid-cols-2 gap-3 text-sm">
+                                {(
+                                    [
+                                        [
+                                            'Target pickup',
+                                            data.processing.regular_target,
+                                        ],
+                                        [
+                                            'Pending masuk',
+                                            data.processing.pending_incoming,
+                                        ],
+                                        ['Target AWB', data.processing.target],
+                                        ['Diproses', data.processing.processed],
+                                    ] as const
+                                ).map(([label, value]) => (
+                                    <div key={label}>
+                                        <dt className="text-muted-foreground">
+                                            {label}
+                                        </dt>
+                                        <dd className="tabular-nums">
+                                            {value?.toLocaleString('id-ID') ??
+                                                '—'}
+                                        </dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </Disclosure>
+                    </div>
                 </SheetContent>
-            </Sheet>
-        </div>
+                <Sheet
+                    open={selected !== null}
+                    onOpenChange={(open) => {
+                        if (!open) select(null);
+                    }}
+                >
+                    <SheetContent
+                        className="w-full gap-0 p-0 sm:max-w-5xl [&>button:last-child]:hidden"
+                        onCloseAutoFocus={(event) => {
+                            if (detailTrigger.current?.isConnected) {
+                                event.preventDefault();
+                                detailTrigger.current.focus();
+                            }
+                        }}
+                    >
+                        <SheetHeader className="sr-only">
+                            <SheetTitle>Detail Rekonsiliasi</SheetTitle>
+                            <SheetDescription>
+                                Perbandingan jumlah pickup, verifikasi gudang
+                                dan resi JNE.
+                            </SheetDescription>
+                        </SheetHeader>
+                        {panel}
+                    </SheetContent>
+                </Sheet>
+            </div>
+        </Sheet>
     );
 }

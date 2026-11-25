@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
 import { useState } from 'react';
 import { Plus, Upload, Users, ArrowRight, Search } from 'lucide-react';
@@ -644,10 +645,10 @@ export default function JneShipperAliases({
                     )}
                 </div>
             </div>
-            <details className="rounded-lg border bg-muted/20 p-3">
-                <summary className="cursor-pointer text-sm font-medium">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Penerapan nama pengirim & riwayat
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex flex-col gap-3">
                     <p className="text-sm font-medium">
                         Perubahan diterapkan otomatis ke AWB yang sudah
@@ -736,7 +737,7 @@ export default function JneShipperAliases({
                         </div>
                     )}
                 </div>
-            </details>
+            </Disclosure>
             <Dialog open={importOpen} onOpenChange={setImportOpen}>
                 <DialogContent>
                     <DialogHeader>

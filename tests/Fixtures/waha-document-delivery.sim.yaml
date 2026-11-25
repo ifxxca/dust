@@ -1,0 +1,6 @@
+simulation: waha-document-delivery
+routing: path
+mocks:
+  - name: waha
+    routeKey: waha
+    path: tests/Fixtures/waha-document-delivery.cjs

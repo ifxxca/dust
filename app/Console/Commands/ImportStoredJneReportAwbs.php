@@ -33,6 +33,11 @@ class ImportStoredJneReportAwbs extends Command
 
                 return self::FAILURE;
             }
+            if ($job->projection_status !== 'PROJECTED') {
+                $this->error($job->projection_error ?? 'Pembaruan monitoring belum selesai.');
+
+                return self::FAILURE;
+            }
             $this->info("Report #{$job->id}: {$job->imported_awb_count} AWB diimpor; {$job->duplicate_awb_count} duplikat identik dilewati.");
         } else {
             $jobs->queueImport($job->id);

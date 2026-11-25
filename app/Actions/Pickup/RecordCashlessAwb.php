@@ -38,9 +38,9 @@ class RecordCashlessAwb
                 Gate::forUser($actor)->authorize($correction ? 'correctCashlessAwb' : 'recordCashlessAwb', $task);
                 $data = Validator::make($data, self::rules($correction))->validate();
                 $raw = $data['awb'] ?? null;
-                $awb = $raw === null ? null : mb_strtoupper(trim($raw));
-                if ($awb !== null && preg_match('/^[A-Z0-9_-]{1,100}$/D', $awb) !== 1) {
-                    throw ValidationException::withMessages(['awb' => 'AWB harus berisi 1–100 huruf, angka, tanda hubung atau garis bawah tanpa spasi.']);
+                $awb = $raw === null ? null : ValidateAwbSignature::normalize($raw);
+                if ($awb !== null && preg_match('/^[A-Z0-9_$-]{6,100}$/D', $awb) !== 1) {
+                    throw ValidationException::withMessages(['awb' => 'AWB harus berisi 6–100 huruf, angka, tanda hubung atau garis bawah tanpa spasi. Kode barang/SKU pendek tidak dapat digunakan.']);
                 }
                 $reason = $data['reason'] ?? null;
                 if ($correction && trim($reason ?? '') === '') {
@@ -68,6 +68,10 @@ class RecordCashlessAwb
                     throw ValidationException::withMessages(['awb' => 'AWB sudah diklaim pada Sertim aktif. Periksa bukti sebelum mengoreksi.']);
                 }
                 $previousAwb = $record?->awb;
+                if ($awb !== null && $awb !== $previousAwb && preg_match('/^(0101|0166)[0-9]+$/D', $awb) === 1) {
+                    throw ValidationException::withMessages(['awb' => 'Resi ini termasuk Manual. Gunakan resi Cashless.']);
+                }
+                $signatureMatches = $awb === null || $awb === $previousAwb ? [] : app(ValidateAwbSignature::class)->handle($awb);
                 $previousRaw = $record?->raw_awb;
                 $awbs = array_values(array_unique(array_filter([$previousAwb, $awb], fn (?string $value): bool => $value !== null)));
                 $before = $this->snapshot($task, $awbs);
@@ -82,7 +86,7 @@ class RecordCashlessAwb
                 $record->events()->create(['pickup_task_id' => $task->id, 'customer_id' => $record->customer_id, 'actor_id' => $actor->id,
                     'submission_key' => $data['submission_key'], 'payload_hash' => $payloadHash, 'revision' => $record->version,
                     'previous_awb' => $previousAwb, 'awb' => $awb, 'previous_raw_awb' => $previousRaw, 'raw_awb' => $raw,
-                    'reason' => $reason, 'affected_results' => ['before' => $before, 'after' => $this->snapshot($task, $awbs)]]);
+                    'reason' => $reason, 'affected_results' => ['signature_matches' => $signatureMatches, 'before' => $before, 'after' => $this->snapshot($task, $awbs)]]);
 
                 return $record;
             }, 3);

@@ -32,11 +32,11 @@ try {
     await staff.page.getByLabel('AWB cashless', { exact: true }).waitFor();
     await staff.page
         .getByLabel('AWB cashless', { exact: true })
-        .fill('sertim001');
+        .fill('tg0000001101');
     await staff.page
         .getByRole('button', { name: 'Catat AWB', exact: true })
         .click();
-    await staff.page.getByRole('cell', { name: /SERTIM001/ }).waitFor();
+    await staff.page.getByRole('cell', { name: /TG0000001101/ }).waitFor();
     assert.equal(
         await staff.page
             .getByRole('button', { name: 'Tambah bukti lewat koreksi Admin' })
@@ -53,12 +53,12 @@ try {
     await admin.page.goto(
         base + '/operations/detail/' + process.env.SERTIM_UI_CLOSED_TASK,
     );
-    const row = admin.page.getByRole('row').filter({ hasText: 'CLOSED001' });
+    const row = admin.page.getByRole('row').filter({ hasText: 'TG0000001201' });
     await row.getByRole('button', { name: 'Koreksi', exact: true }).click();
     await admin.page
         .getByRole('dialog')
         .getByLabel('AWB yang benar')
-        .fill('CLOSED002');
+        .fill('TG0000001202');
     await admin.page
         .getByRole('dialog')
         .getByLabel('Alasan koreksi')
@@ -69,7 +69,7 @@ try {
     await admin.page.getByRole('dialog').waitFor({ state: 'hidden' });
     const corrected = admin.page
         .getByRole('row')
-        .filter({ hasText: 'CLOSED002' });
+        .filter({ hasText: 'TG0000001202' });
     await corrected.getByRole('button', { name: /Riwayat/ }).click();
     await admin.page
         .getByRole('dialog')
@@ -190,8 +190,7 @@ try {
         `Search must be reachable before operational summaries (y=${searchPosition?.y})`,
     );
     await admin.page
-        .locator('summary')
-        .filter({ hasText: /^Koleksi & tracking/ })
+        .getByRole('button', { name: 'Koleksi & tracking', exact: true })
         .click();
     await admin.page
         .getByRole('region', {
@@ -200,8 +199,7 @@ try {
         })
         .waitFor();
     await admin.page
-        .locator('summary')
-        .filter({ hasText: /^Koleksi & tracking/ })
+        .getByRole('button', { name: 'Koleksi & tracking', exact: true })
         .click();
     await admin.page.setViewportSize({ width: 1280, height: 900 });
     await admin.page.evaluate(() => window.scrollTo(0, 0));
@@ -217,15 +215,15 @@ try {
     await admin.page.setViewportSize({ width: 390, height: 844 });
     await admin.page
         .getByRole('listitem')
-        .filter({ hasText: 'SERTIM001' })
+        .filter({ hasText: 'TG0000001101' })
         .getByRole('button', { name: 'Detail pengiriman', exact: true })
         .click();
     const mobileShipment = admin.page
         .getByRole('listitem')
-        .filter({ hasText: 'SERTIM001' });
+        .filter({ hasText: 'TG0000001101' });
     await mobileShipment
         .getByRole('region', { name: 'Detail AWB', exact: true })
-        .getByText('SERTIM001', { exact: true })
+        .getByText('TG0000001101', { exact: true })
         .waitFor();
     assert.equal(
         await mobileShipment
@@ -246,7 +244,7 @@ try {
         .getByRole('link', { name: 'Buka halaman AWB', exact: true })
         .click();
     await admin.page
-        .getByRole('heading', { name: 'AWB SERTIM001', exact: true })
+        .getByRole('heading', { name: 'AWB TG0000001101', exact: true })
         .waitFor();
     await admin.page
         .locator('summary')
@@ -276,7 +274,12 @@ try {
         .click();
     await admin.page.getByText(/Sertim #/).waitFor();
     await admin.page.goto(base + '/admin/jne-monitoring/customer-dashboard');
-    await admin.page.getByLabel('Pemetaan customer').selectOption('candidate');
+    await admin.page
+        .getByRole('combobox', { name: 'Pemetaan customer', exact: true })
+        .click();
+    await admin.page
+        .getByRole('option', { name: 'Kandidat customer', exact: true })
+        .click();
     await admin.page
         .getByRole('button', { name: 'Terapkan filter', exact: true })
         .click();

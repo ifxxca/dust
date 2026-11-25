@@ -57,7 +57,7 @@ export class HybridCashlessPage {
     constructor(client) {
         this.client = client;
     }
-    async protectMutations() {
+    async protectMutations(readOnly = false) {
         this.mutations = new Set();
         this.guard = async (route) => {
             const request = route.request();
@@ -72,6 +72,7 @@ export class HybridCashlessPage {
                         names.includes('P80_DATE') &&
                         names.includes('P80_NO')));
             if (!mutation) return route.continue();
+            if (readOnly) return route.abort('blockedbyclient');
             if (
                 new URL(request.url()).origin !==
                 new URL(this.client.profile.loginUrl).origin
@@ -287,7 +288,85 @@ export class HybridCashlessPage {
             );
         }
     }
-    async verifiedAwbs(ho) {
+    async inspectHo(ho) {
+        assertHo(ho);
+        if (!this.client.session || this.client.needsDailyLogin())
+            throw new ReportError(
+                'CASHLESS_SESSION',
+                'Sesi HO asal tidak tersedia. Pemeriksaan dihentikan tanpa membuat HO atau login baru.',
+            );
+        this.page = this.client.page;
+        await this.protectMutations(true);
+        await this.page.goto(this.client.sessionUrl('80').toString(), {
+            waitUntil: 'domcontentloaded',
+        });
+        await this.assertCurrentHo(ho);
+        const scope = () =>
+            this.page.evaluate(() => {
+                const region = document.getElementById('Connote Reports');
+                if (
+                    !region ||
+                    region.querySelector('.a-IRR-controls-item--filter') ||
+                    region.querySelector('.a-IRR-search-field')?.value ||
+                    document.querySelector(
+                        '.t-Alert--danger,.a-Notification--error',
+                    )
+                )
+                    throw new Error('HO report scope is not clear');
+                const labels = [
+                    ...new Set(
+                        [...region.querySelectorAll('.a-IRR-pagination-label')]
+                            .filter((e) => e.getClientRects().length)
+                            .map((e) => e.textContent.trim()),
+                    ),
+                ];
+                const empty =
+                    !!region.querySelector('.a-IRR-noDataMsg')?.getClientRects()
+                        .length && !region.querySelector('.a-IRR-table td');
+                const match =
+                    labels.length === 1
+                        ? labels[0]
+                              .replace(/,/g, '')
+                              .match(
+                                  /^\d+\s*[-–]\s*\d+\s+(?:of|dari)\s+(\d+)$/i,
+                              )
+                        : null;
+                if (!empty && !match)
+                    throw new Error('HO total is not verifiable');
+                return empty ? 0 : Number(match[1]);
+            });
+        const before = await scope();
+        const awbs = await this.verifiedAwbs(ho, true);
+        await this.assertCurrentHo(ho);
+        if (before !== awbs.length || before !== (await scope()))
+            throw new ReportError(
+                'CASHLESS_CONTENT',
+                'Jumlah CSV tidak cocok dengan total HO atau isi berubah saat diperiksa.',
+            );
+        const print = await this.page
+            .getByRole('button', { name: 'Print', exact: true })
+            .isVisible();
+        const approve = this.page.getByRole('button', {
+            name: 'Approve',
+            exact: true,
+        });
+        const canApprove =
+            (await approve.isVisible()) && (await approve.isEnabled());
+        if (print === canApprove)
+            throw new ReportError(
+                'CASHLESS_APPROVAL_UNKNOWN',
+                'Status approval HO belum dapat dibuktikan.',
+            );
+        return {
+            ho_number: ho,
+            verified_awbs: awbs,
+            ui_total: before,
+            filters_clear: true,
+            print_available: print,
+            approve_available: canApprove,
+        };
+    }
+    async verifiedAwbs(ho, requireHoColumn = false) {
         await this.assertCurrentHo(ho);
         await this.page.evaluate(() => {
             const region = document.getElementById('Connote Reports');
@@ -356,7 +435,7 @@ export class HybridCashlessPage {
         const hoIndex = columns.findIndex((text) =>
             /^(ho no|ho number|handover no)$/.test(text),
         );
-        if (index < 0)
+        if (index < 0 || (requireHoColumn && hoIndex < 0))
             throw new ReportError(
                 'CASHLESS_CSV',
                 'Kolom resi dalam bukti HO tidak dikenali.',
@@ -365,7 +444,7 @@ export class HybridCashlessPage {
             .slice(1)
             .map((row) => row[index]?.trim().replace(/^'/, ''));
         if (
-            awbs.some((awb) => !awb || !/^[A-Z0-9_-]{1,16}$/.test(awb)) ||
+            awbs.some((awb) => !awb || !/^[A-Z0-9_$-]{1,16}$/.test(awb)) ||
             new Set(awbs).size !== awbs.length ||
             (hoIndex >= 0 &&
                 rows.slice(1).some((row) => row[hoIndex]?.trim() !== ho))
@@ -427,6 +506,20 @@ export async function processCashlessBatch(batch, api, adapter) {
         if (heartbeatError) throw heartbeatError;
     };
     try {
+        if (batch.status === 'INSPECTING') {
+            if (
+                !batch.ho_number ||
+                !Array.isArray(batch.items) ||
+                !batch.items.length
+            )
+                throw new ReportError(
+                    'CASHLESS_BATCH',
+                    'Batch pemeriksaan tidak mempunyai bukti HO atau resi.',
+                );
+            const proof = await adapter.inspectHo(batch.ho_number);
+            alive();
+            return await checkpoint('inspection-result', proof);
+        }
         const confirmApproval = batch.status === 'CONFIRMING';
         const resume = batch.status === 'VERIFYING' || confirmApproval;
         if (
@@ -444,6 +537,7 @@ export async function processCashlessBatch(batch, api, adapter) {
                               'NOT_FOUND',
                               'NEEDS_DATA',
                               'INVALID',
+                              'CANCELLED',
                           ].includes(item.status),
                   )
                 : batch.status !== 'CLAIMED' ||

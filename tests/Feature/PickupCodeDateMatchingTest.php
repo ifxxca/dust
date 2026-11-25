@@ -6,6 +6,7 @@ use App\Jobs\RenderPickupAwbManifestJob;
 use App\Models\JneReportAwb;
 use App\Models\JneShipment;
 use App\Models\JneShipperAlias;
+use App\Models\PickupCustomerReconciliation;
 use App\Models\PickupPendingItem;
 use App\Models\PickupRecord;
 use App\Models\PickupTask;
@@ -34,7 +35,7 @@ function storedPrefixPickupReport(string $shipper, int $count = 1, string $entry
     return $job->fresh();
 }
 
-test('seventeen registered prefix AWBs complete and lock a verified pickup without a source contract', function () {
+test('seventeen registered prefix AWBs match a verified pickup but cannot lock without source coverage', function () {
     Queue::fake([RenderPickupAwbManifestJob::class]);
     $fixture = pickupAutomationFixture(17, 0);
     $fixture['contract']->delete();
@@ -45,16 +46,17 @@ test('seventeen registered prefix AWBs complete and lock a verified pickup witho
     app(ReconcilePickupProcessing::class)->handle($fixture['task']->id);
 
     expect($result->status)->toBe('DONE');
-    expect($result->locked_at)->not->toBeNull();
+    expect($result->locked_at)->toBeNull();
+    expect(PickupCustomerReconciliation::sole()->status)->toBe('WAITING_DATA');
     expect($result->reasons)->toBe([]);
     expect($result->categories['manual_hybrid'])->toBe(['pop' => 17, 'received' => 17, 'expected' => 17, 'confirmed' => 17, 'shortfall' => 0, 'excess' => 0]);
     expect(JneShipment::where('pickup_task_id', $fixture['task']->id)->where('match_status', 'MATCHED')->count())->toBe(17);
     expect($result->evidence['coverage']['complete'])->toBeFalse();
     expect($fixture['task']->proof->manual_hybrid)->toBe(17);
-    $this->assertDatabaseCount('pickup_awb_manifests', 1);
-    $this->assertDatabaseCount('pickup_awb_manifest_items', 17);
+    $this->assertDatabaseCount('pickup_awb_manifests', 0);
+    $this->assertDatabaseCount('pickup_awb_manifest_items', 0);
     $this->assertDatabaseCount('pickup_processing_reconciliation_events', 1);
-    Queue::assertPushed(RenderPickupAwbManifestJob::class);
+    Queue::assertNotPushed(RenderPickupAwbManifestJob::class);
     $this->actingAs($fixture['admin'])->getJson(route('pickup-automation.show', $fixture['task']))
         ->assertOk()->assertJsonPath('reconciliation.status', 'DONE')
         ->assertJsonPath('reconciliation.reasons', [])
@@ -66,6 +68,15 @@ test('verified suffix code aliases also fill a same day pickup', function () {
     $fixture['contract']->delete();
     JneShipperAlias::factory()->create(['customer_id' => $fixture['customer']->id, 'shipper_name' => '4000A REGISTERED SENDER']);
     storedPrefixPickupReport('4000A CHANGED SENDER');
+
+    expect(JneShipment::sole()->pickup_task_id)->toBe($fixture['task']->id);
+    expect(JneShipment::sole()->match_status)->toBe('MATCHED');
+});
+
+test('a newly recognized base code suffix fills the verified pickup in its retail day', function () {
+    $fixture = pickupAutomationFixture(1, 0);
+    $fixture['contract']->delete();
+    storedPrefixPickupReport('4000C OTHER SENDER');
 
     expect(JneShipment::sole()->pickup_task_id)->toBe($fixture['task']->id);
     expect(JneShipment::sole()->match_status)->toBe('MATCHED');

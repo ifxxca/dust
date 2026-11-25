@@ -1,4 +1,10 @@
-import { useHttp } from '@inertiajs/react';
+import { useHttp, usePage } from '@inertiajs/react';
+import { EmailRecipientsInput } from '@/components/email-recipients-input';
+import {
+    CustomerDocumentDelivery,
+    defaultDocumentDelivery,
+    type DocumentDeliveryOptions,
+} from '@/components/document-delivery';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +35,8 @@ export type CustomerDetails = {
     contact: string;
     customer_code: string | null;
     email: string | null;
+    additional_emails?: string[];
+    document_delivery_settings?: DocumentDeliveryOptions;
     phone: string | null;
     latitude: string | null;
     longitude: string | null;
@@ -51,12 +59,17 @@ export default function CustomerForm({
     onCancel?: () => void;
     inDialog?: boolean;
 }) {
+    const emailLimit = Number(usePage().props.email_recipient_limit ?? 1);
+    const deliveryReady = Boolean(usePage().props.document_delivery_ready);
     const form = useHttp({
         name: customer?.name ?? '',
         customer_code: customer?.customer_code ?? '',
         pickup_address: customer?.pickup_address ?? '',
         contact: customer?.contact ?? '',
         email: customer?.email ?? '',
+        additional_emails: customer?.additional_emails ?? ([] as string[]),
+        document_delivery_settings:
+            customer?.document_delivery_settings ?? defaultDocumentDelivery,
         phone: customer?.phone ?? '',
         latitude: customer?.latitude ?? '',
         longitude: customer?.longitude ?? '',
@@ -104,7 +117,7 @@ export default function CustomerForm({
             ref={formElement}
             className={
                 inDialog
-                    ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+                    ? 'flex min-h-0 flex-1 flex-col overflow-clip'
                     : 'space-y-5'
             }
             onSubmit={(event) => {
@@ -113,8 +126,12 @@ export default function CustomerForm({
                 setMessage('');
                 form.transform((data) => ({
                     ...data,
+                    document_delivery_settings: deliveryReady
+                        ? data.document_delivery_settings
+                        : undefined,
                     customer_code: data.customer_code || null,
                     email: data.email || null,
+                    additional_emails: data.additional_emails,
                     phone: data.phone || null,
                     contact: data.contact || null,
                     latitude: data.latitude === '' ? null : data.latitude,
@@ -163,8 +180,8 @@ export default function CustomerForm({
                             Identitas & Kontak
                         </h3>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Isi nama customer dan minimal satu email, telepon,
-                            atau kontak utama pickup.
+                            Isi nama customer. Email, telepon, dan kontak pickup
+                            bersifat opsional.
                         </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -177,7 +194,6 @@ export default function CustomerForm({
                                     'text',
                                     false,
                                 ],
-                                ['email', 'Email', 'email', false],
                                 ['phone', 'Nomor Telepon', 'tel', false],
                             ] as const
                         ).map(([key, label, type, required]) => (
@@ -202,20 +218,16 @@ export default function CustomerForm({
                                     autoComplete={
                                         key === 'name'
                                             ? 'organization'
-                                            : key === 'email'
-                                              ? 'email'
-                                              : key === 'phone'
-                                                ? 'tel'
-                                                : 'off'
+                                            : key === 'phone'
+                                              ? 'tel'
+                                              : 'off'
                                     }
                                     placeholder={
                                         key === 'name'
                                             ? 'Contoh: PT Maju Bersama'
                                             : key === 'customer_code'
                                               ? 'Otomatis jika dikosongkan'
-                                              : key === 'email'
-                                                ? 'nama@perusahaan.com'
-                                                : '08xxxxxxxxxx'
+                                              : '08xxxxxxxxxx'
                                     }
                                     aria-invalid={!!form.errors[key]}
                                     aria-describedby={
@@ -246,6 +258,32 @@ export default function CustomerForm({
                             </div>
                         ))}
                     </div>
+                    <EmailRecipientsInput
+                        id="customer-email"
+                        label="Email bukti pickup dan rekap resi"
+                        limit={emailLimit}
+                        disabled={form.processing}
+                        value={[
+                            form.data.email,
+                            ...form.data.additional_emails,
+                        ]}
+                        onChange={(emails) => {
+                            form.setData('email', emails[0] ?? '');
+                            form.setData('additional_emails', emails.slice(1));
+                        }}
+                        errors={{
+                            list: form.errors.additional_emails,
+                            0: form.errors.email,
+                            ...Object.fromEntries(
+                                form.data.additional_emails.map((_, index) => [
+                                    index + 1,
+                                    (form.errors as Record<string, string>)[
+                                        `additional_emails.${index}`
+                                    ],
+                                ]),
+                            ),
+                        }}
+                    />
                 </section>
                 <Separator />
                 <section
@@ -383,9 +421,9 @@ export default function CustomerForm({
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-3 px-4 pb-4">
                         <p className="text-xs text-muted-foreground">
-                            Kontak pickup lama tetap dipertahankan. Kosongkan
-                            untuk memakai email, atau telepon jika email tidak
-                            tersedia.
+                            Kosongkan untuk memakai email, lalu telepon jika
+                            tersedia. Jika keduanya belum ada, customer tetap
+                            dapat disimpan tanpa kontak.
                         </p>
                         <Label htmlFor="customer-contact">
                             Kontak utama (opsional)
@@ -457,6 +495,34 @@ export default function CustomerForm({
                         </p>
                     )}
                 </div>
+                {deliveryReady && (
+                    <CustomerDocumentDelivery
+                        value={form.data.document_delivery_settings}
+                        onChange={(value) => {
+                            if (
+                                value.whatsapp_target !==
+                                form.data.document_delivery_settings
+                                    .whatsapp_target
+                            ) {
+                                form.clearErrors(
+                                    'document_delivery_settings.whatsapp_target',
+                                );
+                            }
+                            if (
+                                value.whatsapp_consent_confirmed !==
+                                form.data.document_delivery_settings
+                                    .whatsapp_consent_confirmed
+                            ) {
+                                form.clearErrors(
+                                    'document_delivery_settings.whatsapp_consent_confirmed',
+                                );
+                            }
+                            form.setData('document_delivery_settings', value);
+                        }}
+                        disabled={form.processing}
+                        errors={form.errors}
+                    />
+                )}
                 {message && (
                     <Alert className="border-destructive/40 text-destructive">
                         <AlertCircle />

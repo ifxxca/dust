@@ -43,6 +43,9 @@ class ManageJneEvidenceRules
                     abort_unless(count($parts) >= 2 && in_array($parts[1], ReportJob::REPORT_TYPES[$parts[0]] ?? [], true) && (! isset($parts[2]) || trim($parts[2]) !== ''), 422, 'Sumber koleksi harus source:type atau source:type:account yang terdaftar.');
                 }
                 $verified = $this->verified($data);
+                if ($verified) {
+                    $this->validateAutomaticCollection($data['source'], $data['report_type'], $data['definition']);
+                }
                 $previous = JneSourceContract::where('source', $data['source'])->where('report_type', $data['report_type'])->lockForUpdate()->get();
                 if ($verified) {
                     foreach ($previous->whereNotNull('active_key') as $old) {
@@ -114,6 +117,7 @@ class ManageJneEvidenceRules
             abort_unless(($row instanceof JneSourceContract ? $row->revision : $row->version) === $version, 409);
             $before = $row->getAttributes();
             if ($row instanceof JneSourceContract) {
+                $this->validateAutomaticCollection($row->source, $row->report_type, $row->definition);
                 $latest = JneSourceContract::where('source', $row->source)->where('report_type', $row->report_type)->max('revision');
                 abort_unless($row->revision === $latest, 409, 'Gunakan revisi kontrak terbaru; definisi lama tidak diaktifkan kembali.');
                 foreach (JneSourceContract::where('source', $row->source)->where('report_type', $row->report_type)->whereNotNull('active_key')->whereKeyNot($id)->lockForUpdate()->get() as $old) {
@@ -130,6 +134,22 @@ class ManageJneEvidenceRules
             $this->audit($actor, $kind, $row, $before, $reason);
             app(QueueJneCustomerMappings::class)->handle([], $actor->id, true);
         }, 3);
+    }
+
+    /** @param array<string, mixed> $definition */
+    private function validateAutomaticCollection(string $source, string $type, array $definition): void
+    {
+        if (($definition['automatic_reconciliation'] ?? false) !== true || ($definition['collection_mode'] ?? '') !== 'complete_date_report') {
+            return;
+        }
+        abort_unless(AssessJneReportCollection::supportsAutomaticCollection($source, $type), 422, 'Kontrak full collection belum dapat diaktifkan: kemampuan sumber belum diverifikasi secara independen. Simpan sebagai draft.');
+        abort_unless(filled($definition['customer_code_column'] ?? null) && ($definition['pickup_date_column'] ?? null) === 'TGL_ENTRY'
+            && ! empty($definition['collection_requirements']), 422, 'Kontrak otomatis memerlukan kolom kode, tanggal TGL_ENTRY, dan sumber wajib eksplisit.');
+        foreach ($definition['collection_requirements'] as $requirement) {
+            $parts = explode(':', $requirement, 3);
+            abort_unless(count($parts) === 3 && trim($parts[2]) !== '' && AssessJneReportCollection::supportsAutomaticCollection($parts[0], $parts[1], $parts[2]), 422,
+                'Coverage otomatis memerlukan source:type:account eksplisit dari koleksi full-date yang didukung; account tidak menentukan identitas customer.');
+        }
     }
 
     /** @param array<string, mixed> $data */

@@ -169,13 +169,60 @@ test('sender suffix inference excludes unsupported aliases', function (array $at
 
     expect(JneShipment::sole()->customer_id)->toBeNull();
 })->with([
-    'unregistered suffix' => [[], '864', '864D OTHER NAME'],
+    'unregistered base' => [[], '865', '864D OTHER NAME'],
     'inactive alias' => [['is_active' => false], '864', '864A OTHER NAME'],
     'different base customer' => [[], '865', '864A OTHER NAME'],
     'account scope' => [['account_scope' => 'SPECIFIC', 'verified_at' => '2026-10-01'], '864', '864A OTHER NAME'],
     'expired alias' => [['valid_thru' => '2026-10-26', 'verified_at' => '2026-10-01'], '864', '864A OTHER NAME'],
     'missing separator' => [[], '864', '864AOTHER NAME'],
 ]);
+
+test('a new single letter shipper suffix maps to its numeric master without a sender alias', function (string $shipper, string $code) {
+    $customer = Customer::factory()->create(['customer_code' => $code]);
+    $job = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED']);
+    $source = JneReportAwb::factory()->create(['report_job_id' => $job->id, 'shipper_name' => $shipper, 'raw_data' => ['SHIPPER_NAME' => $shipper]]);
+
+    app(ProjectJneShipments::class)->handle($job->id);
+
+    $this->assertDatabaseHas('jne_shipments', ['awb' => $source->awb, 'customer_id' => $customer->id, 'customer_match_status' => 'MATCHED', 'customer_match_method' => 'SHIPPER_BASE_CODE']);
+    expect($source->fresh()->raw_data)->toBe(['SHIPPER_NAME' => $shipper]);
+    expect(JneShipmentMatchEvent::sole()->evidence)->toContain([
+        'source_id' => $source->id, 'method' => 'SHIPPER_BASE_CODE', 'column' => 'SHIPPER_NAME',
+        'original_value' => $shipper, 'original_code' => strtoupper(explode(' ', $shipper, 2)[0]),
+        'base_code' => $code, 'registered_code' => $code, 'customer_id' => $customer->id,
+    ]);
+})->with([
+    '864C source example' => ['864C PT KREASI PANEN JAYA', '864'],
+    'lowercase suffix' => ['864c OTHER NAME', '864'],
+    'new suffix' => ['864D OTHER NAME', '864'],
+    'leading zero is retained' => ['01A SENDER', '01'],
+]);
+
+test('an exact alphanumeric master takes priority over the numeric base', function () {
+    Customer::factory()->create(['customer_code' => '864']);
+    $customer = Customer::factory()->create(['customer_code' => '864C']);
+    $job = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED']);
+    $source = JneReportAwb::factory()->create(['report_job_id' => $job->id, 'shipper_name' => '864C OTHER NAME']);
+
+    app(ProjectJneShipments::class)->handle($job->id);
+
+    $this->assertDatabaseHas('jne_shipments', ['awb' => $source->awb, 'customer_id' => $customer->id, 'customer_match_method' => 'SHIPPER_CODE_PREFIX']);
+});
+
+test('base code inference does not bypass an inactive exact master or scoped code alias', function (bool $inactiveMaster) {
+    Customer::factory()->create(['customer_code' => '864']);
+    if ($inactiveMaster) {
+        Customer::factory()->create(['customer_code' => '864C', 'is_active' => false]);
+    } else {
+        JneCustomerCodeAlias::factory()->create(['code' => '864C', 'account_scope' => 'SPECIFIC', 'verified_at' => now()->subDay()]);
+    }
+    $job = ReportJob::factory()->create(['status' => 'COMPLETED', 'import_status' => 'IMPORTED']);
+    $source = JneReportAwb::factory()->create(['report_job_id' => $job->id, 'shipper_name' => '864C OTHER NAME', 'customer_account' => 'OTHER']);
+
+    app(ProjectJneShipments::class)->handle($job->id);
+
+    $this->assertDatabaseHas('jne_shipments', ['awb' => $source->awb, 'customer_id' => null]);
+})->with(['inactive exact master' => true, 'scoped code alias' => false]);
 
 test('registered suffix evidence never overrides a different exact customer code', function () {
     $base = Customer::factory()->create(['customer_code' => '864']);

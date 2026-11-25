@@ -37,7 +37,7 @@ export default function JneApexAccounts({
         accounts: [] as ReturnType<typeof parseJneAccounts>['accounts'],
         enabled: false,
         interval_minutes: 30,
-        lookback_days: 1,
+        lookback_days: 2,
     });
     const parsed = parseJneAccounts(text);
     const accounts = profiles.filter(
@@ -126,10 +126,16 @@ export default function JneApexAccounts({
                                             ? 'YES'
                                             : 'NO'}
                                     </strong>{' '}
-                                    · {profile.interval_minutes} menit ·{' '}
+                                    ·{' '}
+                                    {profile.daily_collection_time
+                                        ? `Setiap hari ${profile.daily_collection_time} WIB`
+                                        : `${profile.interval_minutes} menit`}{' '}
+                                    ·{' '}
                                     {profile.mode === 'fixed'
                                         ? `${profile.date_from} – ${profile.date_thru}`
-                                        : `${profile.lookback_days} hari terakhir`}
+                                        : profile.lookback_days === 2
+                                          ? 'Kemarin & hari ini'
+                                          : `${profile.lookback_days} hari termasuk hari ini`}
                                 </p>
                             </div>
                             <Label className="flex min-h-11 cursor-pointer items-center gap-2">
@@ -224,6 +230,9 @@ export default function JneApexAccounts({
                                 <Label htmlFor="bulk-interval">
                                     Interval account baru (menit)
                                 </Label>
+                                <p className="text-xs text-muted-foreground">
+                                    1440 = setiap hari pukul 01.00 WIB.
+                                </p>
                                 <Input
                                     id="bulk-interval"
                                     className="min-h-11"

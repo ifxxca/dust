@@ -6,7 +6,15 @@
 
 @section('content')
     <p style="margin:0 0 6px;font-size:16px;">Yth. <strong>{{ $manifest->snapshot['customer_name'] }}</strong>,</p>
-    <p style="margin:0;color:#5a687e;font-size:15px;line-height:1.7;">Rekap resi untuk pickup Anda sudah selesai dicocokkan. Daftar lengkap tersedia pada dua lampiran email ini.</p>
+    <p style="margin:0;color:#5a687e;font-size:15px;line-height:1.7;">{{ isset($manifest->snapshot['closure']) ? 'Buku pickup Anda telah ditutup dengan penjelasan selisih oleh PIC Retail.' : 'Rekap resi untuk pickup Anda sudah selesai dicocokkan.' }} Daftar resi tersedia pada dua lampiran email ini.</p>
+    @if(isset($manifest->snapshot['closure']))
+        <div style="margin:16px 0;padding:16px;border:1px solid #e9edf5;border-radius:8px;">
+            <p style="margin:0 0 8px;font-weight:700;">Keterangan selisih</p>
+            <p style="margin:0 0 8px;">Pickup: {{ array_sum(array_column($manifest->snapshot['categories'], 'pop')) }} paket · Resi terkonfirmasi: {{ array_sum(array_column($manifest->snapshot['categories'], 'confirmed')) }}</p>
+            <p style="margin:0 0 4px;">{{ $manifest->snapshot['closure']['reason_label'] }}</p>
+            <p style="margin:0;white-space:pre-line;">{{ $manifest->snapshot['closure']['explanation'] }}</p>
+        </div>
+    @endif
 
     @include('mail.package-summary', [
         'manual' => (int) ($manifest->snapshot['categories']['manual_hybrid']['confirmed'] ?? 0),

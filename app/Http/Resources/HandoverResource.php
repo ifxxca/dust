@@ -2,8 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Actions\Handover\CashlessHandoverReadiness;
 use App\Actions\Handover\CompareQuantities;
 use App\Models\HandoverSession;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,6 +21,10 @@ class HandoverResource extends JsonResource
     {
         $mayWrite = ! $request->routeIs('mobile.*') || $request->user()->tokenCan('mobile:handover');
         $mayReceive = $request->user()->canVerifyHandover() && $mayWrite;
+        if ($this->status !== 'CLOSED' && $this->relationLoaded('items') && $this->cashless_readiness === null) {
+            $tasks = new Collection($this->items->map(fn ($item) => $item->task->setRelation('proof', $item->proof))->all());
+            $this->resource->setAttribute('cashless_readiness', app(CashlessHandoverReadiness::class)->handle($tasks));
+        }
 
         return [
             'id' => $this->id, 'reference' => $this->reference, 'status' => $this->status, 'version' => $this->version,
@@ -29,7 +35,7 @@ class HandoverResource extends JsonResource
             'can_close' => $this->whenLoaded('items', fn () => $mayReceive && $this->status !== 'CLOSED' && $this->items->isNotEmpty() && $this->items->every(function ($item) {
                 $values = $item->effectiveValues();
 
-                return $item->status !== 'PENDING' && ! $item->needsReview() && ($values['status'] !== 'DISCREPANCY' || filled($values['discrepancy_notes']));
+                return ($this->cashless_readiness[$item->pickup_task_id]['ready'] ?? false) && $item->status !== 'PENDING' && ! $item->needsReview() && ($values['status'] !== 'DISCREPANCY' || filled($values['discrepancy_notes']));
             })),
             'created_by' => $this->created_by, 'closed_by' => $this->closed_by, 'closed_at' => $this->closed_at,
             'sertim_closed_at' => $this->sertim_closed_at,
@@ -41,7 +47,7 @@ class HandoverResource extends JsonResource
 
                 return $values['manual_hybrid'] + $values['cashless_hybrid'] + $values['css_orion'];
             })),
-            'items' => $this->when(! $request->routeIs('api.handovers.index', 'mobile.handovers.index') && $this->relationLoaded('items'), fn () => $this->items->map(function ($item) {
+            'items' => $this->when(! $request->routeIs('api.handovers.index', 'mobile.handovers.index', 'retail.handovers.index') && $this->relationLoaded('items'), fn () => $this->items->map(function ($item) {
                 $proof = $item->proof;
                 $pv = $proof->effectiveValues();
                 $rv = $item->effectiveValues();
@@ -58,6 +64,7 @@ class HandoverResource extends JsonResource
                 $baseline = ['manual_hybrid' => (int) $baseline['manual_hybrid'], 'cashless_hybrid' => (int) $baseline['cashless_hybrid'], 'css_orion' => (int) $baseline['css_orion']];
 
                 return ['id' => $item->id, 'task_id' => $item->pickup_task_id, 'reference' => $item->task->reference,
+                    'cashless_readiness' => $this->cashless_readiness[$item->pickup_task_id] ?? null,
                     'customer_name' => $pv['customer_name'], 'contact' => $pv['contact'], 'pickup_address' => $pv['pickup_address'], 'picked_up_at' => $proof->picked_up_at,
                     'pickup_staff' => $item->task->assignedStaff?->only(['id', 'name']),
                     'pickup' => [...$pickup, 'total' => array_sum($pickup)], 'retail' => [...$retail, 'total' => $item->status === 'PENDING' ? null : array_sum($retail)],

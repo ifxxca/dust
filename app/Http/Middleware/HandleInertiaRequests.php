@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Actions\Pickup\WahaClient;
+use App\Models\Customer;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -52,6 +54,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'email_recipient_limit' => Customer::emailRecipientLimit(),
+            'document_delivery_ready' => fn (): bool => $request->user()?->canManagePickup() && app(WahaClient::class)->installed(),
             'auth' => [
                 'user' => $request->user(),
             ],

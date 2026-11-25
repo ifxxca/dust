@@ -1,40 +1,28 @@
-import { useState } from 'react';
-import JneAccountInput from '@/components/jne-account-input';
-import { parseJneAccounts } from '@/lib/jne-accounts';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
-    ArrowDown,
     CalendarDays,
-    CheckCheck,
     ChevronDown,
-    Clock3,
     FileDown,
     History,
-    Inbox,
-    Layers3,
     LoaderCircle,
-    PackageSearch,
     Settings2,
 } from 'lucide-react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { focusFormError } from '@/lib/utils';
-import JneWorkspaceMetrics from '@/components/jne-workspace-metrics';
-import {
-    reportDate,
-    type ReportJobView,
-    type RequestGroupView,
-} from '@/components/jne-report-requests';
+import JneAccountInput from '@/components/jne-account-input';
+import JneAccountPicker, {
+    type JneAccountSource,
+} from '@/components/jne-account-picker';
+import { reportDate } from '@/components/jne-report-requests';
 import PageContainer from '@/components/page-container';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import {
     Collapsible,
     CollapsibleContent,
@@ -42,31 +30,30 @@ import {
 } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { parseJneAccounts } from '@/lib/jne-accounts';
 import { reportPeriodEnd, reportPeriods } from '@/lib/jne-report-limits';
+import { focusFormError } from '@/lib/utils';
+import * as monitoring from '@/routes/jne-monitoring';
 import * as reports from '@/routes/jne-reports';
 import * as runs from '@/routes/report-runs';
-import * as monitoring from '@/routes/jne-monitoring';
 
 export default function JneReports({
     timezone,
     limits,
     sources = [],
 }: {
-    jobs: ReportJobView[];
-    requests: {
-        data: RequestGroupView[];
-        current_page: number;
-        last_page: number;
-        total: number;
-    };
     timezone: string;
     limits: { max_days: number; max_request_days: number; max_awbs: number };
-    sources?: {
-        id: number;
-        customer_account: string;
-        label: string | null;
-        national_account?: string;
-    }[];
+    sources?: JneAccountSource[];
 }) {
     const [bulk, setBulk] = useState(false);
     const [accountText, setAccountText] = useState('');
@@ -75,17 +62,29 @@ export default function JneReports({
         timeZone: timezone,
     }).format(new Date());
     const form = useForm({
+        source: 'apex',
+        retail_server: 'all',
         customer_account: '',
         national_account: 'N',
         date_from: today,
         date_thru: today,
     });
+    const retail = form.data.source === 'hybrid';
     const periods = reportPeriods(
         form.data.date_from,
         form.data.date_thru,
-        limits.max_days,
+        retail ? 1 : limits.max_days,
         limits.max_request_days,
     );
+    const accountCount = retail
+        ? form.data.retail_server === 'all'
+            ? 2
+            : 1
+        : bulk
+          ? parsed.accounts.length
+          : form.data.customer_account
+            ? 1
+            : 0;
     const preset = (days: number, yesterday = false) => {
         const date = new Date(today + 'T12:00:00Z');
         date.setUTCDate(date.getUTCDate() - (yesterday ? 1 : days - 1));
@@ -96,89 +95,212 @@ export default function JneReports({
             date_thru: yesterday ? from : today,
         });
     };
-    const selectedAccounts = bulk
-        ? parsed.accounts
-        : form.data.customer_account
-          ? [
-                {
-                    customer_account: form.data.customer_account,
-                    national_account: form.data.national_account,
-                },
-            ]
-          : [];
+
     return (
         <PageContainer className="flex flex-col gap-4 space-y-0 py-4">
             <Head title="Penarikan Report JNE" />
-            <header className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        Penarikan Report JNE
-                    </h1>
+            <header className="flex flex-wrap items-center justify-between gap-3">
+                <h1 className="text-2xl font-semibold tracking-tight">
+                    Penarikan Report JNE
+                </h1>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" asChild className="min-h-11">
+                        <Link href={monitoring.profiles.url()}>
+                            <Settings2
+                                aria-hidden="true"
+                                data-icon="inline-start"
+                            />
+                            Pengaturan sumber
+                        </Link>
+                    </Button>
+                    <Button variant="outline" asChild className="min-h-11">
+                        <Link href={runs.index.url()}>
+                            <History
+                                aria-hidden="true"
+                                data-icon="inline-start"
+                            />
+                            Riwayat run
+                        </Link>
+                    </Button>
                 </div>
-                <Button variant="outline" className="min-h-11" asChild>
-                    <Link href={runs.index.url()}>
-                        <History aria-hidden="true" data-icon="inline-start" />
-                        Riwayat run
-                    </Link>
-                </Button>
             </header>
-
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
-                <Card className="min-w-0 gap-5 shadow-none">
-                    <CardHeader className="flex-row items-center gap-3">
-                        <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <FileDown aria-hidden="true" className="size-5" />
-                        </span>
-                        <div>
-                            <h2 className="font-semibold">Permintaan report</h2>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Report customer dari APEX JNE CCC
-                            </p>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <form
-                            className="space-y-5"
-                            onSubmit={(event) => {
-                                event.preventDefault();
-                                const element = event.currentTarget;
-                                form.transform((data) =>
-                                    bulk
-                                        ? {
-                                              accounts: parsed.accounts,
-                                              date_from: data.date_from,
-                                              date_thru: data.date_thru,
-                                          }
-                                        : data,
+            <Card className="min-w-0 shadow-none">
+                <CardHeader>
+                    <CardTitle>Permintaan report</CardTitle>
+                    <CardDescription>
+                        Pilih sumber dan periode penarikan.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form
+                        className="flex flex-col gap-5"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            const element = event.currentTarget;
+                            if (
+                                !retail &&
+                                !bulk &&
+                                !form.data.customer_account
+                            ) {
+                                form.setError(
+                                    'customer_account',
+                                    'Pilih atau masukkan nomor penarikan JNE.',
                                 );
-                                form.post(reports.store.url(), {
-                                    preserveScroll: true,
-                                    onError: () => focusFormError(element),
-                                    onSuccess: () =>
-                                        router.visit(runs.index.url()),
-                                });
-                            }}
+                                document
+                                    .getElementById('customer_account')
+                                    ?.focus();
+                                return;
+                            }
+                            form.transform((data) =>
+                                retail
+                                    ? {
+                                          source: 'hybrid',
+                                          retail_server: data.retail_server,
+                                          date_from: data.date_from,
+                                          date_thru: data.date_thru,
+                                      }
+                                    : {
+                                          source: 'apex',
+                                          date_from: data.date_from,
+                                          date_thru: data.date_thru,
+                                          ...(bulk
+                                              ? { accounts: parsed.accounts }
+                                              : {
+                                                    customer_account:
+                                                        data.customer_account,
+                                                    national_account:
+                                                        data.national_account,
+                                                }),
+                                      },
+                            );
+                            form.post(reports.store.url(), {
+                                preserveScroll: true,
+                                onError: () => focusFormError(element),
+                                onSuccess: () =>
+                                    router.visit(
+                                        runs.index.url(
+                                            retail
+                                                ? {
+                                                      query: {
+                                                          source: 'hybrid',
+                                                      },
+                                                  }
+                                                : undefined,
+                                        ),
+                                    ),
+                            });
+                        }}
+                    >
+                        <fieldset
+                            disabled={form.processing}
+                            className="flex min-w-0 flex-col gap-2"
                         >
-                            <div className="space-y-3">
-                                <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        type="button"
-                                        variant={bulk ? 'outline' : 'secondary'}
-                                        className="min-h-11"
-                                        aria-pressed={!bulk}
-                                        onClick={() => setBulk(false)}
+                            <legend className="mb-2 text-sm font-medium">
+                                Sumber report
+                            </legend>
+                            <ToggleGroup
+                                type="single"
+                                variant="outline"
+                                value={form.data.source}
+                                aria-label="Sumber report"
+                                onValueChange={(value) => {
+                                    if (value) {
+                                        form.setData('source', value);
+                                        form.clearErrors();
+                                    }
+                                }}
+                                className="w-full sm:w-fit"
+                            >
+                                <ToggleGroupItem
+                                    value="apex"
+                                    className="min-h-11 flex-1 px-2 whitespace-normal sm:flex-none sm:px-4"
+                                >
+                                    Customer APEX
+                                </ToggleGroupItem>
+                                <ToggleGroupItem
+                                    value="hybrid"
+                                    className="min-h-11 flex-1 px-2 whitespace-normal sm:flex-none sm:px-4"
+                                >
+                                    Retail PM / Puman
+                                </ToggleGroupItem>
+                            </ToggleGroup>
+                            <InputError message={form.errors.source} />
+                        </fieldset>
+                        {retail ? (
+                            <div className="flex flex-col gap-2">
+                                <Label htmlFor="retail-server">
+                                    Server retail
+                                </Label>
+                                <Select
+                                    value={form.data.retail_server}
+                                    disabled={form.processing}
+                                    onValueChange={(value) =>
+                                        form.setData('retail_server', value)
+                                    }
+                                >
+                                    <SelectTrigger
+                                        id="retail-server"
+                                        className="min-h-11 w-full sm:max-w-md"
+                                        aria-invalid={
+                                            !!form.errors.retail_server
+                                        }
+                                        aria-describedby={
+                                            form.errors.retail_server
+                                                ? 'retail-server-error'
+                                                : undefined
+                                        }
                                     >
-                                        Satu account
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant={bulk ? 'secondary' : 'outline'}
-                                        className="min-h-11"
-                                        aria-pressed={bulk}
-                                        onClick={() => setBulk(true)}
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectItem value="all">
+                                                PM dan Puman
+                                            </SelectItem>
+                                            <SelectItem value="HYBRID_PM">
+                                                PM
+                                            </SelectItem>
+                                            <SelectItem value="HYBRID_PUMAN">
+                                                Puman
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                <InputError
+                                    id="retail-server-error"
+                                    message={form.errors.retail_server}
+                                />
+                            </div>
+                        ) : (
+                            <fieldset
+                                disabled={form.processing}
+                                className="flex min-w-0 flex-col gap-3"
+                            >
+                                <legend className="sr-only">Account JNE</legend>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <ToggleGroup
+                                        type="single"
+                                        variant="outline"
+                                        value={bulk ? 'many' : 'one'}
+                                        aria-label="Jumlah account"
+                                        onValueChange={(value) => {
+                                            if (value)
+                                                setBulk(value === 'many');
+                                        }}
                                     >
-                                        Banyak account
-                                    </Button>
+                                        <ToggleGroupItem
+                                            value="one"
+                                            className="min-h-11 px-4"
+                                        >
+                                            Satu account
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem
+                                            value="many"
+                                            className="min-h-11 px-4"
+                                        >
+                                            Banyak account
+                                        </ToggleGroupItem>
+                                    </ToggleGroup>
                                     {sources.length > 0 && (
                                         <Button
                                             type="button"
@@ -196,7 +318,7 @@ export default function JneReports({
                                                 );
                                             }}
                                         >
-                                            Pilih semua akun ({sources.length})
+                                            Pilih semua ({sources.length})
                                         </Button>
                                     )}
                                 </div>
@@ -206,67 +328,40 @@ export default function JneReports({
                                         onChange={setAccountText}
                                     />
                                 ) : (
-                                    <div className="grid gap-4 sm:grid-cols-[1fr_10rem]">
-                                        <div className="space-y-2">
+                                    <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_12rem]">
+                                        <div className="flex min-w-0 flex-col gap-2">
                                             <Label htmlFor="customer_account">
                                                 Nomor penarikan JNE
                                             </Label>
-                                            <Input
-                                                className="min-h-11"
-                                                id="customer_account"
-                                                aria-invalid={
-                                                    !!form.errors
-                                                        .customer_account
-                                                }
-                                                aria-describedby={
-                                                    form.errors.customer_account
-                                                        ? 'report-customer_account-error'
-                                                        : undefined
-                                                }
+                                            <JneAccountPicker
+                                                sources={sources}
                                                 value={
                                                     form.data.customer_account
                                                 }
-                                                maxLength={100}
-                                                required
-                                                list="report-sources"
-                                                placeholder="Pilih atau ketik nomor penarikan"
-                                                onChange={(event) => {
-                                                    const number =
-                                                        event.target.value;
-                                                    const source = sources.find(
-                                                        (item) =>
-                                                            item.customer_account ===
-                                                            number,
-                                                    );
+                                                nationalAccount={
+                                                    form.data.national_account
+                                                }
+                                                disabled={form.processing}
+                                                invalid={
+                                                    !!form.errors
+                                                        .customer_account
+                                                }
+                                                onSelect={(
+                                                    account,
+                                                    national,
+                                                ) => {
                                                     form.setData({
                                                         ...form.data,
                                                         customer_account:
-                                                            number,
+                                                            account,
                                                         national_account:
-                                                            source?.national_account ||
-                                                            form.data
-                                                                .national_account,
+                                                            national,
                                                     });
+                                                    form.clearErrors(
+                                                        'customer_account',
+                                                    );
                                                 }}
                                             />
-                                            <datalist id="report-sources">
-                                                {sources.map((source) => (
-                                                    <option
-                                                        key={source.id}
-                                                        value={
-                                                            source.customer_account
-                                                        }
-                                                    >
-                                                        {source.label ||
-                                                            'Sumber report'}{' '}
-                                                        · National{' '}
-                                                        {source.national_account ===
-                                                        'Y'
-                                                            ? 'YES'
-                                                            : 'NO'}
-                                                    </option>
-                                                ))}
-                                            </datalist>
                                             <InputError
                                                 id="report-customer_account-error"
                                                 message={
@@ -274,7 +369,7 @@ export default function JneReports({
                                                 }
                                             />
                                         </div>
-                                        <div className="space-y-2">
+                                        <div className="flex flex-col gap-2">
                                             <Label htmlFor="request-national">
                                                 National Acc/Cust
                                             </Label>
@@ -282,6 +377,7 @@ export default function JneReports({
                                                 value={
                                                     form.data.national_account
                                                 }
+                                                disabled={form.processing}
                                                 onValueChange={(value) =>
                                                     form.setData(
                                                         'national_account',
@@ -291,6 +387,7 @@ export default function JneReports({
                                             >
                                                 <SelectTrigger
                                                     id="request-national"
+                                                    className="min-h-11 w-full"
                                                     aria-invalid={
                                                         !!form.errors
                                                             .national_account
@@ -301,27 +398,32 @@ export default function JneReports({
                                                             ? 'report-national_account-error'
                                                             : undefined
                                                     }
-                                                    className="min-h-11 w-full"
                                                 >
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="N">
-                                                        NO
-                                                    </SelectItem>
-                                                    <SelectItem value="Y">
-                                                        YES
-                                                    </SelectItem>
+                                                    <SelectGroup>
+                                                        <SelectItem value="N">
+                                                            NO
+                                                        </SelectItem>
+                                                        <SelectItem value="Y">
+                                                            YES
+                                                        </SelectItem>
+                                                    </SelectGroup>
                                                 </SelectContent>
                                             </Select>
+                                            <InputError
+                                                id="report-national_account-error"
+                                                message={
+                                                    form.errors.national_account
+                                                }
+                                            />
                                         </div>
                                     </div>
                                 )}
                                 {Object.entries(form.errors)
-                                    .filter(
-                                        ([key]) =>
-                                            key.startsWith('accounts') ||
-                                            key === 'national_account',
+                                    .filter(([key]) =>
+                                        key.startsWith('accounts'),
                                     )
                                     .map(([key, error]) => (
                                         <InputError
@@ -330,319 +432,186 @@ export default function JneReports({
                                             message={error}
                                         />
                                     ))}
-                            </div>
-                            <div className="space-y-3">
-                                <div className="flex flex-wrap gap-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="min-h-11"
-                                        onClick={() => preset(1)}
-                                    >
-                                        Hari ini
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="min-h-11"
-                                        onClick={() => preset(1, true)}
-                                    >
-                                        Kemarin
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className="min-h-11"
-                                        onClick={() => preset(7)}
-                                    >
-                                        7 hari terakhir
-                                    </Button>
-                                </div>
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="date_from">
-                                            Tanggal dari
-                                        </Label>
-                                        <Input
-                                            className="min-h-11 dark:scheme-dark"
-                                            id="date_from"
-                                            aria-invalid={
-                                                !!form.errors.date_from
-                                            }
-                                            aria-describedby={
-                                                form.errors.date_from
-                                                    ? 'report-date_from-error'
-                                                    : undefined
-                                            }
-                                            type="date"
-                                            required
-                                            value={form.data.date_from}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    'date_from',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            id="report-date_from-error"
-                                            message={form.errors.date_from}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="date_thru">
-                                            Tanggal sampai
-                                        </Label>
-                                        <Input
-                                            className="min-h-11 dark:scheme-dark"
-                                            id="date_thru"
-                                            aria-invalid={
-                                                !!form.errors.date_thru
-                                            }
-                                            aria-describedby={
-                                                form.errors.date_thru
-                                                    ? 'report-date_thru-error'
-                                                    : undefined
-                                            }
-                                            type="date"
-                                            min={form.data.date_from}
-                                            max={reportPeriodEnd(
-                                                form.data.date_from,
-                                                limits.max_request_days,
-                                            )}
-                                            required
-                                            value={form.data.date_thru}
-                                            onChange={(event) =>
-                                                form.setData(
-                                                    'date_thru',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                        <InputError
-                                            id="report-date_thru-error"
-                                            message={form.errors.date_thru}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            {periods.length > 0 && (
-                                <Collapsible className="group rounded-lg border bg-muted/20">
-                                    <CollapsibleTrigger className="flex min-h-12 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                                        <CalendarDays
-                                            aria-hidden="true"
-                                            className="size-4 text-muted-foreground"
-                                        />
-                                        <span className="flex-1">
-                                            {bulk
-                                                ? 'Per account'
-                                                : 'Satu permintaan'}
-                                            , {periods.length} bagian report
-                                        </span>
-                                        <ChevronDown
-                                            aria-hidden="true"
-                                            className="size-4 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
-                                        />
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent>
-                                        <ol className="grid gap-2 border-t p-3 text-xs text-muted-foreground sm:grid-cols-2">
-                                            {periods.map((period, index) => (
-                                                <li
-                                                    key={period.from}
-                                                    className="flex items-center gap-2"
-                                                >
-                                                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted font-medium">
-                                                        {index + 1}
-                                                    </span>
-                                                    {reportDate(period.from)} –{' '}
-                                                    {reportDate(period.thru)}
-                                                </li>
-                                            ))}
-                                        </ol>
-                                    </CollapsibleContent>
-                                </Collapsible>
-                            )}
-                            <JneWorkspaceMetrics
-                                scope="Rencana permintaan saat ini. Setiap account menghasilkan report terpisah di antrean APEX."
-                                items={[
-                                    {
-                                        label: 'Account dipilih',
-                                        value: selectedAccounts.length,
-                                        icon: Layers3,
-                                    },
-                                    {
-                                        label: 'National YES',
-                                        value: selectedAccounts.filter(
-                                            (account) =>
-                                                account.national_account ===
-                                                'Y',
-                                        ).length,
-                                        icon: CheckCheck,
-                                    },
-                                    {
-                                        label: 'National NO',
-                                        value: selectedAccounts.filter(
-                                            (account) =>
-                                                account.national_account ===
-                                                'N',
-                                        ).length,
-                                        icon: Clock3,
-                                    },
-                                    {
-                                        label: 'Bagian report',
-                                        value:
-                                            selectedAccounts.length *
-                                            periods.length,
-                                        icon: FileDown,
-                                    },
-                                ]}
-                            />
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                                <p className="text-xs text-muted-foreground">
-                                    Tanggal mengikuti {timezone}.
-                                </p>
+                            </fieldset>
+                        )}
+                        <fieldset
+                            disabled={form.processing}
+                            className="flex min-w-0 flex-col gap-3"
+                        >
+                            <legend className="mb-2 text-sm font-medium">
+                                Periode penarikan
+                            </legend>
+                            <div className="flex flex-wrap gap-2">
                                 <Button
-                                    className="min-h-11 w-full sm:w-auto"
-                                    disabled={
-                                        form.processing ||
-                                        (bulk &&
-                                            (!parsed.accounts.length ||
-                                                parsed.errors.length > 0))
-                                    }
-                                    type="submit"
+                                    type="button"
+                                    variant="outline"
+                                    className="min-h-11"
+                                    onClick={() => preset(1)}
                                 >
-                                    {form.processing ? (
-                                        <LoaderCircle
-                                            aria-hidden="true"
-                                            data-icon="inline-start"
-                                            className="animate-spin motion-reduce:animate-none"
-                                        />
-                                    ) : (
-                                        <FileDown
-                                            aria-hidden="true"
-                                            data-icon="inline-start"
-                                        />
-                                    )}
-                                    {form.processing
-                                        ? 'Membuat permintaan…'
-                                        : 'Tarik Report'}
+                                    Hari ini
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-h-11"
+                                    onClick={() => preset(1, true)}
+                                >
+                                    Kemarin
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-h-11"
+                                    onClick={() => preset(7)}
+                                >
+                                    7 hari terakhir
                                 </Button>
                             </div>
-                            {form.recentlySuccessful && (
-                                <p role="status" className="text-sm">
-                                    Permintaan dibuat. Report masuk antrean
-                                    worker.
-                                </p>
-                            )}
-                        </form>
-                    </CardContent>
-                </Card>
-                <aside
-                    aria-label="Alur pemrosesan report"
-                    className="space-y-4"
-                >
-                    <Card className="gap-4 shadow-none">
-                        <CardHeader>
-                            <h2 className="text-sm font-semibold">
-                                Setelah report diminta
-                            </h2>
-                        </CardHeader>
-                        <CardContent>
-                            <ol className="space-y-3">
-                                {[
-                                    {
-                                        icon: Inbox,
-                                        title: 'Masuk antrean',
-                                        text: 'Worker mengambil permintaan.',
-                                    },
-                                    {
-                                        icon: FileDown,
-                                        title: 'Unduh dari APEX',
-                                        text: 'Menunggu file report tersedia.',
-                                    },
-                                    {
-                                        icon: PackageSearch,
-                                        title: 'Siap dimonitor',
-                                        text: 'CSV diimpor ke daftar pengiriman.',
-                                    },
-                                ].map(({ icon: Icon, title, text }, index) => (
-                                    <li key={title}>
-                                        <div className="flex items-start gap-3">
-                                            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                                                <Icon
-                                                    aria-hidden="true"
-                                                    className="size-4 text-muted-foreground"
-                                                />
-                                            </span>
-                                            <div>
-                                                <p className="text-sm font-medium">
-                                                    {title}
-                                                </p>
-                                                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                                                    {text}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        {index < 2 && (
-                                            <ArrowDown
-                                                aria-hidden="true"
-                                                className="my-2 ml-2.5 size-3 text-muted-foreground"
-                                            />
+                            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+                                <div className="flex min-w-0 flex-col gap-2">
+                                    <Label htmlFor="date_from">
+                                        Tanggal dari
+                                    </Label>
+                                    <Input
+                                        id="date_from"
+                                        name="date_from"
+                                        type="date"
+                                        required
+                                        className="min-h-11 min-w-0"
+                                        value={form.data.date_from}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'date_from',
+                                                event.target.value,
+                                            )
+                                        }
+                                        aria-invalid={!!form.errors.date_from}
+                                        aria-describedby={
+                                            form.errors.date_from
+                                                ? 'report-date_from-error'
+                                                : undefined
+                                        }
+                                    />
+                                    <InputError
+                                        id="report-date_from-error"
+                                        message={form.errors.date_from}
+                                    />
+                                </div>
+                                <div className="flex min-w-0 flex-col gap-2">
+                                    <Label htmlFor="date_thru">
+                                        Tanggal sampai
+                                    </Label>
+                                    <Input
+                                        id="date_thru"
+                                        name="date_thru"
+                                        type="date"
+                                        required
+                                        className="min-h-11 min-w-0"
+                                        min={form.data.date_from}
+                                        max={reportPeriodEnd(
+                                            form.data.date_from,
+                                            limits.max_request_days,
                                         )}
-                                    </li>
-                                ))}
-                            </ol>
-                            <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
-                                <Badge variant="outline">
-                                    {limits.max_days} hari / report
-                                </Badge>
-                                <Badge variant="outline">
-                                    {limits.max_awbs.toLocaleString('id-ID')}{' '}
-                                    AWB / CSV
-                                </Badge>
+                                        value={form.data.date_thru}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'date_thru',
+                                                event.target.value,
+                                            )
+                                        }
+                                        aria-invalid={!!form.errors.date_thru}
+                                        aria-describedby={
+                                            form.errors.date_thru
+                                                ? 'report-date_thru-error'
+                                                : undefined
+                                        }
+                                    />
+                                    <InputError
+                                        id="report-date_thru-error"
+                                        message={form.errors.date_thru}
+                                    />
+                                </div>
                             </div>
-                        </CardContent>
-                    </Card>
-                    <Button
-                        variant="outline"
-                        className="min-h-11 w-full"
-                        asChild
-                    >
-                        <Link href={monitoring.profiles.url()}>
-                            <Settings2
-                                aria-hidden="true"
-                                data-icon="inline-start"
-                            />
-                            Atur penarikan otomatis
-                        </Link>
-                    </Button>
-                </aside>
-            </div>
-            <Collapsible className="group rounded-xl border bg-card">
-                <CollapsibleTrigger className="flex min-h-14 w-full cursor-pointer items-center justify-between gap-2 px-4 text-left text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                    Batas penarikan & nomor account
-                    <ChevronDown
-                        aria-hidden="true"
-                        className="size-4 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
-                    />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 border-t p-4 text-sm leading-6 text-muted-foreground">
-                    <p>
-                        Maksimal {limits.max_request_days} hari per permintaan,
-                        dibagi per {limits.max_days} hari dan diproses satu per
-                        satu. Hasil di atas{' '}
-                        {limits.max_awbs.toLocaleString('id-ID')} AWB ditolak;
-                        persempit periode report tersebut.
-                    </p>
-                    <p>
-                        Nomor penarikan adalah account JNE, bukan kode customer
-                        internal. Satu report bisa memuat banyak customer.
-                    </p>
-                </CollapsibleContent>
-            </Collapsible>
+                        </fieldset>
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                            <div
+                                className="flex flex-col gap-1 text-sm"
+                                role="status"
+                            >
+                                <span>
+                                    {retail
+                                        ? `${accountCount} server · ${periods.length} hari · ${accountCount * periods.length * 2} report sumber`
+                                        : `${accountCount} account · ${accountCount * periods.length} bagian report`}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    {retail
+                                        ? 'Manual dan Cashless per hari'
+                                        : `APEX dibagi maksimal ${limits.max_days} hari per report`}{' '}
+                                    · {timezone}
+                                </span>
+                            </div>
+                            <Button
+                                type="submit"
+                                className="min-h-11 w-full sm:w-auto"
+                                disabled={
+                                    form.processing ||
+                                    (!retail &&
+                                        bulk &&
+                                        (!parsed.accounts.length ||
+                                            parsed.errors.length > 0))
+                                }
+                            >
+                                {form.processing ? (
+                                    <LoaderCircle
+                                        aria-hidden="true"
+                                        data-icon="inline-start"
+                                        className="animate-spin motion-reduce:animate-none"
+                                    />
+                                ) : (
+                                    <FileDown
+                                        aria-hidden="true"
+                                        data-icon="inline-start"
+                                    />
+                                )}
+                                {form.processing
+                                    ? 'Membuat permintaan…'
+                                    : retail
+                                      ? 'Tarik report retail'
+                                      : 'Tarik report APEX'}
+                            </Button>
+                        </div>
+                        {periods.length > 0 && (
+                            <Collapsible className="group rounded-lg border">
+                                <CollapsibleTrigger className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-sm focus-visible:outline-2 focus-visible:outline-ring">
+                                    <CalendarDays
+                                        aria-hidden="true"
+                                        className="size-4"
+                                    />
+                                    <span className="flex-1">
+                                        Rincian periode ({periods.length})
+                                    </span>
+                                    <ChevronDown
+                                        aria-hidden="true"
+                                        className="size-4 transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none"
+                                    />
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="max-h-64 overflow-y-auto border-t p-3">
+                                    <ol className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+                                        {periods.map((period) => (
+                                            <li key={period.from}>
+                                                {reportDate(period.from)}
+                                                {period.thru !== period.from
+                                                    ? ` – ${reportDate(period.thru)}`
+                                                    : ''}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </CollapsibleContent>
+                            </Collapsible>
+                        )}
+                    </form>
+                </CardContent>
+            </Card>
         </PageContainer>
     );
 }

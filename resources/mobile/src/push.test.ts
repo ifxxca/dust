@@ -290,8 +290,49 @@ test('Android permission precedes channel and FCM registration; local lock unreg
     expect(mocks.channel).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'pickup_assignments' }),
     );
+    expect(mocks.channel).toHaveBeenCalledWith(
+        expect.objectContaining({
+            id: 'cashless_processing',
+            importance: 4,
+            vibration: true,
+            sound: 'retail_notification.wav',
+        }),
+    );
     expect(mocks.register).toHaveBeenCalledTimes(1);
     await stopPush();
     expect(mocks.unregister).toHaveBeenCalledTimes(1);
     expect(mocks.remove).toHaveBeenCalledTimes(1);
+});
+
+test('duplicate foreground incidents update the in-app alert once while taps retain their destination', async () => {
+    const notice = vi.fn();
+    const received = vi.fn();
+    const tap = vi.fn();
+    const dispose = await listenPush(
+        () => ({ session, signal: new AbortController().signal }),
+        tap,
+        notice,
+        received,
+    );
+    const data = {
+        type: 'cashless_entry_attention',
+        task_id: '12',
+        batch_id: '14',
+        event_id: '13',
+        recipient_id: '7',
+    };
+    mocks.callbacks.get('pushNotificationReceived')!({ data });
+    mocks.callbacks.get('pushNotificationReceived')!({ data });
+    expect(notice).toHaveBeenCalledOnce();
+    expect(received).toHaveBeenCalledOnce();
+    mocks.callbacks.get('pushNotificationActionPerformed')!({
+        notification: { data },
+    });
+    expect(tap).toHaveBeenCalledWith({
+        taskId: 12,
+        batchId: 14,
+        eventId: 13,
+        recipientId: 7,
+    });
+    await dispose();
 });

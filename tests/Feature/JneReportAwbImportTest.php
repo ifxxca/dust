@@ -2,6 +2,7 @@
 
 use App\Actions\Reports\ImportReportAwbs;
 use App\Actions\Reports\ManageReportJobs;
+use App\Actions\Reports\ProjectJneShipments;
 use App\Jobs\ImportJneReportAwbs;
 use App\Models\JneReportAwb;
 use App\Models\ReportJob;
@@ -21,6 +22,15 @@ function storedAwbReport(string $csv): ReportJob
 
     return $job;
 }
+
+test('report import preserves a literal dollar AWB while retaining unrelated historical formats', function () {
+    Storage::fake('jne_reports');
+    $job = storedAwbReport('AWB,ID_ACCOUNT'."\n".'$333260100123456,TESTACCOUNT'."\n".'OLD_HISTORY_001,TESTACCOUNT'."\n");
+    ImportJneReportAwbs::dispatchSync($job->id);
+    $this->assertDatabaseHas('jne_report_awbs', ['report_job_id' => $job->id, 'awb' => '$333260100123456']);
+    $this->assertDatabaseHas('jne_report_awbs', ['report_job_id' => $job->id, 'awb' => 'OLD_HISTORY_001']);
+    expect($job->fresh()->import_status)->toBe('IMPORTED');
+});
 
 test('import normalizes Excel text preserves long AWB leading zeros and retains CSV statuses', function () {
     Storage::fake('jne_reports');
@@ -274,5 +284,16 @@ test('failed import can be retried from the same restored CSV without duplicate 
 
     expect($job->fresh()->import_status)->toBe('IMPORTED');
     expect($job->fresh()->import_error)->toBeNull();
+    $this->assertDatabaseCount('jne_report_awbs', 1);
+});
+
+test('synchronous import command reports monitoring failure even when CSV import succeeded', function () {
+    Storage::fake('jne_reports');
+    $job = storedAwbReport("AWB,ID_ACCOUNT\n001,TESTACCOUNT\n");
+    $this->mock(ProjectJneShipments::class)->shouldReceive('handle')->once()->with($job->id)->andThrow(new RuntimeException('projection unavailable'));
+
+    $this->artisan('jne-reports:import-awbs', ['reportJob' => $job->id, '--sync' => true])->assertFailed();
+
+    expect($job->refresh()->import_status)->toBe('IMPORTED')->and($job->projection_status)->toBe('FAILED');
     $this->assertDatabaseCount('jne_report_awbs', 1);
 });

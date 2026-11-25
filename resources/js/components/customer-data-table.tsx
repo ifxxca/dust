@@ -70,6 +70,12 @@ export default function CustomerDataTable({
                                 >
                                     {customer.email}
                                 </span>
+                                {!!customer.additional_emails?.length && (
+                                    <span className="shrink-0 text-xs text-muted-foreground">
+                                        +{customer.additional_emails.length}{' '}
+                                        email
+                                    </span>
+                                )}
                             </p>
                         )}
                         {customer.phone && (

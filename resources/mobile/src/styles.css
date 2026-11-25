@@ -3,8 +3,49 @@
 @source '../../js/components/ui';
 @source '../../js/components/operational-ui.tsx';
 @source '../../js/components/signature-pad.tsx';
+@source '../../js/components/secondary-disclosure.tsx';
 @source '../../js/components/cashless-proof-input.tsx';
 @source '../../js/components/cashless-result-view.tsx';
+
+.browser-camera-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+}
+.mobile-shell[data-browser-pwa='true'] .mobile-bottom-nav {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.retail-pwa input:not([type='checkbox']),
+.retail-pwa textarea,
+.retail-pwa select {
+    font-size: 16px;
+}
+.retail-pwa button:not([role='checkbox']),
+.retail-pwa input:not([type='checkbox']),
+.retail-pwa select {
+    min-height: 44px;
+}
+.retail-pwa button:not([role='checkbox']) {
+    min-width: 44px;
+}
+.retail-pwa .mobile-bottom-nav button {
+    min-height: 52px;
+}
+.retail-pwa .mobile-bottom-nav span {
+    white-space: nowrap;
+}
+.mobile-shell[data-browser-pwa='true'] {
+    max-width: 48rem;
+    margin-inline: auto;
+}
+@media (max-width: 360px) {
+    .mobile-shell[data-browser-pwa='true'] {
+        padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    }
+}
 
 html.cashless-camera-mode,
 body.cashless-camera-mode {
@@ -24,7 +65,7 @@ body.cashless-camera-mode #root {
         max(1rem, env(safe-area-inset-right))
         max(1rem, env(safe-area-inset-bottom))
         max(1rem, env(safe-area-inset-left));
-    overflow: hidden;
+    overflow-y: auto;
     background: transparent;
 }
 
@@ -215,7 +256,7 @@ body {
     overscroll-behavior: none;
 }
 button,
-input,
+input:not([type='checkbox']):not([type='radio']),
 select {
     min-height: 44px;
 }
@@ -659,6 +700,9 @@ select {
     font-weight: 600;
     background: var(--primary);
     color: #fff;
+}
+.task-card-action > svg {
+    display: none;
 }
 .task-card-action.secondary {
     color: var(--primary);
@@ -1118,25 +1162,6 @@ select {
     min-height: 0;
     object-fit: contain;
 }
-.proof-completion-details > summary {
-    display: flex;
-    min-height: 48px;
-    align-items: center;
-    padding: 0.75rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 0.6rem;
-    color: #334155;
-    cursor: pointer;
-    font-weight: 600;
-}
-.proof-completion-details > summary::after {
-    content: '+';
-    margin-left: auto;
-}
-.proof-completion-details[open] > summary::after {
-    content: '−';
-}
-
 .mobile-shell [data-focused-workflow='true'] {
     min-height: calc(var(--mobile-viewport-height) - 12rem);
 }
@@ -1237,4 +1262,233 @@ section[data-start='true'][data-confirmation='false'] > .workflow-primary {
     .quantity-row > label {
         font-size: 13px;
     }
+}
+
+.home-totals,
+.scan-totals {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+}
+.home-totals > div,
+.scan-totals > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.home-totals dt,
+.scan-totals dt {
+    color: var(--muted-foreground);
+    font-size: 12px;
+}
+.home-totals dd,
+.scan-totals dd {
+    font-size: 24px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+}
+.scan-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.scan-totals {
+    padding: 0.75rem 1rem;
+}
+.scan-totals dd {
+    font-size: 22px;
+}
+.scan-server-detail {
+    font-variant-numeric: tabular-nums;
+}
+.home-totals > div:first-child dd,
+.scan-totals > div:first-child dd {
+    color: var(--primary);
+}
+
+.retail-pwa {
+    font-family: var(--font-sans);
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-tap-highlight-color: transparent;
+}
+.retail-pwa button,
+.retail-pwa summary,
+.retail-pwa a {
+    touch-action: manipulation;
+}
+.retail-pwa .mobile-shell {
+    background: transparent;
+    color: var(--foreground);
+}
+.retail-pwa .mobile-shell .text-muted-foreground {
+    color: var(--muted-foreground);
+}
+.retail-pwa .mobile-shell[data-focused='true'] {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
+.retail-pwa .mobile-header {
+    min-height: 76px;
+    margin-bottom: 0.5rem;
+    padding-block: 1rem;
+}
+.retail-pwa .mobile-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.25;
+}
+.retail-pwa .mobile-header p {
+    margin-bottom: 0.2rem;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--muted-foreground);
+}
+.retail-pwa .mobile-header [data-slot='button'] {
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 50%;
+}
+.retail-pwa .mobile-bottom-nav {
+    max-width: 48rem;
+    margin-inline: auto;
+    gap: 0.125rem;
+    background: var(--card);
+    box-shadow: 0 -4px 20px
+        color-mix(in oklab, var(--foreground) 4%, transparent);
+}
+.retail-pwa .mobile-bottom-nav button {
+    gap: 0.25rem;
+    font-size: 11px;
+    font-weight: 500;
+}
+.retail-pwa .mobile-bottom-nav button[aria-current] {
+    background: color-mix(in oklab, var(--primary) 8%, var(--card));
+    font-weight: 650;
+}
+.retail-pwa .task-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1rem;
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    color: var(--card-foreground);
+    box-shadow: 0 2px 4px color-mix(in oklab, var(--foreground) 3%, transparent);
+}
+.retail-pwa .task-card:hover {
+    border-color: var(--primary);
+}
+.retail-pwa .task-card > * + * {
+    margin-top: 0;
+}
+.retail-pwa .task-card-action,
+.retail-pwa .task-card-action.secondary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    padding: 0.75rem 0 0;
+    background: transparent;
+    color: var(--primary);
+    text-align: left;
+    font-size: 13px;
+}
+.retail-pwa .task-card-action > svg {
+    display: block;
+}
+.retail-pwa .pickup-tabs {
+    border: 1px solid var(--border);
+    background: var(--card);
+}
+.retail-pwa .pickup-tabs button[aria-current] {
+    color: var(--primary);
+    background: color-mix(in oklab, var(--primary) 8%, var(--card));
+    box-shadow: none;
+}
+.retail-pwa summary:focus-visible {
+    border-radius: var(--radius-md);
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+.retail-pwa .proof-tabs {
+    background: var(--card);
+}
+.retail-pwa .proof-tabs button {
+    min-height: 52px;
+}
+.retail-pwa .proof-tabs small {
+    display: none;
+}
+.retail-pwa .proof-tabs li[aria-current] {
+    background: color-mix(in oklab, var(--primary) 8%, var(--card));
+    color: var(--primary);
+    box-shadow: inset 0 -2px var(--primary);
+}
+.retail-pwa .proof-workspace canvas {
+    height: 180px;
+    border-style: dashed;
+}
+.retail-pwa .proof-workspace .workflow-primary {
+    box-shadow: 0 0 0 8px var(--background);
+}
+.retail-pwa .cashless-book {
+    position: relative;
+    padding-right: 4.5rem;
+}
+.retail-pwa .cashless-change-book {
+    position: absolute;
+    top: 0;
+    right: 0;
+    max-width: 4rem;
+    height: auto;
+    padding-inline: 0.75rem;
+    white-space: normal;
+}
+.retail-pwa .cashless-scan-form {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+}
+.retail-pwa .cashless-scan-form > ol {
+    background: var(--card);
+}
+.retail-pwa .cashless-keyboard-hint {
+    font-size: 12px;
+}
+.retail-pwa .scan-history {
+    padding-block: 0;
+}
+.retail-pwa .handover-list-tabs {
+    flex-wrap: nowrap;
+    background: var(--card);
+}
+.retail-pwa .mobile-shell[data-focused='false'] .handover-workflow > h2 {
+    display: none;
+}
+.retail-pwa .handover-list-tabs button {
+    flex-basis: 0;
+    font-size: 12px;
+}
+.retail-pwa .handover-workflow .workflow-primary {
+    position: static;
+    margin-top: 0;
+}
+.retail-pwa .account-workspace > div {
+    border-radius: var(--radius-lg);
+}
+.retail-pwa .pwa-install-help {
+    scroll-margin-block: 1rem 6rem;
 }

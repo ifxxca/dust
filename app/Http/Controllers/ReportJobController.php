@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Reports\ManageReportJobs;
+use App\Actions\Reports\QueueRetailReportRange;
 use App\Http\Requests\StoreReportJobRequest;
 use App\Models\JneReportAwb;
 use App\Models\JneReportProfile;
@@ -69,8 +70,14 @@ class ReportJobController extends Controller
         ]);
     }
 
-    public function store(StoreReportJobRequest $request): RedirectResponse
+    public function store(StoreReportJobRequest $request, QueueRetailReportRange $retailReports): RedirectResponse
     {
+        if ($request->validated('source') === 'hybrid') {
+            $retailReports->handle($request->validated('retail_server'), $request->validated('date_from'), $request->validated('date_thru'), $request->user()->id);
+
+            return to_route('report-runs.index', ['source' => 'hybrid']);
+        }
+
         $data = $request->safe()->only(['customer_account', 'national_account', 'accounts', 'date_from', 'date_thru']);
         $lastDate = CarbonImmutable::parse($data['date_thru']);
         $maxDays = config('jne-reports.max_report_days');

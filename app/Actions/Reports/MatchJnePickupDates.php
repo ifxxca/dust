@@ -20,14 +20,14 @@ class MatchJnePickupDates
         if (! config('jne-reports.evidence_policies_enabled')) {
             return [];
         }
-        (new \Illuminate\Database\Eloquent\Collection($history->all()))->loadMissing('reportJob');
+        (new \Illuminate\Database\Eloquent\Collection($history->all()))->loadMissing('reportJob:id,source,report_type,status,import_status');
         $contracts = JneSourceContract::whereNotNull('active_key')->whereNotNull('verified_at')->get()->keyBy('active_key');
         $dates = [];
         foreach ($history as $source) {
             $decision = $decisions[$source->id] ?? [];
             $job = $source->reportJob;
             $contract = $contracts->get(JneSourceContract::key($job->source, $job->report_type));
-            $registeredPrefix = in_array($decision['method'] ?? '', ['SHIPPER_CODE_PREFIX', 'SHIPPER_ALIAS_CODE'], true)
+            $registeredPrefix = in_array($decision['method'] ?? '', ['SHIPPER_CODE_PREFIX', 'SHIPPER_ALIAS_CODE', 'SHIPPER_BASE_CODE'], true)
                 && $job->status === 'COMPLETED' && $job->import_status === 'IMPORTED';
             $verifiedColumn = ($decision['method'] ?? '') === 'CUSTOMER_CODE' && $contract !== null
                 && ($contract->definition['pickup_date_column'] ?? null) === 'TGL_ENTRY'

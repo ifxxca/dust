@@ -19,6 +19,21 @@ class EnsureActiveUser
             abort(403, 'Akun tidak aktif. Hubungi Admin.');
         }
 
-        return $next($request);
+        if ($request->user()?->role === 'customer') {
+            if ($request->routeIs('dashboard', 'home')) {
+                return redirect()->route('portal.dashboard');
+            }
+            abort_unless($request->routeIs('portal.*', 'logout', 'verification.*', 'password.*', 'login', 'login.store'), 403, 'Akses tersedia melalui portal customer.');
+            if ($request->routeIs('portal.*') && ! $request->user()->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice');
+            }
+        }
+
+        $response = $next($request);
+        if ($request->routeIs('portal.*')) {
+            $response->headers->set('Cache-Control', 'private, no-store');
+        }
+
+        return $response;
     }
 }

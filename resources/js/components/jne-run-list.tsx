@@ -53,6 +53,14 @@ export type JneRun = {
         source_row_count: number | null;
         awb_count: number | null;
         error_message: string | null;
+        attempt_count?: number;
+        cycle_attempt?: number;
+        max_attempts?: number;
+        retry_available_at?: string | null;
+        retry_classification?: string | null;
+        error_stage?: string | null;
+        root_cause?: string | null;
+        events?: RunEvent[];
     }[];
 };
 

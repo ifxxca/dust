@@ -11,6 +11,7 @@ import { WorkerApi } from './api.mjs';
 import { randomUUID } from 'node:crypto';
 import { runHybridReportJob } from './hybrid-jobs.mjs';
 import { runCashlessEntry } from './cashless-entry.mjs';
+import { createCashlessPool } from './cashless-pool.mjs';
 
 function servicePaths(config) {
     const directory = path.resolve(
@@ -167,6 +168,10 @@ export async function startHybridService(config, emit = () => {}) {
     let timer;
     let pollTimer;
     const sockets = new Set();
+    const cashlessPool =
+        config.cashlessEntryEnabled && config.cashlessPerUserAccounts
+            ? createCashlessPool(config, slots, emit)
+            : null;
 
     const execute = async (request) => {
         if (request.action === 'status') {
@@ -175,6 +180,9 @@ export async function startHybridService(config, emit = () => {}) {
                 sources: [...slots.keys()],
                 browsers: slots.size,
                 cashless_entry: Boolean(config.cashlessEntryEnabled),
+                cashless_per_user_accounts: Boolean(config.cashlessPerUserAccounts),
+                cashless_concurrency: cashlessPool ? 5 : 1,
+                cashless_source: config.cashlessPerUserAccounts ? 'roberto' : 'batch',
             };
         }
         if (
@@ -297,6 +305,7 @@ export async function startHybridService(config, emit = () => {}) {
         if (stopping || sessionClock(clock()).paused) {
             return;
         }
+        cashlessPool?.poll();
         await Promise.all(
             [...slots].map(async ([source, slot]) => {
                 if (!slot.api || slot.polling) {
@@ -304,8 +313,16 @@ export async function startHybridService(config, emit = () => {}) {
                 }
                 slot.polling = (async () => {
                     try {
-                        if (config.cashlessEntryEnabled) {
-                            await runCashlessEntry(slot.client, config, source, emit);
+                        if (
+                            config.cashlessEntryEnabled &&
+                            !config.cashlessPerUserAccounts
+                        ) {
+                            await runCashlessEntry(
+                                slot.client,
+                                config,
+                                source,
+                                emit,
+                            );
                         }
                         const job = await slot.api.claim(randomUUID());
                         if (job) {
@@ -378,6 +395,7 @@ export async function startHybridService(config, emit = () => {}) {
         stopping = true;
         clearInterval(timer);
         clearInterval(pollTimer);
+        await cashlessPool?.close();
         await Promise.allSettled(
             [...slots.values()].map((slot) => slot.polling),
         );

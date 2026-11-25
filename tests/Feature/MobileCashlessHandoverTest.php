@@ -20,7 +20,7 @@ function mobileCashlessBook(array $abilities = ['mobile:read', 'mobile:handover'
 
 test('mobile cashless saves the same audited evidence visible on the web without redirects or duplicate retries', function () {
     [$staff, $task, $token] = mobileCashlessBook();
-    $data = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TGANDROID001', 'CMANDROID002']];
+    $data = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000101', 'CM00000000102']];
     $this->withToken($token->plainTextToken)->getJson(route('mobile.cashless-handover.index', ['task' => $task->id]))
         ->assertOk()->assertHeader('Cache-Control', 'no-store, private')->assertJsonPath('selected.can_record', true)->assertJsonPath('selected.target', 2);
     $this->postJson(route('mobile.cashless-handover.store', $task), $data)->assertOk()
@@ -38,7 +38,7 @@ test('mobile cashless saves the same audited evidence visible on the web without
 test('mobile readonly tokens can read their own book but cannot submit cashless handover', function () {
     [$staff, $task, $token] = mobileCashlessBook(['mobile:read']);
     $this->withToken($token->plainTextToken)->getJson(route('mobile.cashless-handover.index', ['task' => $task->id]))->assertOk()->assertJsonPath('selected.can_record', false);
-    $this->postJson(route('mobile.cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG001']])->assertForbidden();
+    $this->postJson(route('mobile.cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000001']])->assertForbidden();
     $this->assertDatabaseCount('pickup_cashless_awbs', 0);
 });
 
@@ -49,7 +49,7 @@ test('mobile cashless requires a mobile token and isolates pickup ownership', fu
     $this->withToken($token->plainTextToken)->getJson(route('mobile.cashless-handover.index'))
         ->assertOk()->assertJsonCount(1, 'tasks.data')->assertJsonPath('tasks.data.0.id', $task->id);
     $this->getJson(route('mobile.cashless-handover.index', ['task' => $other->id]))->assertNotFound();
-    $this->postJson(route('mobile.cashless-handover.store', $other), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG001']])->assertForbidden();
+    $this->postJson(route('mobile.cashless-handover.store', $other), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000001']])->assertForbidden();
     $this->assertDatabaseCount('pickup_cashless_awbs', 0);
     app('auth')->forgetGuards();
     $webToken = $staff->createToken('web-tool', ['mobile:read', 'mobile:handover']);
@@ -61,21 +61,21 @@ test('mobile rejects invalid resi and cannot add to a locked pickup', function (
     $this->withToken($token->plainTextToken)->postJson(route('mobile.cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['0101500123456']])
         ->assertUnprocessable()->assertJsonValidationErrors('awbs.0');
     PickupProcessingReconciliation::factory()->create(['pickup_task_id' => $task->id, 'status' => 'DONE', 'locked_at' => now()]);
-    $this->postJson(route('mobile.cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG001']])->assertForbidden();
+    $this->postJson(route('mobile.cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000001']])->assertForbidden();
     $this->assertDatabaseCount('pickup_cashless_awbs', 0);
 });
 
 test('web and mobile share the same unique AWB claim', function () {
     [$staff, $task, $token] = mobileCashlessBook();
-    PickupCashlessAwb::factory()->create(['awb' => 'TGTAKEN']);
-    $this->withToken($token->plainTextToken)->postJson(route('mobile.cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TGNEW', 'TGTAKEN']])
+    PickupCashlessAwb::factory()->create(['awb' => 'TG0000000401']);
+    $this->withToken($token->plainTextToken)->postJson(route('mobile.cashless-handover.store', $task), ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000201', 'TG0000000401']])
         ->assertUnprocessable()->assertJsonValidationErrors('awbs');
     $this->assertDatabaseCount('pickup_cashless_awbs', 1);
 });
 
 test('mobile can confirm an identical committed batch after locking without changing finalized data', function (string $closure) {
     [$staff, $task, $token] = mobileCashlessBook();
-    $data = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TGRECOVER1', 'TGRECOVER2']];
+    $data = ['submission_key' => (string) Str::uuid(), 'awbs' => ['TG0000000301', 'TG0000000302']];
     $this->withToken($token->plainTextToken)->postJson(route('mobile.cashless-handover.store', $task), $data)->assertOk();
     if ($closure === 'reconciliation') {
         $locked = PickupProcessingReconciliation::factory()->create(['pickup_task_id' => $task->id, 'status' => 'DONE', 'locked_at' => now()]);
@@ -86,7 +86,7 @@ test('mobile can confirm an identical committed batch after locking without chan
     $before = $locked->fresh()->getAttributes();
     $this->getJson(route('mobile.cashless-handover.index', ['task' => $task->id]))->assertOk()->assertJsonPath('selected.can_record', false);
     $this->postJson(route('mobile.cashless-handover.store', $task), $data)->assertOk()->assertJsonPath('data.stored_count', 2);
-    $this->postJson(route('mobile.cashless-handover.store', $task), [...$data, 'awbs' => ['TGNEW']])->assertForbidden();
+    $this->postJson(route('mobile.cashless-handover.store', $task), [...$data, 'awbs' => ['TG0000000201']])->assertForbidden();
     $this->assertDatabaseCount('pickup_cashless_awbs', 2);
     $this->assertDatabaseCount('pickup_cashless_awb_events', 2);
     expect($locked->fresh()->getAttributes())->toBe($before);

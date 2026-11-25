@@ -48,8 +48,8 @@ class PickupAwbManifestMail extends Mailable
     public function attachments(): array
     {
         return [
-            Attachment::fromStorageDisk('local', $this->manifest->xlsx_path)->as('resi-'.$this->manifest->snapshot['reference'].'-v'.$this->manifest->revision.'.xlsx')->withMime('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
-            Attachment::fromStorageDisk('local', $this->manifest->pdf_path)->as('resi-'.$this->manifest->snapshot['reference'].'-v'.$this->manifest->revision.'.pdf')->withMime('application/pdf'),
+            Attachment::fromStorageDisk('local', $this->manifest->xlsx_path)->as($this->manifest->downloadFilename('xlsx'))->withMime('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+            Attachment::fromStorageDisk('local', $this->manifest->pdf_path)->as($this->manifest->downloadFilename('pdf'))->withMime('application/pdf'),
         ];
     }
 

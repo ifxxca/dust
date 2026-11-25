@@ -96,6 +96,7 @@ class ReportJob extends Model
             'reviewed_at' => 'immutable_datetime', 'row_count' => 'integer',
             'source_row_count' => 'integer', 'awb_count' => 'integer', 'source_claim_token' => 'encrypted',
             'hybrid_batch_id' => 'integer',
+            'retry_available_at' => 'immutable_datetime', 'retry_final_at' => 'immutable_datetime', 'retry_protocol' => 'integer',
         ];
     }
 

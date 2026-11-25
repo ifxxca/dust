@@ -5,6 +5,7 @@ namespace App\Actions\Pickup;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class QueryCustomerPickupDays
 {
@@ -41,6 +42,7 @@ class QueryCustomerPickupDays
         foreach (['manual_hybrid', 'cashless_hybrid', 'css_orion'] as $category) {
             $buckets->selectRaw("sum(p.$category) as $category");
         }
+        $buckets->selectRaw('min(p.received_at) as validation_started_at');
         $latestManifest = DB::table('pickup_awb_manifests')->select('pickup_task_id')->selectRaw("coalesce(max(case when status <> 'SUPERSEDED' then id end), max(id)) as manifest_id")->groupBy('pickup_task_id');
         $latestDelivery = DB::table('pickup_awb_deliveries')->select('pickup_awb_manifest_id')->selectRaw('max(id) as delivery_id')->groupBy('pickup_awb_manifest_id');
         $query = DB::query()->fromSub($buckets, 'b')->join('customers as c', 'c.id', '=', 'b.customer_id')
@@ -52,6 +54,10 @@ class QueryCustomerPickupDays
             ->selectRaw("case when g.id is null or g.pickup_count <> b.pickup_count or b.compiled_count <> b.pickup_count or b.min_group_id <> g.id or b.max_group_id <> g.id or b.dirty_count > 0 then 'NOT_EVALUATED' else g.status end as automation_status")
             ->selectRaw('case when g.id is null or g.pickup_count <> b.pickup_count or b.compiled_count <> b.pickup_count or b.min_group_id <> g.id or b.max_group_id <> g.id or b.dirty_count > 0 then 1 else 0 end as input_version, 0 as evaluated_input_version')
             ->selectRaw("coalesce(d.status, case when m.status = 'READY' then 'AWAITING_CONFIGURATION' when m.status = 'FAILED' then 'DOCUMENT_FAILED' when m.status = 'REVIEW' then 'REVIEW' when m.id is not null then 'BUILDING_DOCUMENT' else 'NOT_READY' end) as delivery_status");
+        $query->selectRaw(Schema::hasColumn('pickup_customer_reconciliations', 'approval_snapshot')
+            ? "case when g.approval_snapshot is not null then case when g.post_lock_change is not null then 'LOCKED_REVIEW' else 'LOCKED' end else 'PENDING' end as finalization_status"
+            : "'PENDING' as finalization_status");
+        $query->selectRaw(Schema::hasColumn('pickup_customer_reconciliations', 'approval_snapshot') ? "g.approval_snapshot ->> '$.mode' as closure_mode" : 'NULL as closure_mode');
         if (! empty($filters['category'])) {
             $category = $filters['category'];
             $query->where(fn ($present) => $present->where('b.'.$category, '>', 0)->orWhere('g.categories->'.$category.'->confirmed', '>', 0));

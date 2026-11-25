@@ -1,3 +1,6 @@
+import { NativeSelect } from '@/components/ui/native-select';
+import { NativeCheckbox } from '@/components/ui/native-checkbox';
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import InputError from '@/components/input-error';
@@ -232,7 +235,8 @@ export default function JneEvidenceRules({
                                 <Label htmlFor="evidence-kind">
                                     Jenis aturan
                                 </Label>
-                                <select
+                                <NativeSelect
+                                    wrapperClassName="w-full"
                                     id="evidence-kind"
                                     aria-invalid={!!form.errors.kind}
                                     aria-describedby={
@@ -240,7 +244,7 @@ export default function JneEvidenceRules({
                                             ? 'evidence-kind-error'
                                             : undefined
                                     }
-                                    className="h-10 w-full rounded-md border bg-background px-3"
+                                    className="h-10 rounded-md border bg-background px-3"
                                     value={form.data.kind}
                                     onChange={(event) => {
                                         form.setData(
@@ -259,7 +263,7 @@ export default function JneEvidenceRules({
                                     <option value="shipper_alias">
                                         Nama pengirim berscope
                                     </option>
-                                </select>
+                                </NativeSelect>
                                 <InputError
                                     id="evidence-kind-error"
                                     message={form.errors.kind}
@@ -271,7 +275,8 @@ export default function JneEvidenceRules({
                                         <Label htmlFor="evidence-source">
                                             Sistem sumber
                                         </Label>
-                                        <select
+                                        <NativeSelect
+                                            wrapperClassName="w-full"
                                             id="evidence-source"
                                             aria-invalid={!!form.errors.source}
                                             aria-describedby={
@@ -279,7 +284,7 @@ export default function JneEvidenceRules({
                                                     ? 'evidence-source-error'
                                                     : undefined
                                             }
-                                            className="h-10 w-full rounded-md border bg-background px-3"
+                                            className="h-10 rounded-md border bg-background px-3"
                                             value={form.data.source}
                                             onChange={(event) => {
                                                 form.setData(
@@ -308,7 +313,7 @@ export default function JneEvidenceRules({
                                                     {source}
                                                 </option>
                                             ))}
-                                        </select>
+                                        </NativeSelect>
                                         <InputError
                                             id="evidence-source-error"
                                             message={form.errors.source}
@@ -361,7 +366,8 @@ export default function JneEvidenceRules({
                                         <Label htmlFor="evidence-customer">
                                             Customer pemilik
                                         </Label>
-                                        <select
+                                        <NativeSelect
+                                            wrapperClassName="w-full"
                                             id="evidence-customer"
                                             aria-invalid={
                                                 !!form.errors.customer_id
@@ -371,7 +377,7 @@ export default function JneEvidenceRules({
                                                     ? 'evidence-customer-error'
                                                     : undefined
                                             }
-                                            className="h-10 w-full rounded-md border bg-background px-3"
+                                            className="h-10 rounded-md border bg-background px-3"
                                             value={form.data.customer_id}
                                             onChange={(event) =>
                                                 form.setData(
@@ -394,7 +400,7 @@ export default function JneEvidenceRules({
                                                     · {customer.name}
                                                 </option>
                                             ))}
-                                        </select>
+                                        </NativeSelect>
                                         <InputError
                                             id="evidence-customer-error"
                                             message={form.errors.customer_id}
@@ -557,9 +563,8 @@ export default function JneEvidenceRules({
                                     message={form.errors.reason}
                                 />
                             </div>
-                            <label className="flex items-start gap-2 text-sm sm:col-span-2">
-                                <input
-                                    type="checkbox"
+                            <label className="flex min-h-11 items-start gap-2 text-sm sm:col-span-2">
+                                <NativeCheckbox
                                     disabled={!enabled}
                                     checked={form.data.verified}
                                     onChange={(event) =>
@@ -626,17 +631,14 @@ export default function JneEvidenceRules({
                         </p>
                     )}
                     {rows.map((row) => (
-                        <details
-                            key={row.kind + row.id}
-                            className="rounded-lg border p-3 text-sm"
-                        >
-                            <summary className="cursor-pointer break-words">
+                        <Disclosure key={row.kind + row.id}>
+                            <DisclosureSummary className="cursor-pointer break-words">
                                 #{row.id} · {ruleLabels[row.kind] ?? row.kind} ·{' '}
                                 {label(row)} ·{' '}
                                 {row.active_key || row.is_active
                                     ? 'Aktif terverifikasi'
                                     : 'Draft / dinonaktifkan'}
-                            </summary>
+                            </DisclosureSummary>
                             <p className="mt-2">
                                 Customer #{row.customer_id ?? '—'} · Scope:{' '}
                                 {row.account_scope || 'global'} ·{' '}
@@ -673,7 +675,7 @@ export default function JneEvidenceRules({
                                     ? 'Pilih untuk dinonaktifkan'
                                     : 'Pilih untuk diverifikasi dan diaktifkan'}
                             </Button>
-                        </details>
+                        </Disclosure>
                     ))}
                     <Sheet
                         open={ruleActionOpen}
@@ -766,20 +768,17 @@ export default function JneEvidenceRules({
                     </Sheet>
                 </CardContent>
             </Card>
-            <details className="rounded-lg border p-3 text-sm">
-                <summary className="cursor-pointer font-medium">
+            <Disclosure>
+                <DisclosureSummary className="cursor-pointer">
                     Riwayat konfigurasi
-                </summary>
+                </DisclosureSummary>
                 <div className="mt-3 flex flex-col gap-2">
                     {events.map((event) => (
-                        <details
-                            key={event.id}
-                            className="rounded-lg border p-3 text-sm"
-                        >
-                            <summary className="cursor-pointer">
+                        <Disclosure key={event.id}>
+                            <DisclosureSummary className="cursor-pointer">
                                 {event.kind} #{event.rule_id} ·{' '}
                                 {event.actor_name} · {event.reason}
-                            </summary>
+                            </DisclosureSummary>
                             <p>{event.created_at}</p>
                             <pre className="overflow-x-auto text-xs">
                                 {JSON.stringify(
@@ -791,10 +790,10 @@ export default function JneEvidenceRules({
                                     2,
                                 )}
                             </pre>
-                        </details>
+                        </Disclosure>
                     ))}
                 </div>
-            </details>
+            </Disclosure>
         </PageContainer>
     );
 }

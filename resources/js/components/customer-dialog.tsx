@@ -38,7 +38,7 @@ export default function CustomerDialog({
     return (
         <Dialog open={open} onOpenChange={changeOpen}>
             <DialogContent
-                className="flex max-h-[92dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl"
+                className="flex h-[min(92dvh,56rem)] flex-col gap-0 overflow-clip p-0 sm:max-w-2xl"
                 onInteractOutside={(event) => event.preventDefault()}
                 onEscapeKeyDown={(event) => {
                     if (busy) event.preventDefault();

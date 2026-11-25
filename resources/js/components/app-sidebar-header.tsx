@@ -47,6 +47,7 @@ export function AppSidebarHeader({
                             pickup_staff: 'Petugas Pickup',
                             retail_staff: 'Petugas Retail',
                             admin_supervisor: 'Admin / Supervisor',
+                            customer: 'Customer',
                         }[role]
                     }
                 </span>

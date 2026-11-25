@@ -44,6 +44,14 @@ if ($Service) {
             'documents' { $serviceArguments = @($artisan, 'queue:work', '--queue=documents,deliveries', '--sleep=3', '--tries=4', '--timeout=75', '--no-interaction') }
             'notifications' { $serviceArguments = @($artisan, 'queue:work', 'database', '--queue=mobile-push', '--sleep=2', '--tries=1', '--timeout=60', '--no-interaction') }
         }
+        if ($Service -eq 'web' -and $settings.WebDriver -eq 'nginx') {
+            $runtime = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+            $serviceArguments = @('-NoProfile', '-NonInteractive', '-File', (Join-Path $PSScriptRoot 'start-web.ps1'), '-Port', [string] $settings.WebPort, '-PhpWorkers', [string] $settings.PhpWorkers, '-FastCgiPort', [string] $settings.FastCgiPort)
+            if ($settings.NginxPath) { $serviceArguments += @('-NginxPath', $settings.NginxPath) }
+        }
+        if ($Service -in @('import', 'reconciliation', 'documents', 'notifications')) {
+            $serviceArguments += @('--memory=256', '--max-jobs=100', '--max-time=3600')
+        }
     }
     if ($CheckOnly) {
         Write-Output "$Service command: $runtime $($serviceArguments -join ' ')"
@@ -57,9 +65,10 @@ if ($Service) {
         $stdout = Join-Path $logDirectory "local-$Service-$logStamp.stdout.log"
         $stderr = Join-Path $logDirectory "local-$Service-$logStamp.stderr.log"
         $child = Start-Process -FilePath $runtime -ArgumentList $quotedArguments -WorkingDirectory (Get-Location).Path -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru
+        $null = $child.Handle
         try {
             while (!$child.WaitForExit(250)) {}
-            $child.Refresh()
+            $workerExitCode = $child.ExitCode
         } finally {
             if (!$child.HasExited) {
                 $cleanupProcesses = @(Get-CimInstance Win32_Process)
@@ -69,10 +78,14 @@ if ($Service) {
                 }
             }
         }
-        $restartWorker = $Service -in @('import', 'reconciliation', 'documents', 'notifications') -and $child.ExitCode -in @(0, 12)
-        if ($restartWorker) { Start-Sleep -Seconds 5 }
+        $restartWorker = $Service -in @('import', 'reconciliation', 'documents', 'notifications')
+        if ($restartWorker) {
+            $restartDelay = if ($workerExitCode -in @(0, 12)) { 5 } else { 30 }
+            Write-Output "$Service worker exited (code $workerExitCode). Restarting in $restartDelay seconds. Logs: $stdout ; $stderr"
+            Start-Sleep -Seconds $restartDelay
+        }
     } while ($restartWorker)
-    exit $child.ExitCode
+    exit $workerExitCode
 }
 
 $launcher = Join-Path $PSScriptRoot 'start-local.ps1'

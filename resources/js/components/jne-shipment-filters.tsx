@@ -9,14 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import FilterSelect from '@/components/filter-select';
+import DateRangeFields from '@/components/date-range-fields';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
     Sheet,
     SheetContent,
@@ -42,56 +37,6 @@ const customerMatchLabels: Record<string, string> = {
     CANDIDATE: 'Kandidat customer',
     CONFLICT: 'Bukti bertentangan',
 };
-
-function FilterSelect({
-    id,
-    label,
-    value,
-    all,
-    options,
-    disabled,
-    onChange,
-}: {
-    id: string;
-    label: string;
-    value: string;
-    all: string;
-    options: [string, string][];
-    disabled: boolean;
-    onChange: (value: string) => void;
-}) {
-    return (
-        <div className="flex min-w-0 flex-col gap-2">
-            <Label htmlFor={id}>{label}</Label>
-            <Select
-                value={value || 'all'}
-                onValueChange={(value) =>
-                    onChange(value === 'all' ? '' : value)
-                }
-                disabled={disabled}
-            >
-                <SelectTrigger id={id} className="min-h-11 w-full">
-                    <SelectValue>
-                        {value
-                            ? options.find(([key]) => key === value)?.[1] ||
-                              value
-                            : all}
-                    </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        <SelectItem value="all">{all}</SelectItem>
-                        {options.map(([key, text]) => (
-                            <SelectItem key={key} value={key}>
-                                {text}
-                            </SelectItem>
-                        ))}
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
-        </div>
-    );
-}
 
 export default function ShipmentFilters({
     applied,
@@ -130,6 +75,12 @@ export default function ShipmentFilters({
     };
     const pendingChanges = JSON.stringify(draft) !== appliedKey;
     const [advancedOpen, setAdvancedOpen] = useState(false);
+    const mobile = useIsMobile();
+    useEffect(() => {
+        if (mobile && (errors.date_from || errors.date_thru)) {
+            setAdvancedOpen(true);
+        }
+    }, [mobile, errors.date_from, errors.date_thru]);
     const [saved, setSaved] = useState<JneFilters | null>(null);
     const page = usePage();
     const storageKey = `jne-shipment-filters:${page.props?.auth?.user?.id ?? 'current'}`;
@@ -145,6 +96,7 @@ export default function ShipmentFilters({
         applied.account,
         applied.match,
         applied.customer_match,
+        ...(mobile ? [applied.date_from, applied.date_thru] : []),
     ].filter(Boolean).length;
     const active = (Object.keys(applied) as (keyof JneFilters)[]).filter(
         (key) => !['status', 'per_page'].includes(key) && applied[key],
@@ -275,69 +227,20 @@ export default function ShipmentFilters({
                     />
                     <InputError message={errors.status} />
                 </div>
-                <fieldset className="col-span-2 min-w-0 xl:col-span-1">
-                    <legend className="mb-2 text-sm font-medium">
-                        Tanggal AWB (WIB)
-                    </legend>
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-                        <div className="min-w-0">
-                            <Label htmlFor="jne-date-from" className="sr-only">
-                                Tanggal AWB mulai
-                            </Label>
-                            <Input
-                                id="jne-date-from"
-                                name="date_from"
-                                type="date"
-                                className="min-h-11 min-w-0 px-2 text-sm"
-                                value={draft.date_from}
-                                disabled={loading}
-                                aria-invalid={!!errors.date_from}
-                                aria-describedby={
-                                    errors.date_from
-                                        ? 'jne-date-from-error'
-                                        : undefined
-                                }
-                                onChange={(event) =>
-                                    onChange('date_from', event.target.value)
-                                }
-                            />
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                            s/d
-                        </span>
-                        <div className="min-w-0">
-                            <Label htmlFor="jne-date-thru" className="sr-only">
-                                Tanggal AWB sampai
-                            </Label>
-                            <Input
-                                id="jne-date-thru"
-                                name="date_thru"
-                                type="date"
-                                className="min-h-11 min-w-0 px-2 text-sm"
-                                min={draft.date_from || undefined}
-                                value={draft.date_thru}
-                                disabled={loading}
-                                aria-invalid={!!errors.date_thru}
-                                aria-describedby={
-                                    errors.date_thru
-                                        ? 'jne-date-thru-error'
-                                        : undefined
-                                }
-                                onChange={(event) =>
-                                    onChange('date_thru', event.target.value)
-                                }
-                            />
-                        </div>
-                    </div>
-                    <InputError
-                        id="jne-date-from-error"
-                        message={errors.date_from}
+                {!mobile && (
+                    <DateRangeFields
+                        id="jne-date"
+                        label="Periode AWB (WIB)"
+                        from={draft.date_from}
+                        thru={draft.date_thru}
+                        onFromChange={(value) => onChange('date_from', value)}
+                        onThruChange={(value) => onChange('date_thru', value)}
+                        fromError={errors.date_from}
+                        thruError={errors.date_thru}
+                        disabled={loading}
+                        className="col-span-2 xl:col-span-1"
                     />
-                    <InputError
-                        id="jne-date-thru-error"
-                        message={errors.date_thru}
-                    />
-                </fieldset>
+                )}
                 <div className="col-span-2 xl:col-span-1 xl:pt-7">
                     <Sheet open={advancedOpen} onOpenChange={setAdvancedOpen}>
                         <SheetTrigger asChild>
@@ -365,6 +268,23 @@ export default function ShipmentFilters({
                                 </SheetDescription>
                             </SheetHeader>
                             <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4">
+                                {mobile && (
+                                    <DateRangeFields
+                                        id="jne-date"
+                                        label="Periode AWB (WIB)"
+                                        from={draft.date_from}
+                                        thru={draft.date_thru}
+                                        onFromChange={(value) =>
+                                            onChange('date_from', value)
+                                        }
+                                        onThruChange={(value) =>
+                                            onChange('date_thru', value)
+                                        }
+                                        fromError={errors.date_from}
+                                        thruError={errors.date_thru}
+                                        disabled={loading}
+                                    />
+                                )}
                                 <FilterSelect
                                     id="jne-source-filter"
                                     label="Sumber report"

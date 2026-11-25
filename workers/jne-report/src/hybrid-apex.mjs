@@ -20,7 +20,7 @@ export async function retrieveHybridApex(
         !awbs.length ||
         awbs.some(
             (awb) =>
-                typeof awb !== 'string' || !/^[A-Z0-9_-]{1,100}$/.test(awb),
+                typeof awb !== 'string' || !/^[A-Z0-9_$-]{1,100}$/.test(awb),
         ) ||
         new Set(awbs).size !== awbs.length
     ) {
@@ -72,6 +72,23 @@ export async function retrieveHybridApex(
                 {
                     ...job,
                     awbs: awbs.slice(offset, offset + MAX_AWBS),
+                    ...(job.automatic_retry
+                        ? {
+                              parameters: {
+                                  ...job.parameters,
+                                  awbs: awbs.slice(offset, offset + MAX_AWBS),
+                                  apex_history:
+                                      job.parameters?.apex_retry_batches?.[
+                                          batch
+                                      ]?.history,
+                              },
+                              retryCheckpoint: (evidence) =>
+                                  job.retryCheckpoint({
+                                      ...evidence,
+                                      batch_number: batch,
+                                  }),
+                          }
+                        : {}),
                     upload_filename:
                         job.report_type === 'unresolved'
                             ? `active-awbs-${job.id}-${batch}-${randomUUID()}.csv`

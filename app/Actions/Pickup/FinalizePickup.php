@@ -4,6 +4,7 @@ namespace App\Actions\Pickup;
 
 use App\Models\Customer;
 use App\Models\PickupCashlessAwb;
+use App\Models\PickupReceipt;
 use App\Models\PickupRecord;
 use App\Models\PickupTask;
 use App\Models\User;
@@ -53,8 +54,12 @@ class FinalizePickup
                     }
                     $newAwbs = array_values(array_diff($awbs, $savedAwbs));
                     if ($newAwbs !== []) {
-                        $this->cashless->handle($actor, $taskId, ['submission_key' => $data['submission_key'],
-                            'source' => 'nuralamt', 'awbs' => $newAwbs], enqueueEntry: false);
+                        try {
+                            $this->cashless->handle($actor, $taskId, ['submission_key' => $data['submission_key'],
+                                'source' => ManageCashlessEntryBatches::CaptureSource, 'awbs' => $newAwbs], enqueueEntry: false);
+                        } catch (ValidationException $exception) {
+                            throw ValidationException::withMessages(['cashless_awbs' => array_merge(...array_values($exception->errors()))]);
+                        }
                     }
                 }
                 $record = $task->proof()->create([
@@ -74,10 +79,19 @@ class FinalizePickup
                         $record->attachments()->create(['kind' => $kind, 'path' => $path, 'mime_type' => $file->getMimeType(), 'size' => $file->getSize()]);
                     }
                 }
-                $record->receipt()->create(['recipient' => $record->contact, 'status' => 'PENDING_CONFIGURATION']);
+                $recipients = config('pickup.email_recipients.enabled') ? Customer::findOrFail($task->customer_id)->notificationEmails($record->contact) : null;
+                $record->receipt()->create(['recipient' => $recipients[0] ?? $record->contact, 'status' => 'PENDING_CONFIGURATION',
+                    ...($recipients !== null ? ['recipient_statuses' => PickupReceipt::pendingRecipients($recipients)] : [])]);
                 $task->update(['status' => 'PICKED_UP', 'version' => $task->version + 1]);
                 $task->events()->create(['action' => 'pickup_finalized', 'actor_id' => $actor->id, 'task_version' => $task->version, 'occurred_at' => now()]);
                 $this->entries->enqueueUnbatched($taskId, 'Resi tercatat diteruskan setelah POP final.');
+                DB::afterCommit(function () use ($record): void {
+                    try {
+                        app(ManageWhatsappDelivery::class)->queueReceipt($record);
+                    } catch (\Throwable $exception) {
+                        report($exception);
+                    }
+                });
 
                 return $record->load(['attachments', 'receipt']);
             });

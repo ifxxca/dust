@@ -20,6 +20,8 @@ class PickupCustomerReconciliation extends Model
 
     protected $guarded = ['id'];
 
+    protected $hidden = ['approval_snapshot', 'post_lock_change'];
+
     /** @return Attribute<CarbonImmutable, string|\DateTimeInterface> */
     protected function businessDate(): Attribute
     {
@@ -29,6 +31,6 @@ class PickupCustomerReconciliation extends Model
 
     protected function casts(): array
     {
-        return ['categories' => 'array', 'reasons' => 'array', 'evidence' => 'array', 'pickup_count' => 'integer', 'revision' => 'integer', 'locked_at' => 'immutable_datetime', 'evaluated_at' => 'immutable_datetime'];
+        return ['approval_snapshot' => 'array', 'post_lock_change' => 'array', 'categories' => 'array', 'reasons' => 'array', 'evidence' => 'array', 'pickup_count' => 'integer', 'revision' => 'integer', 'locked_at' => 'immutable_datetime', 'evaluated_at' => 'immutable_datetime'];
     }
 }

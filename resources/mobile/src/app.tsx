@@ -1,12 +1,17 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { isBrowserPwa } from './platform';
+import { PwaDraftNotice, PwaHelp, PwaStatus } from './pwa-status';
+import { HomeOverview } from './home-overview';
 import { App } from '@capacitor/app';
 import jneLogo from './jne-logo.svg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useInitials } from '@/hooks/use-initials';
-import { EmptyState } from '@/components/operational-ui';
+import { EmptyState, statusLabels } from '@/components/operational-ui';
 import {
     ArrowLeft,
     RefreshCw,
@@ -20,6 +25,7 @@ import {
     ShieldCheck,
     ChevronRight,
     LogOut,
+    Plus,
 } from 'lucide-react';
 import {
     BottomNavigation,
@@ -50,6 +56,8 @@ import HandoverPanel from './handover-panel';
 import CashlessHandoverPanel from './cashless-handover-panel';
 import CashlessAlertsPanel from './cashless-alerts-panel';
 import CashlessResultPanel from './cashless-result-panel';
+import NotificationSettings from './notification-settings';
+import ScannerFeedbackSettings from './scanner-feedback-settings';
 import ManualPickup from './manual-pickup';
 import { readLocal, captureResult, captureFailure } from './local-store';
 import type { RestoredListenerEvent } from '@capacitor/app';
@@ -411,7 +419,7 @@ export default function MobileApp() {
             setError(message);
             if (failure instanceof ApiError) {
                 setFieldErrors(failure.errors);
-                if (failure.status === 401) {
+                if (failure.status === 401 || failure.status === 419) {
                     changeSession(null);
                     await clearSession().catch(() =>
                         setError(
@@ -437,7 +445,7 @@ export default function MobileApp() {
         const controller = new AbortController();
         void (async () => {
             try {
-                if (!Capacitor.isNativePlatform()) {
+                if (!Capacitor.isNativePlatform() && !isBrowserPwa) {
                     setError(
                         'Preview web tersedia. Login dan token storage hanya dapat diuji pada APK Android.',
                     );
@@ -507,53 +515,84 @@ export default function MobileApp() {
     }, [changeSession]);
 
     useEffect(() => {
-        const update = () => setOnline(navigator.onLine);
+        const update = () => {
+            setOnline(navigator.onLine);
+            if (navigator.onLine) setRefresh((value) => value + 1);
+            if (
+                navigator.onLine &&
+                isBrowserPwa &&
+                !sessionRef.current &&
+                !busyRef.current
+            ) {
+                const epoch = generation.current;
+                void readSession()
+                    .then((restored) => {
+                        if (
+                            !disposed &&
+                            generation.current === epoch &&
+                            restored
+                        )
+                            changeSession(restored);
+                    })
+                    .catch((failure) => {
+                        if (!disposed && generation.current === epoch)
+                            void fail(failure);
+                    });
+            }
+        };
         window.addEventListener('online', update);
         window.addEventListener('offline', update);
         let disposed = false;
+        const resume = async ({ isActive }: { isActive: boolean }) => {
+            const saved = sessionRef.current;
+            if (
+                !isActive ||
+                !saved ||
+                saved.locked ||
+                busyRef.current ||
+                Object.values(featureLocks.current).some(Boolean)
+            )
+                return;
+            const epoch = generation.current;
+            try {
+                const current = await request<MeResult>(
+                    me(),
+                    saved,
+                    network.current.signal,
+                );
+                if (
+                    disposed ||
+                    generation.current !== epoch ||
+                    busyRef.current ||
+                    Object.values(featureLocks.current).some(Boolean)
+                )
+                    return;
+                const updated = {
+                    ...saved,
+                    user: current.data,
+                    timezone: current.meta.operational_timezone,
+                };
+                sessionRef.current = updated;
+                setSession(updated);
+                setRefresh((value) => value + 1);
+            } catch (failure) {
+                if (!disposed && generation.current === epoch)
+                    await fail(failure);
+            }
+        };
         const listener = Capacitor.isNativePlatform()
-            ? App.addListener('appStateChange', async ({ isActive }) => {
-                  const saved = sessionRef.current;
-                  if (
-                      !isActive ||
-                      !saved ||
-                      saved.locked ||
-                      busyRef.current ||
-                      Object.values(featureLocks.current).some(Boolean)
-                  )
-                      return;
-                  const epoch = generation.current;
-                  try {
-                      const current = await request<MeResult>(
-                          me(),
-                          saved,
-                          network.current.signal,
-                      );
-                      if (
-                          disposed ||
-                          generation.current !== epoch ||
-                          busyRef.current ||
-                          Object.values(featureLocks.current).some(Boolean)
-                      )
-                          return;
-                      const updated = {
-                          ...saved,
-                          user: current.data,
-                          timezone: current.meta.operational_timezone,
-                      };
-                      sessionRef.current = updated;
-                      setSession(updated);
-                      setRefresh((value) => value + 1);
-                  } catch (failure) {
-                      if (!disposed && generation.current === epoch)
-                          await fail(failure);
-                  }
-              })
+            ? App.addListener('appStateChange', resume)
             : null;
+        const visible = () => {
+            if (!document.hidden) void resume({ isActive: true });
+        };
+        if (isBrowserPwa)
+            document.addEventListener('visibilitychange', visible);
         return () => {
             disposed = true;
             window.removeEventListener('online', update);
             window.removeEventListener('offline', update);
+            document.removeEventListener('visibilitychange', visible);
             if (listener) void listener.then((handle) => handle.remove());
         };
     }, [fail]);
@@ -607,7 +646,7 @@ export default function MobileApp() {
             manualOpen ||
             tab === 'account' ||
             tab === 'handover' ||
-            (screen !== 'home' && screen !== 'pickup')
+            (screen !== 'home' && screen !== 'pickup' && screen !== 'reports')
         )
             return;
         const controller = new AbortController();
@@ -650,8 +689,11 @@ export default function MobileApp() {
                                       mine: 1,
                                       ...(screen === 'home'
                                           ? { status: 'ASSIGNED', summary: 1 }
-                                          : {}),
-                                      ...(tab === 'history'
+                                          : screen === 'reports'
+                                            ? { summary: 1 }
+                                            : {}),
+                                      ...(tab === 'history' ||
+                                      screen === 'reports'
                                           ? { history: 1 }
                                           : {}),
                                       page,
@@ -679,7 +721,8 @@ export default function MobileApp() {
                         );
                         setLastPage(result.meta.last_page);
                         setTotalTasks(result.meta.total);
-                        if (screen === 'home') setHomeSummary(result.summary);
+                        if (screen === 'home' || screen === 'reports')
+                            setHomeSummary(result.summary);
                     }
                 }
             } catch (failure) {
@@ -739,7 +782,9 @@ export default function MobileApp() {
                     email,
                     password,
                     device_id: deviceId,
-                    device_name: 'Retail Pickup Dev Android',
+                    device_name: isBrowserPwa
+                        ? 'Retail Operations Web'
+                        : 'Retail Pickup Dev Android',
                 },
             );
             setPassword('');
@@ -766,6 +811,15 @@ export default function MobileApp() {
             changeSession(saved);
         } catch (failure) {
             await fail(failure);
+            if (failure instanceof ApiError && failure.status === 422) {
+                requestAnimationFrame(() =>
+                    document
+                        .querySelector<HTMLInputElement>(
+                            '#email[aria-invalid="true"], #password[aria-invalid="true"]',
+                        )
+                        ?.focus(),
+                );
+            }
         } finally {
             setPassword('');
             busyRef.current = false;
@@ -881,8 +935,18 @@ export default function MobileApp() {
     }
     function navigateScreen(next: AppScreen) {
         if (Object.values(featureLocks.current).some(Boolean)) return;
-        if (!navigate(next === 'account' ? 'account' : 'mine')) return;
+        if (
+            !navigate(
+                next === 'account'
+                    ? 'account'
+                    : next === 'handover'
+                      ? 'handover'
+                      : 'mine',
+            )
+        )
+            return;
         setScreen(next);
+        if (next === 'reports') setTab('history');
         setFilters(initialFilters);
         setSearch('');
     }
@@ -905,12 +969,18 @@ export default function MobileApp() {
         });
 
     return (
-        <div
+        <main
+            id="mobile-work"
+            tabIndex={-1}
             className="mobile-shell w-full px-4"
             data-keyboard={keyboardOpen}
             data-focused={taskId !== null || moduleFocused || manualOpen}
             data-auth={!session}
+            data-browser-pwa={isBrowserPwa}
         >
+            <a href="#mobile-work" className="sr-only focus:not-sr-only">
+                Langsung ke area kerja
+            </a>
             <header
                 className={!session && !booting ? 'sr-only' : 'mobile-header'}
             >
@@ -976,14 +1046,14 @@ export default function MobileApp() {
                         )}
                     <div>
                         <p className="text-[10px] font-semibold tracking-wide text-primary">
-                            RETAIL OPERATIONS
+                            Retail Operations
                         </p>
                         <h1
                             className={
                                 ((screen === 'handover' ||
                                     screen === 'cashless') &&
                                     moduleFocused) ||
-                                screen === 'home'
+                                (!isBrowserPwa && screen === 'home')
                                     ? 'sr-only'
                                     : 'text-lg font-semibold'
                             }
@@ -1000,15 +1070,19 @@ export default function MobileApp() {
                                       ? 'Menu'
                                       : screen === 'notifications'
                                         ? 'Notifikasi'
-                                        : screen === 'cashless'
-                                          ? 'Handover Cashless'
-                                          : tab === 'handover'
-                                            ? 'Handover'
-                                            : tab === 'history'
-                                              ? 'Riwayat'
-                                              : tab === 'account'
-                                                ? 'Akun'
-                                                : 'Pickup'}
+                                        : screen === 'reports'
+                                          ? 'Laporan Saya'
+                                          : screen === 'cashless'
+                                            ? 'Handover Cashless'
+                                            : tab === 'handover'
+                                              ? 'Handover'
+                                              : tab === 'history'
+                                                ? 'Riwayat'
+                                                : tab === 'account'
+                                                  ? isBrowserPwa
+                                                      ? 'Profil'
+                                                      : 'Akun'
+                                                  : 'Pickup'}
                         </h1>
                     </div>
                 </div>
@@ -1044,6 +1118,10 @@ export default function MobileApp() {
                         </Button>
                     )}
             </header>
+            <PwaStatus busy={busy || featureBusy} />
+            {session && (taskId !== null || moduleFocused || manualOpen) && (
+                <PwaDraftNotice />
+            )}
             {session && !session.locked && testPushVisible && (
                 <div
                     role="status"
@@ -1225,7 +1303,10 @@ export default function MobileApp() {
                         </div>
                         <Button
                             className="login-submit"
-                            disabled={busy || !Capacitor.isNativePlatform()}
+                            disabled={
+                                busy ||
+                                (!Capacitor.isNativePlatform() && !isBrowserPwa)
+                            }
                         >
                             {busy && (
                                 <LoaderCircle
@@ -1253,6 +1334,35 @@ export default function MobileApp() {
                                 atau hubungi Admin untuk bantuan akun
                                 operasional.
                             </p>
+                        )}
+                        {isBrowserPwa && !!error && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={busy || !online}
+                                onClick={() => {
+                                    setBusy(true);
+                                    void request(
+                                        destroy(),
+                                        null,
+                                        network.current.signal,
+                                        undefined,
+                                        true,
+                                    )
+                                        .then(() => clearSession())
+                                        .then(() =>
+                                            setError(
+                                                'Sesi web ditutup. Silakan masuk kembali.',
+                                            ),
+                                        )
+                                        .catch((failure) =>
+                                            setError(userFacingError(failure)),
+                                        )
+                                        .finally(() => setBusy(false));
+                                }}
+                            >
+                                Keluar dari sesi web
+                            </Button>
                         )}
                     </div>
                     <footer className="login-footer">
@@ -1284,31 +1394,49 @@ export default function MobileApp() {
             ) : (
                 <>
                     {screen === 'pickup' && taskId === null && !manualOpen && (
-                        <nav
-                            aria-label="Pickup workspace"
-                            className="pickup-tabs mb-4 grid grid-cols-3 gap-1 rounded-lg bg-muted p-1"
-                        >
-                            {(
-                                [
-                                    ['mine', 'Tugas Saya'],
-                                    ['available', 'Tersedia'],
-                                    ['history', 'Riwayat'],
-                                ] as const
-                            ).map(([value, label]) => (
+                        <div className="mb-4 flex flex-col gap-3">
+                            {(session.user.role === 'pickup_staff' ||
+                                (isBrowserPwa &&
+                                    session.user.role ===
+                                        'admin_supervisor')) && (
                                 <Button
-                                    key={value}
-                                    variant="ghost"
-                                    aria-current={
-                                        tab === value ? 'page' : undefined
-                                    }
-                                    className="px-1 text-xs"
+                                    className="min-h-11 w-full sm:w-auto sm:self-end"
                                     disabled={featureBusy}
-                                    onClick={() => navigate(value)}
+                                    onClick={() => {
+                                        setManualSource(null);
+                                        setManualOpen(true);
+                                    }}
                                 >
-                                    {label}
+                                    <Plus aria-hidden="true" />
+                                    Buat Pickup Manual
                                 </Button>
-                            ))}
-                        </nav>
+                            )}
+                            <nav
+                                aria-label="Pickup workspace"
+                                className="pickup-tabs grid grid-cols-3 gap-1 rounded-lg bg-muted p-1"
+                            >
+                                {(
+                                    [
+                                        ['mine', 'Tugas Saya'],
+                                        ['available', 'Tersedia'],
+                                        ['history', 'Riwayat'],
+                                    ] as const
+                                ).map(([value, label]) => (
+                                    <Button
+                                        key={value}
+                                        variant="ghost"
+                                        aria-current={
+                                            tab === value ? 'page' : undefined
+                                        }
+                                        className="px-1 text-xs"
+                                        disabled={featureBusy}
+                                        onClick={() => navigate(value)}
+                                    >
+                                        {label}
+                                    </Button>
+                                ))}
+                            </nav>
+                        </div>
                     )}
                     {screen === 'menu' ? (
                         <ModuleMenu
@@ -1366,101 +1494,39 @@ export default function MobileApp() {
                                 ))}
                         </section>
                     ) : screen === 'home' ? (
-                        <section className="space-y-4">
-                            <div>
-                                <h2 className="text-lg font-semibold">
-                                    Halo, {session.user.name}
-                                </h2>
-                                <p className="text-xs text-muted-foreground">
-                                    Pickup Staff
-                                </p>
-                            </div>
-                            <div className="daily-summary">
-                                <div className="flex justify-between">
-                                    <strong>Aktivitas Hari Ini</strong>
-                                    <span className="text-xs text-muted-foreground">
-                                        {homeSummary
-                                            ? homeSummary.date
-                                            : 'Memuat…'}
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-3 divide-x">
-                                    {[
-                                        [homeSummary?.total, 'Pickup'],
-                                        [homeSummary?.successful, 'Berhasil'],
-                                        [
-                                            homeSummary?.no_packages,
-                                            'Tanpa paket',
-                                        ],
-                                    ].map(([count, label]) => (
-                                        <div key={String(label)}>
-                                            <b>{count ?? '—'}</b>
-                                            <small>{label}</small>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <h3 className="font-semibold">Menu Operasional</h3>
-                            <ModuleMenu
-                                compact
+                        <>
+                            <HomeOverview
+                                name={session.user.name}
+                                summary={homeSummary}
+                                tasks={tasks}
+                                total={totalTasks}
+                                loading={loading}
+                                error={error}
                                 onPickup={() => navigate('mine')}
-                                onHandover={() => navigate('handover')}
-                                onCashless={() => navigateScreen('cashless')}
+                                onScan={() => navigateScreen('cashless')}
+                                onTask={openTask}
+                                schedule={date}
                             />
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-semibold">Tugas Saya</h3>
-                                <span className="text-sm text-muted-foreground">
-                                    {totalTasks === null
-                                        ? '—'
-                                        : `${totalTasks} tugas`}
-                                </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Daftar tugas berjalan dari server, urut jadwal.{' '}
-                                {tasks.length > 3 &&
-                                    'Tiga tugas pertama ditampilkan.'}
-                            </p>
-                            {loading ? (
-                                <EmptyState loading />
-                            ) : (
-                                tasks
-                                    .slice(0, 3)
-                                    .map((item) => (
-                                        <TaskCard
-                                            key={item.id}
-                                            task={item}
-                                            schedule={date(item.scheduled_at)}
-                                            history={false}
-                                            onOpen={() => openTask(item.id)}
-                                        />
-                                    ))
-                            )}
-                            {!loading && !error && tasks.length === 0 && (
-                                <EmptyState
-                                    title="Belum ada tugas"
-                                    description="Buka Pickup untuk melihat tugas tersedia."
-                                />
-                            )}
                             {pushNotice && (
                                 <button
                                     onClick={() =>
                                         navigateScreen('notifications')
                                     }
-                                    className="w-full rounded-xl border p-3 text-left text-sm"
+                                    className="mt-4 w-full rounded-xl border bg-card p-3 text-left text-sm"
                                 >
                                     {pushNotice}
                                 </button>
                             )}
-                        </section>
+                        </>
                     ) : tab === 'account' ? (
                         <section
                             aria-label="Profil dan pengaturan akun"
-                            className="space-y-5"
+                            className="account-workspace flex flex-col gap-4"
                         >
-                            <div className="flex items-center gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                            <div className="account-identity flex items-center gap-3 rounded-xl border bg-card p-4">
                                 <div
                                     aria-hidden="true"
-                                    className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primary text-xl font-semibold text-primary-foreground"
+                                    className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground"
                                 >
                                     {getInitials(session.user.name)}
                                 </div>
@@ -1469,7 +1535,12 @@ export default function MobileApp() {
                                         {session.user.name}
                                     </h2>
                                     <p className="text-sm text-muted-foreground">
-                                        Pickup Staff
+                                        {session.user.role === 'pickup_staff'
+                                            ? 'Pickup Staff'
+                                            : session.user.role ===
+                                                'retail_staff'
+                                              ? 'Retail Staff'
+                                              : 'Supervisor'}
                                     </p>
                                     <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
                                         <ShieldCheck
@@ -1513,30 +1584,38 @@ export default function MobileApp() {
                                         role="status"
                                         className="text-xs leading-relaxed text-muted-foreground"
                                     >
-                                        {pushNotice ||
-                                            'Izinkan notifikasi agar pemberitahuan tugas baru dapat diterima di perangkat ini.'}
+                                        {isBrowserPwa
+                                            ? 'Pemberitahuan tersedia saat aplikasi dibuka. Buka Notifikasi Tugas untuk memperbarui.'
+                                            : pushNotice ||
+                                              'Izinkan notifikasi agar pemberitahuan tugas baru dapat diterima di perangkat ini.'}
                                     </p>
-                                    <Button
-                                        variant="outline"
-                                        className="w-full"
-                                        disabled={busy || pushBusy || !online}
-                                        onClick={() =>
-                                            void retryPushRegistration()
-                                        }
-                                    >
-                                        {pushBusy
-                                            ? 'Mengaktifkan…'
-                                            : pushNotice ===
-                                                'Notifikasi tugas sudah diaktifkan pada perangkat ini.'
-                                              ? 'Perbarui Notifikasi'
-                                              : 'Aktifkan Notifikasi'}
-                                    </Button>
+                                    {Capacitor.isNativePlatform() && (
+                                        <Button
+                                            variant="outline"
+                                            className="w-full"
+                                            disabled={
+                                                busy || pushBusy || !online
+                                            }
+                                            onClick={() =>
+                                                void retryPushRegistration()
+                                            }
+                                        >
+                                            {pushBusy
+                                                ? 'Mengaktifkan…'
+                                                : pushNotice ===
+                                                    'Notifikasi tugas sudah diaktifkan pada perangkat ini.'
+                                                  ? 'Perbarui Notifikasi'
+                                                  : 'Aktifkan Notifikasi'}
+                                        </Button>
+                                    )}
                                     {!online && (
                                         <p className="text-xs text-amber-700">
                                             Sambungkan internet untuk
                                             mengaktifkan notifikasi.
                                         </p>
                                     )}
+                                    <NotificationSettings />
+                                    <ScannerFeedbackSettings />
                                 </div>
                             </div>
                             <DraftList
@@ -1549,40 +1628,44 @@ export default function MobileApp() {
                                     setError('');
                                 }}
                             />
+                            <PwaHelp />
                             <div className="overflow-hidden rounded-2xl border bg-card">
-                                <details className="p-4">
-                                    <summary className="flex min-h-11 cursor-pointer items-center gap-3 font-semibold">
-                                        <span className="flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                                            <LockKeyhole
-                                                size={20}
+                                {!isBrowserPwa && (
+                                    <Disclosure>
+                                        <DisclosureSummary className="flex min-h-11 cursor-pointer items-center gap-3">
+                                            <span className="flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                                                <LockKeyhole
+                                                    size={20}
+                                                    aria-hidden="true"
+                                                />
+                                            </span>
+                                            Keamanan Akun
+                                            <ChevronRight
+                                                size={18}
                                                 aria-hidden="true"
+                                                className="ml-auto text-muted-foreground"
                                             />
-                                        </span>
-                                        Keamanan Akun
-                                        <ChevronRight
-                                            size={18}
-                                            aria-hidden="true"
-                                            className="ml-auto text-muted-foreground"
-                                        />
-                                    </summary>
-                                    <div className="mt-3 space-y-3">
-                                        <p className="text-xs leading-relaxed text-muted-foreground">
-                                            Kunci akses sementara di perangkat
-                                            ini, termasuk saat tidak ada
-                                            internet. Akun belum keluar sampai
-                                            proses keluar selesai. Draft Anda
-                                            tetap tersimpan.
-                                        </p>
-                                        <Button
-                                            disabled={busy || featureBusy}
-                                            variant="outline"
-                                            className="w-full"
-                                            onClick={() => void localLock()}
-                                        >
-                                            Kunci Aplikasi
-                                        </Button>
-                                    </div>
-                                </details>
+                                        </DisclosureSummary>
+                                        <div className="mt-3 space-y-3">
+                                            <p className="text-xs leading-relaxed text-muted-foreground">
+                                                Kunci akses sementara di
+                                                perangkat ini, termasuk saat
+                                                tidak ada internet. Akun belum
+                                                keluar sampai proses keluar
+                                                selesai. Draft Anda tetap
+                                                tersimpan.
+                                            </p>
+                                            <Button
+                                                disabled={busy || featureBusy}
+                                                variant="outline"
+                                                className="w-full"
+                                                onClick={() => void localLock()}
+                                            >
+                                                Kunci Aplikasi
+                                            </Button>
+                                        </div>
+                                    </Disclosure>
+                                )}
                                 <div className="space-y-2 border-t p-4">
                                     <Button
                                         disabled={busy || featureBusy}
@@ -1594,8 +1677,9 @@ export default function MobileApp() {
                                         Keluar
                                     </Button>
                                     <p className="text-center text-xs text-muted-foreground">
-                                        Proses keluar memerlukan internet. Draft
-                                        tetap tersimpan untuk akun Anda.
+                                        {isBrowserPwa
+                                            ? 'Keluar memerlukan internet dan menghapus draft tab ini.'
+                                            : 'Proses keluar memerlukan internet. Draft tetap tersimpan untuk akun Anda.'}
                                     </p>
                                 </div>
                             </div>
@@ -1615,7 +1699,7 @@ export default function MobileApp() {
                             onFailure={(failure) =>
                                 sessionRef.current?.token === session.token &&
                                 failure instanceof ApiError &&
-                                [401, 403].includes(failure.status)
+                                [401, 403, 419].includes(failure.status)
                                     ? fail(failure)
                                     : Promise.resolve()
                             }
@@ -1629,7 +1713,7 @@ export default function MobileApp() {
                             onFailure={(failure) =>
                                 sessionRef.current?.token === session.token &&
                                 failure instanceof ApiError &&
-                                [401, 403].includes(failure.status)
+                                [401, 403, 419].includes(failure.status)
                                     ? fail(failure)
                                     : Promise.resolve()
                             }
@@ -1641,6 +1725,84 @@ export default function MobileApp() {
                                 setError('');
                             }}
                         />
+                    ) : screen === 'reports' ? (
+                        <section
+                            className="flex flex-col gap-4"
+                            aria-label="Laporan operasional saya"
+                        >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <h2 className="font-semibold">
+                                    Ringkasan hari ini
+                                </h2>
+                                <Button
+                                    variant="outline"
+                                    disabled={loading || !online}
+                                    onClick={() =>
+                                        setRefresh((value) => value + 1)
+                                    }
+                                >
+                                    Muat ulang
+                                </Button>
+                            </div>
+                            {homeSummary && (
+                                <dl className="grid grid-cols-2 gap-3 rounded-xl border bg-card p-4 text-sm">
+                                    <div>
+                                        <dt>Total tugas</dt>
+                                        <dd className="text-xl font-semibold">
+                                            {homeSummary.total}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt>Pickup selesai</dt>
+                                        <dd className="text-xl font-semibold">
+                                            {homeSummary.successful}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt>Menunggu</dt>
+                                        <dd className="text-xl font-semibold">
+                                            {homeSummary.waiting}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt>Tanpa paket</dt>
+                                        <dd className="text-xl font-semibold">
+                                            {homeSummary.no_packages}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            )}
+                            <h2 className="font-semibold">
+                                Riwayat pickup saya
+                            </h2>
+                            {loading && <EmptyState loading />}
+                            {tasks.map((item) => (
+                                <TaskCard
+                                    key={item.id}
+                                    task={item}
+                                    schedule={date(item.scheduled_at)}
+                                    history
+                                    onOpen={() => openTask(item.id)}
+                                />
+                            ))}
+                            {!loading && !tasks.length && (
+                                <EmptyState
+                                    title="Belum ada riwayat"
+                                    description="Pickup selesai akan tampil di sini."
+                                />
+                            )}
+                            {page < lastPage && (
+                                <Button
+                                    variant="outline"
+                                    disabled={loading || !online}
+                                    onClick={() =>
+                                        setPage((value) => value + 1)
+                                    }
+                                >
+                                    Muat lebih banyak
+                                </Button>
+                            )}
+                        </section>
                     ) : manualOpen ? (
                         <ManualPickup
                             key={`${session.user.id}-${session.environment}`}
@@ -1670,6 +1832,11 @@ export default function MobileApp() {
                             ) : task ? (
                                 <>
                                     {taskMode === 'execution' &&
+                                        !(
+                                            isBrowserPwa &&
+                                            task.visits?.at(-1)?.outcome ===
+                                                'COLLECTED'
+                                        ) &&
                                         !(
                                             task.proof &&
                                             task.status === 'PICKED_UP' &&
@@ -1839,7 +2006,7 @@ export default function MobileApp() {
                                             </div>
                                         )}
                                     {task.proof && (
-                                        <details
+                                        <Disclosure
                                             id="pickup-proof-detail"
                                             className="proof-completion-details"
                                             open={proofDetailsOpen}
@@ -1849,9 +2016,9 @@ export default function MobileApp() {
                                                 )
                                             }
                                         >
-                                            <summary>
+                                            <DisclosureSummary>
                                                 Detail POP dan receipt
-                                            </summary>
+                                            </DisclosureSummary>
                                             <TaskSummary
                                                 task={task}
                                                 schedule={date(
@@ -1863,7 +2030,7 @@ export default function MobileApp() {
                                                 proof={task.proof}
                                                 session={session}
                                             />
-                                        </details>
+                                        </Disclosure>
                                     )}
                                 </>
                             ) : (
@@ -1933,54 +2100,45 @@ export default function MobileApp() {
                                 </Button>
                             </form>
                             <div className="flex flex-wrap items-center gap-2">
-                                {tab === 'mine' &&
-                                    session.user.role === 'pickup_staff' && (
-                                        <Button
-                                            variant="outline"
-                                            disabled={featureBusy}
-                                            onClick={() => {
-                                                setManualSource(null);
-                                                setManualOpen(true);
-                                            }}
-                                        >
-                                            Buat Pickup Manual
-                                        </Button>
-                                    )}
+                                {!isBrowserPwa && (
+                                    <Button
+                                        variant="outline"
+                                        disabled={featureBusy}
+                                        onClick={() => navigate('handover')}
+                                    >
+                                        Handover Pickup
+                                    </Button>
+                                )}
                                 <Button
-                                    variant="outline"
-                                    disabled={featureBusy}
-                                    onClick={() => navigate('handover')}
+                                    variant="ghost"
+                                    className="justify-start px-0 text-sm"
+                                    aria-expanded={filtersOpen}
+                                    onClick={() =>
+                                        setFiltersOpen((value) => !value)
+                                    }
                                 >
-                                    Handover Pickup
+                                    <SlidersHorizontal size={16} />
+                                    {filtersOpen
+                                        ? 'Tutup Filter'
+                                        : 'Filter & Urutan'}
+                                    {Object.entries(filters).some(
+                                        ([key, value]) =>
+                                            !['q', 'sort'].includes(key) &&
+                                            value,
+                                    )
+                                        ? ' · aktif'
+                                        : ''}
                                 </Button>
                             </div>
-
-                            <Button
-                                variant="ghost"
-                                className="justify-start px-0 text-sm"
-                                aria-expanded={filtersOpen}
-                                onClick={() =>
-                                    setFiltersOpen((value) => !value)
-                                }
-                            >
-                                <SlidersHorizontal size={16} />
-                                {filtersOpen
-                                    ? 'Tutup Filter'
-                                    : 'Filter & Urutan'}
-                                {Object.entries(filters).some(
-                                    ([key, value]) =>
-                                        !['q', 'sort'].includes(key) && value,
-                                )
-                                    ? ' · aktif'
-                                    : ''}
-                            </Button>
                             {filtersOpen && (
                                 <div className="space-y-3 rounded-xl border bg-card p-3">
                                     <div className="grid grid-cols-2 gap-3">
                                         <label className="text-xs text-muted-foreground">
                                             Status
-                                            <select
-                                                className="mt-1 w-full rounded-md border bg-background px-2 text-sm text-foreground"
+                                            <NativeSelect
+                                                aria-label="Status"
+                                                wrapperClassName="mt-1 w-full"
+                                                className="rounded-md border bg-background px-2 text-sm text-foreground"
                                                 value={filters.status}
                                                 onChange={(event) =>
                                                     filter(
@@ -1999,16 +2157,22 @@ export default function MobileApp() {
                                                     'NO_PACKAGES',
                                                     'CANCELLED',
                                                 ].map((status) => (
-                                                    <option key={status}>
-                                                        {status}
+                                                    <option
+                                                        key={status}
+                                                        value={status}
+                                                    >
+                                                        {statusLabels[status] ??
+                                                            status}
                                                     </option>
                                                 ))}
-                                            </select>
+                                            </NativeSelect>
                                         </label>
                                         <label className="text-xs text-muted-foreground">
                                             Jenis pickup
-                                            <select
-                                                className="mt-1 w-full rounded-md border bg-background px-2 text-sm text-foreground"
+                                            <NativeSelect
+                                                aria-label="Jenis pickup"
+                                                wrapperClassName="mt-1 w-full"
+                                                className="rounded-md border bg-background px-2 text-sm text-foreground"
                                                 value={filters.pickup_type}
                                                 onChange={(event) =>
                                                     filter(
@@ -2026,7 +2190,7 @@ export default function MobileApp() {
                                                 <option value="on_demand">
                                                     On-demand
                                                 </option>
-                                            </select>
+                                            </NativeSelect>
                                         </label>
                                         <label className="text-xs text-muted-foreground">
                                             Dari tanggal
@@ -2057,8 +2221,10 @@ export default function MobileApp() {
                                     </div>
                                     <label className="block text-xs text-muted-foreground">
                                         Urutan
-                                        <select
-                                            className="mt-1 w-full rounded-md border bg-background px-2 text-sm text-foreground"
+                                        <NativeSelect
+                                            aria-label="Urutan"
+                                            wrapperClassName="mt-1 w-full"
+                                            className="rounded-md border bg-background px-2 text-sm text-foreground"
                                             value={filters.sort}
                                             onChange={(event) =>
                                                 filter(
@@ -2076,7 +2242,7 @@ export default function MobileApp() {
                                             <option value="oldest">
                                                 Terlama dibuat
                                             </option>
-                                        </select>
+                                        </NativeSelect>
                                     </label>
                                     <Button
                                         variant="outline"
@@ -2150,6 +2316,6 @@ export default function MobileApp() {
                         onNavigate={navigateScreen}
                     />
                 )}
-        </div>
+        </main>
     );
 }

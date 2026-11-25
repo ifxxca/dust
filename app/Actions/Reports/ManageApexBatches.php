@@ -27,6 +27,11 @@ class ManageApexBatches
 
                 return ['status' => 'SAVED', 'content_base64' => base64_encode($bytes), 'checksum' => $row->file_checksum];
             }
+            $safeRetry = config('jne-reports.automatic_retry_enabled') && $job->retry_protocol === 1
+                && ($job->parameters['apex_retry_batches'][$number]['state'] ?? 'not_submitted') !== 'uncertain';
+            if ($row?->status === 'STARTED' && $row->start_key !== $key && $safeRetry) {
+                return ['status' => 'STARTED'];
+            }
             abort_if($row?->status === 'STARTED' && $row->start_key !== $key, 409, 'Hasil Process belum pasti. Admin harus memeriksa batch; jangan kirim ulang.');
             DB::table('report_job_batches')->updateOrInsert(['report_job_id' => $jobId, 'batch_number' => $number], ['status' => 'STARTED', 'start_key' => $key, 'updated_at' => now(), 'created_at' => $row->created_at ?? now()]);
             if ($row?->status !== 'STARTED') {
@@ -68,6 +73,7 @@ class ManageApexBatches
                 return;
             }
             abort_if(DB::table('report_job_batches')->where('report_job_id', $jobId)->where('status', 'STARTED')->exists(), 409, 'Selesaikan batch yang belum pasti dahulu.');
+            abort_if(config('jne-reports.automatic_retry_enabled'), 409, 'Retry penarikan dikelola kebijakan antrean otomatis dengan batas tiga percobaan.');
             $job->update(['status' => $job->source_file_path ? 'WAITING_APEX' : 'QUEUED', 'worker_id' => null, 'claim_key' => null, 'claim_token' => null, 'active_slot' => null, 'lease_expires_at' => null, 'error_message' => null, 'reviewed_by' => $actor->id, 'reviewed_at' => now(), 'review_note' => $reason]);
             $job->recordEvent('Admin #'.$actor->id.' melanjutkan APEX dari checkpoint tersimpan. '.$reason);
         }, 3);

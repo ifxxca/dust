@@ -8,6 +8,7 @@ use App\Models\JneShipment;
 use App\Models\JneShipmentMatchEvent;
 use App\Models\PickupAwbDelivery;
 use App\Models\PickupAwbManifest;
+use App\Models\PickupCustomerReconciliation;
 use App\Models\PickupPendingItem;
 use App\Models\PickupProcessingReconciliation;
 use App\Models\PickupProcessingRecord;
@@ -21,14 +22,15 @@ class ReviewPickupAwbs
     public function __construct(private ReviewJneExceptions $reviewer, private ReconcilePickupProcessing $reconcile, private PickupAwbEligibility $eligibility) {}
 
     /** @param array<string, mixed> $data */
-    public function handle(User $actor, int $taskId, array $data): PickupProcessingReconciliation
+    public function handle(User $actor, int $taskId, array $data, bool $recalculate = true): PickupProcessingReconciliation
     {
-        return DB::transaction(function () use ($actor, $taskId, $data): PickupProcessingReconciliation {
+        return DB::transaction(function () use ($actor, $taskId, $data, $recalculate): PickupProcessingReconciliation {
             abort_unless(User::whereKey($actor->id)->where('is_active', true)->where('role', 'admin_supervisor')->exists(), 403);
             Customer::whereKey(PickupTask::whereKey($taskId)->value('customer_id'))->lockForUpdate()->firstOrFail();
             $task = PickupTask::whereKey($taskId)->lockForUpdate()->with(['proof.revisions', 'handoverItem.revisions', 'handoverItem.proof.revisions'])->firstOrFail();
             PickupProcessingReconciliation::firstOrCreate(['pickup_task_id' => $taskId]);
             $result = PickupProcessingReconciliation::where('pickup_task_id', $taskId)->lockForUpdate()->firstOrFail();
+            abort_if($result->customer_reconciliation_id && PickupCustomerReconciliation::find($result->customer_reconciliation_id)?->approval_snapshot !== null, 409, 'Snapshot telah disetujui. Buka review resmi dari workspace dengan revisi terkini.');
             abort_unless($result->input_version === (int) $data['expected_version'], 409, 'Isi pickup berubah. Muat ulang sebelum menyimpan.');
             $action = $data['action'];
             abort_if($action !== 'UNLOCK' && ($result->locked_at !== null || $result->status === 'DONE'), 409, 'Pickup terkunci. Buka koreksi terlebih dahulu.');
@@ -36,12 +38,14 @@ class ReviewPickupAwbs
             abort_if(PickupAwbDelivery::whereIn('pickup_awb_manifest_id', $manifestIds)->whereIn('status', ['SENDING', 'UNKNOWN'])->exists(), 409, 'Selesaikan status pengiriman yang belum pasti sebelum mengubah daftar resi.');
             $before = ['status' => $result->status, 'input_version' => $result->input_version, 'locked_at' => $result->locked_at];
             $evidence = [];
-            if (in_array($action, ['ADD', 'REMOVE'], true)) {
+            if (in_array($action, ['ADD', 'REMOVE', 'CONFIRM'], true)) {
                 $shipment = JneShipment::whereKey($data['shipment_id'])->lockForUpdate()->with('latestSource')->firstOrFail();
                 abort_unless($shipment->version === (int) $data['shipment_version'], 409, 'Bukti resi berubah. Muat ulang daftar resi.');
                 $evidence['shipment_before'] = $shipment->only(['id', 'awb', 'pickup_task_id', 'customer_id', 'version', 'category']);
-                if ($action === 'ADD') {
-                    abort_if($shipment->pickup_task_id !== null, 409, 'Resi sudah terikat ke pickup. Keluarkan dari pickup asal terlebih dahulu.');
+                $evidence['source'] = ['report_id' => $shipment->latest_report_job_id, 'record_id' => $shipment->latest_report_awb_id, 'row' => $shipment->latestSource?->source_row];
+                if (in_array($action, ['ADD', 'CONFIRM'], true)) {
+                    abort_if($action === 'ADD' && $shipment->pickup_task_id !== null, 409, 'Resi sudah terikat ke pickup. Keluarkan dari pickup asal terlebih dahulu.');
+                    abort_if($action === 'CONFIRM' && $shipment->pickup_task_id !== $taskId, 409, 'Konfirmasi hanya untuk resi pada pickup target.');
                     abort_if($shipment->tracking_status === 'CANCELLED' || $shipment->category_status !== 'MATCHED', 422, 'Resi batal atau kategori belum terkonfirmasi. Selesaikan pemeriksaan sumber terlebih dahulu.');
                     $pending = empty($data['pending_id']) ? null : PickupPendingItem::whereKey($data['pending_id'])->where('pickup_task_id', $taskId)->lockForUpdate()->firstOrFail();
                     if ($pending) {
@@ -93,10 +97,14 @@ class ReviewPickupAwbs
             }
             PickupAwbManifest::whereIn('id', $manifestIds)->where('status', '!=', 'SUPERSEDED')->update(['status' => 'SUPERSEDED']);
             PickupAwbDelivery::whereIn('pickup_awb_manifest_id', $manifestIds)->whereIn('status', ['READY', 'AWAITING_CONFIGURATION'])->update(['status' => 'CANCELLED']);
-            $result->update(['locked_at' => null, 'review_open' => $action !== 'VALIDATE', 'input_version' => $result->input_version + 1]);
+            $result->update(['locked_at' => null, 'review_open' => $action === 'UNLOCK', 'input_version' => $result->input_version + 1]);
             DB::table('pickup_awb_review_events')->insert(['pickup_task_id' => $taskId, 'actor_id' => $actor->id, 'action' => $action, 'reason' => $data['reason'], 'evidence' => json_encode(['before' => $before, ...$evidence], JSON_THROW_ON_ERROR), 'created_at' => now()]);
+            if ($recalculate && $action !== 'UNLOCK') {
+                PickupProcessingReconciliation::whereIn('pickup_task_id', app(ReconcileCustomerPickupDay::class)->memberIds($task))
+                    ->where('review_open', true)->update(['review_open' => false, 'input_version' => DB::raw('input_version + 1')]);
+            }
 
-            return $this->reconcile->handle($taskId);
+            return $recalculate ? $this->reconcile->handle($taskId) : $result;
         }, 3);
     }
 }

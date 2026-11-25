@@ -120,8 +120,8 @@ function MetricCard({
     const positive =
         change != null && (lowerIsBetter ? change < 0 : change > 0);
     return (
-        <Card className="gap-0 py-0 shadow-none">
-            <CardContent className="flex gap-3 p-3">
+        <Card className="min-w-0 gap-0 py-0 shadow-none">
+            <CardContent className="flex flex-wrap gap-3 p-3">
                 <span
                     className={cn(
                         'flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-12',
@@ -133,7 +133,7 @@ function MetricCard({
                 >
                     <Icon aria-hidden="true" className="size-6" />
                 </span>
-                <dl className="flex min-w-0 flex-1 flex-col gap-1">
+                <dl className="flex min-w-0 flex-1 basis-24 flex-col gap-1">
                     <dt className="text-xs">{label}</dt>
                     <dd className="flex flex-wrap items-center gap-2">
                         <span className="text-2xl leading-none font-semibold tracking-tight tabular-nums sm:text-3xl">
@@ -305,13 +305,13 @@ export default function OperationalDashboardOverview({
                         <DialogTrigger asChild>
                             <Button
                                 variant="outline"
-                                className="order-1 min-h-11 gap-2"
+                                className="order-1 min-h-11 max-w-full min-w-0 gap-2 whitespace-normal"
                             >
                                 <CalendarDays
                                     aria-hidden="true"
                                     data-icon="inline-start"
                                 />
-                                <span className="text-xs">
+                                <span className="min-w-0 text-left text-xs whitespace-normal">
                                     {shortDate(data.filters.date_from)} –{' '}
                                     {shortDate(data.filters.date_thru)}
                                 </span>
@@ -436,7 +436,7 @@ export default function OperationalDashboardOverview({
                         value={activePreset}
                         onValueChange={preset}
                         aria-label="Periode cepat"
-                        className="order-3 rounded-lg border bg-muted/50 p-0.5 xl:order-2"
+                        className="order-3 max-w-full flex-wrap rounded-lg border bg-muted/50 p-0.5 xl:order-2"
                     >
                         {[
                             [1, 'Hari ini'],

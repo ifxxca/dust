@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SecureSessionPlugin.class);
         registerPlugin(MobileLocalPlugin.class);
         registerPlugin(ScanFeedbackPlugin.class);
+        registerPlugin(NotificationSettingsPlugin.class);
         super.onCreate(savedInstanceState);
         boolean debug=(getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0;
         android.webkit.WebView.setWebContentsDebuggingEnabled(debug);

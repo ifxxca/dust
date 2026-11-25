@@ -23,6 +23,7 @@ Route::prefix('internal/report-jobs')->name('internal.report-jobs.')
     ->middleware(EnsureReportWorker::class)->group(function (): void {
         Route::post('claim', [InternalReportJobController::class, 'claim'])->name('claim');
         Route::post('{reportJob}/progress', [InternalReportJobController::class, 'progress'])->whereNumber('reportJob')->name('progress');
+        Route::post('{reportJob}/retry-checkpoint', [InternalReportJobController::class, 'checkpoint'])->whereNumber('reportJob')->name('retry-checkpoint');
         Route::post('{reportJob}/upload', [InternalReportJobController::class, 'upload'])->whereNumber('reportJob')->name('upload');
         Route::post('{reportJob}/source-upload', [InternalReportJobController::class, 'uploadSource'])->whereNumber('reportJob')->name('source-upload');
         Route::post('{reportJob}/fail', [InternalReportJobController::class, 'fail'])->whereNumber('reportJob')->name('fail');
@@ -42,6 +43,7 @@ Route::prefix('mobile/v1')->name('mobile.')->group(function (): void {
         Route::get('me', [MobileTokenController::class, 'me'])->name('me');
         Route::get('notifications', [PickupNotificationController::class, 'index'])->name('notifications.index');
         Route::get('cashless-entry-batches/{batch}', [CashlessEntryResultController::class, 'show'])->whereNumber('batch')->name('cashless-results.show');
+        Route::post('cashless-entry-batches/{batch}/items/{item}/correction', [CashlessEntryResultController::class, 'correct'])->whereNumber(['batch', 'item'])->middleware('throttle:30,1')->name('cashless-results.correct');
         Route::patch('notifications/read', [PickupNotificationController::class, 'update'])->name('notifications.update');
         Route::get('cashless-handovers', [CashlessHandoverController::class, 'index'])->name('cashless-handover.index');
         Route::post('cashless-handovers/{task}', [CashlessHandoverController::class, 'store'])->whereNumber('task')->middleware('throttle:30,1')->name('cashless-handover.store');

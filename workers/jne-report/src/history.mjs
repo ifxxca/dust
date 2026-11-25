@@ -35,6 +35,7 @@ export function extractHistory(table) {
         if (!cells.length) continue;
         const row = {
             id: tr.querySelector('input[name="f01"]')?.value || '',
+            identitySource: 'source',
             rowIndex,
             columns: {},
         };
@@ -55,6 +56,7 @@ export function extractHistory(table) {
         row.created = row.columns.CREATEDDATE || '';
         row.error = row.columns.ERROR || '';
         if (!row.id && row.filename && row.created) {
+            row.identitySource = 'metadata';
             row.id =
                 'metadata:' +
                 JSON.stringify([
@@ -102,9 +104,38 @@ export async function readHistory(page) {
             'HISTORY_STRUCTURE',
             'Kolom History wajib tidak lengkap.',
         );
-    if (new Set(result.rows.map((row) => row.id)).size !== result.rows.length)
-        throw new ReportError('HISTORY_STRUCTURE', 'ID History tidak unik.');
-    return result.rows;
+    const byId = new Map();
+    for (const row of result.rows) {
+        if (!byId.has(row.id)) byId.set(row.id, []);
+        byId.get(row.id).push(row);
+    }
+    const rows = [];
+    for (const group of byId.values()) {
+        const signature = (row) =>
+            JSON.stringify([
+                row.filename,
+                row.created,
+                row.status,
+                row.error,
+                row.download,
+                Object.entries(row.columns).sort(([a], [b]) =>
+                    a.localeCompare(b),
+                ),
+            ]);
+        if (
+            group.length === 1 ||
+            (group.every((row) => row.identitySource === 'source') &&
+                group.every((row) => signature(row) === signature(group[0])))
+        ) {
+            rows.push(group[0]);
+        } else {
+            // Metadata alone cannot prove that identical-looking rows are the same report.
+            rows.push(
+                ...group.map((row) => ({ ...row, identityAmbiguous: true })),
+            );
+        }
+    }
+    return rows;
 }
 
 const months = [
@@ -204,8 +235,16 @@ export function correlateHistory(
     accepted = true,
     now = Date.now(),
 ) {
-    const baseline = new Set(before.map((row) => row.id));
-    const fresh = current.filter((row) => !baseline.has(row.id));
+    const baseline = new Map();
+    const counts = new Map();
+    for (const row of before)
+        baseline.set(row.id, (baseline.get(row.id) || 0) + 1);
+    for (const row of current)
+        counts.set(row.id, (counts.get(row.id) || 0) + 1);
+    const fresh = current.filter(
+        (row) =>
+            !baseline.has(row.id) || counts.get(row.id) > baseline.get(row.id),
+    );
     const candidates = [];
     for (const row of fresh) {
         const created = parseCreated(
@@ -288,10 +327,13 @@ export function correlateHistory(
         }
         candidates.push(row);
     }
-    if (candidates.length > 1)
+    if (
+        candidates.length > 1 ||
+        candidates.some((row) => row.identityAmbiguous)
+    )
         throw new ReportError(
             'HISTORY_AMBIGUOUS',
-            'Lebih dari satu report baru cocok. Periksa History JNE; worker tidak memilih report secara acak.',
+            'Report yang cocok memiliki lebih dari satu baris atau identitas yang bertabrakan. Periksa History JNE; tidak ada pemilihan report atau pengiriman ulang otomatis.',
         );
     const row = candidates[0] || null;
     if (pinnedId && (!row || row.id !== pinnedId))

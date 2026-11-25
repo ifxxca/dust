@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState, type ReactNode } from 'react';
+import { Link } from '@inertiajs/react';
 import {
     columnVisibilityFeature,
     createColumnHelper,
@@ -27,6 +28,7 @@ import {
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
     SelectTrigger,
     SelectValue,
@@ -66,6 +68,9 @@ export type DataTablePaginationProps = {
     loading?: boolean;
     error?: string;
     itemLabel?: string;
+    pageSizes?: readonly number[];
+    className?: string;
+    hrefForPage?: (page: number) => string;
 };
 
 export function DataTablePagination({
@@ -77,9 +82,41 @@ export function DataTablePagination({
     loading = false,
     error = '',
     itemLabel = 'data',
+    pageSizes = [10, 20, 50],
+    className,
+    hrefForPage,
 }: DataTablePaginationProps) {
     const last = meta?.last_page ?? 1;
     const disabled = loading || !!error;
+    const pageButton = (
+        target: number,
+        label: string,
+        icon: ReactNode,
+        atBoundary: boolean,
+        edge = false,
+    ) => {
+        const inactive = disabled || atBoundary;
+        return (
+            <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={cn('size-8', edge && 'hidden sm:inline-flex')}
+                aria-label={label}
+                disabled={inactive}
+                onClick={hrefForPage ? undefined : () => onPage(target)}
+                asChild={!!hrefForPage && !inactive}
+            >
+                {hrefForPage && !inactive ? (
+                    <Link href={hrefForPage(target)} preserveScroll>
+                        {icon}
+                    </Link>
+                ) : (
+                    icon
+                )}
+            </Button>
+        );
+    };
     const summary = loading
         ? `Memuat ${itemLabel}…`
         : error
@@ -90,7 +127,12 @@ export function DataTablePagination({
               ? `${meta.from}–${meta.to} dari ${meta.total} ${itemLabel}`
               : `${meta.total} ${itemLabel}`;
     return (
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm sm:px-5">
+        <footer
+            className={cn(
+                'flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 text-sm sm:px-5',
+                className,
+            )}
+        >
             <p role="status" className="text-xs text-muted-foreground">
                 {summary}
             </p>
@@ -108,11 +150,13 @@ export function DataTablePagination({
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            {[10, 20, 50].map((size) => (
-                                <SelectItem key={size} value={String(size)}>
-                                    {size} per halaman
-                                </SelectItem>
-                            ))}
+                            <SelectGroup>
+                                {pageSizes.map((size) => (
+                                    <SelectItem key={size} value={String(size)}>
+                                        {size} per halaman
+                                    </SelectItem>
+                                ))}
+                            </SelectGroup>
                         </SelectContent>
                     </Select>
                 )}
@@ -123,50 +167,32 @@ export function DataTablePagination({
                     <span className="mr-2 text-xs text-muted-foreground">
                         Halaman {page} dari {last}
                     </span>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="hidden size-8 sm:inline-flex"
-                        aria-label="Halaman pertama"
-                        disabled={disabled || page <= 1}
-                        onClick={() => onPage(1)}
-                    >
-                        <ChevronsLeft className="size-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="size-8"
-                        aria-label="Halaman sebelumnya"
-                        disabled={disabled || page <= 1}
-                        onClick={() => onPage(page - 1)}
-                    >
-                        <ChevronLeft className="size-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="size-8"
-                        aria-label="Halaman berikutnya"
-                        disabled={disabled || page >= last}
-                        onClick={() => onPage(page + 1)}
-                    >
-                        <ChevronRight className="size-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        className="hidden size-8 sm:inline-flex"
-                        aria-label="Halaman terakhir"
-                        disabled={disabled || page >= last}
-                        onClick={() => onPage(last)}
-                    >
-                        <ChevronsRight className="size-4" />
-                    </Button>
+                    {pageButton(
+                        1,
+                        'Halaman pertama',
+                        <ChevronsLeft aria-hidden="true" />,
+                        page <= 1,
+                        true,
+                    )}
+                    {pageButton(
+                        page - 1,
+                        'Halaman sebelumnya',
+                        <ChevronLeft aria-hidden="true" />,
+                        page <= 1,
+                    )}
+                    {pageButton(
+                        page + 1,
+                        'Halaman berikutnya',
+                        <ChevronRight aria-hidden="true" />,
+                        page >= last,
+                    )}
+                    {pageButton(
+                        last,
+                        'Halaman terakhir',
+                        <ChevronsRight aria-hidden="true" />,
+                        page >= last,
+                        true,
+                    )}
                 </nav>
             </div>
         </footer>

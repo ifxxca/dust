@@ -4,6 +4,7 @@ import {
     type BarcodeScannerPlugin,
 } from '@capacitor-mlkit/barcode-scanning';
 import type { PluginListenerHandle } from '@capacitor/core';
+import { normalizeAwb } from '@/lib/awb-signatures';
 
 export class CameraPermissionError extends Error {}
 
@@ -15,13 +16,14 @@ export class CameraScanSession {
     private stopping: Promise<void> | null = null;
     private writes: Promise<void> = Promise.resolve();
     private seen = new Set<string>();
-    private visible = new Set<string>();
+    private visible = new Map<string, number>();
 
     constructor(
-        private readonly onBarcode: (raw: string) => Promise<void>,
+        private readonly onBarcode: (raw: string) => Promise<void | boolean>,
         private readonly onError: (reason: unknown) => void,
         private readonly scanner: BarcodeScannerPlugin = BarcodeScanner,
-        private readonly onDuplicate?: (awb: string) => void,
+        private readonly onDuplicate?: (awb: string) => void | Promise<void>,
+        private readonly clock: () => number = () => performance.now(),
     ) {}
 
     start(): Promise<void> {
@@ -51,20 +53,44 @@ export class CameraScanSession {
                 'barcodesScanned',
                 ({ barcodes }) => {
                     if (this.closed) return;
-                    const frame = new Set<string>();
+                    const now = this.clock();
+                    const frame = new Map<string, number>();
                     for (const barcode of barcodes) {
-                        const raw = barcode.rawValue?.trim().toUpperCase();
+                        const raw =
+                            barcode.rawValue === undefined
+                                ? ''
+                                : normalizeAwb(barcode.rawValue);
                         if (!raw || frame.has(raw)) continue;
-                        frame.add(raw);
+                        frame.set(raw, now);
+                        const lastObserved = this.visible.get(raw);
                         if (this.seen.has(raw)) {
-                            if (!this.visible.has(raw)) this.onDuplicate?.(raw);
+                            if (
+                                lastObserved === undefined ||
+                                now - lastObserved >= 750
+                            ) {
+                                this.writes = this.writes
+                                    .then(async () => {
+                                        if (this.seen.has(raw))
+                                            await this.onDuplicate?.(raw);
+                                    })
+                                    .catch(this.onError);
+                            }
                             continue;
                         }
+                        if (
+                            lastObserved !== undefined &&
+                            now - lastObserved < 750
+                        )
+                            continue;
                         this.seen.add(raw);
                         this.writes = this.writes
-                            .then(() => this.onBarcode(raw))
+                            .then(async () => {
+                                if ((await this.onBarcode(raw)) === false)
+                                    this.seen.delete(raw);
+                            })
                             .catch((reason: unknown) => {
                                 this.seen.delete(raw);
+                                this.visible.delete(raw);
                                 this.onError(reason);
                             });
                     }

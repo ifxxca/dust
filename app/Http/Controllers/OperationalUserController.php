@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Pickup\ManageUserHybridAccount;
 use App\Models\PickupTask;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -21,9 +22,23 @@ class OperationalUserController extends Controller
         abort_unless($request->user()->role === 'admin_supervisor', 403);
         $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'page' => ['sometimes', 'integer', 'min:1']]);
         $users = User::query()->when($data['q'] ?? null, fn ($query, $search) => $query->where('name', 'like', addcslashes($search, '%_\\').'%'))
-            ->orderBy('name')->orderBy('id')->paginate(20, ['id', 'name', 'email', 'role', 'is_active']);
+            ->select(['id', 'name', 'email', 'role', 'is_active', 'hybrid_username'])
+            ->selectRaw('hybrid_password IS NOT NULL as hybrid_configured')
+            ->orderBy('name')->orderBy('id')->paginate(20);
 
-        return response()->json(['data' => $users->items(), 'meta' => ['current_page' => $users->currentPage(), 'last_page' => $users->lastPage(), 'total' => $users->total()]]);
+        return response()->json(['data' => $users->getCollection()->map(fn (User $user): array => [...$user->only(['id', 'name', 'email', 'role', 'is_active', 'hybrid_username']), 'hybrid_configured' => (bool) $user->hybrid_configured]), 'meta' => ['current_page' => $users->currentPage(), 'last_page' => $users->lastPage(), 'total' => $users->total()]]);
+    }
+
+    public function hybrid(Request $request, User $user, ManageUserHybridAccount $accounts): JsonResponse
+    {
+        abort_unless($request->user()->role === 'admin_supervisor', 403);
+        $this->validateKeys($request, ['hybrid_username', 'hybrid_password', 'remove']);
+        $data = $request->validate(['remove' => ['sometimes', 'boolean'],
+            'hybrid_username' => ['required_unless:remove,true', 'nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9_.@-]+$/D'],
+            'hybrid_password' => ['nullable', 'string', 'max:255']]);
+        $result = $accounts->handle($request->user(), $user, $data);
+
+        return response()->json(['data' => ['id' => $result->id, 'hybrid_username' => $result->hybrid_username, 'hybrid_configured' => $result->hybrid_password !== null], 'meta' => []]);
     }
 
     public function staff(Request $request): JsonResponse

@@ -1,3 +1,4 @@
+import { Disclosure, DisclosureSummary } from '@/components/ui/disclosure';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -5,11 +6,15 @@ import type { CashlessEntryBatch } from '@/types/cashless-handover';
 
 const statuses: Record<string, string> = {
     WAITING_SOURCE: 'Pilih server',
+    WAITING_ACCOUNT: 'Menunggu akun Hybrid dari admin',
     QUEUED: 'Menunggu proses',
     CLAIMED: 'Disiapkan',
     CREATING_HO: 'Membuat HO',
     ENTERING: 'Memasukkan resi',
     APPROVING: 'Approval',
+    INSPECTING: 'Memeriksa hasil HO',
+    VERIFYING: 'Memverifikasi isi HO',
+    CONFIRMING: 'Memastikan approval HO',
     DONE: 'Selesai',
     PARTIAL: 'Selesai dengan pengecualian',
     FAILED: 'Gagal',
@@ -71,8 +76,8 @@ export function CashlessEntryStatus({
                 </p>
             )}
             {batches.map((batch) => (
-                <details key={batch.id} className="rounded-lg border p-3">
-                    <summary className="cursor-pointer text-sm">
+                <Disclosure key={batch.id}>
+                    <DisclosureSummary className="cursor-pointer">
                         <span>
                             Batch #{batch.id} ·{' '}
                             {batch.source === 'roberto'
@@ -93,7 +98,7 @@ export function CashlessEntryStatus({
                         >
                             {statuses[batch.status] ?? batch.status}
                         </Badge>
-                    </summary>
+                    </DisclosureSummary>
                     <div className="mt-3 flex flex-col gap-2 text-sm">
                         {batch.ho_number && (
                             <p className="break-all">HO: {batch.ho_number}</p>
@@ -122,7 +127,7 @@ export function CashlessEntryStatus({
                             ))}
                         </ul>
                     </div>
-                </details>
+                </Disclosure>
             ))}
         </section>
     );

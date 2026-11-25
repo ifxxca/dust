@@ -20,7 +20,7 @@ class PickupTaskResource extends JsonResource
     public function toArray(Request $request): array
     {
         $user = $request->user();
-        $mobileExecute = ! $request->routeIs('mobile.*') || $user->role === 'pickup_staff';
+        $mobileExecute = ! $request->routeIs('mobile.*', 'retail.*') || $user->role === 'pickup_staff';
         $full = in_array($user->role, ['cs', 'admin_supervisor'], true) || $this->assigned_staff_id === $user->id
             || ($user->canExecutePickup() && ($this->resource->getAttribute('handover_item_exists') ?? $this->resource->handoverItem()->exists()));
         $data = [
@@ -32,7 +32,7 @@ class PickupTaskResource extends JsonResource
             'status' => $this->status, 'version' => $this->version,
             'previous_task_id' => $this->previous_task_id,
             'assigned_staff' => $this->assignedStaff ? ['id' => $this->assignedStaff->id, 'name' => $this->assignedStaff->name] : null,
-            'can' => ['assign' => ! $request->routeIs('mobile.*') && $user->canManagePickup() && $this->status === 'SCHEDULED', 'take_over' => $mobileExecute && $this->resource->eligibleFor($user)],
+            'can' => ['assign' => ! $request->routeIs('mobile.*', 'retail.*') && $user->canManagePickup() && $this->status === 'SCHEDULED', 'take_over' => $mobileExecute && $this->resource->eligibleFor($user)],
         ];
         if ($full) {
             $data['contact'] = $this->contact_snapshot;

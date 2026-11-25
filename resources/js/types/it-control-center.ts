@@ -1,0 +1,256 @@
+export type MonitorError = { code: string; summary: string };
+export type MonitorHost = {
+    host: string;
+    state: string;
+    observed_at: string;
+    age_seconds: number;
+    stale: boolean;
+    platform: string | null;
+    cpu_percent: number | null;
+    cpu_count: number | null;
+    memory_total_bytes: number | null;
+    memory_free_bytes: number | null;
+    memory_percent: number | null;
+    disk_total_bytes: number | null;
+    disk_free_bytes: number | null;
+    disk_percent: number | null;
+    uptime_seconds: number | null;
+    workers_online: number;
+    warnings: string[];
+    history: {
+        observed_at: string;
+        cpu_percent: number | null;
+        memory_percent: number | null;
+    }[];
+};
+export type MonitorService = {
+    name: string;
+    runtime: string;
+    state: string;
+    runtime_state: string;
+    readiness_state: string;
+    readiness_observed_at: string | null;
+    execution_state: string;
+    execution_observed_at: string | null;
+    recent_failures: number;
+    coverage: string;
+    observed_at: string | null;
+    last_success: string | null;
+    last_failure: string | null;
+    error: MonitorError | null;
+    evidence: string;
+};
+export type MonitorWorker = {
+    identity: string | null;
+    runtime: string | null;
+    state: string;
+    observed_at: string | null;
+    stale: boolean;
+    host?: string | null;
+    elapsed_seconds?: number | null;
+    attempts?: number | null;
+    configuration_matches?: boolean | null;
+    queue: string | null;
+    connection: string | null;
+    job: string | null;
+    job_id: string | null;
+    timeout: number | null;
+    evidence: string;
+};
+export type MonitorPipeline = {
+    id: string;
+    name: string;
+    stage: string | null;
+    outcome: string;
+    started_at: string | null;
+    finished_at: string | null;
+    observed_at: string | null;
+    duration_ms: number | null;
+    records: number | null;
+    attempts: number | null;
+    duplicates: number | null;
+    lease_until: string | null;
+    lease_expired: boolean;
+    error: MonitorError | null;
+};
+export type MonitorDiagnostic = MonitorError & {
+    kind: string;
+    correlation_id: string | null;
+    exception_type: string | null;
+    fingerprint: string;
+    incident_key: string;
+    occurrences: number;
+    first_at: string | null;
+    last_at: string | null;
+    attempts: number[];
+    id: string;
+    source: string | null;
+    observed_at: string | null;
+};
+export type ControlCenterData = {
+    hosts?: MonitorHost[];
+    report_retries?: {
+        enabled: boolean;
+        waiting: number;
+        attention_total: number;
+        attention: {
+            id: number;
+            run_id: number;
+            source: string;
+            account: string;
+            attempts: number;
+            code: string;
+            classification: string;
+            failed_at: string;
+        }[];
+    } | null;
+    source_diagnostics: {
+        source: string;
+        state: string;
+        observed_at: string;
+        duration_ms: number;
+        exception_type: string | null;
+        sqlstate: string | null;
+        driver_code: number | null;
+        category: string | null;
+    }[];
+    error_summary: {
+        evidence_rows: number;
+        error_events: number;
+        failed_attempts: number;
+        failed_jobs: number | null;
+        failed_runs: number;
+        attention_records: number;
+        incident_groups: number;
+        unique_incidents: number | null;
+    };
+    instrumentation: {
+        observed_at: string;
+        scope: string;
+        host: string;
+        load_1m: number | null;
+        cpu_percent: number | null;
+        host_ram_bytes: number | null;
+        php_memory_bytes: number;
+        disk_free_bytes: number | null;
+        disk_total_bytes: number | null;
+        cache_store: string | null;
+        cache_read_state: string;
+        locks_state: string;
+        cache_evidence: string;
+    };
+    commands: {
+        name: string;
+        state: string;
+        observed_at: string | null;
+        started_at: string | null;
+        duration_ms: number | null;
+        exit_code: number | null;
+    }[];
+    observed_at: string;
+    timezone: string;
+    sample_limit: number;
+    window: string;
+    overview: {
+        healthy: number;
+        degraded: number;
+        unhealthy: number;
+        unknown: number;
+        workers_available: number;
+        workers_unknown: number;
+        active_reports: number | null;
+        last_success: string | null;
+        errors_in_sample: number;
+    };
+    services: MonitorService[];
+    workers: MonitorWorker[];
+    retired_workers: MonitorWorker[];
+    retired_workers_count: number;
+    queues: {
+        failed_rows: {
+            connection: string;
+            name: string | null;
+            failed: number | null;
+        }[];
+        connection: string;
+        default_connection: string;
+        observed_at: string;
+        sources: {
+            connection: string;
+            database_connection: string;
+            table: string;
+            available: boolean;
+        }[];
+        connections: { name: string; driver: string; selected: boolean }[];
+        rows:
+            | {
+                  name: string | null;
+                  connection: string;
+                  observed_concurrency: number;
+                  total: number;
+                  pending: number;
+                  reserved: number;
+                  delayed: number;
+                  failed: number | null;
+                  retries: number;
+                  oldest_pending_seconds: number | null;
+                  expired_reservations: number;
+                  retry_after: number;
+                  worker_timeout: number | null;
+                  timeout_risk: boolean | null;
+              }[]
+            | null;
+    };
+    scheduler: {
+        name: string;
+        expression: string;
+        timezone: string;
+        state: string;
+        last_state: string | null;
+        stale: boolean;
+        last_run: string | null;
+        last_success: string | null;
+        last_failure: string | null;
+        duration_ms: number | null;
+        observed_at: string | null;
+        next_expected_at: string;
+        missed: number | null;
+        overlap_protection: boolean;
+    }[];
+    integrations: {
+        name: string;
+        state: string;
+        source: string;
+        sample_count: number;
+        observed_at: string | null;
+        evidence: string;
+        last_success: string | null;
+        last_failure: string | null;
+        error: MonitorError | null;
+        duration_ms: number | null;
+        endpoint: string | null;
+        recorded_endpoint: string | null;
+        failovers: {
+            observed_at: string | null;
+            from: string | null;
+            to: string | null;
+        }[];
+        source_freshness_at: string | null;
+        recent_failures: number;
+    }[];
+    backlogs: { source: string; status: string; count: number }[] | null;
+    pipelines: MonitorPipeline[];
+    diagnostics: MonitorDiagnostic[];
+    performance: {
+        sample_count: number;
+        duration_p50_ms: number | null;
+        duration_p95_ms: number | null;
+        wait_p50_ms: number | null;
+        wait_sample_count: number;
+        failed_attempt_percent: number | null;
+        throughput: number | null;
+        backlog_trend: number | null;
+        query_ms: number;
+    };
+    unavailable: string[];
+};
