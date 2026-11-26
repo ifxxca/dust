@@ -27,7 +27,7 @@ class MatchJnePickupDates
             $decision = $decisions[$source->id] ?? [];
             $job = $source->reportJob;
             $contract = $contracts->get(JneSourceContract::key($job->source, $job->report_type));
-            $registeredPrefix = in_array($decision['method'] ?? '', ['SHIPPER_CODE_PREFIX', 'SHIPPER_ALIAS_CODE', 'SHIPPER_BASE_CODE'], true)
+            $registeredPrefix = in_array($decision['method'] ?? '', ['SHIPPER_CODE_PREFIX', 'SHIPPER_ALIAS_CODE', 'SHIPPER_BASE_CODE', 'ACCOUNT'], true)
                 && $job->status === 'COMPLETED' && $job->import_status === 'IMPORTED';
             $verifiedColumn = ($decision['method'] ?? '') === 'CUSTOMER_CODE' && $contract !== null
                 && ($contract->definition['pickup_date_column'] ?? null) === 'TGL_ENTRY'

@@ -55,6 +55,11 @@ export function CustomerDocumentDelivery({
     const [more, setMore] = useState(false);
     const [search, setSearch] = useState('');
     const [error, setError] = useState('');
+    const targetError =
+        value.whatsapp_type === 'contact' &&
+        value.whatsapp_target.trim().endsWith('@g.us')
+            ? 'Ini ID grup. Ubah tujuan menjadi Grup lalu tempel ID grupnya.'
+            : errors['document_delivery_settings.whatsapp_target'];
     async function loadGroups(next: number) {
         setError('');
         try {
@@ -177,15 +182,9 @@ export function CustomerDocumentDelivery({
                                     '',
                                 )}
                                 placeholder="08xxxxxxxxxx atau 628xxxxxxxxxx"
-                                aria-invalid={
-                                    !!errors[
-                                        'document_delivery_settings.whatsapp_target'
-                                    ]
-                                }
+                                aria-invalid={!!targetError}
                                 aria-describedby={
-                                    errors[
-                                        'document_delivery_settings.whatsapp_target'
-                                    ]
+                                    targetError
                                         ? 'customer-wa-target-error'
                                         : undefined
                                 }
@@ -201,6 +200,33 @@ export function CustomerDocumentDelivery({
                         </div>
                     ) : (
                         <div className="flex flex-col gap-2">
+                            <Label htmlFor="customer-wa-group">
+                                ID grup WhatsApp
+                            </Label>
+                            <Input
+                                id="customer-wa-group"
+                                name="whatsapp_target"
+                                type="text"
+                                autoComplete="off"
+                                spellCheck={false}
+                                disabled={disabled}
+                                value={value.whatsapp_target}
+                                placeholder="120363046678445460@g.us"
+                                aria-invalid={!!targetError}
+                                aria-describedby={
+                                    targetError
+                                        ? 'customer-wa-target-error'
+                                        : undefined
+                                }
+                                onChange={(e) =>
+                                    onChange({
+                                        ...value,
+                                        whatsapp_target: e.target.value,
+                                        whatsapp_label: '',
+                                        whatsapp_consent_confirmed: false,
+                                    })
+                                }
+                            />
                             {value.whatsapp_target && (
                                 <p className="text-sm">
                                     Grup terpilih:{' '}
@@ -211,7 +237,6 @@ export function CustomerDocumentDelivery({
                                 </p>
                             )}
                             <Button
-                                id="customer-wa-group"
                                 type="button"
                                 variant="outline"
                                 disabled={disabled || http.processing}
@@ -231,7 +256,7 @@ export function CustomerDocumentDelivery({
                             >
                                 {http.processing
                                     ? 'Memuat…'
-                                    : 'Muat / segarkan grup'}
+                                    : 'Pilih dari daftar grup (opsional)'}
                             </Button>
                             {groups.length > 0 && (
                                 <>
@@ -308,17 +333,13 @@ export function CustomerDocumentDelivery({
                             )}
                         </div>
                     )}
-                    {errors['document_delivery_settings.whatsapp_target'] && (
+                    {targetError && (
                         <p
                             id="customer-wa-target-error"
                             role="alert"
                             className="text-sm text-destructive dark:text-red-400"
                         >
-                            {
-                                errors[
-                                    'document_delivery_settings.whatsapp_target'
-                                ]
-                            }
+                            {targetError}
                         </p>
                     )}
                     <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">

@@ -165,7 +165,14 @@ class ManageWhatsappDelivery
 
             return null;
         }
-        if (! Customer::findOrFail($delivery->customer_id)->documentDeliveryOptions()['whatsapp_consent_confirmed']) {
+        $options = Customer::findOrFail($delivery->customer_id)->documentDeliveryOptions();
+        $pattern = $options['whatsapp_type'] === 'group' ? '/^\d+(?:-\d+)?@g\.us$/' : '/^[1-9]\d{6,14}@c\.us$/';
+        if (! preg_match($pattern, $delivery->target)) {
+            $delivery->update(['status' => 'FAILED', 'last_error' => 'Jenis tujuan WhatsApp tidak sesuai dengan ID tujuan. Perbaiki pilihan Kontak atau Grup pada customer sebelum mengirim ulang.']);
+
+            return null;
+        }
+        if (! $options['whatsapp_consent_confirmed']) {
             $delivery->update(['status' => 'WAITING', 'last_error' => 'Menunggu konfirmasi persetujuan tujuan WhatsApp pada customer.']);
 
             return 3600;

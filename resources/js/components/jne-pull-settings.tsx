@@ -34,6 +34,13 @@ export type PullProfile = {
     source: string;
     report_type: string;
     customer_account: string;
+    customer_mapping_mode?: string;
+    customer_id?: number | null;
+    customer?: {
+        id: number;
+        name: string;
+        customer_code: string | null;
+    } | null;
     national_account?: string;
     label?: string | null;
     enabled: boolean;

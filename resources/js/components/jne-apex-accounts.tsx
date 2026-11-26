@@ -45,7 +45,7 @@ export default function JneApexAccounts({
             profile.source === 'apex' && profile.report_type === 'apex',
     );
     const filtered = accounts.filter((profile) =>
-        `${profile.customer_account} ${profile.label || ''}`
+        `${profile.customer_account} ${profile.label || ''} ${profile.customer?.name || ''}`
             .toLowerCase()
             .includes(query.toLowerCase()),
     );
@@ -119,6 +119,14 @@ export default function JneApexAccounts({
                                         {profile.label}
                                     </p>
                                 )}
+                                {profile.customer_mapping_mode ===
+                                    'ACCOUNT_VERIFIED' &&
+                                    profile.customer && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Cocokkan account →{' '}
+                                            {profile.customer.name}
+                                        </p>
+                                    )}
                                 <p className="mt-1 text-xs text-muted-foreground">
                                     National Acc/Cust:{' '}
                                     <strong>

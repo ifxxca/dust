@@ -69,20 +69,10 @@ class StoreCustomerRequest extends FormRequest
                     }
                     $pattern = ($options['whatsapp_type'] ?? '') === 'group' ? '/^\d+(?:-\d+)?@g\.us$/' : '/^[1-9]\d{6,14}@c\.us$/';
                     if (! preg_match($pattern, (string) ($options['whatsapp_target'] ?? ''))) {
-                        $validator->errors()->add('document_delivery_settings.whatsapp_target', 'Pilih grup atau isi nomor WhatsApp yang valid.');
-                    } elseif (($options['whatsapp_type'] ?? '') === 'group') {
-                        $existing = $this->route('customer');
-                        $old = $existing instanceof Customer ? $existing->documentDeliveryOptions() : [];
-                        if (($old['whatsapp_target'] ?? '') !== $options['whatsapp_target'] || (! ($old['receipt_whatsapp'] ?? false) && ! ($old['recap_whatsapp'] ?? false))) {
-                            try {
-                                $session = $waha->settings()['session'];
-                                if (blank($session) || ! $waha->groupExists($session, $options['whatsapp_target'])) {
-                                    $validator->errors()->add('document_delivery_settings.whatsapp_target', 'Grup tidak dapat diakses oleh session pengiriman.');
-                                }
-                            } catch (\Throwable) {
-                                $validator->errors()->add('document_delivery_settings.whatsapp_target', 'Grup belum dapat diverifikasi. Periksa koneksi WAHA.');
-                            }
-                        }
+                        $message = ($options['whatsapp_type'] ?? '') === 'group'
+                            ? 'Isi ID grup WhatsApp yang berakhiran @g.us, misalnya 120363046678445460@g.us.'
+                            : 'Isi nomor WhatsApp, misalnya 08123456789. Untuk ID berakhiran @g.us, ubah tujuan menjadi Grup lalu tempel ID grupnya.';
+                        $validator->errors()->add('document_delivery_settings.whatsapp_target', $message);
                     }
                 }
             }

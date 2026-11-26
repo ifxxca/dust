@@ -3,6 +3,7 @@
 namespace App\Actions\Reports;
 
 use App\Models\JneReportAwb;
+use App\Models\JneReportProfile;
 use App\Models\JneShipperAlias;
 use Illuminate\Support\Collection;
 
@@ -16,6 +17,11 @@ class ResolveJneCustomers
      */
     public function handle(Collection $sources): array
     {
+        (new \Illuminate\Database\Eloquent\Collection($sources->all()))->loadMissing('reportJob:id,source,report_type,status,import_status');
+        $accounts = JneReportProfile::where('source', 'apex')->where('report_type', 'apex')
+            ->where('customer_mapping_mode', 'ACCOUNT_VERIFIED')->whereNotNull('customer_id')
+            ->whereIn('customer_account', $sources->pluck('customer_account')->filter()->unique())
+            ->with('customer:id,is_active')->get()->groupBy('customer_account');
         $aliases = collect();
         $keys = $sources->map(fn (JneReportAwb $source): string => hash('sha256', JneShipperAlias::normalize($source->shipper_name ?? '')))->unique();
         foreach ($keys->chunk(500) as $chunk) {
@@ -59,6 +65,30 @@ class ResolveJneCustomers
                     $decision = [...$code, 'evidence' => $decision['evidence']];
                 } elseif ($code['status'] === 'UNMATCHED' && $status === 'UNMATCHED') {
                     $decision['note'] = 'Kode sumber belum terdaftar; nama pengirim juga belum terverifikasi.';
+                }
+                unset($decision);
+            }
+            $accountMatches = $source->reportJob?->source === 'apex'
+                ? $accounts->get($source->customer_account, collect())->filter(fn (JneReportProfile $profile): bool => $profile->customer?->is_active === true)
+                : collect();
+            if ($accountMatches->isNotEmpty()) {
+                $decision = &$resolved[$source->id];
+                $accountIds = $accountMatches->pluck('customer_id')->unique();
+                $decision['evidence'] = [...$decision['evidence'], ...$accountMatches->map(fn (JneReportProfile $profile): array => [
+                    'source_id' => $source->id, 'method' => 'ACCOUNT', 'column' => 'ID_ACCOUNT',
+                    'account' => $source->customer_account, 'profile_id' => $profile->id, 'profile_version' => $profile->version,
+                    'customer_id' => $profile->customer_id,
+                ])->values()->all()];
+                if ($accountIds->count() !== 1 || in_array($decision['status'], ['CONFLICT', 'AMBIGUOUS'], true)
+                    || ($decision['status'] === 'MATCHED' && $decision['customer_id'] !== (int) $accountIds->first())) {
+                    $decision['customer_id'] = null;
+                    $decision['status'] = 'CONFLICT';
+                    $decision['note'] = 'Pemilik nomor account bertentangan dengan bukti identitas customer; perlu pemeriksaan.';
+                } else {
+                    $decision['customer_id'] = (int) $accountIds->first();
+                    $decision['status'] = 'MATCHED';
+                    $decision['method'] = 'ACCOUNT';
+                    $decision['note'] = 'ID_ACCOUNT sesuai pemilik account yang ditetapkan Admin pada pengaturan penarikan.';
                 }
                 unset($decision);
             }

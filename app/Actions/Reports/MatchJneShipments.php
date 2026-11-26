@@ -242,7 +242,7 @@ class MatchJneShipments
         if ($customer['method'] === 'SERTIM' && count($ids) > 1) {
             $status = 'CONFLICT';
         }
-        $note = $status === 'MATCHED' ? ($customer['method'] === 'SERTIM' ? 'AWB sesuai bukti Sertim Cashless untuk customer dan pickup ini.' : ($customer['method'] === 'CUSTOMER_CODE_DATE' ? 'Kode customer terverifikasi dan tanggal paket sesuai satu pickup yang sudah diverifikasi gudang.' : 'Referensi sama persis dan customer sesuai nama pengirim.'))
+        $note = $status === 'MATCHED' ? ($customer['method'] === 'SERTIM' ? 'AWB sesuai bukti Sertim Cashless untuk customer dan pickup ini.' : ($customer['method'] === 'CUSTOMER_CODE_DATE' ? 'Identitas customer terverifikasi dan tanggal paket sesuai satu pickup yang sudah diverifikasi gudang.' : 'Referensi sama persis dan identitas customer sesuai bukti report.'))
             : ($status === 'CONFLICT' ? 'Bukti Sertim dan referensi report menunjuk pickup berbeda; perlu pemeriksaan Admin.'
                 : ($status === 'AMBIGUOUS' ? 'Referensi cocok dengan lebih dari satu pickup; perlu pemeriksaan Admin.' : 'Customer dikenali, tetapi belum ada referensi pickup yang cocok.'));
         if ($bucketAllocation) {

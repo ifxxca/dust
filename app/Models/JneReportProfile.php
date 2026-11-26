@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Database\Factories\JneReportProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property CarbonImmutable|null $date_from
@@ -23,6 +24,12 @@ class JneReportProfile extends Model
     protected $guarded = ['id'];
 
     protected $attributes = ['source' => 'apex', 'report_type' => 'apex', 'national_account' => 'N'];
+
+    /** @return BelongsTo<Customer, $this> */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
     public function dailyCollectionTime(): ?string
     {

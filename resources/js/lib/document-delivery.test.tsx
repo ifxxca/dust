@@ -46,7 +46,7 @@ test('contact validation is associated with its focusable phone control', () => 
     expect(html).toContain('aria-invalid="true"');
 });
 
-test('group selection uses loaded groups and does not offer free-text chat identifiers', () => {
+test('group destination accepts a pasted ID with optional group discovery', () => {
     const html = renderToStaticMarkup(
         <CustomerDocumentDelivery
             value={{
@@ -62,8 +62,29 @@ test('group selection uses loaded groups and does not offer free-text chat ident
         />,
     );
     expect(html).toContain('Gudang Customer');
-    expect(html).toContain('Muat / segarkan grup');
+    expect(html).toContain('Pilih dari daftar grup (opsional)');
+    expect(html).toContain('ID grup WhatsApp');
+    expect(html).toContain('id="customer-wa-group"');
+    expect(html).toContain('value="120363000000@g.us"');
     expect(html).not.toContain('type="tel"');
+});
+
+test('a pasted group ID shows an immediate error on the contact input', () => {
+    const html = renderToStaticMarkup(
+        <CustomerDocumentDelivery
+            value={{
+                ...defaultDocumentDelivery,
+                receipt_whatsapp: true,
+                whatsapp_target: '120363046678445460@g.us',
+            }}
+            disabled={false}
+            errors={{}}
+            onChange={vi.fn()}
+        />,
+    );
+    expect(html).toContain('Ini ID grup. Ubah tujuan menjadi Grup lalu tempel ID grupnya.');
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('aria-describedby="customer-wa-target-error"');
 });
 
 test('WhatsApp consent remains explicit and its validation links to the checkbox', () => {

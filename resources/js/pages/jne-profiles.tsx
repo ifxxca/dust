@@ -2,6 +2,8 @@ import { NativeSelect } from '@/components/ui/native-select';
 import * as aliases from '@/routes/jne-shipper-aliases';
 import { Head, Link, router, useForm, usePoll } from '@inertiajs/react';
 import { useState } from 'react';
+import CustomerPicker from '@/components/customer-picker';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Plus, History, ChevronDown, Users } from 'lucide-react';
 import JnePullSettings, {
     type PullProfile,
@@ -54,6 +56,8 @@ const emptyProfile = {
     source: 'apex',
     report_type: 'apex',
     customer_account: '',
+    customer_mapping_mode: 'SHIPPER_NAME',
+    customer_id: '' as number | '',
     national_account: 'N',
     label: '',
     enabled: false,
@@ -80,16 +84,27 @@ export default function JneProfiles({
     const [busy, setBusy] = useState<number | null>(null);
     const [running, setRunning] = useState<number | null>(null);
     const [toggleError, setToggleError] = useState('');
+    const [mappingCustomer, setMappingCustomer] =
+        useState<Profile['customer']>(null);
     const run = useForm({ profile_id: 0 });
     const form = useForm(emptyProfile);
     usePoll(15000, { only: ['profiles', 'activeAwbs'] });
     const edit = (profile: Profile) => {
         setEditing(profile.id);
         form.clearErrors();
+        setMappingCustomer(profile.customer ?? null);
         form.setData({
             source: profile.source,
             report_type: profile.report_type,
             customer_account: profile.customer_account,
+            customer_mapping_mode:
+                profile.customer_mapping_mode === 'ACCOUNT_VERIFIED'
+                    ? 'ACCOUNT_VERIFIED'
+                    : 'SHIPPER_NAME',
+            customer_id:
+                profile.customer_mapping_mode === 'ACCOUNT_VERIFIED'
+                    ? (profile.customer_id ?? '')
+                    : '',
             national_account: profile.national_account || 'N',
             label: profile.label || '',
             enabled: profile.enabled,
@@ -119,6 +134,7 @@ export default function JneProfiles({
             return;
         }
         setEditing(null);
+        setMappingCustomer(null);
         form.setData({
             ...emptyProfile,
             source,
@@ -306,6 +322,16 @@ export default function JneProfiles({
                         className="space-y-5"
                         onSubmit={(event) => {
                             event.preventDefault();
+                            form.transform((data) =>
+                                data.source === 'apex' &&
+                                data.report_type === 'apex'
+                                    ? data
+                                    : {
+                                          ...data,
+                                          customer_mapping_mode: 'SHIPPER_NAME',
+                                          customer_id: '',
+                                      },
+                            );
                             const options = {
                                 preserveScroll: true,
                                 onSuccess: () => setOpen(false),
@@ -322,6 +348,90 @@ export default function JneProfiles({
                                 );
                         }}
                     >
+                        {form.data.source === 'apex' &&
+                            form.data.report_type === 'apex' && (
+                                <div className="flex flex-col gap-2">
+                                    <Label id="mapping-basis-label">
+                                        Cocokkan customer menggunakan
+                                    </Label>
+                                    <ToggleGroup
+                                        type="single"
+                                        variant="outline"
+                                        aria-labelledby="mapping-basis-label"
+                                        value={form.data.customer_mapping_mode}
+                                        onValueChange={(value) => {
+                                            if (value)
+                                                form.setData(
+                                                    'customer_mapping_mode',
+                                                    value,
+                                                );
+                                        }}
+                                    >
+                                        <ToggleGroupItem value="SHIPPER_NAME">
+                                            Kode cust / nama pengirim
+                                        </ToggleGroupItem>
+                                        <ToggleGroupItem value="ACCOUNT_VERIFIED">
+                                            Nomor account
+                                        </ToggleGroupItem>
+                                    </ToggleGroup>
+                                    <InputError
+                                        message={
+                                            form.errors.customer_mapping_mode
+                                        }
+                                    />
+                                    {form.data.customer_mapping_mode ===
+                                        'ACCOUNT_VERIFIED' && (
+                                        <>
+                                            <Label htmlFor="account-owner">
+                                                Customer pemilik account
+                                            </Label>
+                                            <CustomerPicker
+                                                triggerId="account-owner"
+                                                selected={
+                                                    mappingCustomer ?? null
+                                                }
+                                                invalid={
+                                                    !!form.errors.customer_id
+                                                }
+                                                errorId={
+                                                    form.errors.customer_id
+                                                        ? 'account-owner-error'
+                                                        : undefined
+                                                }
+                                                onSelect={(customer) => {
+                                                    setMappingCustomer(
+                                                        customer
+                                                            ? {
+                                                                  id: customer.id,
+                                                                  name: customer.name,
+                                                                  customer_code:
+                                                                      customer.customer_code ??
+                                                                      null,
+                                                              }
+                                                            : null,
+                                                    );
+                                                    form.setData(
+                                                        'customer_id',
+                                                        customer?.id ?? '',
+                                                    );
+                                                }}
+                                            />
+                                            <InputError
+                                                id="account-owner-error"
+                                                message={
+                                                    form.errors.customer_id
+                                                }
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                AWB dengan ID_ACCOUNT yang sama
+                                                akan dicocokkan ke customer ini
+                                                pada pemrosesan report
+                                                berikutnya.
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="flex flex-col gap-2">
                                 <Label htmlFor="scraping-source">Sumber</Label>

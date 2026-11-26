@@ -508,6 +508,56 @@ test('customer delivery preferences normalize contact numbers and validate group
     $this->patchJson(route('api.customers.update', $customer), ['expected_version' => 3, 'document_delivery_settings' => whatsappOptions(['whatsapp_type' => 'group', 'whatsapp_target' => 'an arbitrary group name'])])->assertUnprocessable()->assertJsonValidationErrors('document_delivery_settings.whatsapp_target');
 });
 
+test('customer rejects a destination that disagrees with the WhatsApp destination type', function (string $type, string $target) {
+    whatsappSettings();
+    $admin = User::factory()->create(['role' => 'admin_supervisor']);
+    $customer = Customer::factory()->create(['version' => 1]);
+
+    $this->actingAs($admin)->patchJson(route('api.customers.update', $customer), [
+        'expected_version' => 1,
+        'document_delivery_settings' => whatsappOptions(['whatsapp_type' => $type, 'whatsapp_target' => $target]),
+    ])->assertUnprocessable()->assertJsonValidationErrors('document_delivery_settings.whatsapp_target');
+
+    expect($customer->fresh()->version)->toBe(1);
+    Http::assertNothingSent();
+})->with([
+    ['contact', '120363046678445460@g.us'],
+    ['group', '628123456789@c.us'],
+]);
+
+test('manual group ID saves without querying WAHA and still requires consent', function () {
+    whatsappSettings();
+    $admin = User::factory()->create(['role' => 'admin_supervisor']);
+    $customer = Customer::factory()->create(['version' => 1]);
+    $options = whatsappOptions(['whatsapp_type' => 'group', 'whatsapp_target' => ' 120363046678445460@g.us ']);
+
+    $this->actingAs($admin)->patchJson(route('api.customers.update', $customer), [
+        'expected_version' => 1, 'document_delivery_settings' => $options,
+    ])->assertOk()->assertJsonPath('data.document_delivery_settings.whatsapp_target', '120363046678445460@g.us');
+
+    expect($customer->fresh()->documentDeliveryOptions()['whatsapp_type'])->toBe('group');
+    $this->patchJson(route('api.customers.update', $customer), [
+        'expected_version' => 2,
+        'document_delivery_settings' => [...$options, 'whatsapp_consent_confirmed' => false],
+    ])->assertUnprocessable()->assertJsonValidationErrors('document_delivery_settings.whatsapp_consent_confirmed');
+    Http::assertNothingSent();
+});
+
+test('worker blocks legacy mismatched destinations before any WAHA request', function (string $type, string $target) {
+    $f = whatsappFixture();
+    $f['customer']->update(['document_delivery_settings' => whatsappOptions(['whatsapp_type' => $type, 'whatsapp_target' => $target])]);
+    $action = app(ManageWhatsappDelivery::class);
+    $row = $action->queueReceipt($f['proof']);
+
+    expect($action->handle($row->id))->toBeNull();
+    expect($row->fresh()->status)->toBe('FAILED');
+    expect($row->fresh()->last_error)->toContain('Jenis tujuan WhatsApp tidak sesuai');
+    Http::assertNothingSent();
+})->with([
+    ['contact', '120363046678445460@g.us'],
+    ['group', '628123456789@c.us'],
+]);
+
 test('settings reject unconnected sessions and stale versions without exposing API keys', function () {
     whatsappSettings();
     Http::fake(['waha.test/api/sessions' => Http::response([['name' => 'office', 'status' => 'WORKING', 'config' => ['secret' => 'must-not-show']]]), 'waha.test/api/sessions/office' => Http::sequence()->push(['status' => 'WORKING'])->push(['status' => 'STOPPED'])]);

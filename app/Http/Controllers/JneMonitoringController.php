@@ -237,8 +237,10 @@ class JneMonitoringController extends Controller
                 'total' => JneShipment::whereNotIn('tracking_status', ['DELIVERED', 'CANCELLED'])->count(),
                 'eligible' => app(QueryActiveJneAwbs::class)->handle(JneReportProfile::where('source', 'apex')->where('report_type', 'unresolved')->value('lookback_days') ?? 60)->distinct()->count('awb'),
             ],
-            'profiles' => JneReportProfile::where(fn ($query) => $query->where('source', '<>', 'hybrid')->orWhere('customer_account', '<>', 'HYBRID_GABUNGAN'))->orderBy('customer_account')->get()->map(fn (JneReportProfile $profile): array => [
+            'profiles' => JneReportProfile::with('customer:id,name,customer_code')->where(fn ($query) => $query->where('source', '<>', 'hybrid')->orWhere('customer_account', '<>', 'HYBRID_GABUNGAN'))->orderBy('customer_account')->get()->map(fn (JneReportProfile $profile): array => [
                 ...$profile->only(['id', 'source', 'report_type', 'customer_account', 'national_account', 'label', 'enabled', 'mode', 'lookback_days', 'interval_minutes', 'last_error', 'version']),
+                'customer_mapping_mode' => $profile->customer_mapping_mode,
+                'customer_id' => $profile->customer_id, 'customer' => $profile->customer?->only(['id', 'name', 'customer_code']),
                 'date_from' => $profile->date_from?->toDateString(), 'date_thru' => $profile->date_thru?->toDateString(),
                 'next_run_at' => $profile->next_run_at?->toIso8601String(), 'last_run_at' => $profile->last_run_at?->toIso8601String(),
                 'daily_collection_time' => $profile->dailyCollectionTime(),
@@ -275,11 +277,19 @@ class JneMonitoringController extends Controller
             'report_type' => ['required', Rule::in($kinds)],
             'customer_account' => ['required', 'string', 'max:100', 'regex:/^[\pL\pN._\- ]+$/u', Rule::unique('jne_report_profiles')->where('source', $request->input('source'))->where('report_type', $request->input('report_type'))->ignore($profile)],
             'label' => ['nullable', 'string', 'max:150'], 'enabled' => ['required', 'boolean'],
+            'customer_mapping_mode' => ['sometimes', Rule::in(['ACCOUNT', 'SHIPPER_NAME', 'ACCOUNT_VERIFIED'])],
+            'customer_id' => ['nullable', 'required_if:customer_mapping_mode,ACCOUNT_VERIFIED', 'integer', Rule::exists('customers', 'id')->where('is_active', true)],
             'mode' => ['required', Rule::in(['rolling', 'fixed'])], 'lookback_days' => ['required', 'integer', 'min:1', 'max:366'],
             'date_from' => ['nullable', 'required_if:mode,fixed', 'date_format:Y-m-d'],
             'date_thru' => ['nullable', 'required_if:mode,fixed', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'interval_minutes' => ['required', 'integer', 'min:5', 'max:1440'], 'version' => [$profile ? 'required' : 'nullable', 'integer', 'min:1'],
         ]);
+        if (($data['customer_mapping_mode'] ?? '') === 'ACCOUNT_VERIFIED' && ($data['source'] !== 'apex' || $data['report_type'] !== 'apex')) {
+            throw ValidationException::withMessages(['customer_mapping_mode' => 'Pemetaan account hanya tersedia pada report customer APEX.']);
+        }
+        if (($data['customer_mapping_mode'] ?? '') === 'SHIPPER_NAME') {
+            $data['customer_id'] = null;
+        }
         if ($data['mode'] === 'fixed' && CarbonImmutable::parse($data['date_from'])->diffInDays(CarbonImmutable::parse($data['date_thru'])) >= config('jne-reports.max_request_days')) {
             throw ValidationException::withMessages(['date_thru' => 'Rentang maksimal 366 hari, termasuk tanggal awal dan akhir.']);
         }
